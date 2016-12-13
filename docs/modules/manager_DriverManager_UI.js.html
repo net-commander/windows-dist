@@ -1,0 +1,1176 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width">
+	<title>Documentation Source: manager/DriverManager_UI.js</title>
+
+	<!--[if lt IE 9]>
+	<script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+	<![endif]-->
+	<link type="text/css" rel="stylesheet" href="styles/sunlight.default.css">
+
+	<link type="text/css" rel="stylesheet" href="styles/site.simplex.css">
+	<link type="text/css" rel="stylesheet" href="styles/override.css">
+	<link type="text/css" rel="stylesheet" href="styles/theme.css">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-default navbar-fixed-top navbar-inverse">
+<div class="container">
+	<div class="navbar-header">
+		<a class="navbar-brand" href="index.html">Documentation</a>
+		<button class="navbar-toggle" type="button" data-toggle="collapse" data-target="#topNavigation">
+			<span class="icon-bar"></span>
+			<span class="icon-bar"></span>
+			<span class="icon-bar"></span>
+        </button>
+	</div>
+	<div class="navbar-collapse collapse" id="topNavigation">
+		<ul class="nav navbar-nav">
+			
+			<li class="dropdown">
+				<a href="modules.list.html" class="dropdown-toggle" data-toggle="dropdown">Modules<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="module-xcf_driver_DriverBase.html">xcf/driver/DriverBase</a></li><li><a href="module-xcf_manager_BeanManager.html">xcf/manager/BeanManager</a></li><li><a href="module-xcf_manager_DeviceManager.html">xcf/manager/DeviceManager</a></li><li><a href="module-xcf_manager_DeviceManager_DeviceServer.html">xcf/manager/DeviceManager_DeviceServer</a></li><li><a href="module-xide_manager_DeviceManager.html">xide/manager/DeviceManager</a></li>
+				</ul>
+			</li>
+			
+			<li class="dropdown">
+				<a href="classes.list.html" class="dropdown-toggle" data-toggle="dropdown">Classes<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="module-xcf.driver.DriverBase.html">xcf.driver.DriverBase</a></li><li><a href="module-xcf.manager.DeviceManager_DeviceServer.html">xcf.manager.DeviceManager_DeviceServer</a></li><li><a href="module-xcf_manager_Context.html">xcf/manager/Context</a></li>
+				</ul>
+			</li>
+			
+			<li class="dropdown">
+				<a href="global.html" class="dropdown-toggle" data-toggle="dropdown">Global<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="global.html#addDeviceInstance">addDeviceInstance</a></li><li><a href="global.html#appScope">appScope</a></li><li><a href="global.html#beanIconClass">beanIconClass</a></li><li><a href="global.html#completeDriver">completeDriver</a></li><li><a href="global.html#createDriverInstance">createDriverInstance</a></li><li><a href="global.html#createLeftView">createLeftView</a></li><li><a href="global.html#createRightView">createRightView</a></li><li><a href="global.html#defaultScope">defaultScope</a></li><li><a href="global.html#driverScopes">driverScopes</a></li><li><a href="global.html#editDriver">editDriver</a></li><li><a href="global.html#groupType">groupType</a></li><li><a href="global.html#insertIfMatch">insertIfMatch</a></li><li><a href="global.html#itemMetaPath">itemMetaPath</a></li><li><a href="global.html#itemMetaStorePath">itemMetaStorePath</a></li><li><a href="global.html#itemMetaTitleField">itemMetaTitleField</a></li><li><a href="global.html#itemType">itemType</a></li><li><a href="global.html#match">match</a></li><li><a href="global.html#newGroup">newGroup</a></li><li><a href="global.html#newItem">newItem</a></li><li><a href="global.html#nodeValuePath">nodeValuePath</a></li><li><a href="global.html#nodeValueTransform">nodeValueTransform</a></li><li><a href="global.html#onCreateVariableCI">onCreateVariableCI</a></li><li><a href="global.html#onDeviceMessage">onDeviceMessage</a></li><li><a href="global.html#onDeviceReady">onDeviceReady</a></li><li><a href="global.html#onMainViewReady">onMainViewReady</a></li><li><a href="global.html#onNewDriverScopeCreated">onNewDriverScopeCreated</a></li><li><a href="global.html#onReloaded">onReloaded</a></li><li><a href="global.html#onStoreReady">onStoreReady</a></li><li><a href="global.html#onWidgetReady">onWidgetReady</a></li><li><a href="global.html#registerEditorExtensions">registerEditorExtensions</a></li><li><a href="global.html#replaceWith">replaceWith</a></li><li><a href="global.html#setScriptFunctions">setScriptFunctions</a></li><li><a href="global.html#start">start</a></li><li><a href="global.html#systemScope">systemScope</a></li><li><a href="global.html#toPreferenceId">toPreferenceId</a></li><li><a href="global.html#updateItemMetaData">updateItemMetaData</a></li><li><a href="global.html#userScope">userScope</a></li><li><a href="global.html#variables">variables</a></li>
+				</ul>
+			</li>
+			
+		</ul>
+		<div class="col-sm-3 col-md-3">
+            <form class="navbar-form" role="search">
+                <div class="input-group">
+                    <input type="text" class="form-control" placeholder="Search" name="q" id="search-input">
+                    <div class="input-group-btn">
+                        <button class="btn btn-default" id="search-submit"><i class="glyphicon glyphicon-search"></i></button>
+                    </div>
+                </div>
+            </form>
+        </div>
+	</div>
+
+</div>
+</div>
+
+
+<div class="container" id="toc-content">
+<div class="row">
+
+	
+	<div class="col-md-12">
+	
+		<div id="main">
+			
+
+		<h1 class="page-title">Source: manager/DriverManager_UI.js</h1>
+    
+<section>
+    <article>
+        <pre
+            class="sunlight-highlight-javascript linenums">define([
+    'dcl/dcl',
+    "xdojo/declare",
+    'xide/types',
+    'xide/utils',
+    'xace/views/Editor',
+    'xide/views/_CIDialog',
+    "xide/data/Reference",
+    "xcf/views/DriverView2",
+    'dojo/Deferred',
+    'xide/registry'
+], function (dcl,declare,types, utils, Editor, _CIDialog,
+             Reference,DriverView2,Deferred,registry) {
+
+    var debug = false;
+
+    return dcl(null, {
+        declaredClass:"xcf.manager.DriverManager_UI",
+        openItemSettings: function (item,device,mixin,createNew) {
+            var docker = this.ctx.mainView.getDocker();
+            //1. sanity check
+            var userData = item.user;
+            if (!userData || !userData.inputs) {
+                return null;
+            }
+            //2. check its not open already
+            var viewId = this.getViewId(item);
+            var view = registry.byId(viewId);
+            try {
+                if (view &amp;&amp; createNew!==true) {
+                    view._parent.select();
+                    return null;
+                }
+            } catch (e) {
+                utils.destroy(view);
+            }
+
+            var title = this.getMetaValue(item, this.itemMetaTitleField);
+            var devinfo = null,
+                ctx = this.ctx,
+                deviceManager = ctx.getDeviceManager();
+
+            mixin = mixin || {};
+
+            if(device){
+                devinfo  = ctx.getDeviceManager().toDeviceControlInfo(device);
+            }
+            var parent = docker.addTab(null, {
+                title: (title || item.name) + '' + (device ? ':' + device.name + ':' + devinfo.host + ':' : ''),
+                icon: this.beanIconClass
+            });
+            //@Todo:driver, store device temporarly in Commands CI
+            var commandsCI = utils.getCIByChainAndName(userData, 0, types.DRIVER_PROPERTY.CF_DRIVER_COMMANDS);
+            if(commandsCI){
+                commandsCI.device = device;
+            }
+            if(item.blockScope &amp;&amp; !item.blockScope.serviceObject){
+                item.blockScope.serviceObject = this.serviceObject;
+            }
+            //@Todo:driver, store device temporarly in Commands CI
+            if(commandsCI){
+                commandsCI.device = device;
+            }
+            var driverView = utils.addWidget(DriverView2,utils.mixin({
+                userData:commandsCI,
+                driver:item,
+                device:device,
+                ctx:ctx,
+                registerView:true,
+                id:viewId
+            },mixin),null,parent,true);
+            parent.add(driverView,null,false);
+            return driverView;
+        },
+        /////////////////////////////////////////////////////////////////////////////////////
+        //
+        //  Server methods
+        //
+        /////////////////////////////////////////////////////////////////////////////////////
+        /**
+         * updateItemMetaData updates a CI in the drivers meta data store
+         * @param scope {string}
+         * @param driverMetaPath {string}
+         * @param dataPath {string} : /inputs
+         * @param query
+         * @param value
+         * @param readyCB
+         * @param errorCB
+         * @returns {*}
+         */
+        updateItemMetaData: function (scope, driverMetaPath, dataPath, query, value, readyCB, errorCB) {
+            return this.callMethodEx(null, 'updateItemMetaData', [scope, driverMetaPath, dataPath, query, value], readyCB, false);
+        },
+        /***
+         * setDriverScriptContent is storing a driver's actual code in a given scope on the server
+         * @param scope {string}
+         * @param path  {string}
+         * @param readyCB   {function}
+         * @param errorCB   {function}
+         * @returns {*}
+         */
+        setDriverScriptContent: function (scope, path, content, readyCB, errorCB) {
+            return this.callMethodEx(null, 'setDriverContent', [scope, path, content], readyCB, true);
+        },
+        /***
+         * getDriverScriptContent is receiveing a driver's actual code in a given scope
+         * @param scope {string}
+         * @param path  {string}
+         * @param readyCB   {function}
+         * @param errorCB   {function}
+         * @returns {*}
+         */
+        getDriverScriptContent: function (scope, path, readyCB, errorCB) {
+            return this.callMethodEx(null, 'getDriverContent', [scope, path], readyCB, true);
+        },
+        onDriverModified:function(evt){
+            debug &amp;&amp; console.log('on driver modified',this.getStore());
+            var store = this.getStore();
+            var item = evt.driver;
+            if(item.commandsItem) {
+                utils.removeFromStore(store, item.commandsItem, true, 'path', 'parentId');
+            }
+            if(item.variablesItem) {
+                utils.removeFromStore(store, item.variablesItem, true, 'path', 'parentId');
+            }
+            item._completed=false;
+            this.completeDriver(store,item,item);
+        },
+        onAllComponentsLoaded:function(components){
+            debug &amp;&amp; console.log('components loaded!',components);
+        },
+        init:function(){
+            var thiz = this,
+                EVENTS = types.EVENTS;
+            this.subscribe([
+                EVENTS.ON_CI_UPDATE,
+                EVENTS.ON_WIDGET_READY,
+                EVENTS.ON_MAIN_VIEW_READY,
+                EVENTS.ON_SCOPE_CREATED,
+                EVENTS.ON_DRIVER_MODIFIED,
+                EVENTS.ON_ALL_COMPONENTS_LOADED,
+                EVENTS.ON_STORE_CREATED]);
+
+            this.subscribe(EVENTS.ON_DEBUGGER_READY, function (evt) {
+                setTimeout(function () {
+                    thiz.onDebuggerReady(evt)
+                }, 1500);
+            }, this);
+            this.subscribe([EVENTS.ON_DRIVER_GROUP_SELECTED, EVENTS.ON_DRIVER_SELECTED], this.onItemSelected);
+            this.subscribe(EVENTS.ON_ACE_READY, this.onACEReady);
+        },
+        onACEReady: function (evt) {
+
+            var add = true;
+            if (evt.owner &amp;&amp; evt.owner.userData &amp;&amp; evt.owner.userData.widget &amp;&amp; evt.owner.userData.widget.item) {
+                var variable = evt.owner.userData.widget.item;
+                var scope = variable.scope;
+
+
+                var variables = scope.getVariables({
+                    group: 'basicVariables'
+                });
+
+                var _responseVariables = scope.getVariables({
+                    group: 'processVariables'
+                });
+
+                if (_responseVariables &amp;&amp; _responseVariables.length) {
+                    variables = variables.concat(_responseVariables);
+                }
+                var completors = [];
+
+                function createCompleter(text, value, help) {
+                    return {
+                        word: text,
+                        value: value,
+                        meta: help || ''
+                    };
+                }
+
+                if (variables &amp;&amp; variables.length > 0) {
+                    for (var i = 0; i &lt; variables.length; i++) {
+                        var obj = variables[i];
+                        completors.push(createCompleter(obj.name, obj.value, 'Driver Variable'));
+                    }
+                }
+
+                if (completors.length) {
+                    evt.aceEditor.addAutoCompleter(completors);
+                }
+
+
+            }
+
+        },
+        debugDriver: function (ci, storeItem) {
+
+            //http://192.168.1.37:9090/debug?port=5858
+            var dbgManager = this.ctx.getDebugManager();
+
+            var driver = storeItem;
+
+            //1.pick up meta data
+            var meta = driver['user'];
+
+            //2. pick meta data path
+            var path = driver['path'];
+
+            //3. pick scope
+            var scope = driver['scope'];
+
+            //4. pick name
+            var name = driver['name'];
+
+            //5. pick 'inputs' from meta
+            var cis = meta['inputs'];
+
+
+            //6. pick script ci
+            var scriptCI = utils.getInputCIByName(meta, types.DRIVER_PROPERTY.CF_DRIVER_CLASS);
+
+            //7. pick script ci's value
+            var scriptCIValue = utils.toString(scriptCI['value']);
+
+            //8. alternate way to pick a CI value
+            var scriptCIValue2 = utils.getCIInputValueByName(meta, types.DRIVER_PROPERTY.CF_DRIVER_CLASS);
+
+            this.ctx.getDebugManager().debugDriver(scriptCIValue, {
+                owner: this,
+                storeItem: storeItem
+            });
+        },
+        onVariableAction: function (scope, driver, removed) {
+            if (driver &amp;&amp; scope) {
+                var meta = driver['user'];
+                //put variables from CI storage into scope
+                var ci = utils.getCIByChainAndName(meta, 0, types.DRIVER_PROPERTY.CF_DRIVER_VARIABLES);
+                var variables = scope.variablesToJson();
+                var variablesString = JSON.stringify(variables, null, 2);
+                this.updateCI(ci, JSON.stringify(variables, null, 2), '', driver);
+            }
+        },
+        reload: function () {
+            var thiz = this;
+            this.currentItem = null;
+            this.ls('system_drivers', function () {
+                if (thiz.treeView) {
+                    thiz.treeView.reload(thiz.store);
+                }
+            });
+        },
+        getDriversAsEnumeration: function (store) {
+            try {
+                var options = [];
+
+                store = store || this.getStore() || this.store;
+
+                if (!store) {
+                    console.error('getDriversAsEnumeration:: have no store!');
+                    return options;
+                }
+
+                var items = store.query({
+                    isDir: false
+                });
+
+                if (!_.isArray(items)) {
+                    items = [items];
+                }
+
+                for (var i = 0; i &lt; items.length; i++) {
+                    var driver = items[i];
+                    var meta = driver['user'];
+                    var id = utils.getInputCIByName(meta, types.DRIVER_PROPERTY.CF_DRIVER_ID);
+                    var title = utils.getInputCIByName(meta, types.DRIVER_PROPERTY.CF_DRIVER_NAME);
+                    if(!meta){
+                        continue;
+                    }
+                    options.push({
+                        value: utils.toString(id['value']),
+                        label: utils.toString(title['value']),
+                        driver:driver
+                    })
+                }
+                return options;
+            }catch(e){
+                debug &amp;&amp; console.error('getDriversAsEnumeration failed',e);
+                logError(e,'getDriversAsEnumeration failed');
+                return options;
+            }
+
+        },
+        onDriverSettingsChanged: function (ci, storeRef) {
+            debug &amp;&amp; console.log('onDriverSettingsChanged',ci);
+            this.ctx.getDeviceManager().onDriverSettingsChanged(ci, storeRef);
+        },
+        saveDriver:function(storeRef){
+            debug &amp;&amp; console.log('save driver ',storeRef);
+            var scope = this.ctx.getBlockManager().getScope(storeRef['id']);
+            var meta = storeRef['user'];
+            //save variables
+            var variableCI = utils.getCIByChainAndName(meta, 0, types.DRIVER_PROPERTY.CF_DRIVER_VARIABLES);
+            //save blocks
+            var commandsCI = utils.getCIByChainAndName(meta, 0, types.DRIVER_PROPERTY.CF_DRIVER_COMMANDS);
+            var blocksEvent = {
+                ci:commandsCI,
+                newValue:'',
+                oldValue:"0",
+                storeItem:storeRef,
+                owner:this
+            }
+            this.onCIUpdate(blocksEvent);
+            //save responsie-params
+            var resonseCI = utils.getCIByChainAndName(meta, 0, types.DRIVER_PROPERTY.CF_DRIVER_RESPONSES);
+            var rEvent = {
+                ci:resonseCI,
+                newValue:'',
+                oldValue:"0",
+                storeItem:storeRef,
+                owner:this
+            }
+            this.onCIUpdate(rEvent);
+            this.onDriverSettingsChanged(resonseCI,storeRef);
+        },
+        updateCI: function (ci, newValue, oldValue, storeRef) {
+            if (ci &amp;&amp; newValue!==null &amp;&amp; storeRef) {
+                if (utils.toString(ci.name) == types.DRIVER_PROPERTY.CF_DRIVER_COMMANDS || utils.toString(ci.name) == types.DRIVER_PROPERTY.CF_DRIVER_RESPONSES) {
+                    this.onDriverSettingsChanged(ci, storeRef);
+                }
+                this.updateItemMetaData(
+                    utils.toString(storeRef.scope), //the scope of the driver
+                    utils.toString(storeRef.path),  //the relative path of the driver
+                    '/inputs',                      //the path of the CIS in the meta db
+                    {
+                        id: utils.toString(ci.id)
+                    },
+                    {
+                        value: newValue,
+                        params: utils.toString(ci['params'])
+                    }
+                );
+            }
+        },
+        /////////////////////////////////////////////////////////////////////////////////////
+        //
+        //  CI Updates
+        //
+        /////////////////////////////////////////////////////////////////////////////////////
+        onCIUpdate: function (evt) {
+            var ci = evt.ci;
+            var storeItem = ci ? ci.driver : null;
+            if(storeItem){
+                var driver = this.getDriverById(storeItem.id);
+                if(driver){
+                    this.updateCI(evt.ci, evt.newValue, evt.oldValue, driver);
+                }
+            }
+        },
+        /**
+         *
+         * @param store
+         * @param device
+         * @param driver
+         */
+        completeDriver: function (store, device, driver) {
+            if (!driver.id) {
+                console.error('have no id!');
+            }
+            debug &amp;&amp; console.log('complete driver ' + driver.name);
+            var isDevice = device!=driver;
+            var parentId = isDevice ? device.path : driver.path,
+                ctx = this.ctx,
+                blockManager = ctx.getBlockManager(),
+                scope = null;
+
+            if(!blockManager){
+                console.error('no block manager');
+                return;
+            }
+            var commandsRoot = parentId + '_commands';
+            var variablesRoot = parentId + '_variables';
+
+            function wireStore(store){}
+
+            if(!isDevice &amp;&amp; !driver.blockScope){
+                scope = driver.blockScope = this.ctx.getBlockManager().createScope({
+                    id:driver.id,
+                    device:null,
+                    driver:driver,
+                    instance:null,
+                    ctx:this.ctx,
+                    getContext:function(){
+                        return this.instance;
+                    }
+                },dojo.clone(driver.blox.blocks));
+            }
+            var driverScope = scope;
+            var commands = {
+                    path: parentId + '_commands',
+                    name: 'Commands',
+                    isDir: true,
+                    type: 'leaf',
+                    parentId: parentId,
+                    virtual: true,
+                    isCommand:true,
+                    icon:'fa-folder',
+                    children:[]
+                },
+                variables = {
+                    path: parentId + '_variables',
+                    name: 'Variables',
+                    isDir: true,
+                    type: 'leaf',
+                    parentId: parentId,
+                    virtual: true,
+                    icon:'fa-folder',
+                    children:[]
+                },
+                thiz = this,
+                CIS = driver.user,
+                toolbar = this.ctx.mainView.getToolbar();
+
+            //complete commands
+            store.putSync(commands);
+
+            driver.commandsItem=commands;
+            driver.children = [];
+            driver.children.push(commands);
+            driver.children.push(variables);
+
+
+            //complete CIS
+            _.each(CIS.inputs,function(ci){
+                ci.driver=driver;
+                ci.actionTarget=toolbar;
+                ci.ctx = ctx;
+                ci.registerView=function(grid){
+                    ctx.getWindowManager().registerView(grid,false);
+                }
+            });
+
+
+            var commandBlocks = driverScope.getBlocks({
+                group: types.COMMAND_TYPES.BASIC_COMMAND,
+                parentId:null
+            }).concat(driverScope.getBlocks({
+                group: types.COMMAND_TYPES.CONDITIONAL_COMMAND,
+                parentId:null
+            }));
+
+            function createReference(block,driver,title,icon){
+
+                var _isVariable = block.declaredClass.indexOf('Variable') !==-1;
+                var _parent = _isVariable  ? variables.path : commands.path;
+                if(block.declaredClass.indexOf( _isVariable? 'Variable' : 'Command')==-1){
+                    return;
+                }
+                var reference  = new Reference({
+                    enabled:true,
+                    path: _parent + '_reference_'+block.id,
+                    name: title,
+                    id: block.id,
+                    parentId: _parent,
+                    _mayHaveChildren: false,
+                    virtual: true,
+                    tooltip: true,
+                    icon:icon,
+                    ref: {
+                        driver: driver,
+                        item: block,
+                        device:device
+                    },
+                    type: types.ITEM_TYPE.BLOCK
+                });
+
+                reference = store.putSync(reference);
+                _isVariable ? variables.children.push(reference) : commands.children.push(reference);
+                block.addReference(reference,{
+                    properties: {
+                        "name":true,
+                        "enabled":true,
+                        "value":true
+                    },
+                    onDelete:true
+                },true);
+                reference.refresh();
+            }
+
+            if(!driverScope._didSubribeToStoreChanges){
+                driverScope._didSubribeToStoreChanges=true;
+                if(driverScope.blockStore) {
+                    driverScope.blockStore.on('added', function (item) {
+                        if (!item.parentId) {
+                            createReference(item, driver, item.name);
+                        }
+                    });
+                }
+            }
+
+            _.each(commandBlocks,function(block){
+                createReference(block,driver,block.name,block.icon || 'fa-exclamation');
+            });
+
+
+            //complete variables
+            driver.variablesItem=variables;
+            store.putSync(variables);
+
+            var basicVariables = driverScope.getVariables({
+                group: types.BLOCK_GROUPS.CF_DRIVER_BASIC_VARIABLES
+            }).concat(driverScope.getVariables({
+                group: types.BLOCK_GROUPS.CF_DRIVER_RESPONSE_VARIABLES
+            }));
+
+
+            _.each(basicVariables,function(variable){
+                createReference(variable,driver,variable.name,variable.icon || 'fa-exclamation');
+            });
+
+        },
+        /**
+         * Callback when a CI based widget has been rendered
+         * This will may be complete xide standard widgets.
+         * @param evt
+         */
+        onWidgetReady: function (evt) {
+
+            var thiz = this;
+            /***
+             * Widget completion
+             */
+            if (evt['owner'] == this                   // must come from us
+                &amp;&amp; evt['ci'] != null                   // we need an CI
+                &amp;&amp; evt['ci'].name === types.DRIVER_PROPERTY.CF_DRIVER_CLASS    // we need an CI
+                &amp;&amp; evt['widget'] != null               // we need a valid widget
+                &amp;&amp; evt['storeItem'] != null            // we need a store reference
+                &amp;&amp; utils.toInt(evt['ci'].type) === types.ECIType.FILE) //must be a file widget
+            {
+                this.onDriverClassFileWidgetCreated(evt.widget, evt.ci, evt.storeItem);
+            }
+
+            //add a scope to driver command settings widget
+            if (evt['owner'] == this                   // must come from us
+                &amp;&amp; evt['ci'] != null                   // we need an CI
+                &amp;&amp; evt['ci'].name === types.DRIVER_PROPERTY.CF_DRIVER_COMMANDS    // we need an CI
+                &amp;&amp; evt['widget'] != null               // we need a valid widget
+                &amp;&amp; evt['storeItem'] != null)            // we need a store reference
+            {
+                //give this man a cookie!
+                if (!evt['widget']['blockScope']) {
+                    evt['widget']['blockScope'] = thiz.ctx.getBlockManager().getScope(utils.toString(evt['storeItem']['id']), evt);
+                }
+            }
+
+            //add a scope to driver response settings widget
+            if (evt['owner'] == this                   // must come from us
+                &amp;&amp; evt['ci'] != null                   // we need an CI
+                &amp;&amp; evt['ci'].name === types.DRIVER_PROPERTY.CF_DRIVER_RESPONSES    // we need an CI
+                &amp;&amp; evt['widget'] != null               // we need a valid widget
+                &amp;&amp; evt['storeItem'] != null)            // we need a store reference
+            {
+                var blockManager = thiz.ctx.getBlockManager();
+                var scopeId = evt['storeItem']['id'];
+                var scope = blockManager.getScope(scopeId);
+                //give this man a cookie!
+                if (!evt['widget']['blockScope']) {
+                    evt['widget']['blockScope'] = thiz.ctx.getBlockManager().getScope(utils.toString(evt['storeItem']['id']), evt);
+                }
+
+            }
+
+
+            //add a scope to driver variable settings widget
+            if (evt['owner'] == this                   // must come from us
+                &amp;&amp; evt['ci'] != null                   // we need an CI
+                &amp;&amp; utils.toString(evt['ci'].name) === types.DRIVER_PROPERTY.CF_DRIVER_VARIABLES
+                &amp;&amp; evt['widget'] != null               // we need a valid widget
+                &amp;&amp; evt['storeItem'] != null)            // we need a store reference
+            {
+                //give this man a cookie!
+                if (!evt['widget']['blockScope']) {
+                    evt['widget']['blockScope'] = thiz.ctx.getBlockManager().getScope(utils.toString(evt['storeItem']['id']), evt);
+                }
+            }
+
+            if (
+                evt['ci'] != null                   // we need an CI
+                &amp;&amp; utils.toString(evt['ci'].name) === types.DEVICE_PROPERTY.CF_DEVICE_DRIVER
+                &amp;&amp; evt['widget'] != null               // we need a valid widget
+                &amp;&amp; evt['storeItem'] != null            // we need a store reference
+                &amp;&amp; utils.toInt(evt['ci'].type) === types.ECIType.ENUMERATION) //must be a file widget
+            {
+                //this.onDriverClassFileWidgetCreated(evt.widget,evt.ci,evt.storeItem);
+            }
+
+        },
+        /***
+         * Callback when a file widget has been created. We extend this widget for one more buttons:
+         *
+         * @param widget
+         * @param ci
+         * @param storeItem
+         */
+        onDriverClassFileWidgetCreated: function (widget, ci, storeItem) {
+
+            var thiz = this;
+
+            /***
+             * Change file picker options
+             */
+            var ctx = this.ctx;
+            var xFileConfig = types.config;
+
+            return ;
+
+            /*
+            var vfsConfigs = this.ctx.vfsConfigs;
+
+            var vfsDriverConfig = factory.cloneConfig(xFileConfig);
+
+            var xFileContext = null;
+
+            var rootStore = xFileContext.getStore('system_drivers',
+                {
+                    "fields": 1663,
+                    "includedFileExtensions": "js",
+                    "excludedFileExtensions": "*"
+                });
+
+            var filePanelOptions = {
+                cookiePrefix: 'driver',
+                sources: [
+                    {
+                        name: 'System',
+                        path: 'system_drivers',
+                        iconClass: 'fileSelectDiscIcon'
+                    },
+                    {
+                        name: 'User',
+                        path: 'user_drivers',
+                        iconClass: 'fileSelectDiscIcon'
+                    },
+                    {
+                        name: 'App',
+                        path: 'app_drivers',
+                        iconClass: 'fileSelectDiscIcon'
+                    }
+                ],
+                delegate: xFileContext.getPanelManager()
+            };
+
+            var xFileSelectDialogOptions = {
+                store: rootStore,
+                config: vfsDriverConfig,
+                title: 'Select Driver',
+                filePanelOptions: filePanelOptions
+            };
+
+
+            widget.options = xFileSelectDialogOptions;
+
+
+            widget.debugButton = factory.createButton(
+                widget.getFreeExtensionSlot(),//the widget knows where to add new items
+                "el-icon-puzzle",             //eluisve icon class
+                "elusiveButton",              //elusive button class adjustments
+                "",                           //no label
+                "",                           //no extra dom style markup
+                function () {                   //button click callback
+                    thiz.debugDriver(ci, storeItem);
+                },
+                this);
+
+
+            widget.editButton = factory.createButton(
+                widget.getFreeExtensionSlot(),//the widget knows where to add new items
+                "el-icon-file-edit",             //eluisve icon class
+                "elusiveButton",              //elusive button class adjustments
+                "",                           //no label
+                "",                           //no extra dom style markup
+                function () {                   //button click callback
+                    thiz.editDriver(ci, storeItem);
+                },
+                this);
+
+               */
+        },
+        /**
+         *
+         * @param ci
+         * @param storeItem
+         */
+        editDriver: function (ci, storeItem) {
+            var thiz = this;
+            var driver = storeItem;
+            var ctx = thiz.ctx;
+            var meta = driver['user'];
+            var name = driver['name'];
+
+            var driverPath = utils.getCIInputValueByName(meta, types.DRIVER_PROPERTY.CF_DRIVER_CLASS);
+
+            var scope = utils.toString(driver['scope']),
+
+                docker = ctx.mainView.getDocker();
+
+            var where = ctx.mainView.layoutCenter;
+            var title =  name + '.' + utils.getFileExtension(driverPath);
+
+            var parent = docker.addTab(null,{
+                title:title,
+                target:where ? where._parent : null,
+                icon:'fa-code'
+            });
+            try {
+                var view = utils.addWidget(Editor, {
+                    style:'height:inherit',
+                    ctx: this.ctx,
+                    item:{
+                    },
+                    /***
+                     * Provide a text editor store delegate
+                     */
+                    storeDelegate: {
+                        getContent: function (onSuccess) {
+                            //1.pick up meta data
+                            thiz.getDriverScriptContent(scope, driverPath, onSuccess);
+                        },
+                        saveContent: function (value, onSuccess, onError) {
+                            //1.pick up meta data
+                            thiz.setDriverScriptContent(scope, driverPath, value, onSuccess);
+                        }
+                    },
+                    options:{
+                        filePath:'.js',
+                        fileName:name + '.' + utils.getFileExtension(driverPath)
+                    },
+                    title: name + '.' + utils.getFileExtension(driverPath),
+                    fileName: driverPath
+
+                }, this, parent, true);
+                ctx.getWindowManager().registerView(view);
+                view.resize();
+                return view;
+            } catch (e) {
+                logError(e);
+            }
+        },
+        /***
+         * openDriverSettings creates a new settings view for a driver
+         * @param item
+         * @returns {xide.views.CIGroupedSettingsView}
+         */
+        /////////////////////////////////////////////////////////////////////////////////////
+        //
+        //  UX related functions, @TODO : move it to somewhere else
+        //
+        /////////////////////////////////////////////////////////////////////////////////////
+        deleteItem: function (item) {
+            //delete subs
+            var store = this.getStore(item.scope) || this.store;
+            var parent = item.getParent();
+            store.removeSync(item.path);
+            this.onDriverRemoved(store,item);
+            if(parent){
+                store.refreshItem(parent);
+            }
+        },
+        onDeleteItem: function (item) {
+            debug &amp;&amp; console.log('onDeleteItemx',item);
+            var isDir = utils.toBoolean(item.isDir) === true;
+            var dfd = new Deferred();
+            //pick the right service function
+            var removeFn = isDir ? 'removeGroup' : 'removeItem';
+            var thiz = this;
+            var actionDialog = new _CIDialog({
+                title: 'Remove Driver' + (isDir ? ' Group' : '') + ' ' + "\"" + item.name + "\"  ",
+                style: 'max-width:400px',
+                titleBarClass: 'text-danger',
+                onOk: function (dlg) {
+                    var store = thiz.getStore(item.scope);
+                    thiz[removeFn](
+                        utils.toString(item.scope),
+                        utils.toString(item.path),
+                        utils.toString(item.name),
+                        function () {
+                            thiz.deleteItem(item);
+                            thiz.publish(types.EVENTS.ON_STORE_CHANGED, {
+                                owner: thiz,
+                                store: store,
+                                action: types.DELETE,
+                                item: item
+                            });
+                            store.emit(null);
+                            dfd.resolve();
+                        });
+                }
+            });
+
+            actionDialog.show();
+            return dfd;
+        },
+        /**
+         * Creates new driver group dialog
+         */
+        newGroup: function (item,scope) {
+            var thiz = this;
+            var currentItem = item;
+            var parent = currentItem ? currentItem.isDir === true ? currentItem.path : '' : '';
+            var store = this.getStore(scope);
+            var dfd = new Deferred();
+            var actionDialog = new _CIDialog({
+                title: 'New Driver Group',
+                titleBarClass: 'text-info',
+                size: types.DIALOG_SIZE.SIZE_SMALL,
+                onOk: function (dlg, data) {
+                    var title = this.getField('Title');
+                    var scope = this.getField('Scope');
+                    var _final = parent + '/' + title;
+                    thiz.createGroup(scope, _final, function (response) {
+                        var newItem = thiz.createNewGroupItem(title, scope, parent);
+                        store = thiz.getStore(scope);
+                        var _newItem = store.putSync(newItem);
+                        thiz.publish(types.EVENTS.ON_STORE_CHANGED, {
+                            owner: thiz,
+                            store: store,
+                            action: types.NEW_DIRECTORY,
+                            item: newItem
+                        });
+                        store.refreshItem(parent);
+                        store.refreshItem(_newItem);
+                        dfd.resolve(_newItem);
+                    });
+                },
+                delegate: {},
+                ctx: this.ctx,
+                cis: [
+                    utils.createCI('Title', 13, ''),
+                    utils.createCI('Scope', 3, scope|| this.defaultScope, {
+                        "options": [
+                            {
+                                label: 'System',
+                                value: 'system_drivers'
+                            },
+                            {
+                                label: 'User',
+                                value: 'user_drivers'
+                            },
+                            {
+                                label: 'App',
+                                value: 'app_drivers'
+                            }
+                        ]
+                    })
+                ]
+            });
+            actionDialog.show();
+            return dfd;
+        },
+        /////////////////////////////////////////////////////////////////////////////////////
+        //
+        //  Bean protocol impl.
+        //
+        /////////////////////////////////////////////////////////////////////////////////////
+        onItemSelected: function (item) {
+            this.currentItem = item;
+        },
+        /**
+         * Bean UX function to create a new item by opening a dialog, followed by a server call
+         */
+        newItem: function (currentItem) {
+            var dfd = new Deferred();
+            if (!currentItem) {
+                currentItem = {
+                    path: ""
+                }
+            }
+            var parent = currentItem ? currentItem.isDir === true ? currentItem.path : '' : '';
+            var scope = currentItem.scope || 'system_drivers';
+            var templateUrlMeta = require.toUrl('system_drivers/Default.meta.json');
+            var meta = utils.getJson(this._getText(templateUrlMeta));
+            var templateUrlDriverCode = require.toUrl('system_drivers/Default.js');
+            var driverCode = this._getText(templateUrlDriverCode);
+            var nameCi = utils.getInputCIByName(meta, types.DRIVER_PROPERTY.CF_DRIVER_NAME);
+            var idCi = utils.getInputCIByName(meta, types.DRIVER_PROPERTY.CF_DRIVER_ID);
+            var scriptPathCi = utils.getInputCIByName(meta, types.DRIVER_PROPERTY.CF_DRIVER_CLASS);
+            var store = this.getStore(scope);
+            var thiz = this;
+            idCi.value = utils.createUUID();
+            nameCi.value = 'My New Driver';
+
+            var actionDialog = new _CIDialog({
+                title: 'New Driver',
+                resizable: true,
+                titleBarClass: 'text-info',
+                onCancel:function(){
+                    dfd.resolve();
+                },
+                onOk: function (dlg, data) {
+
+                    if (nameCi.value !== 'Default') {
+                        try {
+                            scriptPathCi.value = './' + parent + '/' + nameCi.value + '.js';
+                            var metaOut = JSON.stringify(meta,null,2);
+                            if (parent.length == 0) {
+                                parent = "/";
+                            }
+                            try {
+                                thiz.createItem(scope, parent, nameCi.value, metaOut, driverCode).then(function (data) {
+                                    var newItem = thiz.createNewItem(nameCi.value, scope, parent);
+                                    newItem.path += '.meta.json';
+                                    newItem.user = meta;
+                                    newItem.id = idCi.value;
+                                    newItem.blox = {
+                                        blocks: [],
+                                        variables: []
+                                    }
+                                    newItem = store.putSync(newItem);
+                                    thiz.onDriverCreated(store);
+                                    thiz.completeDriver(store, newItem, newItem);
+                                    thiz.publish(types.EVENTS.ON_STORE_CHANGED, {
+                                        owner: thiz,
+                                        store: store,
+                                        action: types.NEW_FILE,
+                                        item: newItem
+                                    });
+                                    dfd.resolve(newItem);
+                                });
+                            }catch(e){
+                                logError(e);
+                            }
+                        } catch (e) {
+                            logError(e,'error in CIDialog');
+                        }
+                    }
+                },
+                cis: [
+                    nameCi,
+                    utils.createCI('Scope', 3, scope, {
+                        group: 'General',
+                        value:'system_drivers',
+                        options: [
+                            {
+                                label: 'System',
+                                value: 'system_drivers'
+                            },
+                            {
+                                label: 'User',
+                                value: 'user_drivers'
+                            },
+                            {
+                                label: 'App',
+                                value: 'app_devices'
+                            }
+                        ]
+                    })
+                ]
+            });
+            actionDialog.show();
+            return dfd;
+        }
+    });
+});
+</pre>
+    </article>
+</section>
+
+
+
+
+
+		</div>
+	</div>
+
+	<div class="clearfix"></div>
+
+	
+
+</div>
+</div>
+
+<div class="modal fade" id="searchResults">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title">Search results</h4>
+      </div>
+      <div class="modal-body"></div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div>
+
+<footer>
+
+
+<span class="jsdoc-message">
+	Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.0</a>
+	
+		on 2016-06-02T17:42:36+02:00
+	
+	using the <a href="https://github.com/docstrap/docstrap">DocStrap template</a>.
+</span>
+</footer>
+
+<script src="scripts/docstrap.lib.js"></script>
+<script src="scripts/toc.js"></script>
+<script type="text/javascript" src="scripts/fulltext-search-ui.js"></script>
+
+<script>
+$( function () {
+	$( "[id*='$']" ).each( function () {
+		var $this = $( this );
+
+		$this.attr( "id", $this.attr( "id" ).replace( "$", "__" ) );
+	} );
+
+	$( ".tutorial-section pre, .readme-section pre" ).each( function () {
+		var $this = $( this );
+
+		var example = $this.find( "code" );
+		exampleText = example.html();
+		var lang = /{@lang (.*?)}/.exec( exampleText );
+		if ( lang && lang[1] ) {
+			exampleText = exampleText.replace( lang[0], "" );
+			example.html( exampleText );
+			lang = lang[1];
+		} else {
+			var langClassMatch = example.parent()[0].className.match(/lang\-(\S+)/);
+			lang = langClassMatch ? langClassMatch[1] : "javascript";
+		}
+
+		if ( lang ) {
+
+			$this
+			.addClass( "sunlight-highlight-" + lang )
+			.addClass( "linenums" )
+			.html( example.html() );
+
+		}
+	} );
+
+	Sunlight.highlightAll( {
+		lineNumbers : true,
+		showMenu : true,
+		enableDoclinks : true
+	} );
+
+	$.catchAnchorLinks( {
+        navbarOffset: 10
+	} );
+	$( "#toc" ).toc( {
+		anchorName  : function ( i, heading, prefix ) {
+			var id = $( heading ).attr( "id" );
+			return id && id.replace(/\~/g, '-inner-').replace(/\./g, '-static-') || ( prefix + i );
+		},
+		selectors   : "#toc-content h1,#toc-content h2,#toc-content h3,#toc-content h4",
+		showAndHide : false,
+		smoothScrolling: true
+	} );
+
+	$( "#main span[id^='toc']" ).addClass( "toc-shim" );
+	$( '.dropdown-toggle' ).dropdown();
+
+    $( "table" ).each( function () {
+      var $this = $( this );
+      $this.addClass('table');
+    } );
+
+} );
+</script>
+
+
+
+<!--Navigation and Symbol Display-->
+
+
+<!--Google Analytics-->
+
+
+<script type="text/javascript">
+	$(document).ready(function() {
+		SearcherDisplay.init();
+	});
+</script>
+
+</body>
+</html>

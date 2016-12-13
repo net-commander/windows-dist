@@ -1,0 +1,934 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width">
+	<title>Documentation Source: manager/DriverManager.js</title>
+
+	<!--[if lt IE 9]>
+	<script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+	<![endif]-->
+	<link type="text/css" rel="stylesheet" href="styles/sunlight.default.css">
+
+	<link type="text/css" rel="stylesheet" href="styles/site.simplex.css">
+	<link type="text/css" rel="stylesheet" href="styles/override.css">
+	<link type="text/css" rel="stylesheet" href="styles/theme.css">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-default navbar-fixed-top navbar-inverse">
+<div class="container">
+	<div class="navbar-header">
+		<a class="navbar-brand" href="index.html">Documentation</a>
+		<button class="navbar-toggle" type="button" data-toggle="collapse" data-target="#topNavigation">
+			<span class="icon-bar"></span>
+			<span class="icon-bar"></span>
+			<span class="icon-bar"></span>
+        </button>
+	</div>
+	<div class="navbar-collapse collapse" id="topNavigation">
+		<ul class="nav navbar-nav">
+			
+			<li class="dropdown">
+				<a href="modules.list.html" class="dropdown-toggle" data-toggle="dropdown">Modules<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="module-xcf_driver_DriverBase.html">xcf/driver/DriverBase</a></li><li><a href="module-xcf_manager_BeanManager.html">xcf/manager/BeanManager</a></li><li><a href="module-xcf_manager_DeviceManager.html">xcf/manager/DeviceManager</a></li><li><a href="module-xcf_manager_DeviceManager_DeviceServer.html">xcf/manager/DeviceManager_DeviceServer</a></li><li><a href="module-xide_manager_DeviceManager.html">xide/manager/DeviceManager</a></li>
+				</ul>
+			</li>
+			
+			<li class="dropdown">
+				<a href="classes.list.html" class="dropdown-toggle" data-toggle="dropdown">Classes<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="module-xcf.driver.DriverBase.html">xcf.driver.DriverBase</a></li><li><a href="module-xcf.manager.DeviceManager_DeviceServer.html">xcf.manager.DeviceManager_DeviceServer</a></li><li><a href="module-xcf_manager_Context.html">xcf/manager/Context</a></li>
+				</ul>
+			</li>
+			
+			<li class="dropdown">
+				<a href="global.html" class="dropdown-toggle" data-toggle="dropdown">Global<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="global.html#addDeviceInstance">addDeviceInstance</a></li><li><a href="global.html#appScope">appScope</a></li><li><a href="global.html#beanIconClass">beanIconClass</a></li><li><a href="global.html#completeDriver">completeDriver</a></li><li><a href="global.html#createDriverInstance">createDriverInstance</a></li><li><a href="global.html#createLeftView">createLeftView</a></li><li><a href="global.html#createRightView">createRightView</a></li><li><a href="global.html#defaultScope">defaultScope</a></li><li><a href="global.html#driverScopes">driverScopes</a></li><li><a href="global.html#editDriver">editDriver</a></li><li><a href="global.html#groupType">groupType</a></li><li><a href="global.html#insertIfMatch">insertIfMatch</a></li><li><a href="global.html#itemMetaPath">itemMetaPath</a></li><li><a href="global.html#itemMetaStorePath">itemMetaStorePath</a></li><li><a href="global.html#itemMetaTitleField">itemMetaTitleField</a></li><li><a href="global.html#itemType">itemType</a></li><li><a href="global.html#match">match</a></li><li><a href="global.html#newGroup">newGroup</a></li><li><a href="global.html#newItem">newItem</a></li><li><a href="global.html#nodeValuePath">nodeValuePath</a></li><li><a href="global.html#nodeValueTransform">nodeValueTransform</a></li><li><a href="global.html#onCreateVariableCI">onCreateVariableCI</a></li><li><a href="global.html#onDeviceMessage">onDeviceMessage</a></li><li><a href="global.html#onDeviceReady">onDeviceReady</a></li><li><a href="global.html#onMainViewReady">onMainViewReady</a></li><li><a href="global.html#onNewDriverScopeCreated">onNewDriverScopeCreated</a></li><li><a href="global.html#onReloaded">onReloaded</a></li><li><a href="global.html#onStoreReady">onStoreReady</a></li><li><a href="global.html#onWidgetReady">onWidgetReady</a></li><li><a href="global.html#registerEditorExtensions">registerEditorExtensions</a></li><li><a href="global.html#replaceWith">replaceWith</a></li><li><a href="global.html#setScriptFunctions">setScriptFunctions</a></li><li><a href="global.html#start">start</a></li><li><a href="global.html#systemScope">systemScope</a></li><li><a href="global.html#toPreferenceId">toPreferenceId</a></li><li><a href="global.html#updateItemMetaData">updateItemMetaData</a></li><li><a href="global.html#userScope">userScope</a></li><li><a href="global.html#variables">variables</a></li>
+				</ul>
+			</li>
+			
+		</ul>
+		<div class="col-sm-3 col-md-3">
+            <form class="navbar-form" role="search">
+                <div class="input-group">
+                    <input type="text" class="form-control" placeholder="Search" name="q" id="search-input">
+                    <div class="input-group-btn">
+                        <button class="btn btn-default" id="search-submit"><i class="glyphicon glyphicon-search"></i></button>
+                    </div>
+                </div>
+            </form>
+        </div>
+	</div>
+
+</div>
+</div>
+
+
+<div class="container" id="toc-content">
+<div class="row">
+
+	
+	<div class="col-md-12">
+	
+		<div id="main">
+			
+
+		<h1 class="page-title">Source: manager/DriverManager.js</h1>
+    
+<section>
+    <article>
+        <pre
+            class="sunlight-highlight-javascript linenums">define([
+    'dcl/dcl',
+    "dojo/_base/declare",
+    "dojo/_base/lang",
+    "dojo/_base/json",
+    'xide/types',
+    'xcf/types/Types',
+    'xide/utils',
+    'xcf/manager/BeanManager',
+    "xcf/model/Variable",
+    'xcf/manager/DriverManager_Server',
+    'xide/data/TreeMemory',
+    'xide/data/ObservableStore',
+    'dstore/Trackable',
+    'xdojo/has',
+    'xcf/model/Driver',
+    "xide/manager/ServerActionBase",
+    "xide/data/Reference",
+    'xdojo/has!xcf-ui?./DriverManager_UI'
+], function (dcl,declare, lang,json,types,fTypes,utils,
+             BeanManager,Variable, DriverManager_Server,
+             TreeMemory,ObservableStore,Trackable,
+             has,Driver,
+             ServerActionBase,Reference,DriverManager_UI) {
+
+    var bases = [
+        ServerActionBase,
+        BeanManager,
+        DriverManager_Server
+    ],
+    debug = false,
+    isServer = !has('host-browser');
+
+    has('xcf-ui') &amp;&amp; bases.push(DriverManager_UI);
+/*
+    var url = "command://deviceScope=system_devices&amp;device=e5a06e24-6aa4-c8c5-3ffc-9d84d8528a91&amp;driver=235eb680-cb87-11e3-9c1a-0800200c9a66&amp;driverScope=system_drivers&amp;block=53a10527-709b-4c7d-7a90-37f58f17c8db";
+    var parts = utils.parse_url(url);//strip scheme
+
+    parts = utils.urlArgs(parts.host);//go on with query string
+
+    //console.error(parts);
+    var driverId = parts.driver.value;
+
+
+    var driverManager = sctx.getDriverManager();
+    var _driver = driverManager.getItemById(driverId);
+    var block  = null;
+    if(_driver &amp;&amp; _driver.blockScope){
+        block = _driver.blockScope.getBlockById(parts.block.value);
+    }
+    console.error(block);
+    */
+
+
+    return dcl(bases, {
+        getBlock:function(url){
+            var parts = utils.parse_url(url);
+            parts = utils.urlArgs(parts.host);//go on with query string
+            var _driver = this.getItemById(parts.driver.value),
+                block  = null;
+
+            if(_driver &amp;&amp; _driver.blockScope){
+                block = _driver.blockScope.getBlockById(parts.block.value);
+            }
+            return block;
+        },
+        declaredClass:"xcf.manager.DriverManager",
+        /**
+         *
+         * @param device
+         * @param driver
+         */
+        addDeviceInstance:function(device,driver){
+
+            driver.directory = true;
+
+            var store = driver._store,
+                parentId = driver.path,
+                deviceManager = this.ctx.getDeviceManager(),
+                instances = store.getSync(parentId + '_instances');
+
+            instances = instances || store.putSync({
+                    path: parentId + '_instances',
+                    name: 'Instances',
+                    isDir: true,
+                    type: 'leaf',
+                    parentId: parentId,
+                    virtual: true,
+                    isCommand:false,
+                    icon:'fa-folder',
+                    children:[]
+                });
+
+
+
+            var deviceName = deviceManager.getMetaValue(device, types.DEVICE_PROPERTY.CF_DEVICE_TITLE),
+                deviceId = device.path,
+                instance  = store.putSync(new Reference({
+                    name:deviceName,
+                    isCommand:false,
+                    path: instances.path + '_instance_'+deviceId,
+                    isDir: false,
+                    type: 'driver_instance',
+                    parentId:instances.path,
+                    device:device,
+                    driver:driver,
+                    _mayHaveChildren:false,
+                    icon:device.iconClass,
+                    state:device.state
+                }));
+
+            instances.children.push(instance);
+
+            device.addReference(instance,{
+                properties: {
+                    "name":true,
+                    "enabled":true,
+                    "state":true,
+                    "iconClass":true
+                },
+                onDelete:false
+            },true);
+
+
+            !driver.instances &amp;&amp; (driver.instances =[]);
+
+            driver.instances.push(instance);
+        },
+        /***
+         * The Bean-Manager needs a unique name of the bean:
+         */
+        beanNamespace: 'driver',
+        /***
+         * The Bean-Manager has some generic function like creating Dialogs for adding new items, please
+         * provide a title for the interface.
+         */
+        beanName: 'Driver',
+        /**
+         * the icon class for bean edit views
+         */
+        beanIconClass:'fa-exchange',
+        /**
+         * Bean group type
+         */
+        groupType: types.ITEM_TYPE.DRIVER_GROUP,
+        /**
+         * Bean item type
+         */
+        itemType: types.ITEM_TYPE.DRIVER,
+        /**
+         * The name of the CI in the meta database for the title or name.
+         */
+        itemMetaTitleField:types.DRIVER_PROPERTY.CF_DRIVER_NAME,
+        /**
+         * the default scope for new items
+         */
+        defaultScope: 'system_drivers',
+        /***
+         * The RPC server class:
+         */
+        serviceClass: 'XCF_Driver_Service',
+        /***
+         * A copy of all divers raw da4ta from the server
+         */
+        rawData: null,
+        /***
+         * {module:xide/data/TreeMemory}
+         */
+        store: null,
+        /***
+         * {xcf.views.DriverTreeView}
+         */
+        treeView: null,
+        /**
+         * array of driver store scopes : TODO : tbr
+         */
+        driverScopes: null,
+        _isLoading: false,
+        removeDriverInstance:function(instance,device){
+
+            var driver = instance.driver,
+                driverStore = driver._store,
+                parentId = driver.path,
+                deviceId = device.path,
+                instanceId = parentId + '_instances' + '_instance_'+deviceId,
+                instanceReferenceItem = driverStore.getSync(instanceId);
+
+            instanceReferenceItem &amp;&amp; driverStore.removeSync(instanceId);
+
+            driver.instances.remove(instanceReferenceItem);
+            device.removeReference(instanceReferenceItem);
+
+            if(instanceReferenceItem) {
+                instanceReferenceItem.refresh();
+                driverStore.getSync(parentId + '_instances').refresh();
+            }else{
+                debug &amp;&amp; console.error('bad!! cant find reference for instance',arguments);;
+            }
+
+        },
+        onReloaded: function () {
+
+            return;
+
+        },
+        _onReloaded: function () {
+
+            return;
+
+            /*
+
+            var currentItem = this.getItem();
+            if (!currentItem) {
+                currentItem = {
+                    path: ""
+                }
+            }
+            var parent = currentItem ? currentItem.isDir === true ? currentItem.path : '' : '';
+            var scope = 'system_drivers';
+
+
+            var templateUrlMeta = require.toUrl('xcfnode/data/driver/system/Default.meta.json');
+            var meta = utils.getJson(this._getText(templateUrlMeta));
+
+
+            var templateUrlDriverCode = require.toUrl('xcfnode/data/driver/system/Default.js');
+            var driverCode = this._getText(templateUrlDriverCode);
+
+            //console.log('template url : ' + templateUrlDriverCode + " : " + driverCode );
+            //console.log('template url : ' + templateUrlDriverCode + " : " + driverCode );
+            console.log('get json : ', meta);
+
+
+            var nameCi = utils.getInputCIByName(meta, types.DRIVER_PROPERTY.CF_DRIVER_NAME);
+            var idCi = utils.getInputCIByName(meta, types.DRIVER_PROPERTY.CF_DRIVER_ID);
+            idCi.value = utils.createUUID();
+
+            nameCi.value = 'My New Driver2';
+
+
+            var thiz = this;
+            var actionDialog = new CIActionDialog({
+                title: 'New Driver',
+                resizable: true,
+                delegate: {
+                    onOk: function (dlg, data) {
+                        if (nameCi.value !== 'Default') {
+                            try {
+                                var metaOut = JSON.stringify(meta, null, 2);
+                                if (parent.length == 0) {
+                                    parent = "/";
+                                }
+                                thiz.createItem(scope, parent, nameCi.value, metaOut, driverCode).then(function (data) {
+
+                                    var newItem = thiz.createNewItem(title, scope, parent);
+                                    newItem.user = meta;
+                                    thiz.store.putSync(newItem);
+
+                                    thiz.publish(types.EVENTS.ON_STORE_CHANGED, {
+                                        owner: thiz,
+                                        store: thiz.store,
+                                        action: types.NEW_FILE,
+                                        item: newItem
+                                    });
+
+                                    //console.log('did create driver ', data);
+
+
+                                });
+                            } catch (e) {
+                                console.error('error in CIDialog', e);
+                            }
+                        }
+                    }
+                },
+                cis: [
+                    nameCi,
+                    utils.createCI('Scope', 3, 'system_devices', {
+                        group: 'Common',
+                        options: [
+                            {
+                                label: 'System',
+                                value: 'system_devices'
+                            },
+                            {
+                                label: 'User',
+                                value: 'user_devices'
+                            },
+                            {
+                                label: 'App',
+                                value: 'app_devices'
+                            }
+                        ]
+                    })
+                ]
+            });
+            actionDialog.show();
+            actionDialog.resize();*/
+        },
+        /////////////////////////////////////////////////////////////////////////////////////
+        //
+        //  Device messaging
+        //
+        /////////////////////////////////////////////////////////////////////////////////////
+        /**
+         * Secondary entry for incoming device messages. This is a regular callback
+         * for the system event xcf.types.EVENTS.ON_DEVICE_MESSAGE emitted by the
+         * DeviceManager. It comes with the device info, a driver instance and the
+         * unfiltered device message.
+         *
+         * This function is primarily in charge to :
+         * 1. split the message by a delimiter (driver settings)
+         * 2. pass the device messages to the actual driver
+         * 3. pass the device message to blox
+         * 4.
+         *
+         * @param evt
+         */
+        onDeviceMessage: function (evt) {
+
+
+            if (!evt || !evt.device || !evt.driverInstance) {
+                return;
+            }
+            var _deviceInfo = evt['device'],
+                _driverInstance = evt['driverInstance'],
+                _driverOptions = _driverInstance['options'];
+
+            if (!_driverOptions)return;
+
+            if (!_driverInstance.responseSettings) {
+                console.error('driver has no response settings!');
+                return;
+            }
+
+            var serverSide = _driverOptions.serverSide;
+
+
+            //split string into messages, using the driver's delimiter
+            var messages = [evt.deviceMessage];
+            if (lang.isString(evt.deviceMessage)) {
+                messages = _driverInstance.split(evt.deviceMessage);
+            }
+
+            /***
+             * At this point, we should reject incoming traffic
+             */
+            if (_driverInstance.hasMessages()) {
+                console.error('abort incoming, have still messages to send');
+                return;
+            }
+
+
+            //forward to blox
+            if (messages.length > 0) {
+
+                var scope = _driverInstance.blockScope;
+
+                var responseBlocks = scope.getBlocks({
+                    group: types.BLOCK_GROUPS.CF_DRIVER_RESPONSE_BLOCKS
+                });
+
+                var responseVariables = scope.getVariables({
+                    group: types.BLOCK_GROUPS.CF_DRIVER_RESPONSE_VARIABLES
+                });
+
+                if (!responseBlocks || responseBlocks.length == 0) {
+                    //console.log('have no response blocks, abort');
+                }
+                var responseVariable = scope.getVariable('value');
+                if (responseVariable) {
+
+                } else {
+
+                    responseVariable = new Variable({
+                        id: utils.createUUID(),
+                        name: 'value',
+                        value: '',
+                        scope: scope,
+                        type: 13,
+                        group: 'processVariables',
+                        gui: false,
+                        cmd: false
+                    });
+                    scope.blockStore.putSync(responseVariable);
+                }
+
+
+                for (var i = 0; i &lt; messages.length; i++) {
+
+                   if (messages[i].length == 0) {
+                        continue;
+                    }
+                    responseVariable.value = messages[i];
+
+                    this.publish(types.EVENTS.ON_DRIVER_VARIABLE_CHANGED, {
+                        item: responseVariable,
+                        scope: scope,
+                        owner: this,
+                        save: false,                         //dont save it
+                        source: types.MESSAGE_SOURCE.DEVICE  //for prioritizing
+                    });
+                    var runVariables = false;
+                    var runBlocks = false;
+
+                    //now run each top-variabl block in 'conditional process'
+                    for (var j = 0; j &lt; responseVariables.length; j++) {
+
+                        var _var = responseVariables[j];
+                        if (responseVariables[j].title == 'value') {
+                            continue;
+                        }
+
+                        var _varResult = null;
+                        var _cValue = responseVariable.value;
+
+
+                        if (!(typeof _cValue == "number")) {
+                            _cValue = '' + _cValue;
+                            _cValue = "'" + _cValue + "'";
+                        }
+
+
+                        var prefix = "var value = " + _cValue + ";";
+
+                        var _varResult = _cValue;
+
+                        /*
+                        try {
+                            //_varResult = scope.expressionModel.parseVariable(scope, _var, prefix, false, false);
+                        } catch (e) {
+                            console.error('parsing response variable ' + _var.title + ' failed');
+                            this.publish(types.EVENTS.ON_BLOCK_EXPRESSION_FAILED, {
+                                item: _var,
+                                scope: scope,
+                                owner: this,
+                                deviceInfo: _deviceInfo
+                            });
+                        }
+                        */
+
+                        if (_var.target &amp;&amp; _var.target != 'None' &amp;&amp; _varResult != null &amp;&amp; _varResult != 'null' &amp;&amp; _varResult != "'null'") {
+
+                            var targetVariable = scope.getVariable(_var.target);
+                            if (targetVariable) {
+
+                                targetVariable.value = _varResult;
+                                this.publish(types.EVENTS.ON_DRIVER_VARIABLE_CHANGED, {
+                                    item: targetVariable,
+                                    scope: scope,
+                                    owner: this,
+                                    save: false,
+                                    source: types.MESSAGE_SOURCE.BLOX  //for prioritizing
+                                });
+                            }
+                        }
+                    }
+
+                    if( (isServer &amp;&amp; serverSide) || (!serverSide &amp;&amp; !isServer)) {
+
+                        for (var j = 0; j &lt; messages.length; j++) {
+                            var message = messages[j];
+                            if(_.isObject(message)) {
+                                if (message.src) {
+
+                                    var block = scope.getBlockById(message.src);
+                                    if(block &amp;&amp; block.onData){
+                                        block.onData(message);
+                                    }
+                                }
+                            }
+                        }
+
+
+                        //now run each top-level block in 'conditional process'
+                        for (var j = 0; j &lt; responseBlocks.length; j++) {
+
+                            var block = responseBlocks[j];
+
+                            if (block.enabled == false) {
+                                continue;
+                            }
+                            block.override = {
+                                args: _var ? [_var.value] : null
+                            };
+                            try {
+                                scope.solveBlock(responseBlocks[j], {
+                                    highlight: isServer ? false : true
+                                });
+                            } catch (e) {
+                                logError(e,'----solving response block crashed ')
+                                debug &amp;&amp; console.trace();
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        /////////////////////////////////////////////////////////////////////////////////////
+        //
+        //  CI related
+        //
+        /////////////////////////////////////////////////////////////////////////////////////
+        getDriverById: function (id) {
+
+            var options = [];
+            var result = null;
+
+            function search(store) {
+
+                var items = utils.queryStore(store, {
+                    isDir: false
+                });
+
+                if (!lang.isArray(items)) {
+                    items = [items];
+                }
+
+                for (var i = 0; i &lt; items.length; i++) {
+                    var driver = items[i];
+                    var meta = driver['user'];
+                    var _id = utils.getInputCIByName(meta, types.DRIVER_PROPERTY.CF_DRIVER_ID);
+                    if (!_id) {
+                        continue;
+                    }
+                    if (_id.value == id) {
+                        return store.getSync(driver.path);
+                        return driver;
+                    }
+                }
+                return null;
+            }
+
+            for(var scope in this.stores){
+
+                var store = this.stores[scope];
+                result = search(store);
+                if(result){
+                    return result;
+                }
+            }
+            return null;
+        },
+
+        getItemById: function (itemId) {
+
+            if(!this.store || !this.store.data){
+                debug &amp;&amp; console.error('Driver Manager::getItemById : have no valid store');
+            }
+            var data = this.store.data,
+                driver = _.find(data,{
+                    id: itemId
+                });
+
+            if(!driver){
+                debug &amp;&amp; console.error('Driver Manager::getItemById : cant find driver with id: ' + itemId,data);
+            }
+            return driver;
+        },
+        /////////////////////////////////////////////////////////////////////////////////////
+        //
+        //  Data related
+        //
+        /////////////////////////////////////////////////////////////////////////////////////
+        /**
+         *  Callback when a blox scope has been created. This is being used
+         *  to deserialize the driver's CI meta settings into a blox scope : variables, commands
+         * @param scope
+         */
+        onNewDriverScopeCreated: function (scope) {},
+        onScopeCreated: function (evt) {},
+        onDeviceDisconnected: function (evt) {},
+        onDriverCreated: function (store) {
+            has('xcf-ui') &amp;&amp; types.registerEnumeration('Driver', this.getDriversAsEnumeration(store));
+        },
+        onDriverRemoved: function (store,item) {
+            has('xcf-ui') &amp;&amp; types.registerEnumeration('Driver', this.getDriversAsEnumeration(store));
+        },
+        onStoreReady: function (store) {
+            has('xcf-ui') &amp;&amp; types.registerEnumeration('Driver', this.getDriversAsEnumeration(store));
+        },
+        onStoreCreated: function (evt) {
+
+            var type = evt.type,
+                data = evt.data,
+                store = evt.store,
+                items = store.query({
+                    isDir: false
+                }),
+                owner = evt.owner;
+
+            if(type!==types.ITEM_TYPE.DRIVER){
+                return;
+            }
+
+            for (var i = 0; i &lt; items.length; i++) {
+
+                var item = items[i];
+                if (item._completed != null || item.name === 'Default') {
+                    continue;
+                }
+                item._completed = true;
+
+                if(has('xcf-ui')) {
+                    this.completeDriver(store, item, item);
+                }
+            }
+        },
+
+        /***
+         * Inits the store with the driver data
+         * @param data
+         * @returns {xide.data.TreeMemory}
+         */
+        createStore:function(data,scope,track){
+
+            var storeClass = declare('driverStore',[TreeMemory,Trackable,ObservableStore],{});
+
+            var store = new storeClass({
+                data: data.items,
+                Model:Driver,
+                idProperty: 'path',
+                //parentField:'path',
+                scope:scope,
+                observedProperties:[
+                    "name",
+                    "enabled"
+                ]
+            });
+
+            if(scope &amp;&amp; !this.stores[scope] &amp;&amp; track!==false){
+                this.stores[scope] = store;
+            }
+
+            if(!this.store &amp;&amp; scope ==='system_drivers'){
+                this.store = store;
+            }
+            return store;
+        },
+        /***
+         * Inits the store with the driver data
+         * @param data
+         * @returns {xide.data.TreeMemory}
+         */
+        initStore:function(data,scope){
+
+            var store = this.createStore(data,scope);
+            return store;
+        },
+        getStore:function(scope){
+
+            if(!scope || scope==='system_drivers') {
+                return this.store;
+            }
+
+            var store = this.stores[scope];
+            if(store){
+                return store;
+            }
+
+            if(scope){
+                return this.ls(scope);
+            }
+        },
+        /***
+         * ls is enumerating all drivers in a given scope
+         * @param scope{string}
+         * @returns {Deferred}
+         */
+        ls: function (scope) {
+            return this.runDeferred(null, 'ls', [scope]).then(function (data) {
+                try {
+                    var store = this.initStore(data,scope);
+                    if(scope==='system_drivers'){
+                        this.store = store;
+                    }
+                    this.stores[scope] = store;
+                    this.onStoreReady(store);
+                    this.publish(types.EVENTS.ON_STORE_CREATED, {
+                        data: data,
+                        owner: this,
+                        store: store,
+                        type: this.itemType
+                    });
+                }catch(e){
+                    logError(e,'error ls drivers');
+                }
+            }.bind(this));
+        },
+        /***
+         * Common manager function, called by the context of the application
+         */
+        init: function () {
+            var thiz = this,
+                EVENTS = types.EVENTS;
+            this.stores = {};
+            this.subscribe([
+                EVENTS.ON_SCOPE_CREATED,
+                EVENTS.ON_STORE_CREATED
+            ]);
+
+            //replay block exceptions to log messages
+            this.subscribe(EVENTS.ON_BLOCK_EXPRESSION_FAILED, function (evt) {
+
+                thiz.publish(EVENTS.ON_SERVER_LOG_MESSAGE, {
+                    data: {
+                        type: 'Expression',
+                        device: evt.deviceInfo
+                    },
+                    level: 'error',
+                    message: 'Expression Failed: ' + evt.item.title + ' : ' + evt.item.value
+                });
+            });
+
+            this.driverScopes = {
+                "system_drivers": "system_drivers/"
+            };
+        }
+    });
+});
+</pre>
+    </article>
+</section>
+
+
+
+
+
+		</div>
+	</div>
+
+	<div class="clearfix"></div>
+
+	
+
+</div>
+</div>
+
+<div class="modal fade" id="searchResults">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title">Search results</h4>
+      </div>
+      <div class="modal-body"></div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div>
+
+<footer>
+
+
+<span class="jsdoc-message">
+	Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.0</a>
+	
+		on 2016-06-02T17:42:36+02:00
+	
+	using the <a href="https://github.com/docstrap/docstrap">DocStrap template</a>.
+</span>
+</footer>
+
+<script src="scripts/docstrap.lib.js"></script>
+<script src="scripts/toc.js"></script>
+<script type="text/javascript" src="scripts/fulltext-search-ui.js"></script>
+
+<script>
+$( function () {
+	$( "[id*='$']" ).each( function () {
+		var $this = $( this );
+
+		$this.attr( "id", $this.attr( "id" ).replace( "$", "__" ) );
+	} );
+
+	$( ".tutorial-section pre, .readme-section pre" ).each( function () {
+		var $this = $( this );
+
+		var example = $this.find( "code" );
+		exampleText = example.html();
+		var lang = /{@lang (.*?)}/.exec( exampleText );
+		if ( lang && lang[1] ) {
+			exampleText = exampleText.replace( lang[0], "" );
+			example.html( exampleText );
+			lang = lang[1];
+		} else {
+			var langClassMatch = example.parent()[0].className.match(/lang\-(\S+)/);
+			lang = langClassMatch ? langClassMatch[1] : "javascript";
+		}
+
+		if ( lang ) {
+
+			$this
+			.addClass( "sunlight-highlight-" + lang )
+			.addClass( "linenums" )
+			.html( example.html() );
+
+		}
+	} );
+
+	Sunlight.highlightAll( {
+		lineNumbers : true,
+		showMenu : true,
+		enableDoclinks : true
+	} );
+
+	$.catchAnchorLinks( {
+        navbarOffset: 10
+	} );
+	$( "#toc" ).toc( {
+		anchorName  : function ( i, heading, prefix ) {
+			var id = $( heading ).attr( "id" );
+			return id && id.replace(/\~/g, '-inner-').replace(/\./g, '-static-') || ( prefix + i );
+		},
+		selectors   : "#toc-content h1,#toc-content h2,#toc-content h3,#toc-content h4",
+		showAndHide : false,
+		smoothScrolling: true
+	} );
+
+	$( "#main span[id^='toc']" ).addClass( "toc-shim" );
+	$( '.dropdown-toggle' ).dropdown();
+
+    $( "table" ).each( function () {
+      var $this = $( this );
+      $this.addClass('table');
+    } );
+
+} );
+</script>
+
+
+
+<!--Navigation and Symbol Display-->
+
+
+<!--Google Analytics-->
+
+
+<script type="text/javascript">
+	$(document).ready(function() {
+		SearcherDisplay.init();
+	});
+</script>
+
+</body>
+</html>

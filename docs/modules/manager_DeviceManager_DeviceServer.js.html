@@ -1,0 +1,967 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width">
+	<title>Documentation Source: manager/DeviceManager_DeviceServer.js</title>
+
+	<!--[if lt IE 9]>
+	<script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+	<![endif]-->
+	<link type="text/css" rel="stylesheet" href="styles/sunlight.default.css">
+
+	<link type="text/css" rel="stylesheet" href="styles/site.simplex.css">
+	<link type="text/css" rel="stylesheet" href="styles/override.css">
+	<link type="text/css" rel="stylesheet" href="styles/theme.css">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-default navbar-fixed-top navbar-inverse">
+<div class="container">
+	<div class="navbar-header">
+		<a class="navbar-brand" href="index.html">Documentation</a>
+		<button class="navbar-toggle" type="button" data-toggle="collapse" data-target="#topNavigation">
+			<span class="icon-bar"></span>
+			<span class="icon-bar"></span>
+			<span class="icon-bar"></span>
+        </button>
+	</div>
+	<div class="navbar-collapse collapse" id="topNavigation">
+		<ul class="nav navbar-nav">
+			
+			<li class="dropdown">
+				<a href="modules.list.html" class="dropdown-toggle" data-toggle="dropdown">Modules<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="module-xcf_driver_DriverBase.html">xcf/driver/DriverBase</a></li><li><a href="module-xcf_manager_BeanManager.html">xcf/manager/BeanManager</a></li><li><a href="module-xcf_manager_DeviceManager.html">xcf/manager/DeviceManager</a></li><li><a href="module-xcf_manager_DeviceManager_DeviceServer.html">xcf/manager/DeviceManager_DeviceServer</a></li><li><a href="module-xide_manager_DeviceManager.html">xide/manager/DeviceManager</a></li>
+				</ul>
+			</li>
+			
+			<li class="dropdown">
+				<a href="classes.list.html" class="dropdown-toggle" data-toggle="dropdown">Classes<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="module-xcf.driver.DriverBase.html">xcf.driver.DriverBase</a></li><li><a href="module-xcf.manager.DeviceManager_DeviceServer.html">xcf.manager.DeviceManager_DeviceServer</a></li><li><a href="module-xcf_manager_Context.html">xcf/manager/Context</a></li>
+				</ul>
+			</li>
+			
+			<li class="dropdown">
+				<a href="global.html" class="dropdown-toggle" data-toggle="dropdown">Global<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="global.html#addDeviceInstance">addDeviceInstance</a></li><li><a href="global.html#appScope">appScope</a></li><li><a href="global.html#beanIconClass">beanIconClass</a></li><li><a href="global.html#completeDriver">completeDriver</a></li><li><a href="global.html#createDriverInstance">createDriverInstance</a></li><li><a href="global.html#createLeftView">createLeftView</a></li><li><a href="global.html#createRightView">createRightView</a></li><li><a href="global.html#defaultScope">defaultScope</a></li><li><a href="global.html#driverScopes">driverScopes</a></li><li><a href="global.html#editDriver">editDriver</a></li><li><a href="global.html#groupType">groupType</a></li><li><a href="global.html#insertIfMatch">insertIfMatch</a></li><li><a href="global.html#itemMetaPath">itemMetaPath</a></li><li><a href="global.html#itemMetaStorePath">itemMetaStorePath</a></li><li><a href="global.html#itemMetaTitleField">itemMetaTitleField</a></li><li><a href="global.html#itemType">itemType</a></li><li><a href="global.html#match">match</a></li><li><a href="global.html#newGroup">newGroup</a></li><li><a href="global.html#newItem">newItem</a></li><li><a href="global.html#nodeValuePath">nodeValuePath</a></li><li><a href="global.html#nodeValueTransform">nodeValueTransform</a></li><li><a href="global.html#onCreateVariableCI">onCreateVariableCI</a></li><li><a href="global.html#onDeviceMessage">onDeviceMessage</a></li><li><a href="global.html#onDeviceReady">onDeviceReady</a></li><li><a href="global.html#onMainViewReady">onMainViewReady</a></li><li><a href="global.html#onNewDriverScopeCreated">onNewDriverScopeCreated</a></li><li><a href="global.html#onReloaded">onReloaded</a></li><li><a href="global.html#onStoreReady">onStoreReady</a></li><li><a href="global.html#onWidgetReady">onWidgetReady</a></li><li><a href="global.html#registerEditorExtensions">registerEditorExtensions</a></li><li><a href="global.html#replaceWith">replaceWith</a></li><li><a href="global.html#setScriptFunctions">setScriptFunctions</a></li><li><a href="global.html#start">start</a></li><li><a href="global.html#systemScope">systemScope</a></li><li><a href="global.html#toPreferenceId">toPreferenceId</a></li><li><a href="global.html#updateItemMetaData">updateItemMetaData</a></li><li><a href="global.html#userScope">userScope</a></li><li><a href="global.html#variables">variables</a></li>
+				</ul>
+			</li>
+			
+		</ul>
+		<div class="col-sm-3 col-md-3">
+            <form class="navbar-form" role="search">
+                <div class="input-group">
+                    <input type="text" class="form-control" placeholder="Search" name="q" id="search-input">
+                    <div class="input-group-btn">
+                        <button class="btn btn-default" id="search-submit"><i class="glyphicon glyphicon-search"></i></button>
+                    </div>
+                </div>
+            </form>
+        </div>
+	</div>
+
+</div>
+</div>
+
+
+<div class="container" id="toc-content">
+<div class="row">
+
+	
+	<div class="col-md-12">
+	
+		<div id="main">
+			
+
+		<h1 class="page-title">Source: manager/DeviceManager_DeviceServer.js</h1>
+    
+<section>
+    <article>
+        <pre
+            class="sunlight-highlight-javascript linenums">/** @module xcf/manager/DeviceManager_DeviceServer */
+define([
+    'dcl/dcl',
+    "xdojo/declare",
+    "dojo/_base/lang",
+    'xide/encoding/MD5',
+    'xide/types',
+    'xide/utils',
+    'xide/factory',
+    'xdojo/has',
+    'dojo/Deferred',
+    'xdojo/has!host-node?nxapp/utils/_console'
+], function (dcl,declare, lang, MD5,
+             types, utils, factory, has,
+             Deferred,_console) {
+
+
+    var isServer = has('host-node');
+
+    var console = typeof window !== 'undefined' ? window.console : console;
+    if(_console &amp;&amp; _console.error &amp;&amp; _console.warn){
+        console = _console;
+    }
+
+
+    //debug mqtt activity
+    var _debugMQTT = false;
+
+    //debug device - server messages
+    var debug = false;
+
+    // debug device server connectivity
+    var debugDevice = false;
+    var debugStrangers = false;
+    /***
+     *
+     * 1. startDevice
+     *      ->createDriverInstance
+     *          -> sendManagerCommand(MANAGER_START_DRIVER, cInfo);
+     *              ->onDeviceConnected
+     *                  serverVariables? ->
+     *                      getDeviceServerVariables ->onSetDeviceServerVariables
+     *
+     *
+     */
+
+    /**
+     *
+     * @class module:xcf.manager.DeviceManager_DeviceServer
+     * @augments module:xcf/manager/DeviceManager
+     * @augments module:xide/mixins/EventedMixin
+     */
+    return dcl(null,{
+        declaredClass:"xcf.manager.DeviceManager_Server",
+        /**
+         * Callback when server returns the variables of a device
+         *
+         * @param data
+         */
+        onSetDeviceServerVariables:function(data){
+
+            debugDevice &amp;&amp; console.error('did set device server variables',data);
+
+            var instance = this.getDriverInstance(data.device, true);
+            var device = this.getDeviceStoreItem(data.device);
+
+
+            if(!device){
+                debugDevice &amp;&amp; console.log('did set device server variables failed, have no device',data);
+                return;
+            }
+
+            if(instance){
+                var variables = data.variables,
+                    scope = instance.blockScope;
+
+                device.serverVariables = data.variables;
+                _.each(variables,function(variable){
+                    var _var = scope.getVariable(variable.name);
+                    if(_var){
+                        _var.value = variable.value;
+                    }
+                });
+            }
+
+            this.onDeviceConnected(data);
+            device.setState(types.DEVICE_STATE.READY);
+            device._startDfd &amp;&amp; device._startDfd.resolve(device.driverInstance);
+            delete device._startDfd;
+            device._startDfd = null;
+        },
+        onDeviceDisconnected: function (data) {
+
+            if (data &amp;&amp; data.device) {
+                var error = data.error;
+                var code = error &amp;&amp; error.code ? error.code :  error || '';
+                var deviceStoreItem = this.getDeviceStoreItem(data.device);
+                if(!deviceStoreItem){
+                    debugDevice &amp;&amp; console.error('deviceStoreItem is null');
+                    return;
+                }
+                this.publish(types.EVENTS.ON_STATUS_MESSAGE,{
+                    text:'Device has been disconnected ' +'&lt;span class="text-warning">'+ data.device.host+':'+data.device.port + '&lt;/span>' + ' :  ' + '&lt;span class="text-danger">' + code + '&lt;/span>',
+                    type:'info'
+                });
+
+                var info = this.toDeviceControlInfo(deviceStoreItem);
+                if(info &amp;&amp; isServer &amp;&amp; !info.serverSide){
+                    return;
+                }
+
+                //kill old instance
+                var instance = this.getDriverInstance(data.device, true);
+                if (instance) {
+                    this.removeDriverInstance(data.device);
+                }else{
+                    console.error('cant find instance');
+                }
+
+
+                deviceStoreItem.reset();
+
+
+                if (deviceStoreItem.state === types.DEVICE_STATE.DISABLED) {
+                    deviceStoreItem.setState(types.DEVICE_STATE.DISCONNECTED);
+                    return;
+                }
+
+                deviceStoreItem.setState(types.DEVICE_STATE.DISCONNECTED);
+                function shouldRecconect(item){
+                    if(item._userStopped || item.state === types.DEVICE_STATE.DISABLED){
+                        return false;
+                    }
+                    enabled = thiz.getMetaValue(item, types.DEVICE_PROPERTY.CF_DEVICE_ENABLED);
+                    if(!enabled){
+                        return false;
+                    }
+
+                    return true;
+                }
+                if (deviceStoreItem) {
+                    var thiz = this;
+
+                    if(deviceStoreItem.reconnect){
+                        return;
+                    }
+                    deviceStoreItem.reconnect = setTimeout(function(){
+                        deviceStoreItem.reconnect=null;
+                        if(deviceStoreItem.shouldReconnect()) {
+                            deviceStoreItem.setState(types.DEVICE_STATE.CONNECTING);
+                            console.info('trying to reconnect to '+info.toString());
+
+                            //thiz.connectDevice(deviceStoreItem);
+                            thiz.startDevice(deviceStoreItem);
+                        }
+                    },thiz.reconnectDevice);
+                }
+            }
+        },
+        getDeviceServerVariables:function(device,driverInstance){
+
+            //debugDevice &amp;&amp; console.error('requesting device variables');
+            var scope = driverInstance.blockScope;
+            if(!scope){
+                console.error(' have no block scope');
+                return;
+            }
+            var basicVariables = scope.getVariables({
+                group: types.BLOCK_GROUPS.CF_DRIVER_BASIC_VARIABLES
+            });
+
+            var out = [];
+
+            for (var i = 0; i &lt; basicVariables.length; i++) {
+                out.push({
+                    name:basicVariables[i].name,
+                    value:basicVariables[i].value,
+                    initial:basicVariables[i].value
+                })
+            }
+
+            device.setState(types.DEVICE_STATE.SYNCHRONIZING);
+            this.sendManagerCommand(types.SOCKET_SERVER_COMMANDS.GET_DEVICE_VARIABLES, {
+                device:this.toDeviceControlInfo(device),
+                variables:out
+            });
+
+
+        },
+        onDeviceConnected:function(data){
+
+            debugDevice &amp;&amp; console.log('on device connected!',data);
+            var deviceStoreItem = this.getDeviceStoreItem(data.device);
+            var instance = this.getDriverInstance(data.device, true);
+            if(!instance){
+                debugStrangers &amp;&amp; console.error('--cant find device instance',this.deviceInstances);
+                deviceStoreItem &amp;&amp; deviceStoreItem.setState(types.DEVICE_STATE.DISCONNECTED);
+                return;
+            }
+
+
+            if(!deviceStoreItem){
+                debugDevice &amp;&amp; console.error('onDeviceConnected:: deviceStoreItem is null');
+                return;
+            }
+
+            var cInfo = this.toDeviceControlInfo(deviceStoreItem);
+            if(!cInfo){
+                debugDevice &amp;&amp; console.error('onDeviceConnected:: device info  is null');
+                return;
+            }
+
+            if(isServer &amp;&amp; !cInfo.serverSide){
+                debugDevice &amp;&amp; console.error('onDeviceConnected:: device info is not server side, abort');
+            }
+
+            if(instance &amp;&amp; deviceStoreItem.serverVariables==null){
+                this.getDeviceServerVariables(deviceStoreItem,instance);
+                return;
+            }else{
+                //debugDevice &amp;&amp; console.error('device has already device variables',deviceStoreItem.serverVariables);
+            }
+
+
+            deviceStoreItem.setState(types.DEVICE_STATE.CONNECTED);
+            cInfo['clientSide'] = true;
+            if (!cInfo) {
+                console.error('couldnt start device, invalid control info');
+                return;
+            }
+
+            var hash = MD5(JSON.stringify(cInfo), 1);
+            if (this.deviceInstances[hash]) {
+                if(!instance.__didStartBlocks){
+                    this.onDeviceStarted(instance,deviceStoreItem,instance.driver);
+                }else{
+                    console.error('instance.__didStartBlocks bad ' +hash,instance.__didStartBlocks);
+                }
+                deviceStoreItem.setState(types.DEVICE_STATE.READY);
+                this.publish(types.EVENTS.ON_STATUS_MESSAGE,{
+                    text:'Device is Ready &lt;span class="text-success">'+ cInfo.host+':'+cInfo.port + '&lt;/span>',
+                    type:'success'
+                });
+
+                return this.deviceInstances[hash];
+            }
+
+            var thiz = this;
+            var baseDriverPrefix = this.driverScopes['system_drivers'];
+            var baseDriverRequire = baseDriverPrefix + 'DriverBase';
+
+            debugDevice &amp;&amp; console.log('device conntected, load base driver with prefix : ' +baseDriverPrefix + ' and final require ' + baseDriverRequire);
+
+            try {
+                require([baseDriverRequire], function (baseDriver) {
+                    baseDriver.prototype.declaredClass = baseDriverRequire;
+                    thiz.createDriverInstance(cInfo, baseDriver, deviceStoreItem);
+                });
+            }catch(e){
+                console.error('requiring base driver at ' + baseDriverRequire + ' failed',e);
+            }
+
+        },
+        /**
+         * Starts a device with a device store item
+         * @param item
+         */
+        startDevice: function (item,force) {
+
+            //console.error('-start device');
+            this.checkDeviceServerConnection();
+            item.check();
+
+            var dfd = new Deferred();
+            if(item._startDfd &amp;&amp; !item._startDfd.isResolved()){
+                debugDevice &amp;&amp; console.error('already starting ' + item.toString());
+                return item._startDfd;
+            }else{
+                !item.driverInstance &amp;&amp; item.reset();//fresh
+            }
+
+            force==true &amp;&amp; item.setMetaValue(types.DEVICE_PROPERTY.CF_DEVICE_ENABLED,true,false);
+            var enabled = item.getMetaValue(types.DEVICE_PROPERTY.CF_DEVICE_ENABLED);
+
+            if(!enabled &amp;&amp; force!==true){
+                debugDevice &amp;&amp; console.error('---abort start device : device is not enabled!' + item.toString());
+                this.publish(types.EVENTS.ON_STATUS_MESSAGE,{
+                    text:'Can`t start device because its not enabled! ' + item.toString(),
+                    type:'error'
+                });
+                setTimeout(function(){
+                    dfd.reject();
+                },10);
+                return dfd;
+            }
+
+            var cInfo = this.toDeviceControlInfo(item);
+
+            cInfo['clientSide'] = true;
+
+            if (!cInfo) {
+                console.error('couldnt start device, invalid control info '+ item.toString());
+                dfd.reject();
+                return dfd;
+            }
+
+            var hash = MD5(JSON.stringify(cInfo), 1);
+
+            if (this.deviceInstances[hash]) {
+                debugDevice &amp;&amp; console.error('device already started' + item.toString());
+                dfd.resolve(this.deviceInstances[hash]);
+                return dfd;
+            }
+
+            item.setState(types.DEVICE_STATE.CONNECTING);
+
+            item.info = cInfo;
+            item._userStopped=null;
+            item._startDfd = dfd;
+
+
+
+            var thiz = this,
+                baseDriverPrefix = this.driverScopes['system_drivers'],
+                baseDriverRequire = baseDriverPrefix + 'DriverBase';
+
+            function buildMQTTParams(cInfo,driverInstance,deviceItem,driverItem){
+                return {
+                    driverScopeId:driverInstance.blockScope.id,
+                    driverId:driverInstance.driver.id,
+                    deviceId:item.path
+                };
+            }
+
+            try {
+                require([baseDriverRequire], function (baseDriver) {
+
+                    baseDriver.prototype.declaredClass = baseDriverRequire;
+
+                    thiz.createDriverInstance(cInfo, baseDriver, item).then(function (driverInstance) {
+
+                        var _str = item.toString();
+                        debugDevice &amp;&amp; console.info('created driver instance for '+ item.toString(),item.toString());
+
+                        cInfo.mqtt = buildMQTTParams(cInfo, driverInstance, item);
+                        //debugDevice &amp;&amp;  console.error(' start driver on server',cInfo);
+                        thiz.publish(types.EVENTS.ON_STATUS_MESSAGE, {
+                            text: 'Trying to connect to ' + cInfo.toString(),
+                            type: 'info'
+                        });
+                        thiz.sendManagerCommand(types.SOCKET_SERVER_COMMANDS.MANAGER_START_DRIVER, cInfo);
+                        delete cInfo.mqtt;
+                    });
+                });
+            }catch(e){
+                logError(e,'DeviceManager::startDevice: requiring base driver at ' + baseDriverRequire + ' failed! Base Driver - Prefix : ' + baseDriverPrefix);
+            }
+
+            return dfd;
+        },
+        onCommandFinish:function(deviceData,message){
+
+            var driverInstance = this.getDriverInstance(deviceData, true);
+            if (!driverInstance) {
+                return;
+            }
+
+            var deviceInfo  = deviceData;
+            var device = this.getDeviceStoreItem(deviceInfo);
+
+            if(message.src &amp;&amp; message.id){
+                var scope = driverInstance.blockScope;
+                var block = scope.getBlockById(message.src);
+                if(block &amp;&amp; block.onCommandFinish){
+                    block.onCommandFinish(message);
+                }
+            }
+        },
+        onCommandError:function(deviceData,message){
+            var driverInstance = this.getDriverInstance(deviceData, true);
+            if (!driverInstance) {
+                return;
+            }
+
+            var deviceInfo  = deviceData,
+                device = this.getDeviceStoreItem(deviceInfo);
+            if(message.src &amp;&amp; message.id){
+                var scope = driverInstance.blockScope;
+                var block = scope.getBlockById(message.src);
+                if(block &amp;&amp; block.onCommandError){
+                    block.onCommandError(message);
+                }
+            }
+        },
+        /**
+         *
+         * Primary callback when the device server has received a message from a device.
+         *
+         * @param evt
+         */
+        onDeviceServerMessage: function (evt) {
+
+            var dataIn = evt['data'];
+            var deviceMessageData = null;
+            if (lang.isString(dataIn) &amp;&amp; dataIn.indexOf('{') !=-1){
+                try {
+                    /*if (! /^[\[|\{](\s|.*|\w)*[\]|\}]$/.test(dataIn)) {*/
+                    deviceMessageData = dojo.fromJson(dataIn);
+                    /*}else{*/
+                    //console.warn('received non json data...'+dataIn);
+                    /*}*/
+                } catch (e) {
+                    console.error('error parsing device message', evt);
+                    return;
+                }
+            }
+            if (!deviceMessageData || !deviceMessageData.data || !deviceMessageData.data.device) {
+                debug &amp;&amp; console.error('bad device message : ' + deviceMessageData);
+                return;
+            }
+
+            var deviceInfo  = deviceMessageData.data.device;
+            if(!deviceInfo){
+                debug &amp;&amp; console.error('onDeviceServerMessage: cant get device info');
+                return;
+            }
+
+            if(isServer &amp;&amp; !deviceInfo.serverSide){
+                //console.error('onDeviceMessage : not a message for us');
+                return;
+            }
+
+
+            //pick driver instance
+            var driverInstance = this.getDriverInstance(deviceMessageData.data.device, true);
+            if (!driverInstance) {
+                debugDevice &amp;&amp; console.error(' onDeviceMessage : failed! Have no device instance for ' + deviceMessageData.data.device.host, deviceMessageData);
+                return;
+            }
+
+
+            var device = this.getDeviceStoreItem(deviceInfo),
+                state = device.get('state');
+
+
+            //driver replay as broadcast message
+            driverInstance.onBroadcastMessage({
+                device: deviceMessageData.data.device,
+                message: deviceMessageData.data.deviceMessage
+            });
+
+            //driver replay as individual message
+            driverInstance.onMessage({
+                device: deviceMessageData.data.device,
+                message: deviceMessageData.data.deviceMessage
+            });
+
+
+            if(state !==types.DEVICE_STATE.READY){
+                device.set('state',types.DEVICE_STATE.READY);
+            }
+            var debugDevice = device.isDebug();
+            //system replay:
+            if (deviceMessageData.event) {
+
+                //before publishing on the public system bus, we do bundle the driver instance
+                //together with the origin event from the device server:
+                deviceMessageData.data['driverInstance'] = driverInstance;
+                //now tell everybody!
+                //
+                // 'deviceMessageData.event' is a system event and defined in xcf.types.EVENTS.ON_DEVICE_MESSAGE
+                //
+                // 'deviceMessageData.data' is the actual payload, build by the device server. it comes with this structure :
+                //
+                //  {
+                //      device:{
+                //          host:'192.168.1.20',
+                //          port:'23',
+                //          protocol:'tcp'
+                //      },
+                //      deviceMessage:'MV58\r@VOL:-220\r',
+                //
+                //  }
+                //
+                //  Current Subscribers : DriverManager &amp; this
+                //
+                this.publish(deviceMessageData.event, deviceMessageData.data);
+            }
+
+            if(has('xcf-ui')) {
+
+                //console replay
+                var hash = MD5(JSON.stringify(driverInstance.options), 1),
+                    viewId = hash + '-Console',
+                    messages = [],
+                    consoleViews = this.consoles[viewId];
+
+                debug &amp;&amp; console.log('on_device message '+hash,driverInstance.options);
+
+                device.setState(types.DEVICE_STATE.READY);
+
+                function clear(message){
+                    delete message['resposeSettings'];
+                    delete message['driver'];
+                    delete message['lastResponse'];
+                    delete message['scope'];
+                    delete message['driverId'];
+                    delete message['device'];
+                    delete message['src'];
+                    delete message['id'];
+                    delete message['sourceHost'];
+                    delete message['sourcePort'];
+                }
+
+                if(debugDevice) {
+                    var text = deviceMessageData.data.deviceMessage;
+                    if (_.isObject(text)) {
+
+                        clear(text)
+                        try {
+                            text = JSON.stringify(text);
+                        } catch (e) {
+                            logError(e, 'error serialize message');
+                        }
+                    }
+
+                    this.publish(types.EVENTS.ON_STATUS_MESSAGE, {
+                        text: "Device Message from " + driverInstance.options.host + " : " + '&lt;span class="text-info">' + text + '&lt;/span>'
+                    })
+                }
+
+
+                consoleViews &amp;&amp; _.each(consoleViews,function(consoleView){
+                    if (consoleView) {
+                        var message = deviceMessageData.data.deviceMessage;
+                        messages = [];
+
+                        if (_.isString(message)) {
+                            messages = driverInstance.split(message);
+                        }else if(_.isObject(message)){
+                            clear(message);
+                            messages = [message];
+                        }
+                        for (var i = 0; i &lt; messages.length; i++) {
+
+                            var _message = messages[i];
+
+                            if (_.isString(_message) &amp;&amp; _message.length==0) {
+                                continue;
+                            }
+
+                            consoleView.log(_message);
+                        }
+                    }
+                });
+            }
+        },
+        /**
+         * Device Server managment interface
+         * @param cmd
+         * @param data
+         */
+        sendManagerCommand: function (cmd, data) {
+
+            this.checkDeviceServerConnection();
+
+            var dataOut = {
+                manager_command: cmd
+            };
+
+            lang.mixin(dataOut, data);
+
+            if(this.deviceServerClient) {
+
+                var res = this.deviceServerClient.emit(null, dataOut, cmd);
+                debug &amp;&amp; console.log('send manager command ' + cmd,[dataOut,res]);
+                return res;
+            }else{
+
+                console.error('Send Manager Command ' + cmd +' failed, have no  device Server client');
+                this.onHaveNoDeviceServer();
+            }
+        },
+        /***
+         *
+         * @param driverInstance
+         * @param data
+         */
+        sendDeviceCommand: function (driverInstance, data,src,id) {
+
+
+            this.checkDeviceServerConnection();
+
+
+            var options = driverInstance.options,
+                sendOptions = {
+                    id:id,
+                    src:src
+                },
+                dataOut = {
+                    command: data,
+                    device_command: 'Device_Send',
+                    host: options.host,
+                    port: options.port,
+                    protocol: options.protocol,
+                    options:sendOptions
+                };
+
+            debug &amp;&amp; console.log("Device.Manager.Send.Message : " + dataOut.command.substr(0,30), dataOut);//sending device message
+
+            var device = this.getDevice(options.id);
+            if(device.isDebug()) {
+                this.publish(types.EVENTS.ON_STATUS_MESSAGE, {
+                    text: "Did send message : " + '&lt;span class="text-warnin">' + dataOut.command.substr(0, 30) + '&lt;/span>' + " to " + '&lt;span class="text-info">' + dataOut.host + ":" + dataOut.port + "@" + dataOut.protocol + '&lt;/span>'
+                })
+            }
+
+            //console replay
+            var hash = MD5(JSON.stringify(driverInstance.options), 1);
+            var viewId = hash + '-Console';
+            if(this.deviceServerClient) {
+                this.deviceServerClient.emit(null, dataOut, 'Device_Send');
+            }else{
+                this.onHaveNoDeviceServer();
+                console.error('this.deviceServerClient is null');
+                console.error('Send Device Command ' + data +'failed, have no  device Server client');
+
+            }
+        },
+        /***
+         *
+         * @param driverInstance
+         * @param data
+         */
+        callMethod: function (driverInstance,method,args,src,id) {
+            this.checkDeviceServerConnection();
+
+            var options = driverInstance.options,
+                sendOptions = {
+                    id:id,
+                    src:src
+                },
+                dataOut = {
+                    method:method,
+                    args: args,
+                    device_command: 'Call_Method',
+                    host: options.host,
+                    port: options.port,
+                    protocol: options.protocol,
+                    options:sendOptions
+                };
+            if(this.deviceServerClient) {
+                this.deviceServerClient.emit(null, dataOut, 'Call_Method');
+            }else{
+                this.onHaveNoDeviceServer();
+            }
+        },
+        createDeviceServerClient:function(store){
+            var thiz = this;
+            var dfd = new Deferred();
+            this.deviceServerClient = null;
+            this.deviceServerClient = factory.createClientWithStore(store, 'Device Control Server', {
+                delegate: {
+                    onConnected:function(){
+                        thiz.onDeviceServerConnected();
+                        dfd.resolve();
+                    },
+                    onLostConnection: function(){
+                        thiz.onDeviceServerConnectionLost();
+                    },
+                    onServerResponse: function (data) {
+
+                        //if(!has('debug')){
+
+                        //};
+
+                        var dataIn = data['data'];
+
+                        var msg = null;
+
+                        if (_.isString(dataIn)) {
+
+                            try {
+                                msg = dojo.fromJson(dataIn,false);
+                            } catch (e) {
+                                msg = dataIn;
+                            }
+
+                            debug &amp;&amp; !msg &amp;&amp; console.error('invalid incoming message',data);
+
+                            msg = msg || {};
+
+                            debug &amp;&amp; console.log('server :'+msg.event);
+
+
+
+                            if (msg &amp;&amp; msg.data &amp;&amp; msg.data.deviceMessage &amp;&amp; msg.data.deviceMessage.event === types.EVENTS.ON_COMMAND_FINISH) {
+                                thiz.onCommandFinish(msg.data.device,msg.data.deviceMessage);
+                                return;
+                            }
+                            if (msg.data &amp;&amp; msg.data.deviceMessage &amp;&amp; msg.data.deviceMessage.event === types.EVENTS.ON_COMMAND_ERROR) {
+                                thiz.onCommandError(msg.data.device,msg.data.deviceMessage);
+                                return;
+                            }
+                            if (msg.event === types.EVENTS.ON_DEVICE_DISCONNECTED) {
+                                thiz.publish(types.EVENTS.ON_DEVICE_DISCONNECTED, msg.data);
+                                return;
+                            }
+
+                            if (msg.event === types.EVENTS.SET_DEVICE_VARIABLES) {
+                                return thiz.onSetDeviceServerVariables(msg.data);
+                            }
+
+                            if (msg.event === types.EVENTS.ON_DEVICE_CONNECTED) {
+                                thiz.publish(types.EVENTS.ON_DEVICE_CONNECTED, msg.data);
+                                return;
+                            }
+
+                            if (msg.event === types.EVENTS.ON_SERVER_LOG_MESSAGE) {
+                                thiz.publish(types.EVENTS.ON_SERVER_LOG_MESSAGE, msg.data);
+                                return;
+                            }
+
+                            if (msg.event === types.EVENTS.ON_MQTT_MESSAGE) {
+                                thiz.publish(types.EVENTS.ON_MQTT_MESSAGE, msg.data);
+                                thiz.onMQTTMessage(msg.data);
+                                return;
+                            }
+
+                            if (msg.event === types.EVENTS.ON_FILE_CHANGED) {
+                                return thiz.ctx.onXIDEMessage(dojo.fromJson(data.data));
+                            }
+
+                        }
+                        thiz.onDeviceServerMessage(data);
+
+                        if(data &amp;&amp; data.data){
+                            //thiz.ctx.onXIDEMessage(dojo.fromJson(data.data));
+                        }
+                    }
+                }
+            });
+            if (!this.deviceServerClient) {
+                debug &amp;&amp; console.log('couldnt connect to device server');
+                return;
+            } else {
+                debug &amp;&amp; console.log('did connect to device server');
+            }
+            this.deviceServerClient.dfd = dfd;
+            return this.deviceServerClient;
+        }
+    });
+});
+</pre>
+    </article>
+</section>
+
+
+
+
+
+		</div>
+	</div>
+
+	<div class="clearfix"></div>
+
+	
+
+</div>
+</div>
+
+<div class="modal fade" id="searchResults">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title">Search results</h4>
+      </div>
+      <div class="modal-body"></div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div>
+
+<footer>
+
+
+<span class="jsdoc-message">
+	Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.0</a>
+	
+		on 2016-06-02T17:42:36+02:00
+	
+	using the <a href="https://github.com/docstrap/docstrap">DocStrap template</a>.
+</span>
+</footer>
+
+<script src="scripts/docstrap.lib.js"></script>
+<script src="scripts/toc.js"></script>
+<script type="text/javascript" src="scripts/fulltext-search-ui.js"></script>
+
+<script>
+$( function () {
+	$( "[id*='$']" ).each( function () {
+		var $this = $( this );
+
+		$this.attr( "id", $this.attr( "id" ).replace( "$", "__" ) );
+	} );
+
+	$( ".tutorial-section pre, .readme-section pre" ).each( function () {
+		var $this = $( this );
+
+		var example = $this.find( "code" );
+		exampleText = example.html();
+		var lang = /{@lang (.*?)}/.exec( exampleText );
+		if ( lang && lang[1] ) {
+			exampleText = exampleText.replace( lang[0], "" );
+			example.html( exampleText );
+			lang = lang[1];
+		} else {
+			var langClassMatch = example.parent()[0].className.match(/lang\-(\S+)/);
+			lang = langClassMatch ? langClassMatch[1] : "javascript";
+		}
+
+		if ( lang ) {
+
+			$this
+			.addClass( "sunlight-highlight-" + lang )
+			.addClass( "linenums" )
+			.html( example.html() );
+
+		}
+	} );
+
+	Sunlight.highlightAll( {
+		lineNumbers : true,
+		showMenu : true,
+		enableDoclinks : true
+	} );
+
+	$.catchAnchorLinks( {
+        navbarOffset: 10
+	} );
+	$( "#toc" ).toc( {
+		anchorName  : function ( i, heading, prefix ) {
+			var id = $( heading ).attr( "id" );
+			return id && id.replace(/\~/g, '-inner-').replace(/\./g, '-static-') || ( prefix + i );
+		},
+		selectors   : "#toc-content h1,#toc-content h2,#toc-content h3,#toc-content h4",
+		showAndHide : false,
+		smoothScrolling: true
+	} );
+
+	$( "#main span[id^='toc']" ).addClass( "toc-shim" );
+	$( '.dropdown-toggle' ).dropdown();
+
+    $( "table" ).each( function () {
+      var $this = $( this );
+      $this.addClass('table');
+    } );
+
+} );
+</script>
+
+
+
+<!--Navigation and Symbol Display-->
+
+
+<!--Google Analytics-->
+
+
+<script type="text/javascript">
+	$(document).ready(function() {
+		SearcherDisplay.init();
+	});
+</script>
+
+</body>
+</html>

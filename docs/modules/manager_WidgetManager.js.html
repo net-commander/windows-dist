@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width">
+	<title>Documentation Source: manager/WidgetManager.js</title>
+
+	<!--[if lt IE 9]>
+	<script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+	<![endif]-->
+	<link type="text/css" rel="stylesheet" href="styles/sunlight.default.css">
+
+	<link type="text/css" rel="stylesheet" href="styles/site.simplex.css">
+	<link type="text/css" rel="stylesheet" href="styles/override.css">
+	<link type="text/css" rel="stylesheet" href="styles/theme.css">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-default navbar-fixed-top navbar-inverse">
+<div class="container">
+	<div class="navbar-header">
+		<a class="navbar-brand" href="index.html">Documentation</a>
+		<button class="navbar-toggle" type="button" data-toggle="collapse" data-target="#topNavigation">
+			<span class="icon-bar"></span>
+			<span class="icon-bar"></span>
+			<span class="icon-bar"></span>
+        </button>
+	</div>
+	<div class="navbar-collapse collapse" id="topNavigation">
+		<ul class="nav navbar-nav">
+			
+			<li class="dropdown">
+				<a href="modules.list.html" class="dropdown-toggle" data-toggle="dropdown">Modules<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="module-xcf_driver_DriverBase.html">xcf/driver/DriverBase</a></li><li><a href="module-xcf_manager_BeanManager.html">xcf/manager/BeanManager</a></li><li><a href="module-xcf_manager_DeviceManager.html">xcf/manager/DeviceManager</a></li><li><a href="module-xcf_manager_DeviceManager_DeviceServer.html">xcf/manager/DeviceManager_DeviceServer</a></li><li><a href="module-xide_manager_DeviceManager.html">xide/manager/DeviceManager</a></li>
+				</ul>
+			</li>
+			
+			<li class="dropdown">
+				<a href="classes.list.html" class="dropdown-toggle" data-toggle="dropdown">Classes<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="module-xcf.driver.DriverBase.html">xcf.driver.DriverBase</a></li><li><a href="module-xcf.manager.DeviceManager_DeviceServer.html">xcf.manager.DeviceManager_DeviceServer</a></li><li><a href="module-xcf_manager_Context.html">xcf/manager/Context</a></li>
+				</ul>
+			</li>
+			
+			<li class="dropdown">
+				<a href="global.html" class="dropdown-toggle" data-toggle="dropdown">Global<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="global.html#addDeviceInstance">addDeviceInstance</a></li><li><a href="global.html#appScope">appScope</a></li><li><a href="global.html#beanIconClass">beanIconClass</a></li><li><a href="global.html#completeDriver">completeDriver</a></li><li><a href="global.html#createDriverInstance">createDriverInstance</a></li><li><a href="global.html#createLeftView">createLeftView</a></li><li><a href="global.html#createRightView">createRightView</a></li><li><a href="global.html#defaultScope">defaultScope</a></li><li><a href="global.html#driverScopes">driverScopes</a></li><li><a href="global.html#editDriver">editDriver</a></li><li><a href="global.html#groupType">groupType</a></li><li><a href="global.html#insertIfMatch">insertIfMatch</a></li><li><a href="global.html#itemMetaPath">itemMetaPath</a></li><li><a href="global.html#itemMetaStorePath">itemMetaStorePath</a></li><li><a href="global.html#itemMetaTitleField">itemMetaTitleField</a></li><li><a href="global.html#itemType">itemType</a></li><li><a href="global.html#match">match</a></li><li><a href="global.html#newGroup">newGroup</a></li><li><a href="global.html#newItem">newItem</a></li><li><a href="global.html#nodeValuePath">nodeValuePath</a></li><li><a href="global.html#nodeValueTransform">nodeValueTransform</a></li><li><a href="global.html#onCreateVariableCI">onCreateVariableCI</a></li><li><a href="global.html#onDeviceMessage">onDeviceMessage</a></li><li><a href="global.html#onDeviceReady">onDeviceReady</a></li><li><a href="global.html#onMainViewReady">onMainViewReady</a></li><li><a href="global.html#onNewDriverScopeCreated">onNewDriverScopeCreated</a></li><li><a href="global.html#onReloaded">onReloaded</a></li><li><a href="global.html#onStoreReady">onStoreReady</a></li><li><a href="global.html#onWidgetReady">onWidgetReady</a></li><li><a href="global.html#registerEditorExtensions">registerEditorExtensions</a></li><li><a href="global.html#replaceWith">replaceWith</a></li><li><a href="global.html#setScriptFunctions">setScriptFunctions</a></li><li><a href="global.html#start">start</a></li><li><a href="global.html#systemScope">systemScope</a></li><li><a href="global.html#toPreferenceId">toPreferenceId</a></li><li><a href="global.html#updateItemMetaData">updateItemMetaData</a></li><li><a href="global.html#userScope">userScope</a></li><li><a href="global.html#variables">variables</a></li>
+				</ul>
+			</li>
+			
+		</ul>
+		<div class="col-sm-3 col-md-3">
+            <form class="navbar-form" role="search">
+                <div class="input-group">
+                    <input type="text" class="form-control" placeholder="Search" name="q" id="search-input">
+                    <div class="input-group-btn">
+                        <button class="btn btn-default" id="search-submit"><i class="glyphicon glyphicon-search"></i></button>
+                    </div>
+                </div>
+            </form>
+        </div>
+	</div>
+
+</div>
+</div>
+
+
+<div class="container" id="toc-content">
+<div class="row">
+
+	
+	<div class="col-md-12">
+	
+		<div id="main">
+			
+
+		<h1 class="page-title">Source: manager/WidgetManager.js</h1>
+    
+<section>
+    <article>
+        <pre
+            class="sunlight-highlight-javascript linenums">define([
+    'dcl/dcl',
+    "dojo/_base/declare",
+    "dojo/_base/lang",
+    'dojo/dom-construct',
+    'xide/mixins/ReloadMixin',
+    'xide/types',
+    'xide/utils',
+    'xide/factory',
+    'xwire/Binding',
+    'xwire/EventSource',
+    'xwire/WidgetTarget',
+    'xwire/WidgetSource',
+    'xwire/DeviceTarget',
+    'dojo/has!xideve?xideve/manager/WidgetManager'
+], function (dcl, declare, lang, domConstruct, ReloadMixin, types, utils, factory, Binding, EventSource, WidgetTarget, WidgetSource, DeviceTarget, WidgetManager) {
+    return dcl([WidgetManager, ReloadMixin.dcl], {
+        declaredClass: "xcf/manager/WidgetManager",
+        instances: null,
+        _cbinding: null,
+        options: null,
+        _doOpenRight: false,
+        /////////////////////////////////////////////////////////////////////////////////////
+        //
+        //  Public API
+        //
+        /////////////////////////////////////////////////////////////////////////////////////
+
+        /////////////////////////////////////////////////////////////////////////////////////
+        //
+        //  Storage &amp; Persistence
+        //
+        /////////////////////////////////////////////////////////////////////////////////////
+
+        /**
+         *
+         */
+        onReloaded: function () {
+            //console.error('reloaded!');
+
+            /*this.init();*/
+            this._createBinding();
+
+
+            /*
+             var _data = new dojox.wire.ml.Data();
+             _data.startup();
+             _data.setPropertyValue('tempData','');
+             _data.setPropertyValue('value','value');
+
+             var _action = new dojox.wire.ml.Action({
+             trigger:"inputField",
+             triggerEvent:"onChange"
+             });
+             _action.startup();
+
+             var _transfer = new dojox.wire.ml.Transfer({
+             source:"inputField.value",
+             target:"data.tempData"
+             });
+             _transfer.startup();
+             */
+
+
+            /*
+             &lt;div dojoType="dojox.wire.ml.Action"
+             id="action1"
+             trigger="inputField"
+             triggerEvent="onChange">
+             &lt;div dojoType="dojox.wire.ml.Transfer" source="inputField.value" target="data.tempData">&lt;/div>
+             &lt;div dojoType="dojox.wire.ml.Invocation" id="targetCopy" object="targetField1"  method="set" parameters="data.value, data.tempData">&lt;/div>
+             &lt;/div>
+             */
+
+
+            /*
+             &lt;div dojoType="dojox.wire.ml.Data"
+             id="data">
+             &lt;div dojoType="dojox.wire.ml.DataProperty"
+             name="tempData"
+             value="">
+             &lt;/div>
+             &lt;div dojoType="dojox.wire.ml.DataProperty"
+             name="value"
+             value="value">
+             &lt;/div>
+             &lt;/div>
+             */
+        },
+        /////////////////////////////////////////////////////////////////////////////////////
+        //
+        //  UX factory and utils
+        //
+        /////////////////////////////////////////////////////////////////////////////////////
+        makeDeviceBinding: function () {
+            var source = {}
+        },
+        _createBinding: function () {
+
+            return;
+            console.log('create binding');
+            /*
+             var observable = new Observable({foo: "FooValue0"});
+             var observablePath = new ObservablePath(observable, "foo");
+             */
+
+            if (!this._cbinding) {
+                this._cbinding = [];
+            }
+
+
+            var editorDijit = this.currentContext.getDijit();
+            var editorRegistry = editorDijit.registry;
+            var slider = editorRegistry.byId('VolumeSlider');
+
+
+            //destroy old bindings
+            for (var i = 0; i &lt; this._cbinding.length; i++) {
+                this._cbinding[i].destroy();
+            }
+
+            this._cbinding = [];
+
+            /***
+             * Device Variable to Widget
+             * @type {xwire.EventSource}
+             */
+
+
+            //wire to a standard event
+            var bindingSource = new EventSource({
+                //listen to variable changes
+                trigger: types.EVENTS.ON_DRIVER_VARIABLE_CHANGED,
+                //the path to value
+                path: 'item.value',
+                //add an event filter
+                filters: [{
+                    path: 'item.title',  // variable title must match :
+                    value: 'Volume'  // 'value'
+                }]
+            });
+
+            //we map the event source to a widget
+            var bindingTarget = new WidgetTarget({
+                //the path to value
+                path: 'value',
+                object: slider
+            });
+
+
+            //construct the binding
+            var binding = new Binding({
+                source: bindingSource,
+                target: bindingTarget
+            });
+            binding.start();
+
+            this._cbinding.push(binding);
+
+
+            ////////////////////////////////////////////////////////////////
+            //
+            //  widget to device
+            //
+            ////////////////////////////////////////////////////////////////
+            var deviceData = this.instances[0];
+
+            /**
+             * Widget to Device
+             * @type {binding|*}
+             * @private
+             */
+
+            bindingSource = new WidgetSource({
+                trigger: 'onChange',
+                object: slider
+            });
+
+            //we map the event source to a widget
+            bindingTarget = new DeviceTarget({
+                object: deviceData.instance,
+                command: 'SetMasterVolume',
+                variable: 'Volume'
+            });
+            //construct the binding
+            binding = new Binding({
+                source: bindingSource,
+                target: bindingTarget
+            });
+            binding.start();
+
+            //track instance
+            this._cbinding.push(binding);
+
+
+            //slider.bind("value", observablePath);
+            /*
+             var input = document.querySelector("input");
+             input.bind("value", observablePath);
+             */
+
+        },
+        /**
+         * Callback when a device driver instance is complete and ready!
+         * @param evt
+         */
+        onDeviceReady: function (evt) {
+            console.log('on device ready');
+            this.instances.push(evt);
+        },
+
+        getXFileOptions: function (extensions) {
+            var thiz = this;
+
+            /***
+             * Change file picker options
+             */
+            var xFileContext = window['xFileContext'];
+            var xFileConfig = xFileContext.config;
+
+            //var vfsConfigs = this.ctx.vfsConfigs;
+            var vfsDriverConfig = factory.cloneConfig(xFileConfig);
+            var rootStore = xFileContext.getStore('workspace', {
+                "fields": 1663,
+                "includedFileExtensions": extensions || "*",
+                "excludedFileExtensions": "*"
+            });
+
+            var filePanelOptions = {
+                cookiePrefix: 'driver',
+                sources: [
+                    {
+                        name: 'System',
+                        path: 'system_drivers',
+                        iconClass: 'fileSelectDiscIcon'
+                    },
+                    {
+                        name: 'User',
+                        path: 'user_drivers',
+                        iconClass: 'fileSelectDiscIcon'
+                    },
+                    {
+                        name: 'App',
+                        path: 'app_drivers',
+                        iconClass: 'fileSelectDiscIcon'
+                    }
+                ],
+                delegate: xFileContext.getPanelManager()
+            };
+
+            return {
+                store: rootStore,
+                config: vfsDriverConfig,
+                title: 'Select Driver',
+                filePanelOptions: filePanelOptions
+            };
+        },
+        onFileSelected: function (dlg, item) {
+            console.log('on file selected');
+            //dlg.custom.node.value = utils.buildPath(item.mount,item.path,false);
+            dlg.custom.prop.value = utils.buildPath(item.mount, item.path, false);
+            dlg.custom.prop.owner._onChange({target: dlg.custom.prop.row});
+
+
+            /*
+             var evt = document.createEvent("HTMLEvents");
+             evt.initEvent("change", false, true);
+             dlg.custom.prop.dispatchEvent(evt);
+             var event = new Event('change');
+             dlg.custom.prop.dispatchEvent(event);
+             */
+
+            /*dlg.custom.prop.fireEvent("onchange");*/
+
+
+            /*
+             dlg.custom.prop.focus();
+             dlg.custom.prop.onchange();
+             */
+
+        },
+        onSelectFile: function (node, prop) {
+            var thiz = this;
+
+            var ctx = window['xFileContext'];
+
+            var _defaultOptions = {
+                title: 'Select Script',
+                owner: window['xFileContext'],
+                dst: {
+                    name: 'Select',
+                    path: '.'
+                },
+                src: '.',
+                ctx: window['xFileContext'],
+                custom: {
+                    node: node,
+                    prop: prop
+                }
+            };
+
+
+            var extensions = "*";
+            if (prop.data &amp;&amp; prop.data.custom &amp;&amp; prop.data.custom.extensions) {
+                extensions = prop.data.custom.extensions;
+            }
+
+            var xFileOptions = this.getXFileOptions(extensions);
+            if (this.options) {
+                _defaultOptions = lang.mixin(_defaultOptions, xFileOptions);
+            }
+            _defaultOptions.store = xFileOptions.store;
+            _defaultOptions.config = xFileOptions.config;
+            _defaultOptions.filePanelOptions = xFileOptions.filePanelOptions;
+            _defaultOptions.defaultStoreName = 'workspace';
+            _defaultOptions.defaultStoreOptions = {
+                "fields": 1663,
+                "includedFileExtensions": extensions || "*",
+                "excludedFileExtensions": "*"
+            };
+            ctx.defaultOptions = _defaultOptions;
+
+            var dlg = factory.createFileSelectDialogLarge(_defaultOptions,
+                function (dlg, item) {
+                    thiz.onFileSelected(dlg, item);
+                });
+
+            console.log('on select file');
+
+
+        },
+        /**
+         * _addXAppApplication does a require of some xapp modules
+         * @param context
+         * @private
+         */
+        _addXAppApplication: function (context) {
+
+            var global = context.getGlobal();
+            var _require = global["require"];
+            var _t = _require.toUrl('xapp/manager/Application');
+            /*
+             _require(['xapp/manager/Application'],function(main){
+             });
+             */
+        },
+        onShowBlockSmartInput: function (evt) {
+
+            evt.input.ctx = this.ctx;
+
+        },
+        /////////////////////////////////////////////////////////////////////////////////////
+        //
+        //  Main entries, called by the context. 'Managers' must have always an init function
+        //
+        /////////////////////////////////////////////////////////////////////////////////////
+        init: function () {
+            this.instances = [];
+            this.subscribe(types.EVENTS.ON_DEVICE_DRIVER_INSTANCE_READY, this.onDeviceReady);
+            this.subscribe(types.EVENTS.ON_SHOW_BLOCK_SMART_INPUT, this.onShowBlockSmartInput);
+        }
+    });
+});
+
+</pre>
+    </article>
+</section>
+
+
+
+
+
+		</div>
+	</div>
+
+	<div class="clearfix"></div>
+
+	
+
+</div>
+</div>
+
+<div class="modal fade" id="searchResults">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title">Search results</h4>
+      </div>
+      <div class="modal-body"></div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div>
+
+<footer>
+
+
+<span class="jsdoc-message">
+	Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.0</a>
+	
+		on 2016-06-02T17:42:36+02:00
+	
+	using the <a href="https://github.com/docstrap/docstrap">DocStrap template</a>.
+</span>
+</footer>
+
+<script src="scripts/docstrap.lib.js"></script>
+<script src="scripts/toc.js"></script>
+<script type="text/javascript" src="scripts/fulltext-search-ui.js"></script>
+
+<script>
+$( function () {
+	$( "[id*='$']" ).each( function () {
+		var $this = $( this );
+
+		$this.attr( "id", $this.attr( "id" ).replace( "$", "__" ) );
+	} );
+
+	$( ".tutorial-section pre, .readme-section pre" ).each( function () {
+		var $this = $( this );
+
+		var example = $this.find( "code" );
+		exampleText = example.html();
+		var lang = /{@lang (.*?)}/.exec( exampleText );
+		if ( lang && lang[1] ) {
+			exampleText = exampleText.replace( lang[0], "" );
+			example.html( exampleText );
+			lang = lang[1];
+		} else {
+			var langClassMatch = example.parent()[0].className.match(/lang\-(\S+)/);
+			lang = langClassMatch ? langClassMatch[1] : "javascript";
+		}
+
+		if ( lang ) {
+
+			$this
+			.addClass( "sunlight-highlight-" + lang )
+			.addClass( "linenums" )
+			.html( example.html() );
+
+		}
+	} );
+
+	Sunlight.highlightAll( {
+		lineNumbers : true,
+		showMenu : true,
+		enableDoclinks : true
+	} );
+
+	$.catchAnchorLinks( {
+        navbarOffset: 10
+	} );
+	$( "#toc" ).toc( {
+		anchorName  : function ( i, heading, prefix ) {
+			var id = $( heading ).attr( "id" );
+			return id && id.replace(/\~/g, '-inner-').replace(/\./g, '-static-') || ( prefix + i );
+		},
+		selectors   : "#toc-content h1,#toc-content h2,#toc-content h3,#toc-content h4",
+		showAndHide : false,
+		smoothScrolling: true
+	} );
+
+	$( "#main span[id^='toc']" ).addClass( "toc-shim" );
+	$( '.dropdown-toggle' ).dropdown();
+
+    $( "table" ).each( function () {
+      var $this = $( this );
+      $this.addClass('table');
+    } );
+
+} );
+</script>
+
+
+
+<!--Navigation and Symbol Display-->
+
+
+<!--Google Analytics-->
+
+
+<script type="text/javascript">
+	$(document).ready(function() {
+		SearcherDisplay.init();
+	});
+</script>
+
+</body>
+</html>

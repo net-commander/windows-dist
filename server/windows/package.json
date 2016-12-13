@@ -1,0 +1,67 @@
+{
+  "name": "xcf-server",
+  "version": "0.1.5",
+  "contributors": [
+    {
+      "name": "Günter Baumgart",
+      "email": "baumgart.guenter@gmail.com",
+      "url": "http://pearls-media.com/control-freak"
+    }
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/net-commander/web-server-dist.git"
+  },
+  "dependencies": {
+    "ansi-to-html": "^0.4.2",
+    "ansi_up": "^1.3.0",
+    "cheerio": "^0.22.0",
+    "chokidar": "^1.6.0",
+    "colors": "^1.1.2",
+    "commander": "^2.9.0",
+    "deferred": "^0.7.5",
+    "extend": "^3.0.0",
+    "flop": "^1.4.5",
+    "fs-jetpack": "^0.10.1",
+    "glob": "^7.0.6",
+    "glob-base": "^0.3.0",
+    "glob-fs": "^0.1.6",
+    "lodash": "4.0.0",
+    "mime": "~1.3.4",
+    "minimatch": "^3.0.3",
+    "mosca": "^1.4.1",
+    "mqtt": "^1.12.0",
+    "os-tmpdir": "^1.0.2",
+    "progress": "^1.1.8",
+    "readline": "^1.3.0",
+    "request-progress": "^2.0.1",
+    "serialport": "^4.0.1",
+    "sockjs": "^0.3.16",
+    "sockjs-client": "^1.1.1",
+    "sockjs-client-ws": "^0.1.0",
+    "ssh2": "^0.5.0",
+    "strip-ansi": "^3.0.1",
+    "tcp-port-used": "^0.1.2",
+    "tracer": "^0.8.3",
+    "unzip": "^0.1.11",
+    "walk": "^2.3.9",
+    "winston": "^2.2.0",
+    "yargs-parser": "^3.2.0",
+    "xcf-server-misc": "^0.3.0",
+    "evilscan": "git+https://github.com/gbaumgart/evilscan.git",
+    "ipaddr.js": "^1.2.0"
+  },
+  "devDependencies": {},
+  "optionalDependencies": {
+    "node-notifier": "^4.5.0",
+    "vlc-ffi": "git+https://github.com/gbaumgart/vlc-ffi.git"
+  },
+  "scripts": {},
+  "licenses": [
+    {
+      "type": "BSD",
+      "url": "https://github.com/net-commander/web-server-dist//blob/master/LICENSE"
+    }
+  ],
+  "bugs": "https://github.com/net-commander/web-server-dist/issues"
+}

@@ -1,0 +1,26 @@
+{
+    "class":"cmx.types.Resources",
+    "includes":[
+
+    ],
+    "items":[
+        {
+            "class":"cmx.types.Resource",
+            "type":"CSS",
+            "url":"%XASWEB%/xfile/xjoomla/resources/app.css",
+            "enabled":true
+        },
+        {
+            "class":"cmx.types.Resource",
+            "type":"JS-HEADER-SCRIPT-TAG",
+            "url":"%XASWEB%/xfile/xjoomla/Site.js",
+            "enabled":true
+        },
+        {
+            "class":"cmx.types.Resource",
+            "type":"HTML",
+            "url":"%XASWEB%/xfile/xjoomla/joomlaSiteRelease.html",
+            "enabled":true
+        }
+    ]
+}

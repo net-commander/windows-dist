@@ -1,0 +1,34 @@
+.xHTMLEditor{
+    height: inherit;
+}
+.xHTMLEditor .layoutCenter{
+    padding: 0px;
+}
+.xHTMLEditor .toolbarButton{
+    text-align: center;
+}
+.xHTMLEditor .toolbarButton .dijitIcon{
+    font-size: 15px;
+}
+
+/*
+.cke_inner {
+    height: inherit !important;
+
+
+}
+.cke_browser_gecko, .cke_chrome{
+    height: inherit !important;
+
+}
+*/
+/*
+cke_1 cke cke_reset cke_chrome cke_editor_xfile_views_CKEditor_0_Editor cke_ltr cke_browser_gecko{
+
+}
+*/
+/*
+span.cke_wrapper cke_ltr,table.cke_editor, td.cke_contents, span.cke_skin_kama, span.cke_wrapper, span.cke_browser_webkit{
+    height: 95%!important;
+}
+*/

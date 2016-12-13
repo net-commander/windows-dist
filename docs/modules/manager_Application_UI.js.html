@@ -1,0 +1,1580 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width">
+	<title>Documentation Source: manager/Application_UI.js</title>
+
+	<!--[if lt IE 9]>
+	<script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+	<![endif]-->
+	<link type="text/css" rel="stylesheet" href="styles/sunlight.default.css">
+
+	<link type="text/css" rel="stylesheet" href="styles/site.simplex.css">
+	<link type="text/css" rel="stylesheet" href="styles/override.css">
+	<link type="text/css" rel="stylesheet" href="styles/theme.css">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-default navbar-fixed-top navbar-inverse">
+<div class="container">
+	<div class="navbar-header">
+		<a class="navbar-brand" href="index.html">Documentation</a>
+		<button class="navbar-toggle" type="button" data-toggle="collapse" data-target="#topNavigation">
+			<span class="icon-bar"></span>
+			<span class="icon-bar"></span>
+			<span class="icon-bar"></span>
+        </button>
+	</div>
+	<div class="navbar-collapse collapse" id="topNavigation">
+		<ul class="nav navbar-nav">
+			
+			<li class="dropdown">
+				<a href="modules.list.html" class="dropdown-toggle" data-toggle="dropdown">Modules<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="module-xcf_driver_DriverBase.html">xcf/driver/DriverBase</a></li><li><a href="module-xcf_manager_BeanManager.html">xcf/manager/BeanManager</a></li><li><a href="module-xcf_manager_DeviceManager.html">xcf/manager/DeviceManager</a></li><li><a href="module-xcf_manager_DeviceManager_DeviceServer.html">xcf/manager/DeviceManager_DeviceServer</a></li><li><a href="module-xide_manager_DeviceManager.html">xide/manager/DeviceManager</a></li>
+				</ul>
+			</li>
+			
+			<li class="dropdown">
+				<a href="classes.list.html" class="dropdown-toggle" data-toggle="dropdown">Classes<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="module-xcf.driver.DriverBase.html">xcf.driver.DriverBase</a></li><li><a href="module-xcf.manager.DeviceManager_DeviceServer.html">xcf.manager.DeviceManager_DeviceServer</a></li><li><a href="module-xcf_manager_Context.html">xcf/manager/Context</a></li>
+				</ul>
+			</li>
+			
+			<li class="dropdown">
+				<a href="global.html" class="dropdown-toggle" data-toggle="dropdown">Global<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="global.html#addDeviceInstance">addDeviceInstance</a></li><li><a href="global.html#appScope">appScope</a></li><li><a href="global.html#beanIconClass">beanIconClass</a></li><li><a href="global.html#completeDriver">completeDriver</a></li><li><a href="global.html#createDriverInstance">createDriverInstance</a></li><li><a href="global.html#createLeftView">createLeftView</a></li><li><a href="global.html#createRightView">createRightView</a></li><li><a href="global.html#defaultScope">defaultScope</a></li><li><a href="global.html#driverScopes">driverScopes</a></li><li><a href="global.html#editDriver">editDriver</a></li><li><a href="global.html#groupType">groupType</a></li><li><a href="global.html#insertIfMatch">insertIfMatch</a></li><li><a href="global.html#itemMetaPath">itemMetaPath</a></li><li><a href="global.html#itemMetaStorePath">itemMetaStorePath</a></li><li><a href="global.html#itemMetaTitleField">itemMetaTitleField</a></li><li><a href="global.html#itemType">itemType</a></li><li><a href="global.html#match">match</a></li><li><a href="global.html#newGroup">newGroup</a></li><li><a href="global.html#newItem">newItem</a></li><li><a href="global.html#nodeValuePath">nodeValuePath</a></li><li><a href="global.html#nodeValueTransform">nodeValueTransform</a></li><li><a href="global.html#onCreateVariableCI">onCreateVariableCI</a></li><li><a href="global.html#onDeviceMessage">onDeviceMessage</a></li><li><a href="global.html#onDeviceReady">onDeviceReady</a></li><li><a href="global.html#onMainViewReady">onMainViewReady</a></li><li><a href="global.html#onNewDriverScopeCreated">onNewDriverScopeCreated</a></li><li><a href="global.html#onReloaded">onReloaded</a></li><li><a href="global.html#onStoreReady">onStoreReady</a></li><li><a href="global.html#onWidgetReady">onWidgetReady</a></li><li><a href="global.html#registerEditorExtensions">registerEditorExtensions</a></li><li><a href="global.html#replaceWith">replaceWith</a></li><li><a href="global.html#setScriptFunctions">setScriptFunctions</a></li><li><a href="global.html#start">start</a></li><li><a href="global.html#systemScope">systemScope</a></li><li><a href="global.html#toPreferenceId">toPreferenceId</a></li><li><a href="global.html#updateItemMetaData">updateItemMetaData</a></li><li><a href="global.html#userScope">userScope</a></li><li><a href="global.html#variables">variables</a></li>
+				</ul>
+			</li>
+			
+		</ul>
+		<div class="col-sm-3 col-md-3">
+            <form class="navbar-form" role="search">
+                <div class="input-group">
+                    <input type="text" class="form-control" placeholder="Search" name="q" id="search-input">
+                    <div class="input-group-btn">
+                        <button class="btn btn-default" id="search-submit"><i class="glyphicon glyphicon-search"></i></button>
+                    </div>
+                </div>
+            </form>
+        </div>
+	</div>
+
+</div>
+</div>
+
+
+<div class="container" id="toc-content">
+<div class="row">
+
+	
+	<div class="col-md-12">
+	
+		<div id="main">
+			
+
+		<h1 class="page-title">Source: manager/Application_UI.js</h1>
+    
+<section>
+    <article>
+        <pre
+            class="sunlight-highlight-javascript linenums">define([
+    'dcl/dcl',
+    'require',
+    'dojo/_base/declare',
+    'dojo/_base/lang',
+    'xide/utils',
+    'xcf/views/DriverTreeView',
+    'xcf/views/DeviceTreeView',
+    'xcf/views/ProtocolTreeView',
+    'xide/types',
+    'xide/factory',
+    'xace/views/Editor',
+    'xide/Wizards',
+    'xide/views/CIView',
+    'dojo/has',
+    'xide/editor/Default',
+    'xide/layout/_Accordion',
+    'xide/widgets/WidgetBase',
+    'xide/views/ACEEditor',
+    "xcf/views/_MainView",
+    'xaction/Action',
+    "xide/mixins/PersistenceMixin",
+    "xide/views/JsonEditor",
+    'xide/widgets/JSONDualEditorWidget',
+    'xdojo/has!xcf-ui?xide/editor/Registry'
+
+], function (dcl,require,declare, lang,utils, DriverTreeView, DeviceTreeView,
+             ProtocolTreeView, types, factory,
+             Editor, Wizards, CIView,has,Default,_Accordion,
+             WidgetBase,ACEEditor,_MainView,Action,PersistenceMixin,JSONEditor,JSONDualEditorWidget,Registry,FileConsole) {
+
+
+    var Persistence = dcl([PersistenceMixin.dcl], {
+
+        declaredClass:'xcf.manager.ApplicationPersistence',
+        defaultPrefenceTheme: 'idle_fingers',
+        defaultPrefenceFontSize: 14,
+        saveValueInPreferences: true,
+        cookiePrefix:'_xcf_application',
+        getDefaultPreferences: function () {
+            return utils.mixin(
+                {
+                    theme: this.defaultPrefenceTheme,
+                    fontSize: this.defaultPrefenceFontSize
+                },
+                this.saveValueInPreferences ? {
+
+                } : null);
+
+        },
+        onAfterAction: function (action) {
+            //var _theme = this.getEditor().getTheme();
+            this.savePreferences({
+                /*
+                theme: _theme.replace('ace/theme/', ''),
+                fontSize: this.getEditor().getFontSize()
+                */
+            });
+            return this.inherited(arguments);
+        },
+        /**
+         * Override id for pref store:
+         * know factors:
+         *
+         * - IDE theme
+         * - per bean description and context
+         * - by container class string
+         * - app / plugins | product / package or whatever this got into
+         * -
+         **/
+        toPreferenceId: function (prefix) {
+            prefix = '';
+            return (prefix || this.cookiePrefix || '') + '_xcf_application';
+        },
+        getDefaultOptions: function () {
+
+            //take our defaults, then mix with prefs from store,
+            var _super = this.inherited(arguments),
+
+                _prefs = this.loadPreferences(null);
+
+            (_prefs &amp;&amp; utils.mixin(_super, _prefs) ||
+                //else store defaults
+            this.savePreferences(this.getDefaultPreferences()));
+            return _super;
+        }
+    });
+
+    return dcl(Persistence.dcl,{
+        declaredClass:"xcf.manager.Application_UI",
+        mainView: null,
+        leftLayoutContainer: null,
+        rightLayoutContainer: null,
+        showGUI: true,
+        showFiles: true,
+        lastPane: null,
+        _lastWizard: null,
+        _maximized:false,
+        openFile:function(args){
+
+            var self = this;
+
+            var _editor=args.editor;
+
+            var editor = Registry.getEditor(_editor) || Registry.getDefaultEditor({
+                    path:args.file
+                }) || Registry.getEditor('Default Editor');
+
+            var _require = window['eRequire'];
+
+            var app = _require('electron').remote.app;
+            var BrowserWindow = _require('electron').remote.BrowserWindow;
+            var wind = BrowserWindow.getFocusedWindow() || BrowserWindow.mainWindow;
+            wind &amp;&amp; wind.setTitle(args.file);
+
+            if(editor){
+                var editorInstance =  editor.onEdit({
+                    path:args.file,
+                    mount:'__direct__',
+                    getPath:function(){
+                        return this.path;
+                    }
+                })
+                if(editorInstance._on) {
+                    this.ctx.getWindowManager().registerView(editorInstance, true);
+                }else if(editorInstance.then){
+                    editorInstance.then(function(instance){
+                        self.ctx.getWindowManager().registerView(instance, true);
+                    });
+                }
+            }else{
+                console.error('--have no editor ',args.editor);
+            }
+        },
+        /***
+         * Register custom types
+         */
+        registerCustomTypes: function () {
+
+
+            var _t = types;
+            /***
+             * Network settings
+             */
+            types.registerType(types.ECIType.DEVICE_NETWORK_SETTINGS, [
+
+                utils.createCI('Host', 13, '192.168.1.20', {
+                    group: 'Network'
+                }),
+
+                utils.createCI('Protocol', 3, 'tcp', {
+                    group: 'Network',
+                    options:[
+                        {
+                            label:"TCP",
+                            value:"tcp"
+                        },
+                        {
+                            label:"UDP",
+                            value:"tcp"
+                        },
+                        {
+                            label:"Driver",
+                            value:"driver"
+                        },
+                        {
+                            label:"SSH",
+                            value:"ssh"
+                        },
+                        {
+                            label:"Serial",
+                            value:"serial"
+                        },
+                        {
+                            label:"MQTT",
+                            value:"mqtt"
+                        }
+                    ]
+                }),
+                utils.createCI('Port', 13, '23', {
+                    group: 'Network'
+                }),
+                utils.createCI('Options', 28, '{}', {
+                    group: 'Network'
+                })
+            ]);
+
+            /*                 Widget Mappings                 */
+            //commands
+            //types.registerWidgetMapping('CommandSettings', 'xcf.widgets.CommandSettings');
+
+
+            types.registerWidgetMapping('CommandSettings', 'xcf.widgets.CommandSettings');
+
+
+            //variables
+            //types.registerWidgetMapping('VariableSettings', 'xcf.widgets.VariableSettings');
+
+            //responses
+            //types.registerWidgetMapping('ResponseSettings', 'xcf.widgets.ResponseSettings');
+
+        },
+        /**
+         *
+         * @param clear
+         * @param open
+         * @returns {*}
+         */
+        onMainViewReady: function (view) {
+
+            var thiz = this;
+            /**
+             * Register Help Action
+             */
+
+            var helpAction = Action.createDefault('Driver Guide', 'fa-cube', 'Help/Driver', '_a', null, {
+                permanent: true,
+                handler: function () {
+                    window.open('../../../docs/daux')
+                }
+
+            }).setVisibility(types.ACTION_VISIBILITY.ACTION_TOOLBAR, null).
+            setVisibility(types.ACTION_VISIBILITY.MAIN_MENU, {}).
+            setVisibility(types.ACTION_VISIBILITY.CONTEXT_MENU, null);
+
+            thiz.publish(types.EVENTS.REGISTER_ACTION, {
+                owner: thiz,
+                action: helpAction
+            });
+
+
+            var helpAction = Action.createDefault('Widget Guide', 'fa-cube', 'Help/Widgets', '_a', null, {
+                permanent: true,
+                handler: function () {
+                    window.open('../../../docs/daux/Interface_Designer/Guide')
+                }
+
+            }).setVisibility(types.ACTION_VISIBILITY.ACTION_TOOLBAR, null).
+            setVisibility(types.ACTION_VISIBILITY.MAIN_MENU, {}).
+            setVisibility(types.ACTION_VISIBILITY.CONTEXT_MENU, null);
+
+            thiz.publish(types.EVENTS.REGISTER_ACTION, {
+                owner: thiz,
+                action: helpAction
+            });
+
+            var helpAction = Action.createDefault('jQuery', 'fa-cube', 'Help/jQuery', '_a', null, {
+                permanent: true,
+                handler: function () {
+                    window.open('../../../docs/jQuery/index.html')
+                }
+
+            }).setVisibility(types.ACTION_VISIBILITY.ACTION_TOOLBAR, null).
+            setVisibility(types.ACTION_VISIBILITY.MAIN_MENU, {}).
+            setVisibility(types.ACTION_VISIBILITY.CONTEXT_MENU, null);
+
+            thiz.publish(types.EVENTS.REGISTER_ACTION, {
+                owner: thiz,
+                action: helpAction
+            });
+
+            if (this.logPanel || has('log') == false) {
+                return;
+            }
+
+
+            thiz.registerEditorExtensions();
+
+
+            return;
+        },
+        /**
+         * Main entry point, does:
+         *  - create the main view
+         *  - registers custom types and enumerations
+         *  - loads data and adds data views
+         *  - initializes XFile
+         */
+        start: function (showGUI, rootSelector,args) {
+
+            var thiz = this;
+
+            this.args = args;
+            this.showGUI = showGUI;
+            var ACTION = types.ACTION;
+            var container = $(rootSelector || '#root')[0];
+            var permissons = [
+                ACTION.BREADCRUMB,
+                //ACTION.RIBBON,
+                ACTION.MAIN_MENU,
+                ACTION.NAVIGATION,
+                ACTION.STATUSBAR,
+                ACTION.TOOLBAR,
+                ACTION.WELCOME
+            ];
+
+            var isEditor = false;
+
+            console.info('---start main view with args',args);
+
+            if(has('electron') &amp;&amp; args){
+                if(args.file){
+                    permissons = [
+                        ACTION.MAIN_MENU
+                    ]
+                    isEditor = true;
+                }
+            }
+
+            var MainViewClass = dcl(_MainView, {
+
+                getNewAlternateTarget: function () {
+                    return this.layoutCenter;
+                },
+
+                getToolbar: function () {
+                    return this.toolbar;
+                },
+                getNewDefaultTab: function (args) {
+
+                    utils.mixin(args, {
+                        target: this.layoutCenter,
+                        location: types.DOCKER.DOCK.STACKED
+                    });
+                    var tab = this.getDocker().addTab(null, args);
+                    return tab;
+                },
+                _onResize: function () {
+                    this.getDocker().resize();
+                },
+                resize: function () {
+                    this.getDocker().resize();
+                },
+                _resizeToWindow: function () {
+
+
+                    var target = $('#root')[0];
+
+                    var staticTop = $('#staticTopContainer');
+                    var staticTopH = 0;
+                    if (staticTop &amp;&amp; staticTop) {
+                        staticTopH = staticTop.height();
+                    }
+
+                    utils.resizeTo(target, window, true, true, null, {
+                        h: -staticTopH
+                    });
+
+                    if (this.layoutMain) {
+
+                        utils.resizeTo(this.layoutMain, target, true, true);
+                        this.layoutMain.resize();
+                        var _total = $('#root').height();
+                        _total -= this.extraBottomHeight;
+                        _toolbar -= staticTopH;
+                        var _toolbar = $(this.layoutTop.domNode).height();
+                        $(this.layoutCenter.domNode).css('height', _total - _toolbar);
+
+                    }
+                    this.getDocker().resize();
+                },
+                __createLayout: function (docker, permissions) {
+
+                    this.inherited(arguments);
+
+                    this.layoutCenter = docker.addPanel('DefaultTab', types.DOCKER.DOCK.RIGHT, this.layoutLeft, {
+                        w: '80%',
+                        title: 'Welcome',
+                        mixin: {
+                            isDefault: true
+                        }
+                    });
+
+                    this.layoutCenter.closeable(false);
+
+
+                    this.toolbar = utils.addWidget(Ribbon, {
+                        store: new ActionStore({}),
+                        flat: false
+                    }, this, this.layoutTop, true);
+
+
+                    var self = this,
+                        toolbar = this.toolbar;
+
+                    toolbar._on('RibbonClosed', function (evt) {
+                        setTimeout(function () {
+                            self.layoutTop.resize();
+                        }, 1)
+
+                    });
+                    toolbar._on('RibbonExpand', function (evt) {
+                        self._onResize();
+                        self.resize();
+                        setTimeout(function () {
+                            self.layoutTop.resize();
+                        }, 1)
+                    });
+
+                    toolbar._on('setActionEmitter', function (evt) {
+
+                        self._onResize();
+                        self._resizeToWindow();
+                        if (toolbar.isOpen) {
+                            setTimeout(function () {
+                                self.layoutTop.resize();
+                            }, 1)
+                            setTimeout(function () {
+                                factory.publish(types.EVENTS.RESIZE, {
+                                    force: true
+                                });
+                            }, 10);
+                        }
+                    });
+
+
+                    this.toolbar._on(types.EVENTS.RESIZE, function (evt) {
+                        self._onResize();
+                    });
+
+                    function _resize() {
+                        self._resizeToWindow();
+                        setTimeout(function () {
+                            self.publish(types.EVENTS.RESIZE, {}, this);
+                        }, 500);
+                    }
+
+                    $(window).resize(function () {
+                        return self.debounce('resize', _resize.bind(thiz), 1000, null);
+                    });
+
+                },
+                getLayoutLeft: function () {
+                    return this.layoutLeft;
+                },
+                getLayoutCenter: function () {
+                    return this.layoutCenter;
+                },
+                onOpenView:function(evt){
+                    this.onOpenView2 &amp;&amp; this.onOpenView2(evt);
+                },
+                startup: function () {
+
+                    var self = this;
+
+                    function _resize() {
+                        self._resizeToWindow();
+                        setTimeout(function () {
+                            self.publish(types.EVENTS.RESIZE, {}, this);
+                        }, 500);
+                    }
+
+                    $(window).resize(function () {
+                        return self.debounce('resize', _resize.bind(self), 1000, null);
+                    });
+
+                    setTimeout(function(){
+                        _resize();
+                    },5000);
+
+                    this.subscribe(types.EVENTS.ON_OPEN_VIEW);
+                }
+
+            });
+            var view = utils.addWidget(_MainView, {
+                ctx: this.ctx,
+                permissions: permissons,
+                config: this.config,
+                windowManager: this.ctx.getWindowManager(),
+                container: container
+
+            }, null, container, true);
+
+            this.mainView = view;
+
+            this.ctx.mainView = this.mainView;
+            var leftContainer = view.layoutLeft;
+            var docker = view.getDocker();
+
+            if(!isEditor) {
+                var accContainer = utils.addWidget(_Accordion, {
+                    tabHeight: '500px'
+                }, null, leftContainer, true);
+                this.mainView.leftLayoutContainer = accContainer;
+                this.leftLayoutContainer = accContainer;
+            }else{
+                this.mainView.layoutCenter =this.mainView.layoutLeft;
+            }
+
+
+
+            var self = this;
+            this.doComponents().then(function () {
+
+                console.info('xcf:dockerTest:: all components loaded ');
+                self.registerCustomTypes();
+                self.onComponentsReady();
+                setTimeout(function () {
+                    if(isEditor) {
+                        self.openFile(args);
+                    }else{
+                        self.initData();
+                    }
+                    view._resize();
+                }, 1000);
+            });
+        },
+        /**
+         * Register new editors for xfile
+         */
+        registerEditorExtensions: function () {
+
+            var ctx = this.ctx,
+                thiz = this;
+
+            Default.Implementation.ctx = ctx;
+            Default.ctx = ctx;
+
+
+
+            //ctx.registerEditorExtension('CF Project Editor', 'cfproject', 'fa-sliders', this);
+
+            /*
+             ctx.registerEditorExtension('Preview', 'jpg|png', 'el-icon-eye-open', this, true, null, FilePreview, {
+             updateOnSelection: false
+             });*/
+
+            /*
+             xfileContext.registerEditorExtension('Visual Editor', 'cfhtml', 'fa-laptop', this, true, null, VisualEditor, {
+             updateOnSelection: false,
+             leftLayoutContainer: this.leftLayoutContainer,
+             rightLayoutContainer: null,
+             ctx: this.ctx,
+             mainView: this.mainView
+             });
+             */
+
+
+            //sample default text editor open function, not needed
+
+            var editInACE = function (item, owner) {
+                var where = null;
+                if (owner) {
+                    //where = owner ? owner.newTarget : null;
+                    if (_.isFunction(owner.newTarget)) {
+                        where = owner.newTarget({
+                            title: item.name,
+                            icon: 'fa-code'
+                        });
+                    }
+                }
+                return Default.Implementation.open(item, where, null, null, owner);
+            };
+
+
+            /*
+             ctx.registerEditorExtension('Text Editor', 'cfhtml', 'fa-code', this, false, editInACE, ACEEditor, {
+             updateOnSelection: false,
+             leftLayoutContainer: this.leftLayoutContainer,
+             ctx: ctx
+             });
+
+             */
+            ctx.registerEditorExtension('Default Editor', '*', 'fa-code', this, false, editInACE, ACEEditor, {
+                updateOnSelection: false,
+                leftLayoutContainer: this.leftLayoutContainer,
+                ctx: ctx,
+                defaultEditor: true
+            });
+
+            /*
+             ctx.registerEditorExtension('Text Editor', 'xblox', 'fa-code', this, false, editInACE, ACEEditor, {
+             updateOnSelection: false,
+             leftLayoutContainer: this.leftLayoutContainer,
+             ctx: ctx
+             });
+
+             ctx.registerEditorExtension('Text Editor', 'dhtml', 'fa-code', this, false, editInACE, ACEEditor, {
+             updateOnSelection: false,
+             leftLayoutContainer: this.leftLayoutContainer,
+             ctx: ctx
+             });
+
+             ctx.registerEditorExtension('Text Editor', 'html', 'fa-code', this, false, editInACE, ACEEditor, {
+             updateOnSelection: false,
+             leftLayoutContainer: this.leftLayoutContainer,
+             ctx: ctx
+             });
+
+             ctx.registerEditorExtension('Text Editor', 'md', 'fa-code', this, false, editInACE, ACEEditor, {
+             updateOnSelection: false,
+             leftLayoutContainer: this.leftLayoutContainer,
+             ctx: ctx
+             });
+             */
+
+            ctx.registerEditorExtension('JSON Editor', 'json', 'fa-code', this, true, null, JSONEditor, {
+                updateOnSelection: false,
+                leftLayoutContainer: this.leftLayoutContainer,
+                ctx: ctx,
+                registerView: true
+            });
+            types.registerCustomMimeIconExtension('cfhtml', 'fa-laptop');
+            this.registerSplitEditors();
+
+        },
+        init:function(){
+
+            this.ctx.addActions(this.getActions());
+            this.ctx.addActions(this.getThemeActions());
+            WidgetBase.prototype.ctx = this.ctx;
+            var thiz = this;
+
+            this.subscribe(types.EVENTS.ON_EXPRESSION_EDITOR_ADD_FUNCTIONS, this.onExpressionEditorAddFunctions);
+            //this.subscribe(types.EVENTS.ON_STATUS_MESSAGE);
+
+            if(has('consoleError') &amp;&amp; location.href.indexOf('consoleError')!==-1){
+
+                var console = (window.console = window.console || {});
+
+                var _consoleErrorOld = console.error;
+                function consoleError(string,args){
+                    thiz.publish(types.EVENTS.ON_STATUS_MESSAGE,{
+                        text:string,
+                        type:'error'
+                    });
+                    //_consoleErrorOld.apply(thiz,[string,args]);
+                }
+                console.error = consoleError;
+            }
+        },
+        getLayoutRightMain: function (clear, open) {
+            var mainView = this.mainView;
+            return mainView.getLayoutRightMain(clear, open);
+        },
+        getRightTopTarget: function (clear, open) {
+            var mainView = this.mainView;
+            return mainView.getRightTopTarget(clear, open);
+        },
+        onExpressionEditorAddFunctions: function (evt) {
+
+            var widget = evt.widget;
+            var root = evt.root;
+            if(!widget || !root){
+                return;
+            }
+            var device = widget.device;
+            if(!device){
+                return;
+            }
+            var driverInstance = device.driverInstance;
+            var _Variables = widget.createBranch('Variables', root.items);
+
+            root.items.push(widget.createLeaf('getVariable', 'this.getVariable(\'variableName\')', 'Variables', 'gets a variable', true, _Variables));
+            root.items.push(widget.createLeaf('setVariable', 'this.setVariable(\'variableName\')', 'Variables', 'sets a variable by name', true, _Variables));
+            if(driverInstance){
+                var _Driver = widget.createBranch('Driver', root.items);
+                //root.items.push(widget.createLeaf('sendSettings', 'this.sendSettings', 'Driver', 'drivers sendSettings', true, _Driver));
+                for(var prop in driverInstance){
+                }
+            }
+
+
+        },
+        initWidgets: function () {
+            //factory.showStandBy(false);
+        },
+        initElectron:function(){
+            /*
+            document.addEventListener('drop', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            });
+            */
+            document.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            });
+            /*
+            webview.addEventListener('dragover', function(e) {
+                e.preventDefault();
+            });
+            */
+            /*
+            document.addEventListener('dragover',function(event){
+                event.preventDefault();
+                return false;
+            },false);
+*/
+            var self = this;
+            document.addEventListener('drop',function(event){
+                event.preventDefault();
+                var pathsToOpen = Array.prototype.map.call(event.dataTransfer.files, function(file) {
+                    return file.path;
+                });
+                if (pathsToOpen.length > 0) {
+
+                    self.openFile({
+                        file:pathsToOpen[0]
+                    });
+                }
+                return false;
+            },false);
+
+        },
+        onComponentsReady:function(){
+            var thiz = this,
+                ctx = thiz.ctx,
+                windowManager = ctx.getWindowManager(),
+                mainView = ctx.mainView,
+                left = mainView.layoutLeft,
+                container = thiz.leftLayoutContainer;
+
+
+            Editor.ctx = thiz.ctx;
+            Editor.prototype.ctx = thiz.ctx;
+            $('#loadingWrapper').remove();
+            if(has('electron')){
+                this.initElectron();
+            };
+        },
+        addDeviceView:function(){
+            var view,
+                ctx = this.ctx,
+                deviceMgr = ctx.getDeviceManager(),
+                windowManager = ctx.getWindowManager(),
+                thiz = this,
+                container = thiz.leftLayoutContainer;
+
+            view = deviceMgr.treeView = utils.addWidget(DeviceTreeView, {
+                title: 'Devices',
+                collection: deviceMgr.getStore(),
+                delegate: deviceMgr,
+                blockManager: thiz.ctx.getBlockManager(),
+                ctx:thiz.ctx,
+                icon:'fa-sliders',
+                showHeader:false,
+                scope:'system_devices',
+                open:true
+            }, null, container, false);
+
+            deviceMgr.onDeviceTreeViewCreated(deviceMgr.treeView);
+            windowManager.registerView(view,false);
+            setTimeout(function(){
+                view.startup();
+                view.select([0],null,true,{
+                    focus:true,
+                    append:false,
+                    delay:1000
+                }).then(function(){
+
+                });
+            },500);
+        },
+        initData: function () {
+
+            var thiz = this,
+                ctx = thiz.ctx,
+                driverMgr = ctx.getDriverManager(),
+                deviceMgr = ctx.getDeviceManager(),
+                logMgr = ctx.getLogManager(),
+                windowManager = ctx.getWindowManager(),
+                mainView = ctx.mainView,
+                toolbar = mainView.getToolbar(),
+                docker = mainView.getDocker(),
+                left = mainView.layoutLeft,
+                container = thiz.leftLayoutContainer;
+
+
+            Editor.ctx = thiz.ctx;
+            Editor.prototype.ctx = thiz.ctx;
+            $('#loadingWrapper').remove();
+
+            this.publish(types.EVENTS.ON_STATUS_MESSAGE,{
+                text:"Load data, please wait",
+                timeout:8000
+            });
+            //docker.registerPanelType('Navigator',Docker.defaultPaneType('','',false,true,true));
+            /**
+             * Driver tree view, added as pane into the left accordion
+             */
+            if (has('drivers')) {
+
+                driverMgr.ls('system_drivers').then(function () {
+
+                    thiz.publish(types.EVENTS.ON_STATUS_MESSAGE,{
+                        text:"Load Drivers, please wait..."
+                    })
+                    /**
+                     * Device tree view, added as pane into the left accordion
+                     */
+
+                    if (has('devices')) {
+                        deviceMgr.ls('system_devices').then(function () {
+                            thiz.publish(types.EVENTS.ON_STATUS_MESSAGE,{
+                                text:"Start Device View, please wait...",
+                                type:'success'
+                            })
+
+                            if (thiz.showGUI) {
+                                thiz.addDeviceView();
+                            }
+                        });
+                    }
+
+
+                    if (thiz.showGUI) {
+                        try {
+
+                            var view = driverMgr.treeView = utils.addWidget(DriverTreeView, {
+                                title: 'Drivers',
+                                store: driverMgr.getStore(),
+                                delegate: driverMgr,
+                                blockManager: thiz.ctx.getBlockManager(),
+                                scope:'system_drivers',
+                                ctx:thiz.ctx,
+                                icon:'fa-exchange'
+
+                            }, driverMgr, thiz.leftLayoutContainer, false);
+
+                            windowManager.registerView(view,false);
+
+                            /*
+                            setTimeout(function(){
+
+                                view.startup();
+
+                                view.select([0],null,true,{
+                                    focus:true,
+                                    append:false,
+                                    delay:1000
+                                }).then(function(){
+
+                                });
+                            },500);*/
+
+                            thiz.publish(types.EVENTS.ON_STATUS_MESSAGE,{
+                                text:"Driver View Ready"
+                            })
+
+
+                        } catch (e) {
+                            console.error('Driver Tree-View creation failed : ' + e);
+                        }
+                    }
+
+                    /**
+                     * Load past logs
+                     */
+
+                    if (has('log')) {
+                        logMgr.ls(function () {});
+                    }
+                });
+            }else if(has('drivers')) {
+                deviceMgr.ls('system_devices');
+            }
+            /**
+             * Protocol tree view, added as pane into the left accordion
+             */
+
+            if (has('protocols')) {
+
+                this.ctx.getProtocolManager().ls('system_protocols').then(function () {
+                    var protocolMgr = thiz.ctx.getProtocolManager();
+                    /*
+                    if (thiz.showGUI) {
+
+                        try {
+                            protocolMgr.treeView = utils.addWidget(ProtocolTreeView, {
+                                title: 'Protocols',
+                                store: protocolMgr.getStore(),
+                                delegate: protocolMgr,
+                                beanContextName: thiz.ctx.mainView.beanContextName
+                            }, protocolMgr, thiz.leftLayoutContainer, true);
+                        } catch (e) {
+                            console.error('Protocol Tree-View creation failed : ' + e);
+                        }
+                    }
+                    */
+                });
+            }
+
+
+
+            this.ctx.mainView.resize();
+            this.ctx.mainView.layoutLeft.__update();
+
+        },
+        registerSplitEditors: function () {
+
+            return;
+
+            var thiz = this,
+                ctx = this.ctx;
+
+            var editInACE = function (args) {
+                /*xfileContext.getScriptManager().onFileClicked(args);*/
+                thiz.openJsonEditor(args);
+            };
+
+
+            ctx.registerEditorExtension('JSON Editor', 'json', 'fa-code', this, false, null, null, {
+                updateOnSelection: false,
+                leftLayoutContainer: this.leftLayoutContainer,
+                ctx: ctx
+            }, {
+                /**
+                 * this goes into _designCP
+                 * @param where
+                 * @param who
+                 * @param item
+                 * @returns {widgetProto|*|*}
+                 */
+                createLeftView: function (where, who, item) {
+
+
+                    var pane = factory.createPane('', '', where, {}, null);
+
+
+                    //var editor = pane.editor = new JSONEditorX({},pane.containerNode);
+
+                    var editor = pane.editor = utils.addWidget(JSONEditorX, {}, this, pane.containerNode, true);
+
+                    pane.getItemActions = function () {
+                        return editor.getItemActions();
+                    };
+
+
+                    pane.setValue = function (value) {
+                        var _json = dojo.fromJson(value);
+                        editor.setData(_json);
+                    };
+                    pane.getValue = function () {
+                        return JSON.stringify(editor.getData(), null, 2);
+                    };
+
+                    return pane;
+
+                },
+                /**
+                 * this goes into _srcCP
+                 * @param where
+                 * @param who
+                 * @param item
+                 * @returns {widgetProto|*|*}
+                 */
+                createRightView: function (where, who, item) {
+
+
+                    var editor = Default.Implementation.open(item, where, {
+                        region: 'bottom',
+                        splitter: true,
+                        style: "height:40%;padding:0px;overflow:hidden;",
+                        emits: {
+                            'onViewShow': false,
+                            'onItemSelected': false
+                        },
+                        autoSelect: false
+                    }, false);
+
+
+                    var thiz = this;
+
+                    editor._on('setFirstContent', function (evt) {
+                        thiz.setLeftValue(evt.value);
+                    });
+
+                    return editor;
+
+                }
+            });
+
+
+            /*
+
+             xfileContext.registerEditorExtension('Text Editor', 'xblox', 'fa-code', this, false, editInACE, ACEEditor, {
+             updateOnSelection: false,
+             leftLayoutContainer: this.leftLayoutContainer,
+             ctx: this.getXFileContext()
+             });
+
+             xfileContext.registerEditorExtension('Text Editor', 'dhtml', 'fa-code', this, false, editInACE, ACEEditor, {
+             updateOnSelection: false,
+             leftLayoutContainer: this.leftLayoutContainer,
+             ctx: this.getXFileContext()
+             });
+             */
+
+
+        },
+        createProtocolWizard: function () {
+
+
+            return;
+
+            /**
+             * tasks
+             *
+             * 1. wizard-page- one: read-only Protocol-tree-viewer (as picker)
+             *
+             * 1.1
+             *
+             *
+             */
+            try {
+                var thiz = this;
+                if (this._lastWizard) {
+                    this._lastWizard.dialog.hide().then(function () {
+                        thiz._lastWizard.dialog.destroy();
+                    });
+                }
+            } catch (e) {
+
+            }
+            /**
+             * setup
+             *
+             * 1. create the dialog,
+             * 2. create wizard
+             * 3. add panes
+             *
+             *
+             */
+            var wizardStruct = Wizards.createWizard('Select Protocol', false,{});
+            this._lastWizard = wizardStruct;
+            var wizard = wizardStruct.wizard;
+            var dialog = wizardStruct.dialog;
+            /*
+             var CIS = [
+             utils.createCI('Title', 13, ''),
+             utils.createCI('Scope', 3, 'system_drivers', {
+             "options": [
+             {
+             label: 'System',
+             value: 'system_drivers'
+             },
+             {
+             label: 'User',
+             value: 'user_drivers'
+             },
+             {
+             label: 'App',
+             value: 'app_drivers'
+             }
+             ]
+             })
+             ];
+
+             var ciView = utils.addWidget(CIView, {
+             viewStyle: 'padding:0px;',
+             options: {
+             groupOrder: {
+             'General': 0,
+             'Advanced': 1,
+             'Description': 2
+             }
+             },
+             cis: CIS
+             }, this, wizard, true, null, [WizardPaneBase]);
+
+             ciView.initWithCIS(CIS);
+             */
+
+            var protocolMgr = thiz.ctx.getProtocolManager();
+            var selectView = null;
+            var selectItemsView = null;
+            var selectedItems = [],
+
+                selectedItem = null;
+
+            var store = protocolMgr.getStore();
+
+            var done = function(){
+                wizard.destroy();
+                dialog.destroy();
+            }
+
+
+
+            dialog.show().then(function () {
+
+                /**
+                 * First protocol view, select item
+                 */
+                selectView = utils.addWidget(ProtocolTreeView, {
+                    title: 'Protocols',
+                    store: protocolMgr.getStore(),
+                    delegate: protocolMgr,
+                    beanContextName:'3',// thiz.ctx.mainView.beanContextName
+                    _doneFunction:function(){
+                        return false;
+                    },
+                    passFunction:function(){
+                        return true;
+                    },
+                    canGoBack:true,
+                    gridParams:{
+                        showHeader:true
+                    }
+
+                }, protocolMgr, wizard, true,null,[WizardPaneBase]).
+                _on(types.EVENTS.ON_ITEM_SELECTED, function(evt){
+                    selectedItem = evt.item;
+                    wizard.adjustWizardButton('next',selectView.isGroup(evt.item));
+                });
+
+                setTimeout(function(){
+                    selectView.grid.set('collection',store.filter(selectView.getRootFilter()));
+                    selectView.grid.refresh();
+                },200);
+
+
+                /**
+                 * Select commands/variables view
+                 */
+                /**
+                 * First protocol view, select item
+                 */
+                selectItemsView = utils.addWidget(ProtocolTreeView, {
+                    title: 'Protocols',
+                    store: protocolMgr.getStore(),
+                    delegate: protocolMgr,
+                    beanContextName:'3',// thiz.ctx.mainView.beanContextName
+                    doneFunction:function(){
+                        done();
+                        return true;
+                    },
+                    passFunction:function(){
+                        //not used
+                        return true;
+                    },
+                    canGoBack:true,
+                    getRootFilter:function(){
+                        if(selectedItem) {
+                            return {
+                                parentId: selectedItem.path
+                            }
+                        }else{
+                            return {
+                                parentId: ''
+                            }
+                        }
+                    },
+                    canSelect:function(item){
+                        if(item.virtual===true &amp;&amp; item.isDir===false){
+                            return true;
+                        }
+                        return false;
+                    }
+                }, protocolMgr, wizard, true,null,[WizardPaneBase],null,{
+                    getColumns:function(){
+
+                        var _res = this.inherited(arguments);
+                        _res.push({
+                            label: "Value",
+                            field: "value",
+                            sortable: false,
+                            _formatter: function (name, item) {
+                                if (!thiz.isGroup(item) &amp;&amp; item['user']) {
+                                    var meta = item['user'].meta;
+                                    var _in = meta ? utils.getCIInputValueByName(meta, types.PROTOCOL_PROPERTY.CF_PROTOCOL_TITLE) : null;
+                                    if (meta) {
+                                        return '&lt;span class="grid-icon ' + 'fa-exchange' + '">&lt;/span>' + _in;
+                                    } else {
+                                        return item.name;
+                                    }
+                                    return _in;
+                                } else {
+                                    return item.name;
+                                }
+                            }
+                        });
+                        return _res;
+                    }
+                }).
+                _on(types.EVENTS.ON_ITEM_SELECTED, function(evt){
+                    selectedItems = selectItemsView.getSelection();
+                    wizard.adjustWizardButton('done',selectedItems.length==0);
+
+                });
+
+                setTimeout(function(){
+                    if(selectItemsView.grid) {
+                        selectItemsView.grid.set('collection', store.filter(selectItemsView.getRootFilter()));
+                        selectItemsView.grid.refresh();
+                    }
+                },200);
+                wizard.onNext = function(){
+                    dialog.set('title','Select Commands &amp; Variables');
+                    selectItemsView.grid.set('collection',store.filter(selectItemsView.getRootFilter()));
+                    selectItemsView.grid.refresh();
+                }
+            });
+        },
+        createWizard: function () {
+
+            return;
+
+            try {
+                var thiz = this;
+                if (this._lastWizard) {
+                    this._lastWizard.dialog.hide().then(function () {
+                        thiz._lastWizard.dialog.destroy();
+                    });
+                }
+            } catch (e) {
+                console.error('');
+            }
+
+            /**
+             * setup
+             *
+             * 1. create the dialog,
+             * 2. create wizard
+             * 3. add panes
+             *
+             *
+             */
+            var wizardStruct = Wizards.createWizard('Select', false);
+            this._lastWizard = wizardStruct;
+
+            var wizard = wizardStruct.wizard;
+            var dialog = wizardStruct.dialog;
+
+
+            var CIS = [
+                utils.createCI('Title', 13, ''),
+                utils.createCI('Scope', 3, 'system_drivers', {
+                    "options": [
+                        {
+                            label: 'System',
+                            value: 'system_drivers'
+                        },
+                        {
+                            label: 'User',
+                            value: 'user_drivers'
+                        },
+                        {
+                            label: 'App',
+                            value: 'app_drivers'
+                        }
+                    ]
+                })
+            ];
+
+
+
+            var ciView = utils.addWidget(CIView, {
+                viewStyle: 'padding:0px;',
+                options: {
+                    groupOrder: {
+                        'General': 0,
+                        'Advanced': 1,
+                        'Description': 2
+                    }
+                },
+                cis: CIS
+            }, this, wizard, true, null, [WizardPaneBase]);
+            ciView.initWithCIS(CIS);
+
+
+
+            dialog.show();
+
+
+
+
+
+
+        },
+        createAceTerminal: function () {
+            return;
+
+
+            var where = this.ctx.mainView.bottomTabContainer;
+
+            if (this.lastPane) {
+                //utils.destroyWidget(this.lastPane);
+                where.removeChild(this.lastPane);
+            }
+
+            var pane = factory.createPane('nada', 'nada', where);
+            this.lastPane = pane;
+
+            //console.log(term);
+
+
+
+            /*
+             var _k = ace.require("ace/lib/keys");
+             console.log('_keys ',_k);*/
+
+            var _boot = require(['./ace/term'], function (term) {
+                console.log('terminal', term);
+
+                var aceterm;
+                aceterm = term.createEditor(null, "ace/theme/idle_fingers");
+                aceterm.container.style.position = "absolute";
+                aceterm.container.style.left = "0px";
+                aceterm.container.style.right = "0px";
+                aceterm.container.style.top = "0px";
+                aceterm.container.style.bottom = "0px";
+
+                pane.containerNode.appendChild(aceterm.container);
+                var session = aceterm.session;
+
+
+                var terminal = new term.aceTerm(0, 0, function () {
+
+                    console.log('asdfasdf');
+
+                });
+
+                session.term = terminal;
+
+                session.setValue('asdfasdf');
+
+
+            });
+
+
+            /*
+             var aceTerm = ace.require("./ace/term");
+             console.log('aceTerm',aceTerm);
+             */
+
+
+            /*
+             var require = ace.require;
+             var dom = require("ace/lib/dom");
+             var Range = require("ace/range").Range;
+             var AceEditor = require("ace/editor").Editor;
+             var EditSession = require("ace/edit_session").EditSession;
+             var VirtualRenderer = require("ace/virtual_renderer").VirtualRenderer;*/
+
+
+            /*
+             var Range = require("ace/range").Range;
+             var AceEditor = require("ace/editor").Editor;
+             var EditSession = require("ace/edit_session").EditSession;
+             var VirtualRenderer = require("ace/virtual_renderer").VirtualRenderer;
+             */
+
+
+            /*
+             var parent = view.bottomTabContainer,
+             view;
+             try{
+             view=utils.addWidget(LogView,{
+             delegate:this,
+             store:logManager.store,
+             title:'Log',
+             closable:false,
+             style:'padding:0px',
+             className:'ui-widget-content logGridView',
+             showSource:true,
+             silent:true
+             },this,parent,true);
+             }catch(e){
+             console.error(e);
+             }
+             */
+        }
+    });
+});
+</pre>
+    </article>
+</section>
+
+
+
+
+
+		</div>
+	</div>
+
+	<div class="clearfix"></div>
+
+	
+
+</div>
+</div>
+
+<div class="modal fade" id="searchResults">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title">Search results</h4>
+      </div>
+      <div class="modal-body"></div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div>
+
+<footer>
+
+
+<span class="jsdoc-message">
+	Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.0</a>
+	
+		on 2016-06-02T17:42:36+02:00
+	
+	using the <a href="https://github.com/docstrap/docstrap">DocStrap template</a>.
+</span>
+</footer>
+
+<script src="scripts/docstrap.lib.js"></script>
+<script src="scripts/toc.js"></script>
+<script type="text/javascript" src="scripts/fulltext-search-ui.js"></script>
+
+<script>
+$( function () {
+	$( "[id*='$']" ).each( function () {
+		var $this = $( this );
+
+		$this.attr( "id", $this.attr( "id" ).replace( "$", "__" ) );
+	} );
+
+	$( ".tutorial-section pre, .readme-section pre" ).each( function () {
+		var $this = $( this );
+
+		var example = $this.find( "code" );
+		exampleText = example.html();
+		var lang = /{@lang (.*?)}/.exec( exampleText );
+		if ( lang && lang[1] ) {
+			exampleText = exampleText.replace( lang[0], "" );
+			example.html( exampleText );
+			lang = lang[1];
+		} else {
+			var langClassMatch = example.parent()[0].className.match(/lang\-(\S+)/);
+			lang = langClassMatch ? langClassMatch[1] : "javascript";
+		}
+
+		if ( lang ) {
+
+			$this
+			.addClass( "sunlight-highlight-" + lang )
+			.addClass( "linenums" )
+			.html( example.html() );
+
+		}
+	} );
+
+	Sunlight.highlightAll( {
+		lineNumbers : true,
+		showMenu : true,
+		enableDoclinks : true
+	} );
+
+	$.catchAnchorLinks( {
+        navbarOffset: 10
+	} );
+	$( "#toc" ).toc( {
+		anchorName  : function ( i, heading, prefix ) {
+			var id = $( heading ).attr( "id" );
+			return id && id.replace(/\~/g, '-inner-').replace(/\./g, '-static-') || ( prefix + i );
+		},
+		selectors   : "#toc-content h1,#toc-content h2,#toc-content h3,#toc-content h4",
+		showAndHide : false,
+		smoothScrolling: true
+	} );
+
+	$( "#main span[id^='toc']" ).addClass( "toc-shim" );
+	$( '.dropdown-toggle' ).dropdown();
+
+    $( "table" ).each( function () {
+      var $this = $( this );
+      $this.addClass('table');
+    } );
+
+} );
+</script>
+
+
+
+<!--Navigation and Symbol Display-->
+
+
+<!--Google Analytics-->
+
+
+<script type="text/javascript">
+	$(document).ready(function() {
+		SearcherDisplay.init();
+	});
+</script>
+
+</body>
+</html>

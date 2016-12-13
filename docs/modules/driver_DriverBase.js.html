@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width">
+	<title>Documentation Source: driver/DriverBase.js</title>
+
+	<!--[if lt IE 9]>
+	<script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+	<![endif]-->
+	<link type="text/css" rel="stylesheet" href="styles/sunlight.default.css">
+
+	<link type="text/css" rel="stylesheet" href="styles/site.simplex.css">
+	<link type="text/css" rel="stylesheet" href="styles/override.css">
+	<link type="text/css" rel="stylesheet" href="styles/theme.css">
+
+</head>
+
+<body>
+
+<div class="navbar navbar-default navbar-fixed-top navbar-inverse">
+<div class="container">
+	<div class="navbar-header">
+		<a class="navbar-brand" href="index.html">Documentation</a>
+		<button class="navbar-toggle" type="button" data-toggle="collapse" data-target="#topNavigation">
+			<span class="icon-bar"></span>
+			<span class="icon-bar"></span>
+			<span class="icon-bar"></span>
+        </button>
+	</div>
+	<div class="navbar-collapse collapse" id="topNavigation">
+		<ul class="nav navbar-nav">
+			
+			<li class="dropdown">
+				<a href="modules.list.html" class="dropdown-toggle" data-toggle="dropdown">Modules<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="module-xcf_driver_DriverBase.html">xcf/driver/DriverBase</a></li><li><a href="module-xcf_manager_BeanManager.html">xcf/manager/BeanManager</a></li><li><a href="module-xcf_manager_DeviceManager.html">xcf/manager/DeviceManager</a></li><li><a href="module-xcf_manager_DeviceManager_DeviceServer.html">xcf/manager/DeviceManager_DeviceServer</a></li><li><a href="module-xide_manager_DeviceManager.html">xide/manager/DeviceManager</a></li>
+				</ul>
+			</li>
+			
+			<li class="dropdown">
+				<a href="classes.list.html" class="dropdown-toggle" data-toggle="dropdown">Classes<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="module-xcf.driver.DriverBase.html">xcf.driver.DriverBase</a></li><li><a href="module-xcf.manager.DeviceManager_DeviceServer.html">xcf.manager.DeviceManager_DeviceServer</a></li><li><a href="module-xcf_manager_Context.html">xcf/manager/Context</a></li>
+				</ul>
+			</li>
+			
+			<li class="dropdown">
+				<a href="global.html" class="dropdown-toggle" data-toggle="dropdown">Global<b class="caret"></b></a>
+				<ul class="dropdown-menu ">
+					<li><a href="global.html#addDeviceInstance">addDeviceInstance</a></li><li><a href="global.html#appScope">appScope</a></li><li><a href="global.html#beanIconClass">beanIconClass</a></li><li><a href="global.html#completeDriver">completeDriver</a></li><li><a href="global.html#createDriverInstance">createDriverInstance</a></li><li><a href="global.html#createLeftView">createLeftView</a></li><li><a href="global.html#createRightView">createRightView</a></li><li><a href="global.html#defaultScope">defaultScope</a></li><li><a href="global.html#driverScopes">driverScopes</a></li><li><a href="global.html#editDriver">editDriver</a></li><li><a href="global.html#groupType">groupType</a></li><li><a href="global.html#insertIfMatch">insertIfMatch</a></li><li><a href="global.html#itemMetaPath">itemMetaPath</a></li><li><a href="global.html#itemMetaStorePath">itemMetaStorePath</a></li><li><a href="global.html#itemMetaTitleField">itemMetaTitleField</a></li><li><a href="global.html#itemType">itemType</a></li><li><a href="global.html#match">match</a></li><li><a href="global.html#newGroup">newGroup</a></li><li><a href="global.html#newItem">newItem</a></li><li><a href="global.html#nodeValuePath">nodeValuePath</a></li><li><a href="global.html#nodeValueTransform">nodeValueTransform</a></li><li><a href="global.html#onCreateVariableCI">onCreateVariableCI</a></li><li><a href="global.html#onDeviceMessage">onDeviceMessage</a></li><li><a href="global.html#onDeviceReady">onDeviceReady</a></li><li><a href="global.html#onMainViewReady">onMainViewReady</a></li><li><a href="global.html#onNewDriverScopeCreated">onNewDriverScopeCreated</a></li><li><a href="global.html#onReloaded">onReloaded</a></li><li><a href="global.html#onStoreReady">onStoreReady</a></li><li><a href="global.html#onWidgetReady">onWidgetReady</a></li><li><a href="global.html#registerEditorExtensions">registerEditorExtensions</a></li><li><a href="global.html#replaceWith">replaceWith</a></li><li><a href="global.html#setScriptFunctions">setScriptFunctions</a></li><li><a href="global.html#start">start</a></li><li><a href="global.html#systemScope">systemScope</a></li><li><a href="global.html#toPreferenceId">toPreferenceId</a></li><li><a href="global.html#updateItemMetaData">updateItemMetaData</a></li><li><a href="global.html#userScope">userScope</a></li><li><a href="global.html#variables">variables</a></li>
+				</ul>
+			</li>
+			
+		</ul>
+		<div class="col-sm-3 col-md-3">
+            <form class="navbar-form" role="search">
+                <div class="input-group">
+                    <input type="text" class="form-control" placeholder="Search" name="q" id="search-input">
+                    <div class="input-group-btn">
+                        <button class="btn btn-default" id="search-submit"><i class="glyphicon glyphicon-search"></i></button>
+                    </div>
+                </div>
+            </form>
+        </div>
+	</div>
+
+</div>
+</div>
+
+
+<div class="container" id="toc-content">
+<div class="row">
+
+	
+	<div class="col-md-12">
+	
+		<div id="main">
+			
+
+		<h1 class="page-title">Source: driver/DriverBase.js</h1>
+    
+<section>
+    <article>
+        <pre
+            class="sunlight-highlight-javascript linenums">/** @module xcf/driver/DriverBase **/
+define(["dcl/dcl"], function (dcl) {
+    var _debug = false;
+
+    /**
+     * Driver Base Class
+     *
+     * Please read {@link module:xide/types}
+     *
+     * Online docs: http://rawgit.com/mc007/xcfnode/tree/master/out
+     *
+     * @class module:xcf.driver.DriverBase
+     */
+    return dcl(null, {
+        declaredClass:'system_drivers/DriverBase',
+        /**
+         * The information about the device in this structure:
+         * @example
+         * {
+         *   driver:"Marantz/MyMarantz.js",
+         *   host:"102.123.23.23"
+         *   port:23,
+         *   protocol:"tcp"
+         *   scope:"system_drivers"
+         * }
+         *
+         * @type {object}
+         */
+        options: null,
+        /**
+         * The information about the driver it self
+         * @example
+         * {
+         *   name:"My Marantz",
+         *   path:"Marantz/My Marantz.meta.json"
+         * }
+         *
+         * @private
+         * @type {object}
+         */
+        storeItem: null,
+        /**
+         * The xBlox scope object for this driver. It contains all commands, variables and settings. You can blocks
+         * through here
+         * @private
+         * @access private
+         */
+        blockScope: null,
+        /**
+         * Our delegate is in charge to send messages
+         * @private
+         * @access private
+         */
+        delegate: null,
+        /**
+         * @type {string}
+         * @default \r
+         */
+        lineBreak: '\r',
+        // (optional, but recommended) name your class:
+        // constructor is a method named ... 'constructor'
+        constructor: function (name) {},
+        /**
+         * sendSettings contains the constants for receiving and sending data to a device
+         * its being set at initialization time and has this structure:
+         * @example
+         {
+             constants:{
+                 end:'\r',
+                 start:'',
+             },
+             send:{
+                 interval:500,
+                 mode:true|false,    //true=onReply | false=Interval
+                 onReply:'\n',
+                 timeout:500
+             }
+         }
+         * @type {object}
+         */
+        sendSettings: null,
+        /**
+         * responseSettings contains the constants for receiving data from a device
+         * its being set at initialization time and has this structure:
+         * @example
+         {
+                start:false,
+                startString:''
+                cTypeByte:false,        //construction type 'Per Byte'
+                cTypePacket:false,      //construction type 'Per Packet'
+                cTypeDelimiter:true,    //construction type 'Per Delimiter'
+                cTypeCount:false,       //construction type 'Per Count'
+                delimiter:'',           //the delimiter
+                count:10                //packet count
+         }
+         * @type {object}
+         */
+        responseSettings: null,
+        /**
+         * currently outgoing message queue
+         * @private
+         * @type {message[]}
+         */
+        outgoing: null,
+        /**
+         * currently incoming message queue
+         * @private
+         * @type {message[]}
+         */
+        incoming: null,
+        // reference to a Javascript timer object, used for sending outgoing messages. private!
+        /**
+         * @private
+         */
+        queueTimer: null,
+        /**
+         * private!in case processOutgoing is busy
+         * @private
+         */
+        busy: false,
+        /**
+         * Method to add a logging message.
+         *
+         * @param level {string} This can be error, warning, info, trace or custom
+         * @param type {string} An additional string, by default this is set to "Device"
+         * @param message {string} The message it self
+         * @param data {object} An optional object/data you want to include
+         *
+         * @example
+         *
+         // for instance you want to log any incoming message in a custom way, you need to overwrite 'sendMessage' in
+         // your base class like this:
+
+         onMessage: function (data) {
+
+                this.log('info', 'my marantz', 'Marantz Driver Message: ' + data.message, {
+                    some: 'extra',
+                    message: data
+                });
+
+                this.inherited(arguments); //important, call BaseDriver::onMessage!
+            }
+         *
+         */
+        log: function (level, type, message, data) {
+
+            return this.inherited(arguments);
+
+        },
+        /**
+         * Callback when we got changed by an external editor or the IDE.
+         * @private
+         */
+        onReloaded: function (evt) {},
+        /***
+         * Unescape string from line breaks
+         * @param str
+         * @returns {*}
+         */
+        unescape: function (str) {
+            try {
+                if (str) {
+                    return JSON.parse('"' + str + '"');
+                }
+            }catch(e){
+
+            }
+            return str;
+        },
+        /**
+         * Surround command with 'start' and 'end' constant, specified in the command settings
+         * of the driver.
+         * @param msg
+         * @returns {*|string|String}
+         */
+        prepareMessage: function (msg) {
+
+            // add 'start'
+            if (this.sendSettings.constants.start) {
+                msg = this.sendSettings.constants.start + msg;
+            }
+
+            // add 'end'
+            if (this.sendSettings.constants.end) {
+                var _t = this.sendSettings.constants.end.split('\\n').join('\n');
+                if (_t) {
+                    _t = _t.split('\\r').join('\r');
+                }
+                msg += _t;
+            }
+
+            var _m = msg.split('\\n').join('\n');
+            if (_m) {
+                _m = _m.split('\\r').join('\r');
+            }
+            return _m;
+        },
+        /***
+         * Process outgoing sends last message from this.outgoing
+         * @param force
+         */
+        processOutgoing: function (force) {
+
+            if(force==true){
+                this.busy=false;
+            }
+
+            //locked?
+            if (this.busy) {
+                return;
+            }
+            this.busy = true;
+
+            var thiz = this;
+            if (!this.outgoing) {
+                this.outgoing = [];
+            }
+
+            //send via interval
+            if (!this.sendSettings.send.mode &amp;&amp; this.sendSettings.send.interval > 0) {
+                //prepare timer if not already
+                this.queueTimer = this.queueTimer || setInterval(function () {
+                        thiz.busy = false;//reset lock
+                        thiz.processOutgoing();
+                    }, this.sendSettings.send.interval);
+            }
+
+            var messageToSend = this.outgoing[0];//pick the first
+
+            //now finally send it out
+            if (messageToSend) {
+
+                messageToSend.msg = this.prepareMessage(messageToSend.msg);
+
+                //send via interval mode
+                if(!this.sendSettings.send.mode){
+                    try {
+                        if (thiz.delegate &amp;&amp; thiz.delegate.sendDeviceCommand) {
+                            thiz.delegate.sendDeviceCommand(thiz, messageToSend.msg,messageToSend.src,messageToSend.id);
+                        } else {
+                            console.error('have no delegate');
+                        }
+                    } catch (e) {
+                        console.error('error sending message : '+ e.message);
+                    }
+                    //remove from out going
+                    thiz.outgoing.remove(messageToSend);
+                }else{
+
+                    //send via onReply mode
+
+                    //special case, first command &amp;&amp; nothing received yet:
+                    if(this.incoming==null || force==true){
+                        try {
+
+                            if (thiz.delegate &amp;&amp; thiz.delegate.sendDeviceCommand) {
+                                thiz.delegate.sendDeviceCommand(thiz, messageToSend.msg,messageToSend.src,messageToSend.id);
+                            } else {
+                                console.error('have no delegate');
+                            }
+                        } catch (e) {
+                            console.error('error sending message : ' + e.message);
+                        }
+                        //remove from out going
+                        thiz.outgoing.remove(messageToSend);
+                        thiz.busy = false;//reset lock
+                    }
+                }
+            }
+        },
+        /**
+         * Send message send a string to the device. Basing on the send settings this message will be queued or send
+         * on reply.
+         * @param msg {string} the string to send
+         * @param now {string} force sending now!
+         * @param src {string} the id of the source block
+         * @param id {string} the id of the send job
+         */
+        sendMessage: function (msg, now,src,id) {
+
+            if (!this.sendSettings) {
+                console.error('have no send settings');
+                return;
+            }
+
+            //check we have a queue array
+            if (!this.outgoing) {
+                this.outgoing = [];
+            }
+            /**
+             * if this.sendSettings.send.mode == false, its sending via 'interval', if true its on 'reply'
+             */
+            if (now !== false) {
+
+                var _interval = parseInt(this.sendSettings.send.interval) || 0;
+
+                //we send per interval
+                if (!this.sendSettings.send.mode &amp;&amp; _interval > 0) {
+
+                    //add it to the queue
+                    this.outgoing.push({
+                        msg: msg,
+                        src:src,
+                        id:id
+                    });
+
+                    //trigger outgoing
+                    this.processOutgoing();
+
+                }else if (!_interval) {//we se
+
+                    if (this.delegate &amp;&amp; this.delegate.sendDeviceCommand) {
+                        return this.delegate.sendDeviceCommand(this, msg,src,id);
+                    } else {
+                        console.error('have no delegate');
+                    }
+                }
+                //we send on reply
+                else if (this.sendSettings.send.mode) {
+
+
+                    //add it to the queue
+                    this.outgoing.push({
+                        msg: msg,
+                        src:src,
+                        id:id
+                    });
+
+                    //trigger outgoing
+                    this.processOutgoing();
+
+                    return;
+                }
+
+                return;
+            }
+
+            //we send directly
+            if (this.delegate &amp;&amp; this.delegate.sendDeviceCommand) {
+                return this.delegate.sendDeviceCommand(this, msg,src,id);
+            } else {
+                console.error('have no delegate');
+            }
+
+            return false;
+        },
+        /**
+         * Deal with Javascript special characters, indexOf("\n") fails otherwise
+         * @returns {string}
+         */
+        getLineBreakSend: function () {
+            if (!this.sendSettings) {
+                return '';
+            }
+            var lineBreak = '' + this.sendSettings.constants.end;
+            var lb = JSON.parse('"' + lineBreak + '"');
+            return lb || '\r';
+        },
+        /**
+         * Deal with Javascript special characters, indexOf("\n") fails otherwise
+         * @returns {string}
+         */
+        getLineBreak: function () {
+            if (!this.responseSettings || !this.responseSettings.cTypeDelimiter) {
+                return '';
+            }
+            var lineBreak = '' + this.responseSettings.delimiter;
+            var lb = JSON.parse('"' + lineBreak + '"');
+
+            return lb || '\r';
+        },
+        /**
+         * Splits a message string from the device server into an array of messages. Its using 'responseSettings'
+         * @param str
+         * @returns {string[]}
+         */
+        split: function (str) {
+
+            if (!this.responseSettings || !this.getLineBreak()) {
+                return [str];
+            }
+            if (this.responseSettings.cTypeDelimiter) {
+                var lineBreak = this.getLineBreak();
+                var has = str.indexOf(lineBreak);
+                if (has != -1) {
+                    var _split = str.split(lineBreak);
+                    return _split;
+                }
+                return [str];
+            }
+            return [str];
+        },
+        /////////////////////////////////////////////////////////////////////////////////////
+        //
+        //  Utils
+        //
+        /////////////////////////////////////////////////////////////////////////////////////
+
+        /**
+         * Return true if we have message
+         * @private
+         * @returns {boolean}
+         */
+        hasMessages: function () {
+            return this.outgoing &amp;&amp; this.outgoing.length > 0;
+        },
+        /**
+         * Standard callback when we have a message from the device we're bound to (specified in profile).
+         * 1. put the message in the incoming queue, tag it as 'unread'
+         * 2. in case we have messages to send and we are in 'onReply' mode, trigger outgoing queue
+         *
+         * @param data {Object} : Message Struct build by the device manager
+         * @param data.device {Object} : Device info
+         * @param data.device.host {String} : The host
+         * @param data.device.port {String} : The host's port
+         * @param data.device.protocol {String} : The host's protocol
+
+         * @param data.message {String} : RAW message, untreated
+         *
+         * @example
+
+         // for instance you might update the "Volume" Variable within onMessage:
+         onMessage:function(data){
+
+                    var value = data.message;
+                    var volume = 0;
+                    if (value.indexOf('MV') != -1 &amp;&amp; value.indexOf('MVMAX') == -1) {
+                        var _volume = value.substring(2, value.length);
+                        _volume = parseInt(_volume.substring(0, 2));
+                        if (!isNaN(_volume)) {
+                            this.setVariable('Volume', _volume);
+                            volume = _volume;
+                        }
+                    }
+
+                    // do something else with volume:
+                    this.log('info',null,'Did update volume to ' + volume);
+
+                    //important, call BaseDriver::onMessage!
+                    this.inherited(arguments);
+
+                }
+         */
+        onMessage: function (data) {
+
+            //track message
+            this.incoming = data;
+
+            //we're in 'onReply' mode
+            if (this.sendSettings &amp;&amp; this.sendSettings.send.mode) {
+
+                var _onReplyString = '' + this.unescape(this.sendSettings.send.onReply);
+                var _messageString = '' + this.unescape(data.message);
+                if (!this.sendSettings.send.onReply || _onReplyString ===_messageString) {
+                    this.processOutgoing(true);
+                }
+            }
+        },
+        /***
+         * Standard callback when we have a feedback message from any device. The message data contains
+         * all needed info like which device, the response, etc...
+         * @param msg
+         */
+        onBroadcastMessage: function (msg) {},
+        /**
+         * Main entry when this instance is started
+         * @returns {boolean}
+         */
+        start: function () {
+            this.outgoing = [];
+            return true;
+        },
+        /**
+         * Set a variable's value
+         * @param title {string} the name of the variable
+         * @param value {string} the new value
+         */
+        setVariable:function(title,value){},
+        /**
+         * Return a variable's value
+         * @param title {string} the name of the variable
+         * @returns {string} the value of the variable
+         */
+        getVariable:function(title){
+            return "";
+        }
+    });
+});
+</pre>
+    </article>
+</section>
+
+
+
+
+
+		</div>
+	</div>
+
+	<div class="clearfix"></div>
+
+	
+
+</div>
+</div>
+
+<div class="modal fade" id="searchResults">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title">Search results</h4>
+      </div>
+      <div class="modal-body"></div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+    </div><!-- /.modal-content -->
+  </div><!-- /.modal-dialog -->
+</div>
+
+<footer>
+
+
+<span class="jsdoc-message">
+	Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.0</a>
+	
+		on 2016-06-02T17:42:36+02:00
+	
+	using the <a href="https://github.com/docstrap/docstrap">DocStrap template</a>.
+</span>
+</footer>
+
+<script src="scripts/docstrap.lib.js"></script>
+<script src="scripts/toc.js"></script>
+<script type="text/javascript" src="scripts/fulltext-search-ui.js"></script>
+
+<script>
+$( function () {
+	$( "[id*='$']" ).each( function () {
+		var $this = $( this );
+
+		$this.attr( "id", $this.attr( "id" ).replace( "$", "__" ) );
+	} );
+
+	$( ".tutorial-section pre, .readme-section pre" ).each( function () {
+		var $this = $( this );
+
+		var example = $this.find( "code" );
+		exampleText = example.html();
+		var lang = /{@lang (.*?)}/.exec( exampleText );
+		if ( lang && lang[1] ) {
+			exampleText = exampleText.replace( lang[0], "" );
+			example.html( exampleText );
+			lang = lang[1];
+		} else {
+			var langClassMatch = example.parent()[0].className.match(/lang\-(\S+)/);
+			lang = langClassMatch ? langClassMatch[1] : "javascript";
+		}
+
+		if ( lang ) {
+
+			$this
+			.addClass( "sunlight-highlight-" + lang )
+			.addClass( "linenums" )
+			.html( example.html() );
+
+		}
+	} );
+
+	Sunlight.highlightAll( {
+		lineNumbers : true,
+		showMenu : true,
+		enableDoclinks : true
+	} );
+
+	$.catchAnchorLinks( {
+        navbarOffset: 10
+	} );
+	$( "#toc" ).toc( {
+		anchorName  : function ( i, heading, prefix ) {
+			var id = $( heading ).attr( "id" );
+			return id && id.replace(/\~/g, '-inner-').replace(/\./g, '-static-') || ( prefix + i );
+		},
+		selectors   : "#toc-content h1,#toc-content h2,#toc-content h3,#toc-content h4",
+		showAndHide : false,
+		smoothScrolling: true
+	} );
+
+	$( "#main span[id^='toc']" ).addClass( "toc-shim" );
+	$( '.dropdown-toggle' ).dropdown();
+
+    $( "table" ).each( function () {
+      var $this = $( this );
+      $this.addClass('table');
+    } );
+
+} );
+</script>
+
+
+
+<!--Navigation and Symbol Display-->
+
+
+<!--Google Analytics-->
+
+
+<script type="text/javascript">
+	$(document).ready(function() {
+		SearcherDisplay.init();
+	});
+</script>
+
+</body>
+</html>

@@ -1,0 +1,82 @@
+<div id="main"  class="xasMain dTuned  %BODY_PREFIX%" data-dojo-type="dijit/layout/BorderContainer" data-dojo-props='design:"headline", liveSplitters:false,
+		style:"border: 0px solid black;"'>
+
+    <script type="dojo/method">
+			this._splitterClass = "dojox.layout.ToggleSplitter";
+    </script>
+
+    <div data-dojo-type="dijit.layout.AccordionContainer" data-dojo-props="region:'leading', splitter:true, minSize:20" style="padding-left:0px;width: 320px;" id="settingsRoot" tabIndex="-1" splitter="true" toggleSplitterCollapsedSize="20px" region="left" toggleSplitterState="full"></div>
+    <div class="topMainTabs" data-dojo-type="dijit.layout.TabContainer" data-dojo-props="region:'center', tabStrip:true" id="topTabs" style="padding-left:0px;min-width:400px;width:55%;height:600px" splitter="true">
+
+        <div class="welcomePane ui-state-active" data-dojo-type="dijit/layout/ContentPane" data-dojo-props='minSize:400,splitter:true, region:"center",style:"background-color: #fff; padding:8px;"' title="Welcome">
+            <h1 >
+                This is a beta release. Please drop us a message to support@xapp-studio.com.
+            </h1>
+
+            <h2>Keyboard </h2>
+            <ul>
+                <li><strong>F2</strong> : Rename</li>
+                <li><strong>CTRL/CMD + ENTER</strong> : Open selection in main window</li>
+                <li><strong>F5</strong> : Copy (If main window is open, the destination is set automatically)</li>
+                <li><strong>F6</strong> : Move</li>
+                <li><strong>F7</strong> : Delete</li>
+                <li><strong>BACKSPACE</strong> (Firefox) : Go back in history</li>
+                <li><strong>SHIFT + BACKSPACE</strong> (Chrome) : Go back in history</li>
+                <li><strong>DEL</strong> : Delete selection</li>
+                <li><strong>CTRL+W</strong> (Firefox) : Close last window</li>
+                <li><strong>SHIFT+W</strong> (Chrome) : Close last window</li>
+                <li><strong>SHIFT+UP/DOWN</strong> : Multi-Selection</li>
+                <li><strong>CTRL+A</strong> : Select all</li>
+                <li><strong>CTRL+C</strong> : Copy selection to clipboard</li>
+                <li><strong>CTRL+X</strong> : Cut selection to clipboard</li>
+                <li><strong>CTRL+V</strong> : Paste selection</li>
+            </ul>
+
+            <h2>Drag'n Drop </h2>
+            <ul>
+                <li>CTRL                : Enable copy modus</li>
+            </ul>
+
+            <h2>Mouse </h2>
+            <ul>
+                <li>Right-Click         : Open context menu</li>
+            </ul>
+
+            <h2>How to Upload</h2>
+            <ul>
+                <li>Simply drag files from your file manager into the file panel</li>
+                <li>Only files are allowed! Not folders!</li>
+            </ul>
+
+            <h2>Soon</h2>
+            <ul>
+                <li>Lots of improvements !</li>
+                <li>Lots of editors !</li>
+                <li>Better keyboard handling for Chrome and IE</li>
+            </ul>
+
+        </div>
+    </div>
+
+    <div class="bottomTab"  dojoType="dijit.layout.TabContainer" attachParent="true" tabPosition="bottom" tabStrip="true" id="bottomTabs" splitter="true" region="bottom" toggleSplitterFullSize="150px" toggleSplitterCollapsedSize="100px" toggleSplitterState="close">
+        <div id="bottomTabLog" class="bottomTabLog" dojoType="dijit.layout.ContentPane" title="Log" style="padding:0;background-color: transparent;">
+        </div>
+        <!--div class="bottomTabHelp" dojoType="dijit.layout.ContentPane" title="Help" style="background-color: transparent;">
+            <span style="color:white">Help Panel : Soon</span>
+        </div-->
+    </div>
+
+</div>
+<div id="lightbox" dojoType="dojox.image.LightboxDialog" group="flickrStore"></div>
+
+<div dojoType="xfile.widgets.Toaster" id="errorToast"
+     positionDirection="br-left" duration="0"
+     messageTopic="errorMessageTopic"></div>
+
+<div dojoType="dojox.widget.Toaster" id="statusToast"
+     positionDirection="br-left" duration="0"
+     messageTopic="statusMessageTopic"></div>
+
+<script type="text/javascript" src="./administrator/components/com_xappcommander/client/xfile/dojo/dojo.js"></script>
+<!-- Run main-->
+<script type="text/javascript" src="./administrator/components/com_xappcommander/client/xfile/xjoomla/run.js"></script>
