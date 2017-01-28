@@ -1,2 +1,0 @@
-Speakers (High Definition Audio ($1,$ffff)
-Speakers (USB Sound Device      ($ffff,$ffff)

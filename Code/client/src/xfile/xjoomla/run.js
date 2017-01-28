@@ -1,4 +1,0 @@
-//>>built
-require({packages:["dojo","dijit","dojox",{name:"xapp",location:"xapp",packageMap:{}},{name:"xas",location:"xas",packageMap:{}},{name:"xjoomla",location:"xjoomla",packageMap:{}},{name:"cbtree",location:"cbtree",packageMap:{}},{name:"xappconnect",location:"xappconnect",packageMap:{}},{name:"xcms",location:"xcms",packageMap:{}},{name:"dgrid",location:"dgrid",packageMap:{}},{name:"put-selector",location:"put-selector",packageMap:{}},{name:"xstyle",location:"xstyle",packageMap:{}},{name:"xfile",location:"xfile",
-packageMap:{}},"xjoomla"],cache:{}},["xjoomla"]);
-//@ sourceMappingURL=run.js.map
