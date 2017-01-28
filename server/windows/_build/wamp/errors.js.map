@@ -1,0 +1,1 @@
+{"version":3,"file":"errors.js","sourceRoot":"","sources":["../../src/wamp/errors.ts"],"names":[],"mappings":";AAAA,MAAM,MAAM,GAAG;IACd,OAAO,EAAE,8BAA8B;IACvC,OAAO,EAAE,4BAA4B;IACrC,KAAK,EAAE,0BAA0B;IACjC,SAAS,EAAE,8BAA8B;IACzC,QAAQ,EAAE,qCAAqC;IAC/C,UAAU,EAAE,iCAAiC;IAC7C,GAAG,EAAE,wBAAwB;CAC7B,CAAC;;AAEF,kBAAe,MAAM,CAAC"}
