@@ -495,9 +495,10 @@ define('deliteful/Accordion',[
 		},
 
 		_setupNonUpgradedChild: function (panel) {
+			var attachListener;
 			panel.accordion = this;
-			panel.addEventListener("customelement-attached", this._attachedlistener = function () {
-				this.removeEventListener("customelement-attached", this.accordion._attachedlistener);
+			panel.addEventListener("customelement-attached", attachListener = function () {
+				this.removeEventListener("customelement-attached", attachListener);
 				this.accordion._panelList.push(this.accordion._setupUpgradedChild(this));
 			}.bind(panel));
 		},
@@ -818,18 +819,18 @@ define('deliteful/Accordion',[
 			this.activatePanel(focusedHeader.panel);
 		},
 
-		_lastFocusedDescendant: null,
-
 		focus: function () {
-			this._lastFocusedDescendant ? this.navigateTo(this._lastFocusedDescendant) : this.navigateToFirst();
-		},
+			// Navigate to the header for the first open panel, or if no open panels, then the first header.
+			var header = this.children[0];
+			for (var i = 0; i < this.children.length; i++) {
+				if (this.children[i].open) {
+					header = this.children[i];
+					break;
+				}
+			}
 
-		_keynavDeactivatedHandler: dcl.superCall(function (sup) {
-			return function () {
-				this._lastFocusedDescendant = this.navigatedDescendant;
-				sup.call(this);
-			};
-		})
+			this.navigateTo(header);
+		}
 	});
 });
 ;
@@ -3701,7 +3702,7 @@ Data.prototype = {
 		if ( key !== undefined ) {
 
 			// Support array or space separated string of keys
-			if ( jQuery.isArray( key ) ) {
+			if ( Array.isArray( key ) ) {
 
 				// If key is an array of keys...
 				// We always set camelCase keys, so remove that.
@@ -3964,11 +3965,11 @@ jQuery.extend = jQuery.fn.extend = function() {
 
 				// Recurse if we're merging plain objects or arrays
 				if ( deep && copy && ( jQuery.isPlainObject( copy ) ||
-					( copyIsArray = jQuery.isArray( copy ) ) ) ) {
+					( copyIsArray = Array.isArray( copy ) ) ) ) {
 
 					if ( copyIsArray ) {
 						copyIsArray = false;
-						clone = src && jQuery.isArray( src ) ? src : [];
+						clone = src && Array.isArray( src ) ? src : [];
 
 					} else {
 						clone = src && jQuery.isPlainObject( src ) ? src : {};
@@ -4006,8 +4007,6 @@ jQuery.extend( {
 	isFunction: function( obj ) {
 		return jQuery.type( obj ) === "function";
 	},
-
-	isArray: Array.isArray,
 
 	isWindow: function( obj ) {
 		return obj != null && obj === obj.window;
@@ -4495,10 +4494,12 @@ define('delite/handlebars!deliteful/Accordion/AccordionHeader/AccordionHeader.ht
 });;
 /** @module deliteful/Accordion/AccordionHeader */
 define('deliteful/Accordion/AccordionHeader',[
+	"delite/a11y",
 	"delite/register",
 	"delite/Widget",
 	"delite/handlebars!./AccordionHeader/AccordionHeader.html"
 ], function (
+	a11y,
 	register,
 	Widget,
 	template
@@ -4543,34 +4544,271 @@ define('deliteful/Accordion/AccordionHeader',[
 		 */
 		closedIconClass: "",
 
+		/**
+		 * Corresponding panel.
+		 * @member {delite/Widget}
+		 */
+		panel: null,
+
 		template: template,
 
 		createdCallback: function () {
-			this.on("delite-activated", function () {
-				this.activatedHandler();
-			}.bind(this));
-			this.on("delite-deactivated", function () {
-				this.deactivatedHandler();
-			}.bind(this));
+			this.on("focusin", this.focusinHandler.bind(this));
+			this.on("focusout", this.focusoutHandler.bind(this));
+			this.on("keydown", this.keydownHandler.bind(this));
 		},
 
-		// Handling for when there are fields inside the header that can be focused.
-		// The template must set tabindex=-1 on all
-		// fields inside the header, in addition to the header itself.
-		activatedHandler: function () {
-			// Set all the tabindexes to 0 so that user can tab around fields in the header.
-			Array.prototype.forEach.call(this.querySelectorAll("[tabindex]"), function (node) {
-				node.tabIndex = 0;
-			});
+		refreshRendering: function (oldVals) {
+			if ("panel" in oldVals) {
+				this.panel.on("focusin", this.focusinHandler.bind(this));
+				this.panel.on("focusout", this.focusoutHandler.bind(this));
+			}
 		},
 
-		deactivatedHandler: function () {
-			// Set all the tabindexes to -1 so that tabbing doesn't hit unselected headers.
-			Array.prototype.forEach.call(this.querySelectorAll("[tabindex]"), function (node) {
-				node.tabIndex = -1;
-			});
+		/**
+		 * Handler for when header or related panel gets a focus event.
+		 * @param evt
+		 */
+		focusinHandler: function (evt) {
+			if (evt.target === this || this.panel.contains(evt.target)) {
+				// If the AccordionHeader itself is focused, or if the panel is focused,
+				// then set tabIndex=0 so that tab and shift-tab work correctly.
+				this.tabIndex = 0;
+
+				// Handling for when there are fields inside the header that can be tab navigated.
+				// Set all the tabindexes to 0 so that user can tab around fields in the header.
+				Array.prototype.forEach.call(this.querySelectorAll("[tabindex]"), function (node) {
+					node.tabIndex = 0;
+				});
+			} else {
+				// If my descendant gets focus, remove my tabIndex to
+				// avoid Safari and Firefox problems with nested focusable elements.
+				this.removeAttribute("tabindex");
+			}
+		},
+
+		keydownHandler: function (evt) {
+			// The focusinHandler() may have removed my tabIndex, but shift-tab from a node
+			// inside of me should still go to me.  Call getFirstInTabbingOrder() on every
+			// keystroke in case content changes dynamically.
+			if (evt.shiftKey && evt.key === "Tab" && evt.target === a11y.getFirstInTabbingOrder(this)) {
+				evt.preventDefault();
+				evt.stopPropagation();
+				this.tabIndex = 0;
+				this.focus();
+			}
+		},
+
+		/**
+		 * Handler for when header or related panel gets a blur event.
+		 * @param evt
+		 */
+		focusoutHandler: function (evt) {
+			if (!this.contains(evt.relatedTarget) && !this.panel.contains(evt.relatedTarget)) {
+				// Set all the tabindexes to -1 so that tabbing doesn't hit unselected headers.
+				this.tabIndex = -1;
+				Array.prototype.forEach.call(this.querySelectorAll("[tabindex]"), function (node) {
+					node.tabIndex = -1;
+				});
+			}
 		}
 	});
+});
+;
+/**
+ * Accessibility utility functions (keyboard, tab stops, etc.).
+ * @module delite/a11y
+ * */
+define('delite/a11y',[], function () {
+
+	var a11y = /** @lends module:delite/a11y */ {
+		/**
+		 * Returns true if Element is visible.
+		 * @param {Element} elem - The Element.
+		 * @returns {boolean}
+		 * @private
+		 */
+		_isElementShown: function (elem) {
+			var s = getComputedStyle(elem);
+			return s.visibility !== "hidden"
+				&& s.visibility !== "collapsed"
+				&& s.display !== "none"
+				&& elem.type !== "hidden";
+		},
+
+		/**
+		 * Tests if element is tab-navigable even without an explicit tabIndex setting
+		 * @param {Element} elem - The Element.
+		 * @returns {boolean}
+		 */
+		hasDefaultTabStop: function (elem) {
+			/* jshint maxcomplexity:11 */
+
+			// No explicit tabIndex setting, need to investigate node type
+			switch (elem.nodeName.toLowerCase()) {
+			case "a":
+				// An <a> w/out a tabindex is only navigable if it has an href
+				return elem.hasAttribute("href");
+			case "area":
+			case "button":
+			case "input":
+			case "object":
+			case "select":
+			case "textarea":
+				// These are navigable by default
+				return true;
+			case "iframe":
+				// If it's an editor <iframe> then it's tab navigable.
+				var contentDocument = elem.contentDocument;
+				if ("designMode" in contentDocument && contentDocument.designMode === "on") {
+					return true;
+				}
+				var body = contentDocument.body;
+				return body && (body.contentEditable === "true" ||
+					(body.firstChild && body.firstChild.contentEditable === "true"));
+			default:
+				return elem.contentEditable === "true";
+			}
+		},
+
+		/**
+		 * Returns effective tabIndex of an element, either a number, or undefined if element isn't focusable.
+		 * @param {Element} elem - The Element.
+		 * @returns {number|undefined}
+		 */
+		effectiveTabIndex: function (elem) {
+			if (elem.disabled) {
+				return undefined;
+			} else if (elem.hasAttribute("tabIndex")) {
+				// Explicit tab index setting
+				return +elem.getAttribute("tabIndex");// + to convert string --> number
+			} else {
+				// No explicit tabIndex setting, so depends on node type
+				return a11y.hasDefaultTabStop(elem) ? 0 : undefined;
+			}
+		},
+
+		/**
+		 * Tests if an element is tab-navigable.
+		 * @param {Element} elem - The Element.
+		 * @returns {boolean}
+		 */
+		isTabNavigable: function (elem) {
+			return a11y.effectiveTabIndex(elem) >= 0;
+		},
+
+		/**
+		 * Tests if an element is focusable by tabbing to it, or clicking it with the mouse.
+		 * @param {Element} elem - The Element.
+		 * @returns {boolean}
+		 */
+		isFocusable: function (elem) {
+			return a11y.effectiveTabIndex(elem) >= -1;
+		},
+
+		/**
+		 * Finds descendants of the specified root node.
+		 *
+		 * The following descendants of the specified root node are returned:
+		 *
+		 * - the first tab-navigable element in document order without a tabIndex or with tabIndex="0"
+		 * - the last tab-navigable element in document order without a tabIndex or with tabIndex="0"
+		 * - the first element in document order with the lowest positive tabIndex value
+		 * - the last element in document order with the highest positive tabIndex value
+		 *
+		 * @param Element root - The Element.
+		 * @returns {Object} Hash of the format `{first: Element, last: Element, lowest: Element, highest: Element}`.
+		 * @private
+		 */
+		_getTabNavigable: function (root) {
+			var first, last, lowest, lowestTabindex, highest, highestTabindex, radioSelected = {};
+
+			function radioName(node) {
+				// If this element is part of a radio button group, return the name for that group.
+				return node && node.tagName.toLowerCase() === "input" &&
+					node.type && node.type.toLowerCase() === "radio" &&
+					node.name && node.name.toLowerCase();
+			}
+
+			var shown = a11y._isElementShown, effectiveTabIndex = a11y.effectiveTabIndex;
+
+			function walkTree(/*Element*/ parent) {
+				/* jshint maxcomplexity:14 */
+				for (var child = parent.firstChild; child; child = child.nextSibling) {
+					// Skip text elements, hidden elements
+					if (child.nodeType !== 1 || !shown(child)) {
+						continue;
+					}
+
+					var tabindex = effectiveTabIndex(child);
+					if (tabindex >= 0) {
+						if (tabindex === 0) {
+							if (!first) {
+								first = child;
+							}
+							last = child;
+						} else if (tabindex > 0) {
+							if (!lowest || tabindex < lowestTabindex) {
+								lowestTabindex = tabindex;
+								lowest = child;
+							}
+							if (!highest || tabindex >= highestTabindex) {
+								highestTabindex = tabindex;
+								highest = child;
+							}
+						}
+						var rn = radioName(child);
+						if (child.checked && rn) {
+							radioSelected[rn] = child;
+						}
+					}
+					if (child.nodeName.toUpperCase() !== "SELECT") {
+						walkTree(child);
+					}
+				}
+			}
+
+			if (shown(root)) {
+				walkTree(root);
+			}
+			function rs(node) {
+				// substitute checked radio button for unchecked one, if there is a checked one with the same name.
+				return radioSelected[radioName(node)] || node;
+			}
+
+			return { first: rs(first), last: rs(last), lowest: rs(lowest), highest: rs(highest) };
+		},
+
+		/**
+		 * Finds the descendant of the specified root node that is first in the tabbing order.
+		 * @param {string|Element} root
+		 * @param {Document} [doc]
+		 * @returns {Element}
+		 */
+		getFirstInTabbingOrder: function (root, doc) {
+			if (typeof root === "string") {
+				root = (doc || document).getElementById(root);
+			}
+			var elems = a11y._getTabNavigable(root);
+			return elems.lowest ? elems.lowest : elems.first;
+		},
+
+		/**
+		 * Finds the descendant of the specified root node that is last in the tabbing order.
+		 * @param {string|Element} root
+		 * @param {Document} [doc]
+		 * @returns {Element}
+		 */
+		getLastInTabbingOrder: function (root, doc) {
+			if (typeof root === "string") {
+				root = (doc || document).getElementById(root);
+			}
+			var elems = a11y._getTabNavigable(root);
+			return elems.last ? elems.last : elems.highest;
+		}
+	};
+
+	return a11y;
 });
 ;
 /** @module delite/DisplayContainer */
@@ -4859,7 +5097,6 @@ define('delite/KeyNav',[
 		 *
 		 * When set to false:
 		 *
-		 * - All navigable descendants must specify an id.
 		 * - Navigable descendants shouldn't have any tabIndex (as opposed to having tabIndex=-1).
 		 * - The focused element should specify `aria-owns` to point to this KeyNav Element.
 		 * - The focused Element must be kept synced so that `aria-activedescendant` points to the currently
@@ -4916,8 +5153,7 @@ define('delite/KeyNav',[
 		keyNavContainerNode: null,
 
 		/**
-		 * Figure out effective target of this event, either a navigable node, or this widget itself.
-		 * Note that for subclasses like a Tree, one navigable node could be a descendant of another.
+		 * Figure out effective navigable descendant of this event.
 		 * @param {Event} evt
 		 * @private
 		 */
@@ -4927,7 +5163,7 @@ define('delite/KeyNav',[
 					return child;
 				}
 			}
-			return this;
+			return null;
 		},
 
 		postRender: function () {
@@ -4971,7 +5207,7 @@ define('delite/KeyNav',[
 		 */
 		pointerdownHandler: function (evt) {
 			var target = this._getTargetElement(evt);
-			if (target && target !== this) {
+			if (target) {
 				this._descendantNavigateHandler(target, evt);
 			}
 		},
@@ -4986,7 +5222,9 @@ define('delite/KeyNav',[
 					// Ignore spurious focus event:
 					// On IE, clicking the scrollbar of a select dropdown moves focus from the focused child item to me
 					if (!this.navigatedDescendant) {
-						this.focus();
+						// Focus the first child but do it on a delay so that activationTracker sees my "focus"
+						// event before seeing the "focus" event on the child widget.
+						this.defer(this.focus);
 					}
 				} else {
 					// When container's descendant gets focus,
@@ -4998,20 +5236,18 @@ define('delite/KeyNav',[
 						container.removeAttribute("tabindex");
 					}
 
-					// Also adjust tabIndex for navigable descendant (i.e. one that matches descendantSelector):
-					// 1. If the navigable descendant itself is focused, then set tabIndex=0 so that tab and
-					//    shift-tab work right.
-					// 2. If a descendant of the navigable descendant is focused, the clear the tabIndex, to
-					//    prevented unwanted tab stop and to avoid Safari/Firefox nested focus problems.
-					// When focus is moved outside the navigable descendant, focusoutHandler() resets its
-					// tabIndex to -1.
+					// Handling for when navigatedDescendant or a node inside a navigableDescendant gets focus.
 					var navigatedDescendant = this._getTargetElement(evt);
-					if (navigatedDescendant !== this) {
+					if (navigatedDescendant) {
 						if (evt.target === navigatedDescendant) {
+							// If the navigable descendant itself is focused, then set tabIndex=0 so that tab and
+							// shift-tab work correctly.
 							navigatedDescendant.tabIndex = this._savedTabIndex;
-						} else {
-							navigatedDescendant.removeAttribute("tabindex");
 						}
+
+						// Note: when focus is moved outside the navigable descendant,
+						// focusoutHandler() resets its tabIndex to -1.
+
 						this._descendantNavigateHandler(navigatedDescendant, evt);
 					}
 				}
@@ -5023,18 +5259,20 @@ define('delite/KeyNav',[
 		 */
 		focusoutHandler: function (evt) {
 			if (this.focusDescendants) {
-				if (this.navigatedDescendant) {
-					if (this.navigatedDescendant.contains(evt.relatedTarget)) {
-						// If focus has moved inside of the navigable descendant, then clear the
-						// navigable descendant's tabindex, to prevent extraneous tab stop and to
-						// avoid Safari and Firefox problem with nested focusable elements.
-						this.navigatedDescendant.removeAttribute("tabindex");
-					} else if (this.navigatedDescendant !== evt.relatedTarget) {
-						// If focus has moved outside of the navigable descendant, then set its
+				// Note: don't use this.navigatedDescendant because it may or may not have already been
+				// updated to point to the new descendant, depending on if navigation was by mouse
+				// or keyboard.
+				var previouslyNavigatedDescendant = this._getTargetElement(evt);
+				if (previouslyNavigatedDescendant) {
+					if (previouslyNavigatedDescendant !== evt.relatedTarget) {
+						// If focus has moved outside of the previously navigated descendant, then set its
 						// tabIndex back to -1, for future time when navigable descendant is clicked.
-						this.navigatedDescendant.tabIndex = "-1";
-						$(this.navigatedDescendant).removeClass("d-active-descendant");
-						this.navigatedDescendant = null;
+						previouslyNavigatedDescendant.tabIndex = "-1";
+						$(previouslyNavigatedDescendant).removeClass("d-active-descendant");
+
+						if (this.navigatedDescendant === previouslyNavigatedDescendant) {
+							this.navigatedDescendant = null;
+						}
 					}
 				}
 
@@ -8231,8 +8469,7 @@ define('deliteful/list/List',[
 		},
 
 		/**
-		 * @method
-		 * Handle keydown events
+		 * Handle keydown events.
 		 * @private
 		 */
 		_keynavKeyDownHandler: dcl.before(function (evt) {
@@ -8266,15 +8503,14 @@ define('deliteful/list/List',[
 			}
 		},
 
-		/**
-		 * @method
-		 * Called on "delite-deactivated" event, stores a reference to the focused child.
-		 * @private
-		 */
-		_keynavDeactivatedHandler: dcl.superCall(function (sup) {
-			return function () {
-				this._previousFocusedChild = this.navigatedDescendant;
-				sup.call(this);
+		focusoutHandler: dcl.superCall(function (sup) {
+			return function (evt) {
+				// When focus moves outside of the List, save reference to previously focused child.
+				if (!this.contains(evt.relatedTarget)) {
+					this._previousFocusedChild = this.navigatedDescendant;
+				}
+
+				sup.apply(this, arguments);
 			};
 		}),
 
@@ -9201,7 +9437,7 @@ define('deliteful/list/Renderer',[
 		},
 
 		/**
-		 * This method update the list of children of the renderer that can
+		 * This method updates the list of children of the renderer that can
 		 * be focused during keyboard navigation.
 		 * If the list of navigable children of the renderer is updated after the
 		 * render step has been executed, this method must be
@@ -9231,9 +9467,6 @@ define('deliteful/list/Renderer',[
 			for (i = 0; i < this._focusableChildren.length; i++) {
 				var node = this._focusableChildren[i];
 				node.tabIndex = -1;
-				if (!node.id) {
-					node.id = this.id + "-cell-" + i;
-				}
 			}
 		},
 
@@ -9831,7 +10064,7 @@ function propFilter( props, specialEasing ) {
 		name = jQuery.camelCase( index );
 		easing = specialEasing[ name ];
 		value = props[ index ];
-		if ( jQuery.isArray( value ) ) {
+		if ( Array.isArray( value ) ) {
 			easing = value[ 1 ];
 			value = props[ index ] = value[ 0 ];
 		}
@@ -9890,12 +10123,19 @@ function Animation( elem, properties, options ) {
 
 			deferred.notifyWith( elem, [ animation, percent, remaining ] );
 
+			// If there's more to do, yield
 			if ( percent < 1 && length ) {
 				return remaining;
-			} else {
-				deferred.resolveWith( elem, [ animation ] );
-				return false;
 			}
+
+			// If this was an empty animation, synthesize a final progress notification
+			if ( !length ) {
+				deferred.notifyWith( elem, [ animation, 1, 0 ] );
+			}
+
+			// Resolve the animation and report its conclusion
+			deferred.resolveWith( elem, [ animation ] );
+			return false;
 		},
 		animation = deferred.promise( {
 			elem: elem,
@@ -9960,6 +10200,13 @@ function Animation( elem, properties, options ) {
 		animation.opts.start.call( elem, animation );
 	}
 
+	// Attach callbacks from options
+	animation
+		.progress( animation.opts.progress )
+		.done( animation.opts.done, animation.opts.complete )
+		.fail( animation.opts.fail )
+		.always( animation.opts.always );
+
 	jQuery.fx.timer(
 		jQuery.extend( tick, {
 			elem: elem,
@@ -9968,11 +10215,7 @@ function Animation( elem, properties, options ) {
 		} )
 	);
 
-	// attach callbacks from options
-	return animation.progress( animation.opts.progress )
-		.done( animation.opts.done, animation.opts.complete )
-		.fail( animation.opts.fail )
-		.always( animation.opts.always );
+	return animation;
 }
 
 jQuery.Animation = jQuery.extend( Animation, {
@@ -10216,7 +10459,7 @@ jQuery.fx.tick = function() {
 	for ( ; i < timers.length; i++ ) {
 		timer = timers[ i ];
 
-		// Checks the timer has not already been removed
+		// Run the timer and safely remove it when done (allowing for external removal)
 		if ( !timer() && timers[ i ] === timer ) {
 			timers.splice( i--, 1 );
 		}
@@ -10229,11 +10472,16 @@ jQuery.fx.tick = function() {
 };
 
 jQuery.fx.timer = function( timer ) {
-	jQuery.timers.push( timer );
+	var i = jQuery.timers.push( timer ) - 1,
+		timers = jQuery.timers;
+
 	if ( timer() ) {
 		jQuery.fx.start();
-	} else {
-		jQuery.timers.pop();
+
+	// If the timer finished immediately, safely remove it (allowing for external removal)
+	// Use a superfluous post-decrement for better compressibility w.r.t. jQuery.fx.tick above
+	} else if ( timers[ i ] === timer ) {
+		timers.splice( i--, 1 );
 	}
 };
 
@@ -10797,7 +11045,7 @@ jQuery.fn.extend( {
 				map = {},
 				i = 0;
 
-			if ( jQuery.isArray( name ) ) {
+			if ( Array.isArray( name ) ) {
 				styles = getStyles( elem );
 				len = name.length;
 
@@ -11226,8 +11474,8 @@ define( 'jquery/src/manipulation',[
 	"./core",
 	"./var/concat",
 	"./var/push",
+	"./var/rcheckableType",
 	"./core/access",
-	"./manipulation/var/rcheckableType",
 	"./manipulation/var/rtagName",
 	"./manipulation/var/rscriptType",
 	"./manipulation/wrapMap",
@@ -11245,8 +11493,8 @@ define( 'jquery/src/manipulation',[
 	"./traversing",
 	"./selector",
 	"./event"
-], function( jQuery, concat, push, access,
-	rcheckableType, rtagName, rscriptType,
+], function( jQuery, concat, push, rcheckableType,
+	access, rtagName, rscriptType,
 	wrapMap, getAll, setGlobalEval, buildFragment, support,
 	dataPriv, dataUser, acceptData, DOMEval ) {
 
@@ -11271,11 +11519,12 @@ var
 	rscriptTypeMasked = /^true\/(.*)/,
 	rcleanScript = /^\s*<!(?:\[CDATA\[|--)|(?:\]\]|--)>\s*$/g;
 
+// Prefer a tbody over its parent table for containing new rows
 function manipulationTarget( elem, content ) {
 	if ( jQuery.nodeName( elem, "table" ) &&
 		jQuery.nodeName( content.nodeType !== 11 ? content : content.firstChild, "tr" ) ) {
 
-		return elem.getElementsByTagName( "tbody" )[ 0 ] || elem;
+		return jQuery( ">tbody", elem )[ 0 ] || elem;
 	}
 
 	return elem;
@@ -11714,12 +11963,12 @@ define( 'jquery/src/event',[
 	"./var/document",
 	"./var/documentElement",
 	"./var/rnothtmlwhite",
+	"./var/rcheckableType",
 	"./var/slice",
 	"./data/var/dataPriv",
-
 	"./core/init",
 	"./selector"
-], function( jQuery, document, documentElement, rnothtmlwhite, slice, dataPriv ) {
+], function( jQuery, document, documentElement, rnothtmlwhite, rcheckableType, slice, dataPriv ) {
 
 "use strict";
 
@@ -12185,9 +12434,11 @@ jQuery.event = {
 		},
 		click: {
 
-			// For checkbox, fire native event so checked state will be right
+			// For checkable types, fire native event so checked state will be right
 			trigger: function() {
-				if ( this.type === "checkbox" && this.click && jQuery.nodeName( this, "input" ) ) {
+				if ( rcheckableType.test( this.type ) &&
+					this.click && jQuery.nodeName( this, "input" ) ) {
+
 					this.click();
 					return false;
 				}
@@ -12701,7 +12952,7 @@ define( 'jquery/src/manipulation/var/rtagName',[],function() {
 	return ( /<([a-z][^\/\0>\x20\t\r\n\f]+)/i );
 } );
 ;
-define( 'jquery/src/manipulation/var/rcheckableType',[],function() {
+define( 'jquery/src/var/rcheckableType',[],function() {
 	"use strict";
 
 	return ( /^(?:checkbox|radio)$/i );
@@ -12852,7 +13103,18 @@ jQuery.each( {
 		return siblings( elem.firstChild );
 	},
 	contents: function( elem ) {
-		return elem.contentDocument || jQuery.merge( [], elem.childNodes );
+        if ( jQuery.nodeName( elem, "iframe" ) ) {
+            return elem.contentDocument;
+        }
+
+        // Support: IE 9 - 11 only, iOS 7 only, Android Browser <=4.3 only
+        // Treat the template element as a regular one in browsers that
+        // don't support it.
+        if ( jQuery.nodeName( elem, "template" ) ) {
+            elem = elem.content || elem;
+        }
+
+        return jQuery.merge( [], elem.childNodes );
 	}
 }, function( name, fn ) {
 	jQuery.fn[ name ] = function( until, selector ) {
@@ -12942,7 +13204,7 @@ function Thrower( ex ) {
 	throw ex;
 }
 
-function adoptValue( value, resolve, reject ) {
+function adoptValue( value, resolve, reject, noValue ) {
 	var method;
 
 	try {
@@ -12958,9 +13220,10 @@ function adoptValue( value, resolve, reject ) {
 		// Other non-thenables
 		} else {
 
-			// Support: Android 4.0 only
-			// Strict mode functions invoked without .call/.apply get global-object context
-			resolve.call( undefined, value );
+			// Control `resolve` arguments by letting Array#slice cast boolean `noValue` to integer:
+			// * false: [ value ].slice( 0 ) => resolve( value )
+			// * true: [ value ].slice( 1 ) => resolve()
+			resolve.apply( undefined, [ value ].slice( noValue ) );
 		}
 
 	// For Promises/A+, convert exceptions into rejections
@@ -12970,7 +13233,7 @@ function adoptValue( value, resolve, reject ) {
 
 		// Support: Android 4.0 only
 		// Strict mode functions invoked without .call/.apply get global-object context
-		reject.call( undefined, value );
+		reject.apply( undefined, [ value ] );
 	}
 }
 
@@ -13295,7 +13558,8 @@ jQuery.extend( {
 
 		// Single- and empty arguments are adopted like Promise.resolve
 		if ( remaining <= 1 ) {
-			adoptValue( singleValue, master.done( updateFunc( i ) ).resolve, master.reject );
+			adoptValue( singleValue, master.done( updateFunc( i ) ).resolve, master.reject,
+				!remaining );
 
 			// Use .then() to unwrap secondary thenables (cf. gh-3000)
 			if ( master.state() === "pending" ||
@@ -13388,7 +13652,7 @@ jQuery.Callbacks = function( options ) {
 		fire = function() {
 
 			// Enforce single-firing
-			locked = options.once;
+			locked = locked || options.once;
 
 			// Execute callbacks for all pending executions,
 			// respecting firingIndex overrides and runtime changes
@@ -13571,7 +13835,7 @@ jQuery.extend( {
 
 			// Speed up dequeue by getting out quickly if this is just a lookup
 			if ( data ) {
-				if ( !queue || jQuery.isArray( data ) ) {
+				if ( !queue || Array.isArray( data ) ) {
 					queue = dataPriv.access( elem, type, jQuery.makeArray( data ) );
 				} else {
 					queue.push( data );
@@ -21445,6 +21709,9 @@ define('delite/activationTracker',[
 	var lastPointerDownTime;
 	var lastFocusinTime;
 
+	// Time of last touchend event.  Tells us if the mouseover event is real or emulated.
+	var lastTouchendTime;
+
 	// Last node that got pointerdown or focusin event, and the time it happened.
 	var lastPointerDownOrFocusInNode;
 	var lastPointerDownOrFocusInTime;
@@ -21516,7 +21783,17 @@ define('delite/activationTracker',[
 				_this._blurHandler(evt.target);
 			}
 
+			function touchendHandler() {
+				lastTouchendTime = (new Date()).getTime();
+			}
+
 			function mouseOverHandler(evt) {
+				// Ignore emulated mouseover events on iOS and android.  Otherwise, when clicking the
+				// [x] to close a TooltipDialog it will immediately reopen (see HasDropDownHover.html).
+				if (lastTouchendTime && (new Date()).getTime() < lastTouchendTime + 500) {
+					return;
+				}
+
 				_this._mouseOverHandler(evt.target);
 			}
 
@@ -21525,6 +21802,7 @@ define('delite/activationTracker',[
 				body.addEventListener("pointerdown", pointerDownHandler, true);
 				body.addEventListener("focus", focusHandler, true);	// need true since focus doesn't bubble
 				body.addEventListener("blur", blurHandler, true);	// need true since blur doesn't bubble
+				body.addEventListener("touchend", touchendHandler, true);
 				body.addEventListener("mouseover", mouseOverHandler);
 
 				return {
@@ -21751,7 +22029,7 @@ define('delite/activationTracker',[
 				// Set timer so that if node remains hovered, we send a delite-hover-activated event.
 				hoveredNode.hoverActivateTimer = setTimeout(function () {
 					delete hoveredNode.hoverActivateTimer;
-					on.emit(hoveredNode, "delite-hover-activated");
+					on.emit(hoveredNode, "delite-hover-activated", {bubbles: false});
 				}.bind(this), this.hoverDelay);
 			}
 		},
@@ -21770,7 +22048,7 @@ define('delite/activationTracker',[
 				unhoveredNode.hoverDeactivateTimer = setTimeout(function () {
 					delete unhoveredNode.hoverDeactivateTimer;
 					unhoveredNode.hoverActivated = false;
-					on.emit(unhoveredNode, "delite-hover-deactivated");
+					on.emit(unhoveredNode, "delite-hover-deactivated", {bubbles: false});
 				}.bind(this), this.hoverDelay);
 			}
 		}
@@ -23004,6 +23282,8 @@ define('deliteful/ViewStack',[
 			}
 			return Promise.all(promises).then(function () {
 				$(this).removeClass("-d-view-stack-transition");
+				$(target).removeClass("-d-view-stack-transition -d-view-stack-in");
+				$(origin).removeClass("-d-view-stack-transition -d-view-stack-out");
 			}.bind(this));
 		},
 
@@ -24653,14 +24933,14 @@ define('deliteful/Select',[
 });
 ;
 define('delite/handlebars!deliteful/Combobox/Combobox.html',["delite/handlebars"], function(handlebars){
-	return handlebars.compile("<template class=\"d-combobox\" role=\"presentation\" attach-point=\"buttonNode\">\n\t<input class=\"d-combobox-input\" role=\"combobox\" attach-point=\"inputNode,focusNode\" autocomplete=\"off\" autocorrect=\"off\" autocapitalize=\"none\" aria-autocomplete=\"list\" type=\"text\" readonly=\"{{this._inputReadOnly ? 'readonly' : ''}}\">\n\t<input class=\"d-hidden\" attach-point=\"valueNode\" readonly=\"\" name=\"{{name}}\" value=\"{{value}}\">\n\t<span class=\"d-combobox-arrow\" aria-hidden=\"true\"></span>\n</template>");
+	return handlebars.compile("<template class=\"d-combobox\" role=\"presentation\">\n\t<input class=\"d-combobox-input\" role=\"combobox\" attach-point=\"inputNode,focusNode\" autocomplete=\"off\" autocorrect=\"off\" autocapitalize=\"none\" aria-autocomplete=\"list\" type=\"text\" readonly=\"{{this._inputReadOnly ? 'readonly' : ''}}\" placeholder=\"{{searchPlaceHolder}}\">\n\t<input class=\"d-hidden\" attach-point=\"valueNode\" readonly=\"\" name=\"{{name}}\" value=\"{{value}}\">\n\t<span class=\"d-combobox-arrow\" d-shown=\"{{hasDownArrow}}\" attach-point=\"buttonNode\" aria-hidden=\"true\"></span>\n</template>");
 });;
 /** @module deliteful/Combobox */
 define('deliteful/Combobox',[
 	"dcl/dcl",
 	"requirejs-dplugins/jquery!attributes/classes,event",	// addClass(), css(), on(), off()
 	"dstore/Filter",
-	"decor/sniff",
+	"dojo/string",
 	"delite/register",
 	"delite/CssState",
 	"delite/FormValueWidget",
@@ -24674,7 +24954,7 @@ define('deliteful/Combobox',[
 	dcl,
 	$,
 	Filter,
-	has,
+	string,
 	register,
 	CssState,
 	FormValueWidget,
@@ -24768,8 +25048,7 @@ define('deliteful/Combobox',[
 	 *   "deliteful/Combobox", ..., "requirejs-domready/domReady!"],
 	 *   function (List, Combobox, ...) {
 	 *     var dataStore = ...; // Create data store
-	 *     var list = new List({source: dataStore});
-	 *     var combobox = new Combobox({list: list, selectionMode: "multiple"}).
+	 *     var combobox = new Combobox({source: dataStore, selectionMode: "multiple"}).
 	 *       placeAt(...);
 	 *   });
 	 *
@@ -24874,11 +25153,14 @@ define('deliteful/Combobox',[
 		searchPlaceHolder: messages["search-placeholder"],
 
 		/**
-		 * The text displayed in the input element when more than one option is
-		 * selected. The default value is provided by the "search-placeholder" key of
-		 * the message bundle.
+		 * The text displayed in the input element when no option is selected.
+		 * The default value is provided by the "multiple-choice-no-selection" key of
+		 * the message bundle. This message can contains placeholders for the
+		 * Combobox attributes to be replaced by their runtime value. For example, the
+		 * message can include the number of selected items by using the
+		 * placeholder `${items}`.
 		 * @member {string}
-		 * @default "Search"
+		 * @default localized version of "{items} selected"
 		 */
 		multipleChoiceMsg: messages["multiple-choice"],
 
@@ -24909,6 +25191,49 @@ define('deliteful/Combobox',[
 		 */
 		cancelMsg: messages["cancel-button-label"],
 
+		/**
+		 * Displays or not the down arrow button.
+		 * @type {boolean}
+		 * @default true
+		 */
+		hasDownArrow: true,
+
+		/**
+		 * Source for the inner list.
+		 * @type {dstore/Store|decor/ObservableArray|Array} Source set.
+		 */
+		source: null,
+
+		/**
+		 * Minimum number of characters before the dropdown automatically opens.
+		 * However, aside the above, depending of its value, the widget behavior changes slightly.
+		 * In fact:
+		 * - if minFilterChars = 0
+		 * -- show the dropdown on pointer down.
+		 * -- show the dropdown even if the user clears the input field.
+		 * - if minFilterChars = 1
+		 * -- do not show the dropdown on pointer down.
+		 * -- clearing the input field will close the dropdown.
+		 * @type {number}
+		 * @default 1
+		 */
+		minFilterChars: 1,
+
+		/**
+		 * Text displayed in the Combobox's `<input>`.
+		 * @type {string}
+		 */
+		displayedValue: "",
+
+		/**
+		 * It's `true` if the dropdown should be centered, and returns
+		 * `false` if it should be displayed below/above the widget.
+		 * It's `true` when the module `deliteful/Combobox/ComboPopup` has
+		 * been loaded. Note that the module is loaded conditionally, depending
+		 * on the channel has() features set by `deliteful/features`.
+		 */
+		_isMobile: !!ComboPopup,
+
 		createdCallback: function () {
 			// Declarative case (list specified declaratively inside the declarative Combobox)
 			var list = this.querySelector("d-list");
@@ -24923,9 +25248,75 @@ define('deliteful/Combobox',[
 					this.list = list;
 				}
 			}
+
+			this.on("click", function () {
+				// NOTE: This runs only when in mobile mode
+				if (this._isMobile && !this.disabled) {
+					this.openDropDown();
+				}
+			}.bind(this));
+
+			this.on("mousedown", function (evt) {
+				// NOTE: This runs only when in desktop mode
+				if (!this._isMobile && (!this.minFilterChars || this._inputReadOnly)) {
+					// event could be triggered by the down arrow element. If so, we do not react to it.
+					if (evt.srcElement !== this.buttonNode && !this.disabled) {
+						if (!this.opened) {
+							this.openDropDown();
+						} else {
+							this.closeDropDown(true);
+						}
+					}
+				}
+			}.bind(this));
+		},
+
+		parseAttribute: dcl.superCall(function (sup) {
+			return function (name, value) {
+				var capitalize = /f(?=unc$)|a(?=ttr$)/;
+				if (/Attr$|Func$/i.test(name)) {
+					name = name.toLowerCase();	// needed only on IE9
+					name = this._propCaseMap[name] ||
+							name.replace(capitalize, capitalize.exec(name)[0].toUpperCase());
+					return {
+						prop: name,
+						value: /Attr$/.test(name) ? value :
+							this.parseFunctionAttribute(value, ["item", "store", "value"])
+					};
+				} else {
+					return sup.apply(this, arguments);
+				}
+			};
+		}),
+
+		attachedCallback: function () {
 			if (!this.list) {
-				// default list, may be overridden later by user-defined value or when above event listener fires
-				this.list = new List();
+				var regexp = /^(?!_)(\w)+(?=Attr$|Func$)/;
+				var listArgs = {
+					showNoItems: true
+				};
+
+				// attributes
+				this._parsedAttributes.filter(function (attr) {
+					return regexp.test(attr.prop);
+				}).forEach(function (item) {
+					listArgs[item.prop] = item.value;
+				}.bind(this));
+
+				// properties
+				for (var prop in this) {
+					var match = regexp.exec(prop);
+					if (match && !(match.input in listArgs)) {
+						listArgs[match.input] = this[match.input];
+					}
+				}
+
+				this.list = new List(listArgs);
+				this.deliver();
+			}
+
+			if (!this.list.id) {
+				this.list.id = this.id ? this.id + "-list" : this.tag + "-" + this.widgetId + "-list";
 			}
 		},
 
@@ -24933,47 +25324,78 @@ define('deliteful/Combobox',[
 			this._prepareInput(this.inputNode);
 		},
 
+		computeProperties: function (oldValues, justCreated) {
+			/* jshint maxcomplexity: 12 */
+			// If value was specified as a string (like during creation from markup),
+			// but selectionMode === multiple, need to convert it to an array.
+			if (this.selectionMode === "multiple" && typeof this.value === "string") {
+				this.value = this.value ? this.value.split(",") : [];
+
+				// So computeProperties doesn't get called again and oldValues contains "value"
+				// but not "displayedValue", which would trigger code below to run.
+				this.discardComputing();
+			}
+
+			this._inputReadOnly = this.readOnly || !this.autoFilter ||
+				this._isMobile || this.selectionMode === "multiple";
+
+			// Sometimes, especially during creation, the app will specify a value without specifying a displayedValue.
+			// In that case, copy this.value to this.displayedValue.  This code is fragile though; need to make
+			// sure Combobox itself always sets displayedValue at the same time it sets value.
+			var valueChanged = justCreated ? this.hasOwnProperty("_shadowValueAttr") : "value" in oldValues;
+			var displayedValueChanged = justCreated ? this.hasOwnProperty("_shadowDisplayedValueAttr") :
+				"displayedValue" in oldValues;
+			if (valueChanged && !displayedValueChanged) {
+				if (this.selectionMode === "single") {
+					this.displayedValue = this.value;
+				} else {
+					var items = this.value;
+					var n = items.length;
+					if (n > 1) {
+						this.displayedValue = string.substitute(this.multipleChoiceMsg, {items: n});
+					} else if (n === 1) {
+						this.displayedValue = items[0];
+					} else {
+						this.displayedValue = this.multipleChoiceNoSelectionMsg;
+					}
+				}
+
+				// Call computeProperties() again to flush out the change record for "displayedValue".
+				// That way, all the notifications are processed before the new Combobox() constructor
+				// finishes running.
+				this.deliverComputing();
+			}
+		},
+
+		/* jshint maxcomplexity: 17 */
 		refreshRendering: function (oldValues) {
-			var updateReadOnly = false;
 			if ("list" in oldValues) {
 				this._initList();
 			}
 			if ("selectionMode" in oldValues) {
-				updateReadOnly = true;
 				if (this.list) {
 					this.list.selectionMode = this.selectionMode === "single" ?
 						"radio" : "multiple";
 				}
 			}
-			if ("autoFilter" in oldValues ||
-				"readOnly" in oldValues) {
-				updateReadOnly = true;
+			if ("_inputReadOnly" in oldValues) {
+				// Note: Can't just put readonly={{_inputReadOnly}} in the template because we need to override
+				// when delite/FormWidget sets the <input>'s readonly attribute based on this.readOnly.
+				this.inputNode.readOnly = this._inputReadOnly;
+				this._setSelectable(this.inputNode, !this._inputReadOnly);
 			}
-			if (updateReadOnly) {
-				this._updateInputReadOnly();
-				this._setSelectable(this.inputNode, !this.inputNode.readOnly);
-			}
-		},
 
-		/**
-		 * Updates the value of the private property on which the Combobox template
-		 * binds the `readonly` attribute of the input element.
-		 * @private
-		 */
-		_updateInputReadOnly: function () {
-			var oldValue = this._inputReadOnly;
-			this._inputReadOnly = this.readOnly || !this.autoFilter ||
-				this._useCenteredDropDown() || this.selectionMode === "multiple";
-			if (this._inputReadOnly === oldValue) {
-				// FormValueWidget.refreshRendering() mirrors the value of widget.readOnly
-				// to focusNode.readOnly, thus competing with the binding of the readOnly
-				// attribute of the input node (which is also the focusNode attach point)
-				// in the template of Combobox. To ensure the refresh of the binding is done
-				// including when the value of the flag _inputReadOnly doesn't change while
-				// FormValueWidget has reset the attribute to a different value, force
-				// the notification:
-				this.notifyCurrentValue("_inputReadOnly");
-			} // else no need to notify "by hand", rely on automatic notification
+			// Update <input>'s value if necessary, but don't update the value because the user
+			// typed a character into the <input> as that will move the caret to the end of the
+			// <input>.
+			if ("displayedValue" in oldValues) {
+				if (this.displayedValue !== this.inputNode.value) {
+					this.inputNode.value = this.displayedValue;
+				}
+				if (this._popupInput && this.displayedValue !== this._popupInput.value) {
+					this._popupInput.value = this.displayedValue;
+				}
+			}
 		},
 
 		/**
@@ -24995,41 +25417,46 @@ define('deliteful/Combobox',[
 		},
 
 		afterFormResetCallback: function () {
-			if (this.value !== this.valueNode.value ||
-					// In multiple mode, with no option selected before reset,
-					// valueNode.value is the same but still needs the reinit to get
-					// the correct initial inputNode.value.
-					this.selectionMode === "multiple") {
-				this._initValue();
+			if (this.value !== this.valueNode.value) {
+				if (this.selectionMode === "single") {
+					this.value = this.valueNode.value || "";
+				} else if (this.selectionMode === "multiple") {
+					this.value = this.valueNode.value ? this.valueNode.value.split(",") : [];
+				}
+
+				// computeProperties() will do the wrong thing if it thinks value was set without displayedValue
+				// being set.
+				this.notifyCurrentValue("displayedValue");
 			}
 		},
 
 		_initList: function () {
-			// TODO
-			// This is a workaround waiting for a proper mechanism (at the level
-			// of delite/Store - delite/StoreMap) to allow a store-based widget
-			// to delegate the store-related functions to a parent widget (delite#323).
-			if (!this.list.attached) {
-				this.list.attachedCallback();
+			if (this.list) {
+				// TODO
+				// This is a workaround waiting for a proper mechanism (at the level
+				// of delite/Store - delite/StoreMap) to allow a store-based widget
+				// to delegate the store-related functions to a parent widget (delite#323).
+				if (!this.list.attached) {
+					this.list.attachedCallback();
+				}
+
+				// Class added on the list such that Combobox' theme can have a specific
+				// CSS selector for elements inside the List when used as dropdown in
+				// the combo.
+				$(this.list).addClass("d-combobox-list");
+
+				// The drop-down is hidden initially
+				$(this.list).addClass("d-hidden");
+
+				// The role=listbox is required for the list part of a combobox by the
+				// aria spec of role=combobox
+				this.list.type = "listbox";
+
+				this.list.selectionMode = this.selectionMode === "single" ?
+					"radio" : "multiple";
+
+				this._initHandlers();
 			}
-
-			// Class added on the list such that Combobox' theme can have a specific
-			// CSS selector for elements inside the List when used as dropdown in
-			// the combo.
-			$(this.list).addClass("d-combobox-list");
-
-			// The drop-down is hidden initially
-			$(this.list).addClass("d-combobox-list-hidden");
-
-			// The role=listbox is required for the list part of a combobox by the
-			// aria spec of role=combobox
-			this.list.type = "listbox";
-
-			this.list.selectionMode = this.selectionMode === "single" ?
-				"radio" : "multiple";
-
-			this._initHandlers();
-			this._initValue();
 		},
 
 		_initHandlers: function () {
@@ -25069,82 +25496,12 @@ define('deliteful/Combobox',[
 
 				// React to interactive changes of selected items
 				this.list.on("selection-change", function () {
-					if (this.selectionMode === "single") {
-						this._validateSingle();
-					}
+					this._validateInput();
 					this.handleOnInput(this.value); // emit "input" event
 				}.bind(this)),
 
-				// React to programmatic changes of selected items
-				this.list.observe(function (oldValues) {
-					if ("selectedItems" in oldValues) {
-						if (this.selectionMode === "single") {
-							this._validateSingle();
-							// do not emit "input" event for programmatic changes
-						} else if (this.selectionMode === "multiple") {
-							this._validateMultiple(this._popupInput || this.inputNode);
-						}
-					}
-				}.bind(this))
+				this.list.on("query-success", this._setSelectedItems.bind(this))
 			];
-		},
-
-		/**
-		 * Sets the initial value of the widget. If the widget is inside a form,
-		 * also called when reseting the form.
-		 * @private
-		 */
-		_initValue: function () {
-			if (this.selectionMode === "single") {
-				// Returns true if List content already available, false otherwise.
-				var initValueSingleMode = function () {
-					var selectedItem = this.list.selectedItem;
-					var done = false;
-					var value, label;
-					if (selectedItem) {
-						label = this._getItemLabel(selectedItem);
-						value = this._getItemValue(selectedItem);
-						done = true;
-					} else {
-						var firstItemRenderer = this.list.getItemRendererByIndex(0);
-						if (firstItemRenderer) {
-							label = this._getItemRendererLabel(firstItemRenderer);
-							value = this._getItemRendererValue(firstItemRenderer);
-							// Like the native select, the first item is selected.
-							this.list.selectedItem = firstItemRenderer.item;
-							done = true;
-						}
-					}
-					if (done) {
-						this.inputNode.value = label;
-						// Initialize widget's value
-						this._set("value", value);
-						this.valueNode.value = value;
-					}
-					return done;
-				}.bind(this);
-
-				if (!initValueSingleMode()) {
-					// List not ready, wait.
-					// TODO: handle case when List is initialized but has no items yet, from "new List()".
-					// Also, handle when the Combobox's selected item is deleted from the list.
-					var waitListener = this.list.on("query-success", function () {
-						initValueSingleMode();
-						waitListener.remove(waitListener);
-					});
-				}
-			} else { // selectionMode === "multiple"
-				// Differently than in single selection mode, no need to wait for the data,
-				// and do not select the first option, because it would be confusing; the user
-				// may scroll and select some other option, without deselecting the first one.
-				// The native select in multiple mode doesn't select any option by default either.
-				this.inputNode.value = this.multipleChoiceNoSelectionMsg;
-				// widget value: // array, more convenient for client-side usage
-				this.value = [];
-				// submitted form value: string (comma-separated values), more convenient for
-				// server-side usage.
-				this.valueNode.value = "";
-			}
 		},
 
 		/**
@@ -25181,27 +25538,12 @@ define('deliteful/Combobox',[
 			return "value" in item ? item.value : item.label;
 		},
 
-		/**
-		 * Returns `true` if the dropdown should be centered, and returns
-		 * `false` if it should be displayed below/above the widget.
-		 * Returns `true` when the module `deliteful/Combobox/ComboPopup` has
-		 * been loaded. Note that the module is loaded conditionally, depending
-		 * on the channel has() features set by `deliteful/features`.
-		 * @private
-		 */
-		_useCenteredDropDown: function () {
-			return !!ComboPopup;
-		},
-
 		loadDropDown: function () {
-			this._updateInputReadOnly();
-
-			var centeredDropDown = this._useCenteredDropDown();
-			var dropDown = centeredDropDown ?
+			var dropDown = this._isMobile ?
 				this.createCenteredDropDown() :
 				this.createAboveBelowDropDown();
 
-			this.dropDownPosition = centeredDropDown ?
+			this.dropDownPosition = this._isMobile ?
 				["center"] :
 				["below", "above"]; // this is the default
 
@@ -25213,6 +25555,11 @@ define('deliteful/Combobox',[
 			}
 
 			this.dropDown = dropDown; // delite/HasDropDown's property
+
+			if (this._isMobile) {
+				// Set correct (initial) value of aria-expanded on ComboPopup <input>.
+				this._togglePopupList(dropDown.inputNode);
+			}
 
 			return dropDown;
 		},
@@ -25243,21 +25590,82 @@ define('deliteful/Combobox',[
 		},
 
 		/**
-		 * Indicates if a filtering operation is in progress. If so, closeDropDown will perform differently than usual.
-		 * @member {boolean}
-		 * @default false
+		 * Toggles the popup's visibility.
+		 * If in mobile, toggles list visibility.
+		 * If in desktop, closes or opens the popup.
 		 */
-		filteringInProgress: false,
+		_togglePopupList: function (inputElement, suppressChangeEvent) {
+			// Compute whether or not to show the list.  Note that in mobile mode ComboPopup doesn't display a
+			// down arrow icon to manually show/hide the list, so on mobile,
+			// if the Combobox has a down arrow icon, the list is always shown.
+			var showList = inputElement.value.length >= this.minFilterChars ||
+				(this._isMobile && this.hasDownArrow);
+			if (this._isMobile) {
+				// Mobile version.
+				if (showList) {
+					this.filter(inputElement.value);
+				}
+				this.list.setAttribute("d-shown", "" + showList);
+				if (this.dropDown) {
+					this.dropDown.inputNode.setAttribute("aria-expanded", "" + showList);
+					this.list.emit("delite-size-change");
+				}
+			} else {
+				// Desktop version.
+				if (showList) {
+					this.openDropDown();
+				} else {
+					this.closeDropDown(true /*refocus*/, suppressChangeEvent);
+				}
+			}
+		},
+
+		/**
+		 * True iff the `<input>`'s value was set by user typing.
+		 * We only filter the dropdown list when the value was set by the user typing into the `<input>`,
+		 * and specifically avoid filtering the list to a single item when the user selects an item from
+		 * list and then reopens the dropdown.
+		 */
+		_valueSetByUserInput: false,
+
+		_setValueAttr: function (val) {
+			if (val !== this.value) {
+				this._set("value", val);
+				this._valueSetByUserInput = false;
+			}
+		},
+			
+		/**
+		 * Defines the milliseconds the widget has to wait until a new filter operation starts.
+		 * @type {Number}
+		 * @default 0
+		 */
+		filterDelay: 0,
 
 		_prepareInput: function (inputElement) {
 			this.on("input", function (evt) {
+				// TODO
 				// Would be nice to also have an "incrementalFilter" boolean property.
 				// On desktop, this would allow to redo the filtering only for "change"
 				// events, triggered when pressing ENTER. This would also fit for Chrome/Android,
 				// where pressing the search key of the virtual keyboard also triggers a
 				// change event. But there's no equivalent on Safari / iOS...
 
-				this.filter(inputElement.value);
+				// save what user typed at each keystroke.
+				this.value = this.displayedValue = inputElement.value;
+				this._valueSetByUserInput = true;
+				this.handleOnInput(this.value); // emit "input" event.
+
+				if (this._timeoutHandle !== undefined) {
+					this._timeoutHandle.remove();
+					delete this._timeoutHandle;
+				}
+				this._timeoutHandle = this.defer(function () {
+					// Note: set suppressChangeEvent=true because we shouldn't get a change event because
+					// the dropdown closed just because the user backspaced while typing in the <input>.
+					this._togglePopupList(inputElement, true);
+				}.bind(this), this.filterDelay);
+
 				// Stop the spurious "input" events emitted while the user types
 				// such that only the "input" events emitted via FormValueWidget.handleOnInput()
 				// bubble to widget's root node.
@@ -25272,7 +25680,7 @@ define('deliteful/Combobox',[
 				evt.preventDefault();
 			}.bind(this), inputElement);
 			this.on("keydown", function (evt) {
-				/* jshint maxcomplexity: 15 */
+				/* jshint maxcomplexity: 16 */
 				// deliteful issue #382: prevent the browser from navigating to
 				// the previous page when typing backspace in a readonly input
 				if (inputElement.readOnly && evt.key === "Backspace") {
@@ -25284,13 +25692,15 @@ define('deliteful/Combobox',[
 					if (this.opened) {
 						this.closeDropDown(true/*refocus*/);
 					}
-				} else if (evt.key === "Spacebar") {
+				} else if (evt.key === "Spacebar" && this.opened) {
 					// Simply forwarding the key event to List doesn't allow toggling
 					// the selection, because List's mechanism is based on the event target
 					// which here is the input element outside the List. TODO: see deliteful #500.
 					if (this.selectionMode === "multiple") {
 						var rend = this.list.getEnclosingRenderer(this.list.navigatedDescendant);
-						this.list.selectFromEvent(evt, rend.item, rend, true);
+						if (rend) {
+							this.list.selectFromEvent(evt, rend.item, rend, true);
+						}
 					}
 					if (this.selectionMode === "multiple" || !this.autoFilter) {
 						evt.stopPropagation();
@@ -25299,7 +25709,7 @@ define('deliteful/Combobox',[
 				} else if (evt.key === "ArrowDown" || evt.key === "ArrowUp" ||
 					evt.key === "PageDown" || evt.key === "PageUp" ||
 					evt.key === "Home" || evt.key === "End") {
-					if (this._useCenteredDropDown()) {
+					if (this._isMobile) {
 						this.list.emit("keydown", evt);
 					}
 					evt.stopPropagation();
@@ -25308,34 +25718,55 @@ define('deliteful/Combobox',[
 			}.bind(this), inputElement);
 		},
 
+		_validateInput: function () {
+			if (this.selectionMode === "single") {
+				this._validateSingle();
+			} else {
+				this._validateMultiple();
+			}
+		},
+
 		_validateSingle: function () {
 			var selectedItem = this.list.selectedItem;
 			// selectedItem non-null because List in radio selection mode, but
 			// the List can be empty, so:
-			this.inputNode.value = selectedItem ? this._getItemLabel(selectedItem) : "";
+			this.displayedValue = selectedItem ? this._getItemLabel(selectedItem) : "";
 			this.value = selectedItem ? this._getItemValue(selectedItem) : "";
+
+			// If user selects a choice from the dropdown with the same label as what's
+			// currently typed into the <input>, make sure computeProperties() doesn't set
+			// the <input> to the item's value (ex: "DE" rather than "Germany").
+			this.notifyCurrentValue("displayedValue");
 		},
 
-		_validateMultiple: function (inputElement) {
+		_validateMultiple: function () {
+			var n;
 			var selectedItems = this.list.selectedItems;
-			var n = selectedItems ? selectedItems.length : 0;
+			n = selectedItems ? selectedItems.length : 0;
 			var value = [];
 			if (n > 1) {
-				inputElement.value = this.multipleChoiceMsg;
+				this.displayedValue = string.substitute(this.multipleChoiceMsg, {items: n});
 				for (var i = 0; i < n; i++) {
 					value.push(selectedItems[i] ? this._getItemValue(selectedItems[i]) : "");
 				}
 			} else if (n === 1) {
 				var selectedItem = this.list.selectedItem;
-				inputElement.value = this._getItemLabel(selectedItem);
+				this.displayedValue = this._getItemLabel(selectedItem);
 				value.push(this._getItemValue(selectedItem));
 			} else { // no option selected
-				inputElement.value = this.multipleChoiceNoSelectionMsg;
+				this.displayedValue = this.multipleChoiceNoSelectionMsg;
 			}
-			this._set("value", value);
+
+			// Only set this.value if the value has changed.  Otherwise it's a spurious
+			// notification.  Stateful doesn't detect that two arrays are deep-equal because
+			// ["foo"] !== ["foo"]
+			if (!this.value || this.value.join(",") !== value.join(",")) {
+				this.value = value;
+			}
+
 			// FormWidget.refreshRendering() also updates valueNode.value, but we need to
 			// make sure this is already done when FormValueWidget.handleOnInput() runs.
-			this.valueNode.value = value;
+			this.valueNode.value = value.toString();
 			this.handleOnInput(this.value); // emit "input" event
 		},
 
@@ -25344,37 +25775,100 @@ define('deliteful/Combobox',[
 		 * If `autoFilter` is `true` and `selectionMode` is `"single"`, the method
 		 * is called automatically while the user types into the editable input
 		 * element, with `filterTxt` being the currently entered text.
+		 * @protected
+		 */
+		filter: function (inputText) {
+			if (!this.autoFilter || inputText.length === 0 || !this._valueSetByUserInput) {
+				// Display the full list.
+				this.list.query = this._getDefaultQuery();
+			} else {
+				// Display the list filtered by what user typed into <input>.
+
+				// Escape special chars in search string, see
+				// http://stackoverflow.com/questions/3446170/escape-string-for-use-in-javascript-regex.
+				var filterTxt = inputText.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, "\\$&");
+				if (this.filterMode === "startsWith") {
+					filterTxt = "^" + filterTxt;
+				} else if (this.filterMode === "is") {
+					filterTxt = "^" + filterTxt + "$";
+				} // nothing to add for "contains"
+
+				var rexExp = new RegExp(filterTxt, this.ignoreCase ? "i" : "");
+				this.list.query = this.getQuery({
+					rexExp: rexExp,
+					inputText: inputText
+				});
+			}
+
+			if (this.source) {
+				this.list.source = this.source;
+			}
+		},
+
+		/**
+		 * Sets the new list's query.
+		 * This method can be overridden when using other store types.
 		 * The default implementation uses `dstore/Filter.match()`.
-		 * The matching is performed against the `list.labelAttr` attribute of
+		 * The matching is performed against the `list.labelAttr` or `list.labelFunc` attributes of
 		 * the data store items.
 		 * The method can be overridden for implementing other filtering strategies.
 		 * @protected
+		 * @param  {Object.<string, Object>} args Dictionary containing by default
+		 * the regular expression and the original input text.
+		 * @returns {Object} New query to set to the list.
 		 */
-		filter: function (filterTxt) {
-			if (this.filterMode === "startsWith") {
-				filterTxt = "^" + filterTxt;
-			} else if (this.filterMode === "is") {
-				filterTxt = "^" + filterTxt + "$";
-			} // nothing to add for "contains"
+		getQuery: function (args) {
+			return (new Filter()).match(this.list.labelAttr || this.list.labelFunc, args.rexExp);
+		},
 
-			var rexExp = new RegExp(filterTxt, this.ignoreCase ? "i" : "");
-			this.list.query = (new Filter()).match(this.list.labelAttr, rexExp);
+		/**
+		 * Consists in the default query to apply to the source.
+		 * It can be a `function` or a `Object`.
+		 * If it is a function, then it's invoked and the list's query will get the return value.
+		 * If it is an Object, it's assigned to the list's query directly.
+		 * It can be overridden depending of store used and the strategy to apply.
+		 */
+		defaultQuery: {},
+
+		_getDefaultQuery: function () {
+			return (typeof this.defaultQuery === "function") ?
+				this.defaultQuery() : this.defaultQuery;
+		},
+
+		_setSelectedItems: function () {
+			if (this.list.source && this.list.renderItems && this.value !== "") {
+				var selectedItems = [],
+					presetItems = this.value instanceof Array && this.value.length >= 1 ? this.value : [this.value];
+				selectedItems = this.list.renderItems.filter(function (renderItem) {
+					return presetItems.indexOf(this._getItemValue(renderItem)) >= 0;
+				}.bind(this));
+
+				this.list.selectedItems = selectedItems;
+				if (selectedItems.length) {
+					this._validateInput();
+				}
+			}
 		},
 
 		openDropDown: dcl.superCall(function (sup) {
 			return function () {
-				// Store the current selection, to be able to restore when pressing the
-				// cancel button. Used by ComboPopup. (Could spare it in situations when
-				// there is no cancel button, but not really worth.)
-				this._selectedItems = this.list.selectedItems;
+				if (this._isMobile) {
+					// We are opening the ComboPopup but may or may not want to show the list.
+					// TogglePopupList will decide the right thing to do.
+					this._togglePopupList(this.inputNode);
+				} else {
+					// On desktop, we definitely want to display the list.
+					// Adjust the dropdown contents to be filtered by the current value of the <input>.
+					this.filter(this.inputNode.value);
+				}
+
+				this._setSelectedItems();
 
 				if (!this.opened) {
-					var mobile = this._useCenteredDropDown();
-
 					// On desktop, leave focus in the original <input>.  But on mobile, focus the popup dialog.
-					this.focusOnPointerOpen = this.focusOnKeyboardOpen = mobile;
+					this.focusOnPointerOpen = this.focusOnKeyboardOpen = this._isMobile;
 
-					if (!mobile) {
+					if (!this._isMobile) {
 						this.defer(function () {
 							// Avoid losing focus when clicking the arrow (instead of the input element):
 							// TODO: isn't this already handled by delite/HasDropDown#_dropDownPointerUpHandler() ?
@@ -25389,48 +25883,43 @@ define('deliteful/Combobox',[
 					// Avoid that List gives focus to list items when navigating, which would
 					// blur the input field used for entering the filtering criteria.
 					this.dropDown.focusDescendants = false;
-
-					this._updateScroll(undefined, true);	// sets this.list.navigatedDescendant
-					this._setActiveDescendant(this.list.navigatedDescendant);
+					if (!this._isMobile) {
+						// desktop version
+						this._updateScroll(undefined, true);	// sets this.list.navigatedDescendant
+						this._setActiveDescendant(this.list.navigatedDescendant);
+					} else {
+						if (this.hasDownArrow) {
+							this.dropDown.inputNode.value = this.displayedValue;
+						}
+						this.dropDown.focus();
+					}
 				}.bind(this));
 			};
 		}),
 
 		closeDropDown: dcl.superCall(function (sup) {
-			return function () {
-
-				// cleanup
-				this._selectedItems = null;
-
+			return function (focus, suppressChangeEvent) {
 				var input = this._popupInput || this.inputNode;
 				input.removeAttribute("aria-activedescendant");
 
-				if (this.opened) {
-					// Using the flag `opened` (managed by delite/HasDropDown), avoid
-					// emitting a new change event if closeDropDown is closed more than once
-					// for a closed dropdown.
-
-					// Closing the dropdown represents a commit interaction
+				// Closing the dropdown represents a commit interaction, unless the dropdown closes
+				// automatically because the user backspaced, in which case suppressChangeEvent is true.
+				if (!suppressChangeEvent) {
 					this.handleOnChange(this.value); // emit "change" event
-
-					// Reinit the query. Necessary such that after closing the dropdown
-					// in autoFilter mode with a text in the input field not matching
-					// any item, when the dropdown will be reopen it shows all items
-					// instead of being empty
-					this.list.query = {};
-
-					if (this.selectionMode === "single" && this.autoFilter) {
-						// In autoFilter mode, reset the content of the inputNode when
-						// closing the dropdown, such that next time the dropdown is opened
-						// it doesn't show the text the user may have entered for filtering
-						var selItem = this.list.selectedItem;
-						if (selItem) {
-							(this._popupInput || this.inputNode).value =
-								this._getItemLabel(this.list.selectedItem);
-						}
-					}
 				}
+
 				sup.apply(this, arguments);
+			};
+		}),
+
+		// HasDropDown#_dropDownKeyUpHandler() override.
+		// Do not call openDropDown if widget does not have a down arrow shown (auto-complete mode).
+		// In this mode the popup will open when the user typed something and text.length > this.minFilterChars.
+		_dropDownKeyUpHandler: dcl.superCall(function (sup) {
+			return function () {
+				if (this.hasDownArrow) {
+					sup.call(this);
+				}
 			};
 		}),
 
@@ -25479,7 +25968,7 @@ define('deliteful/Combobox',[
 });
 ;
 define('delite/handlebars!deliteful/Combobox/ComboPopup.html',["delite/handlebars","deliteful/LinearLayout","deliteful/Button"], function(handlebars){
-	return handlebars.compile("<template role=\"presentation\">\n\t<d-linear-layout style=\"height: 100%\">\n        <div class=\"d-combo-popup-header\">{{header}}</div>\n\t\t<input d-hidden=\"{{!(this.combobox.autoFilter &amp;&amp; this.combobox.selectionMode !== 'multiple')}}\" attach-point=\"inputNode\" class=\"d-combobox-input\" role=\"combobox\" autocomplete=\"off\" autocapitalize=\"none\" autocorrect=\"off\" aria-autocomplete=\"list\" type=\"text\" placeholder=\"{{combobox.searchPlaceHolder}}\">\n\t\t<div attach-point=\"listNode\"></div>\n\t\t<d-linear-layout d-hidden=\"{{combobox.selectionMode !== 'multiple'}}\" vertical=\"false\">\n\t\t\t<button is=\"d-button\" class=\"fill d-combo-cancel-button\" label=\"{{combobox.cancelMsg}}\" on-click=\"{{cancelHandler}}\"></button>\n\t\t\t<button is=\"d-button\" class=\"fill d-combo-ok-button\" label=\"{{combobox.okMsg}}\" on-click=\"{{okHandler}}\"></button>\n\t\t</d-linear-layout>\n\t</d-linear-layout>\n</template>");
+	return handlebars.compile("<template role=\"presentation\">\n\t<d-linear-layout style=\"height: 100%\">\n\t\t<label class=\"d-combo-popup-header\" for=\"{{_tag}}-{{widgetId}}-input\">{{header}}</label>\n\t\t<input id=\"{{_tag}}-{{widgetId}}-input\" d-hidden=\"{{!(this.combobox.autoFilter &amp;&amp; this.combobox.selectionMode !== 'multiple')}}\" attach-point=\"inputNode\" class=\"d-combobox-input\" role=\"combobox\" autocomplete=\"off\" autocapitalize=\"none\" autocorrect=\"off\" aria-autocomplete=\"list\" aria-haspopup=\"true\" aria-owns=\"{{combobox.list.id}}\" type=\"text\" placeholder=\"{{combobox.searchPlaceHolder}}\">\n\t\t<div attach-point=\"listNode\"></div>\n\t\t<d-linear-layout d-hidden=\"{{combobox.selectionMode !== 'multiple'}}\" vertical=\"false\">\n\t\t\t<button is=\"d-button\" class=\"fill d-combo-cancel-button\" label=\"{{combobox.cancelMsg}}\" on-click=\"{{cancelHandler}}\"></button>\n\t\t\t<button is=\"d-button\" class=\"fill d-combo-ok-button\" label=\"{{combobox.okMsg}}\" on-click=\"{{okHandler}}\"></button>\n\t\t</d-linear-layout>\n\t</d-linear-layout>\n</template>");
 });;
 /** @module deliteful/Combobox/ComboPopup */
 define('deliteful/Combobox/ComboPopup',[
@@ -25537,7 +26026,8 @@ define('deliteful/Combobox/ComboPopup',[
 					var list = this.combobox.list;
 					if (list) {
 						list.placeAt(this.listNode, "replace");
-						$(list).addClass("fill");
+						$(list).addClass("fill")
+							.removeClass("d-hidden");
 					}
 					this.combobox._prepareInput(this.inputNode);
 				}
@@ -25549,7 +26039,7 @@ define('deliteful/Combobox/ComboPopup',[
 		 * @protected
 		 */
 		okHandler: function () {
-			this.combobox._validateMultiple(this.combobox.inputNode);
+			// NOTE: no need to validate since it's handled by the `selection-change` listener
 			this.combobox.closeDropDown();
 		},
 
@@ -25558,8 +26048,11 @@ define('deliteful/Combobox/ComboPopup',[
 		 * @protected
 		 */
 		cancelHandler: function () {
-			this.combobox.list.selectedItems = this.combobox._selectedItems;
+			// INFO: resetting any selected items.
+			this.combobox.list.selectedItems = [];
 			this.combobox.closeDropDown();
+			// cont: then ask to validate, so widget's value and inputNode get updated as well.
+			this.combobox._validateMultiple(true);
 		},
 
 		/**
@@ -25567,12 +26060,18 @@ define('deliteful/Combobox/ComboPopup',[
 		 * @protected
 		 */
 		focus: function () {
-			if (this.combobox.list && this.combobox.list.containerNode.children.length > 0) {
-				var id = this.combobox.list.getIdentity(
-					this.combobox.list.selectedItems.length > 0 ? this.combobox.list.selectedItems[0] : "");
-				var renderer = (id && id !== -1) ? this.combobox.list.getRendererByItemId(id) :
-					this.combobox.list.getRenderers()[0];
-				this.combobox.list.navigateTo(renderer);
+			if (this.combobox.autoFilter && this.combobox.selectionMode === "single") {
+				this.inputNode.focus();
+			} else {
+				// first check if list is not hidden.
+				if (!$(this.combobox.list).hasClass("d-hidden")
+						&& this.combobox.list && this.combobox.list.containerNode.children.length > 0) {
+					var id = this.combobox.list.getIdentity(
+						this.combobox.list.selectedItems.length > 0 ? this.combobox.list.selectedItems[0] : "");
+					var renderer = (id && id !== -1) ? this.combobox.list.getRendererByItemId(id) :
+						this.combobox.list.getItemRendererByIndex(0);
+					this.combobox.list.navigateTo(renderer);
+				}
 			}
 
 		}
@@ -25593,6 +26092,14 @@ define('delite/Dialog',[
 	return dcl(Widget, /** @lends module:delite/Dialog# */ {
 		createdCallback: function () {
 			this.on("keydown", this._dialogKeyDownHandler.bind(this));
+		},
+
+		focus: function () {
+			// Focus on first field.
+			this._getFocusItems();
+			if (this._firstFocusItem && this._firstFocusItem !== this) {
+				this._firstFocusItem.focus();
+			}
 		},
 
 		/**
@@ -25631,202 +26138,6 @@ define('delite/Dialog',[
 	});
 });
 ;
-/**
- * Accessibility utility functions (keyboard, tab stops, etc.).
- * @module delite/a11y
- * */
-define('delite/a11y',[], function () {
-
-	var a11y = /** @lends module:delite/a11y */ {
-		/**
-		 * Returns true if Element is visible.
-		 * @param {Element} elem - The Element.
-		 * @returns {boolean}
-		 * @private
-		 */
-		_isElementShown: function (elem) {
-			var s = getComputedStyle(elem);
-			return s.visibility !== "hidden"
-				&& s.visibility !== "collapsed"
-				&& s.display !== "none"
-				&& elem.type !== "hidden";
-		},
-
-		/**
-		 * Tests if element is tab-navigable even without an explicit tabIndex setting
-		 * @param {Element} elem - The Element.
-		 * @returns {boolean}
-		 */
-		hasDefaultTabStop: function (elem) {
-			/* jshint maxcomplexity:11 */
-
-			// No explicit tabIndex setting, need to investigate node type
-			switch (elem.nodeName.toLowerCase()) {
-			case "a":
-				// An <a> w/out a tabindex is only navigable if it has an href
-				return elem.hasAttribute("href");
-			case "area":
-			case "button":
-			case "input":
-			case "object":
-			case "select":
-			case "textarea":
-				// These are navigable by default
-				return true;
-			case "iframe":
-				// If it's an editor <iframe> then it's tab navigable.
-				var contentDocument = elem.contentDocument;
-				if ("designMode" in contentDocument && contentDocument.designMode === "on") {
-					return true;
-				}
-				var body = contentDocument.body;
-				return body && (body.contentEditable === "true" ||
-					(body.firstChild && body.firstChild.contentEditable === "true"));
-			default:
-				return elem.contentEditable === "true";
-			}
-		},
-
-		/**
-		 * Returns effective tabIndex of an element, either a number, or undefined if element isn't focusable.
-		 * @param {Element} elem - The Element.
-		 * @returns {number|undefined}
-		 */
-		effectiveTabIndex: function (elem) {
-			if (elem.disabled) {
-				return undefined;
-			} else if (elem.hasAttribute("tabIndex")) {
-				// Explicit tab index setting
-				return +elem.getAttribute("tabIndex");// + to convert string --> number
-			} else {
-				// No explicit tabIndex setting, so depends on node type
-				return a11y.hasDefaultTabStop(elem) ? 0 : undefined;
-			}
-		},
-
-		/**
-		 * Tests if an element is tab-navigable.
-		 * @param {Element} elem - The Element.
-		 * @returns {boolean}
-		 */
-		isTabNavigable: function (elem) {
-			return a11y.effectiveTabIndex(elem) >= 0;
-		},
-
-		/**
-		 * Tests if an element is focusable by tabbing to it, or clicking it with the mouse.
-		 * @param {Element} elem - The Element.
-		 * @returns {boolean}
-		 */
-		isFocusable: function (elem) {
-			return a11y.effectiveTabIndex(elem) >= -1;
-		},
-
-		/**
-		 * Finds descendants of the specified root node.
-		 *
-		 * The following descendants of the specified root node are returned:
-		 *
-		 * - the first tab-navigable element in document order without a tabIndex or with tabIndex="0"
-		 * - the last tab-navigable element in document order without a tabIndex or with tabIndex="0"
-		 * - the first element in document order with the lowest positive tabIndex value
-		 * - the last element in document order with the highest positive tabIndex value
-		 *
-		 * @param Element root - The Element.
-		 * @returns {Object} Hash of the format `{first: Element, last: Element, lowest: Element, highest: Element}`.
-		 * @private
-		 */
-		_getTabNavigable: function (root) {
-			var first, last, lowest, lowestTabindex, highest, highestTabindex, radioSelected = {};
-
-			function radioName(node) {
-				// If this element is part of a radio button group, return the name for that group.
-				return node && node.tagName.toLowerCase() === "input" &&
-					node.type && node.type.toLowerCase() === "radio" &&
-					node.name && node.name.toLowerCase();
-			}
-
-			var shown = a11y._isElementShown, effectiveTabIndex = a11y.effectiveTabIndex;
-
-			function walkTree(/*Element*/ parent) {
-				/* jshint maxcomplexity:14 */
-				for (var child = parent.firstChild; child; child = child.nextSibling) {
-					// Skip text elements, hidden elements
-					if (child.nodeType !== 1 || !shown(child)) {
-						continue;
-					}
-
-					var tabindex = effectiveTabIndex(child);
-					if (tabindex >= 0) {
-						if (tabindex === 0) {
-							if (!first) {
-								first = child;
-							}
-							last = child;
-						} else if (tabindex > 0) {
-							if (!lowest || tabindex < lowestTabindex) {
-								lowestTabindex = tabindex;
-								lowest = child;
-							}
-							if (!highest || tabindex >= highestTabindex) {
-								highestTabindex = tabindex;
-								highest = child;
-							}
-						}
-						var rn = radioName(child);
-						if (child.checked && rn) {
-							radioSelected[rn] = child;
-						}
-					}
-					if (child.nodeName.toUpperCase() !== "SELECT") {
-						walkTree(child);
-					}
-				}
-			}
-
-			if (shown(root)) {
-				walkTree(root);
-			}
-			function rs(node) {
-				// substitute checked radio button for unchecked one, if there is a checked one with the same name.
-				return radioSelected[radioName(node)] || node;
-			}
-
-			return { first: rs(first), last: rs(last), lowest: rs(lowest), highest: rs(highest) };
-		},
-
-		/**
-		 * Finds the descendant of the specified root node that is first in the tabbing order.
-		 * @param {string|Element} root
-		 * @param {Document} [doc]
-		 * @returns {Element}
-		 */
-		getFirstInTabbingOrder: function (root, doc) {
-			if (typeof root === "string") {
-				root = (doc || document).getElementById(root);
-			}
-			var elems = a11y._getTabNavigable(root);
-			return elems.lowest ? elems.lowest : elems.first;
-		},
-
-		/**
-		 * Finds the descendant of the specified root node that is last in the tabbing order.
-		 * @param {string|Element} root
-		 * @param {Document} [doc]
-		 * @returns {Element}
-		 */
-		getLastInTabbingOrder: function (root, doc) {
-			if (typeof root === "string") {
-				root = (doc || document).getElementById(root);
-			}
-			var elems = a11y._getTabNavigable(root);
-			return elems.last ? elems.last : elems.highest;
-		}
-	};
-
-	return a11y;
-});
-;
 /** @module delite/HasDropDown */
 define('delite/HasDropDown',[
 	"dcl/dcl",
@@ -25837,7 +26148,7 @@ define('delite/HasDropDown',[
 	"./register",
 	"./Widget",
 	"./activationTracker",		// for delite-deactivated event
-	"dpointer/events"		// so can just monitor for "pointerdown"
+	"dpointer/events"		// for "pointerenter", "pointerleave"
 ], function (dcl, Promise, $, place, popup, register, Widget) {
 	
 	/**
@@ -25887,20 +26198,18 @@ define('delite/HasDropDown',[
 	 */
 	var HasDropDown = dcl(Widget, /** @lends module:delite/HasDropDown# */ {
 		/**
-		 * The node to display the popup around.
-		 * Can be set in a template via a `attach-point` assignment,
-		 * or set to a node non-descendant node, in order to set up dropdown-opening behavior on an arbitrary node.
-		 * If missing, then `this` will be used.
+		 * If specified, defines a node to set up the dropdown-opening behavior on,
+		 * rather than the HasDropDown node itself.
 		 * @member {Element}
 		 * @protected
 		 */
-		anchorNode: null,
+		behaviorNode: null,
 
 		/**
 		 * The button/icon/node to click to display the drop down.
 		 * Useful for widgets like Combobox which contain an `<input>` and a
 		 * down arrow icon, and only clicking the icon should open the drop down.
-		 * If undefined, click handler set up on `this.anchorNode` (if defined),
+		 * If undefined, click handler set up on `this.behaviorNode` (if defined),
 		 * or otherwise on `this`.
 		 * @member {Element}
 		 * @protected
@@ -25997,80 +26306,18 @@ define('delite/HasDropDown',[
 		opened: false,
 
 		/**
-		 * Callback when the user mousedown/touchstart on the arrow icon.
+		 * Callback when the user clicks the arrow icon.
 		 * @private
 		 */
-		_dropDownPointerDownHandler: function () {
+		_dropDownClickHandler: function (e) {
+			e.preventDefault();
+			e.stopPropagation();
+
 			if (this.disabled || this.readOnly) {
 				return;
 			}
 
-			// In the past we would call e.preventDefault() to stop things like text selection,
-			// but it doesn't work on IE10 (or IE11?) since it prevents the button from getting focus
-			// (see #17262), so not doing it at all for now.
-			//
-			// Also, don't stop propagation, so that:
-			//		1. TimeTextBox etc. can focus the <input> on mousedown
-			//		2. dropDownButtonActive class applied by CssState (on button depress)
-			//		3. user defined onMouseDown handler fires
-
-			this._docHandler = this.on("pointerup", this._dropDownPointerUpHandler.bind(this), this.ownerDocument.body);
-
 			this.toggleDropDown();
-		},
-
-		/**
-		 * Callback on mouseup/touchend after mousedown/touchstart on the arrow icon.
-		 * Note that this function is called regardless of what node the event occurred on (but only after
-		 * a mousedown/touchstart on the arrow).
-		 *
-		 * If the drop down is a simple menu and the cursor is over the menu, we execute it, otherwise,
-		 * we focus our drop down widget.  If the event is missing, then we are not a mouseup event.
-		 *
-		 * This is useful for the common mouse movement pattern with native browser `<select>` nodes:
-		 *
-		 * 1. mouse down on the select node (probably on the arrow)
-		 * 2. move mouse to a menu item while holding down the mouse button
-		 * 3. mouse up; this selects the menu item as though the user had clicked it
-		 *
-		 * @param {Event} [e]
-		 * @private
-		 */
-		_dropDownPointerUpHandler: function (e) {
-			/* jshint maxcomplexity:14 */
-
-			if (this._docHandler) {
-				this._docHandler.remove();
-				this._docHandler = null;
-			}
-
-			// If mousedown on the button, then dropdown opened, then user moved mouse over a menu item
-			// in the drop down, and released the mouse.
-			if (this._currentDropDown) {
-				// This if() statement deals with the corner-case when the drop down covers the original widget,
-				// because it's so large.  In that case mouse-up shouldn't select a value from the menu.
-				// Find out if our target is somewhere in our dropdown widget,
-				// but not over our buttonNode (the clickable node)
-				var c = place.position(this.buttonNode);
-				if (!(e.pageX >= c.x && e.pageX <= c.x + c.w) || !(e.pageY >= c.y && e.pageY <= c.y + c.h)) {
-					var t = e.target, overMenu;
-					while (t && !overMenu) {
-						if ($(t).hasClass("d-popup")) {
-							overMenu = true;
-							break;
-						} else {
-							t = t.parentNode;
-						}
-					}
-					if (overMenu) {
-						if (this._currentDropDown.handleSlideClick) {
-							var menuItem = this.getEnclosingWidget(e.target);
-							menuItem.handleSlideClick(menuItem, e);
-						}
-						return;
-					}
-				}
-			}
 
 			if (this._openDropDownPromise) {
 				// Test if this is a fake mouse event caused by the user typing
@@ -26116,59 +26363,38 @@ define('delite/HasDropDown',[
 		},
 
 		postRender: function () {
-			this.anchorNode = this.anchorNode || this;
-			this.buttonNode = this.buttonNode || this.anchorNode;
+			this.behaviorNode = this.behaviorNode || this;
+			this.buttonNode = this.buttonNode || this.behaviorNode;
 			this.popupStateNode = this.focusNode || this.buttonNode;
 
 			this.popupStateNode.setAttribute("aria-haspopup", "true");
 
 			this._HasDropDownListeners = [
 				// basic listeners
-				this.on("pointerdown", this._dropDownPointerDownHandler.bind(this), this.buttonNode),
-				this.on("keydown", this._dropDownKeyDownHandler.bind(this), this.focusNode || this.anchorNode),
-				this.on("keyup", this._dropDownKeyUpHandler.bind(this), this.focusNode || this.anchorNode),
+				this.on("click", this._dropDownClickHandler.bind(this), this.buttonNode),
+				this.on("keydown", this._dropDownKeyDownHandler.bind(this), this.focusNode || this.behaviorNode),
+				this.on("keyup", this._dropDownKeyUpHandler.bind(this), this.focusNode || this.behaviorNode),
 
-				this.on("delite-deactivated", this._deactivatedHandler.bind(this), this.anchorNode),
+				this.on("delite-deactivated", this._deactivatedHandler.bind(this), this.behaviorNode),
 
 				// set this.hovering when mouse is over widget so we can differentiate real mouse clicks from synthetic
 				// mouse clicks generated from JAWS upon keyboard events
 				this.on("pointerenter", function () {
 					this.hovering = true;
-				}.bind(this), this.anchorNode),
+				}.bind(this), this.behaviorNode),
 				this.on("pointerleave", function () {
 					this.hovering = false;
-				}.bind(this), this.anchorNode),
-
-				// Avoid phantom click on android [and maybe iOS] where touching the button opens a centered dialog, but
-				// then there's a phantom click event on the dialog itself, possibly closing it.
-				// Happens in deliteful/tests/functional/ComboBox-prog.html on a phone (portrait mode), when you click
-				// towards the right side of the second ComboBox.
-				this.on("touchstart", function (evt) {
-					// Note: need to be careful not to call evt.preventDefault() indiscriminately because that would
-					// prevent [non-disabled] <input> etc. controls from getting focus.
-					if (this.dropDownPosition[0] === "center") {
-						evt.preventDefault();
-					}
-				}.bind(this), this.buttonNode),
-
-				// Stop click events and workaround problem on iOS where a blur event occurs ~300ms after
-				// the focus event, causing the dropdown to open then immediately close.
-				// Workaround iOS problem where clicking a Menu can focus an <input> (or click a button) behind it.
-				// Need to be careful though that you can still focus <input>'s and click <button>'s in a TooltipDialog.
-				// Also, be careful not to break (native) scrolling of dropdown like ComboBox's options list.
-				this.on("touchend", function (evt) {
-					evt.preventDefault();
-				}, this.buttonNode),
-				this.on("click", function (evt) {
-					evt.preventDefault();
-					evt.stopPropagation();
-				}, this.buttonNode)
+				}.bind(this), this.behaviorNode)
 			];
 
 			if (this.openOnHover) {
 				this._HasDropDownListeners.push(
-					this.on("delite-hover-activated", this.openDropDown.bind(this), this.buttonNode),
-					this.on("delite-hover-deactivated", this.closeDropDown.bind(this), this.buttonNode)
+					this.on("delite-hover-activated", function () {
+						this.openDropDown();
+					}.bind(this), this.buttonNode),
+					this.on("delite-hover-deactivated", function () {
+						this.closeDropDown();
+					}.bind(this), this.buttonNode)
 				);
 			}
 		},
@@ -26343,7 +26569,7 @@ define('delite/HasDropDown',[
 				delete this._cancelPendingDisplay;
 
 				this._currentDropDown = dropDown;
-				var anchorNode = this.anchorNode,
+				var behaviorNode = this.behaviorNode,
 					self = this;
 
 				this.emit("delite-before-show", {
@@ -26358,10 +26584,21 @@ define('delite/HasDropDown',[
 
 				dropDown._originalStyle = dropDown.style.cssText;
 
+				// Set width of drop down if necessary, so that dropdown width [including scrollbar]
+				// matches width of behaviorNode.  Don't do anything for when dropDownPosition=["center"] though,
+				// in which case popup.open() doesn't return a value.
+				if (this.dropDownPosition[0] !== "center") {
+					if (this.forceWidth) {
+						dropDown.style.width = behaviorNode.offsetWidth + "px";
+					} else if (this.autoWidth) {
+						dropDown.style.minWidth = behaviorNode.offsetWidth + "px";
+					}
+				}
+
 				var retVal = popup.open({
-					parent: anchorNode,
+					parent: behaviorNode,
 					popup: dropDown,
-					around: anchorNode,
+					around: behaviorNode,
 					orient: this.dropDownPosition,
 					maxHeight: this.maxHeight,
 					onExecute: function () {
@@ -26376,22 +26613,6 @@ define('delite/HasDropDown',[
 					}
 				});
 
-				// Set width of drop down if necessary, so that dropdown width [including scrollbar]
-				// matches width of anchorNode.  Don't do anything for when dropDownPosition=["center"] though,
-				// in which case popup.open() doesn't return a value.
-				if (retVal && (this.forceWidth ||
-						(this.autoWidth && anchorNode.offsetWidth > dropDown.offsetWidth))) {
-					var widthAdjust = anchorNode.offsetWidth - dropDown._popupWrapper.offsetWidth;
-
-					dropDown.style.width = anchorNode.offsetWidth + "px";
-
-					// If dropdown is right-aligned then compensate for width change by changing horizontal position
-					if (retVal.corner[1] === "R") {
-						dropDown._popupWrapper.style.left =
-							(dropDown._popupWrapper.style.left.replace("px", "") - widthAdjust) + "px";
-					}
-				}
-
 				$(this.popupStateNode).addClass("d-drop-down-open");
 				this.opened = true;
 
@@ -26399,7 +26620,7 @@ define('delite/HasDropDown',[
 
 				// Set aria-labelledby on dropdown if it's not already set to something more meaningful
 				if (dropDown.getAttribute("role") !== "presentation" && !dropDown.getAttribute("aria-labelledby")) {
-					dropDown.setAttribute("aria-labelledby", this.anchorNode.id);
+					dropDown.setAttribute("aria-labelledby", this.behaviorNode.id);
 				}
 
 				this.emit("delite-after-show", {
@@ -26447,8 +26668,8 @@ define('delite/HasDropDown',[
 			}
 
 			if (this.opened) {
-				if (focus && this.focus) {
-					this.focus();
+				if (focus && this.behaviorNode.focus) {
+					this.behaviorNode.focus();
 				}
 
 				this.emit("delite-before-hide", {
@@ -27877,6 +28098,169 @@ define('delite/place',[
 	};
 
 	return place;
+});
+;
+define('dojo/string',[
+	"./_base/kernel",	// kernel.global
+	"./_base/lang"
+], function(kernel, lang){
+
+// module:
+//		dojo/string
+
+var string = {
+	// summary:
+	//		String utilities for Dojo
+};
+lang.setObject("dojo.string", string);
+
+string.rep = function(/*String*/str, /*Integer*/num){
+	// summary:
+	//		Efficiently replicate a string `n` times.
+	// str:
+	//		the string to replicate
+	// num:
+	//		number of times to replicate the string
+
+	if(num <= 0 || !str){ return ""; }
+
+	var buf = [];
+	for(;;){
+		if(num & 1){
+			buf.push(str);
+		}
+		if(!(num >>= 1)){ break; }
+		str += str;
+	}
+	return buf.join("");	// String
+};
+
+string.pad = function(/*String*/text, /*Integer*/size, /*String?*/ch, /*Boolean?*/end){
+	// summary:
+	//		Pad a string to guarantee that it is at least `size` length by
+	//		filling with the character `ch` at either the start or end of the
+	//		string. Pads at the start, by default.
+	// text:
+	//		the string to pad
+	// size:
+	//		length to provide padding
+	// ch:
+	//		character to pad, defaults to '0'
+	// end:
+	//		adds padding at the end if true, otherwise pads at start
+	// example:
+	//	|	// Fill the string to length 10 with "+" characters on the right.  Yields "Dojo++++++".
+	//	|	string.pad("Dojo", 10, "+", true);
+
+	if(!ch){
+		ch = '0';
+	}
+	var out = String(text),
+		pad = string.rep(ch, Math.ceil((size - out.length) / ch.length));
+	return end ? out + pad : pad + out;	// String
+};
+
+string.substitute = function(	/*String*/		template,
+									/*Object|Array*/map,
+									/*Function?*/	transform,
+									/*Object?*/		thisObject){
+	// summary:
+	//		Performs parameterized substitutions on a string. Throws an
+	//		exception if any parameter is unmatched.
+	// template:
+	//		a string with expressions in the form `${key}` to be replaced or
+	//		`${key:format}` which specifies a format function. keys are case-sensitive.
+	// map:
+	//		hash to search for substitutions
+	// transform:
+	//		a function to process all parameters before substitution takes
+	//		place, e.g. mylib.encodeXML
+	// thisObject:
+	//		where to look for optional format function; default to the global
+	//		namespace
+	// example:
+	//		Substitutes two expressions in a string from an Array or Object
+	//	|	// returns "File 'foo.html' is not found in directory '/temp'."
+	//	|	// by providing substitution data in an Array
+	//	|	string.substitute(
+	//	|		"File '${0}' is not found in directory '${1}'.",
+	//	|		["foo.html","/temp"]
+	//	|	);
+	//	|
+	//	|	// also returns "File 'foo.html' is not found in directory '/temp'."
+	//	|	// but provides substitution data in an Object structure.  Dotted
+	//	|	// notation may be used to traverse the structure.
+	//	|	string.substitute(
+	//	|		"File '${name}' is not found in directory '${info.dir}'.",
+	//	|		{ name: "foo.html", info: { dir: "/temp" } }
+	//	|	);
+	// example:
+	//		Use a transform function to modify the values:
+	//	|	// returns "file 'foo.html' is not found in directory '/temp'."
+	//	|	string.substitute(
+	//	|		"${0} is not found in ${1}.",
+	//	|		["foo.html","/temp"],
+	//	|		function(str){
+	//	|			// try to figure out the type
+	//	|			var prefix = (str.charAt(0) == "/") ? "directory": "file";
+	//	|			return prefix + " '" + str + "'";
+	//	|		}
+	//	|	);
+	// example:
+	//		Use a formatter
+	//	|	// returns "thinger -- howdy"
+	//	|	string.substitute(
+	//	|		"${0:postfix}", ["thinger"], null, {
+	//	|			postfix: function(value, key){
+	//	|				return value + " -- howdy";
+	//	|			}
+	//	|		}
+	//	|	);
+
+	thisObject = thisObject || kernel.global;
+	transform = transform ?
+		lang.hitch(thisObject, transform) : function(v){ return v; };
+
+	return template.replace(/\$\{([^\s\:\}]+)(?:\:([^\s\:\}]+))?\}/g,
+		function(match, key, format){
+			var value = lang.getObject(key, false, map);
+			if(format){
+				value = lang.getObject(format, false, thisObject).call(thisObject, value, key);
+			}
+			return transform(value, key).toString();
+		}); // String
+};
+
+string.trim = String.prototype.trim ?
+	lang.trim : // aliasing to the native function
+	function(str){
+		str = str.replace(/^\s+/, '');
+		for(var i = str.length - 1; i >= 0; i--){
+			if(/\S/.test(str.charAt(i))){
+				str = str.substring(0, i + 1);
+				break;
+			}
+		}
+		return str;
+	};
+
+/*=====
+ string.trim = function(str){
+	 // summary:
+	 //		Trims whitespace from both sides of the string
+	 // str: String
+	 //		String to be trimmed
+	 // returns: String
+	 //		Returns the trimmed string
+	 // description:
+	 //		This version of trim() was taken from [Steven Levithan's blog](http://blog.stevenlevithan.com/archives/faster-trim-javascript).
+	 //		The short yet performant version of this function is dojo/_base/lang.trim(),
+	 //		which is part of Dojo base.  Uses String.prototype.trim instead, if available.
+	 return "";	// String
+ };
+ =====*/
+
+	return string;
 });
 ;
 define('delite/handlebars!deliteful/Slider/Slider.html',["delite/handlebars"], function(handlebars){

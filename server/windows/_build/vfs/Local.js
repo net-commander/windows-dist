@@ -886,7 +886,7 @@ function create(fsOptions) {
                         watch();
                     }
                     catch (e) { }
-                });
+                }, 0);
             }
         }
         this.close = function () {

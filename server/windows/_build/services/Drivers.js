@@ -76,6 +76,9 @@ class DriverService extends Bean_1.BeanService {
                             if (stat) {
                                 let root = file.replace(driverPath + '/', '');
                                 if (stat.isDirectory()) {
+                                    if (~file.indexOf('node_modules')) {
+                                        return;
+                                    }
                                     let dirItem = {
                                         isDir: true,
                                         parent: root,

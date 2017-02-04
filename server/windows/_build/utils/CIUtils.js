@@ -8,6 +8,7 @@
 "use strict";
 // - Urgent: the reason for value[0] in the code below is back-compate to pre Dojo - 2.0 stores. To be removed soon.
 const _ = require("lodash");
+const primitives_1 = require("../std/primitives");
 function toOptions(cis) {
     cis = flattenCIS(cis);
     let result = [];
@@ -192,7 +193,7 @@ exports.getStringValue = getStringValue;
 ;
 function toString(d) {
     if (d != null) {
-        if (!_.isArray(d)) {
+        if (!primitives_1.isArray(d)) {
             return '' + d;
         }
         if (d && d.length === 1 && d[0] == null) {
@@ -206,7 +207,7 @@ exports.toString = toString;
 ;
 function setIntegerValue(data, value) {
     if (data != null) {
-        if (_.isArray(data)) {
+        if (primitives_1.isArray(data)) {
             data[0] = value;
         }
         else {
@@ -218,7 +219,7 @@ exports.setIntegerValue = setIntegerValue;
 ;
 function getCIValueByField(data, field) {
     if (data[field] != null) {
-        if (_.isArray(data[field])) {
+        if (primitives_1.isArray(data[field])) {
             return data[field][0] ? data[field][0] : data[field];
         }
         else {
@@ -270,7 +271,7 @@ exports.getCIInputValueByNameAndFieldStr = getCIInputValueByNameAndFieldStr;
 ;
 function toString2(val) {
     if (val != null) {
-        if (!_.isArray(val)) {
+        if (!primitives_1.isArray(val)) {
             return '' + val;
         }
         if (val && val.length === 1 && val[0] == null) {

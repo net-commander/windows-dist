@@ -178,7 +178,7 @@ class Mongod extends External_1.ExternalService {
                         reject(err);
                         return;
                     }
-                    fs.access(targetPath, fs.W_OK | fs.R_OK, (err) => {
+                    fs.access(targetPath, fs.W_OK | fs.R_OK | fs.R_OK, (err) => {
                         if (err) {
                             const dir = path.dirname(targetPath);
                             fs.access(dir, fs.W_OK | fs.R_OK, (err) => {
@@ -266,6 +266,7 @@ class Mongod extends External_1.ExternalService {
                     }
                     break;
                 }
+                case 'darwin':
                 case 'linux': {
                     this.searchPaths = this.searchPaths.concat(['/usr/bin/', '/usr/local/bin/']);
                     break;

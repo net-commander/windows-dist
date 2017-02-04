@@ -179,10 +179,14 @@ class ExternalService extends Base_1.BaseService {
     _findInLinux(filename) {
         let result = this._find(filename);
         const which = require('which');
-        if (which) {
-            const whichResult = which.sync(filename);
-            if (whichResult) {
-                result = whichResult;
+        if (!result && which) {
+            try {
+                const whichResult = which.sync(filename);
+                if (whichResult) {
+                    result = whichResult;
+                }
+            }
+            catch (e) {
             }
         }
         return result;
@@ -192,6 +196,7 @@ class ExternalService extends Base_1.BaseService {
             case 'win32': {
                 return this._findInWindows(filename);
             }
+            case 'darwin':
             case 'linux': {
                 return this._findInLinux(filename);
             }

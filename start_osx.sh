@@ -8,7 +8,7 @@ if [ ! -d "../Contents/Frameworks" ]; then
 fi
 
 
-cd server/nodejs
+cd server/osx
 
-./server noob --file=start.js
+./server noob --print=true --trial=true --type=OFFLINE_RELEASE --release=true --root="../.."
 

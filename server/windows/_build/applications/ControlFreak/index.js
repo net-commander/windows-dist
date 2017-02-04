@@ -37,6 +37,8 @@ const mount = require('koa-mount');
 const qs = require('qs').parse;
 const argv = yargs_parser(process.argv.slice(2));
 const util = require('util');
+//import { RootRequire } from '@dojo/interfaces/loader';
+//const dojoRequire: RootRequire = require('@dojo/loader');
 const io = {
     serialize: JSON.stringify
 };
@@ -119,10 +121,15 @@ class ControlFreak extends Base_1.ApplicationBase {
         if (this.options.type === Base_1.ELayout.OFFLINE_RELEASE) {
             searchPaths.push(path.resolve(path.join(this.path(Base_1.EEKey.APP_ROOT), 'mongo')));
         }
-        const mongod = new Mongod_1.Mongod({
-            db: this.path(Base_1.EEKey.DB_ROOT)
-        }, searchPaths);
-        return [mongod];
+        if (argv['mqtt'] !== 'false') {
+            const mongod = new Mongod_1.Mongod({
+                db: this.path(Base_1.EEKey.DB_ROOT)
+            }, searchPaths);
+            return [mongod];
+        }
+        else {
+            return [];
+        }
     }
     vfsConfig() {
         return {
@@ -156,7 +163,7 @@ class ControlFreak extends Base_1.ApplicationBase {
         const components = this.components();
         let componentServices = [];
         _.each(components, component => {
-            componentServices = componentServices.concat(component.services(serviceConfig));
+            componentServices.push(...component.services(serviceConfig));
         });
         this._rpcServices = [directoryService, mountService, driverService, devicesService, logsService, nodeService, settingsService, trackingService];
         this._rpcServices = this._rpcServices.concat(componentServices);
@@ -208,7 +215,7 @@ class ControlFreak extends Base_1.ApplicationBase {
         const components = this.components();
         let componentRoutes = [];
         _.each(components, component => {
-            componentRoutes = componentRoutes.concat(component.routes());
+            componentRoutes.push(...component.routes());
         });
         this._routes = [routes_1.default, filesRoute, app_1.default, smd_1.default, uploadRoute];
         this._routes = this._routes.concat(componentRoutes);
@@ -262,13 +269,123 @@ class ControlFreak extends Base_1.ApplicationBase {
     }
     boot() {
         return __awaiter(this, void 0, void 0, function* () {
-            const services = this.externalServices();
-            for (let index = 0; index < services.length; index++) {
-                yield services[index].run();
-            }
-            this._externalServices = services;
-            Promise.resolve(true);
+            this._externalServices = this.externalServices();
+            return yield Promise.all(this._externalServices.map((service) => __awaiter(this, void 0, void 0, function* () {
+                yield service.run();
+            })));
         });
+    }
+    dConfig(clientRoot, serverRoot, base, packages) {
+        //path.join(this.path(EEKey.CLIENT_ROOT), '/lib'), this.path('NODE_ROOT'));
+        var dojoConfig = {
+            libRoot: clientRoot,
+            clientRoot: clientRoot,
+            cwd: serverRoot,
+            hasCache: {
+                "host-node": 1,
+                "host-browser": 0,
+                "dom": 0,
+                "dojo-amd-factory-scan": 0,
+                "dojo-has-api": 1,
+                "dojo-inject-api": 0,
+                "dojo-timeout-api": 0,
+                "dojo-trace-api": 1,
+                "dojo-log-api": 0,
+                "dojo-dom-ready-api": 0,
+                "dojo-publish-privates": 1,
+                "dojo-config-api": 1,
+                "dojo-sniff": 1,
+                "dojo-sync-loader": 0,
+                "dojo-test-sniff": 0,
+                "config-deferredInstrumentation": 1,
+                "config-useDeferredInstrumentation": "report-unhandled-rejections",
+                "config-tlmSiblingOfDojo": 1,
+                'xlog': true,
+                'xblox': true,
+                'dojo-undef-api': true,
+                "debug": true,
+                "dcl": false,
+                "dojo": true
+            },
+            trace: 0,
+            async: 0,
+            baseUrl: base || serverRoot || '.',
+            packages: [
+                {
+                    name: "dojo",
+                    location: "dojo"
+                },
+                {
+                    name: "nxappmain",
+                    location: serverRoot + path.sep + "nxappmain"
+                },
+                {
+                    name: "nxapp",
+                    location: serverRoot + path.sep + "nxapp"
+                },
+                {
+                    name: "requirejs-dplugins2",
+                    location: clientRoot + path.sep + 'xibm/ibm/requirejs-dplugins'
+                },
+                {
+                    name: "xcf",
+                    location: clientRoot + path.sep + 'xcf'
+                },
+                {
+                    name: "dstore",
+                    location: clientRoot + path.sep + 'dstore'
+                },
+                {
+                    name: "xide",
+                    location: clientRoot + path.sep + 'xide'
+                },
+                {
+                    name: "xwire",
+                    location: clientRoot + path.sep + 'xwire'
+                },
+                {
+                    name: "dcl",
+                    location: clientRoot + path.sep + 'dcl'
+                },
+                {
+                    name: "xblox",
+                    location: clientRoot + path.sep + 'xblox'
+                },
+                {
+                    name: "xlog",
+                    location: clientRoot + path.sep + 'xlog'
+                },
+                {
+                    name: "xblox",
+                    location: clientRoot + path.sep + 'xblox'
+                },
+                {
+                    name: "dstore",
+                    location: clientRoot + path.sep + 'dstore'
+                },
+                {
+                    name: "dijit",
+                    location: clientRoot + path.sep + 'dijit'
+                },
+                {
+                    name: "xlang",
+                    location: clientRoot + path.sep + 'xlang'
+                },
+                {
+                    name: "xgrid",
+                    location: clientRoot + path.sep + 'xgrid'
+                },
+                {
+                    name: "xaction",
+                    location: clientRoot + path.sep + 'xaction/src'
+                },
+                {
+                    name: "xdojo",
+                    location: clientRoot + path.sep + 'xdojo'
+                }
+            ]
+        };
+        return dojoConfig;
     }
     run(deviceServer = true) {
         const _super = name => super[name];
@@ -283,6 +400,13 @@ class ControlFreak extends Base_1.ApplicationBase {
                 if (!deviceServer) {
                     return Promise.resolve(true);
                 }
+                /*
+                const clientRoot:string = path.join(this.path(EEKey.CLIENT_ROOT), '/lib');
+                const nodeRoot:string = this.path('NODE_ROOT');
+                const dConfig = this.dConfig(clientRoot, nodeRoot,null,null);
+                dojoRequire.config(dConfig);*/
+                //console.log('dconfig ',dConfig);
+                //return;
                 const amdRequire = require(path.join(process.cwd(), !this.options.release ? '../dojo/dojo-require' : '/dojo/dojo-require'));
                 const dojoRequire = amdRequire(path.join(this.path(Base_1.EEKey.CLIENT_ROOT), '/lib'), this.path('NODE_ROOT'));
                 const loader = this.options.release ? 'nxappmain/main_server_ts_build' : 'nxappmain/main_server_ts';

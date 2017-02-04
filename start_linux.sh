@@ -8,7 +8,8 @@ else
 fi
 
 if [ -z "$DISPLAY" ]; then
-    ./server noob --export=false --web=false --file=start.js "$@"
+    ./server noob --print=true --type=OFFLINE_RELEASE --release=true --root="../.." "$@"
 else
-    gnome-terminal -e "./server noob --export=false --web=false --file=start.js \"$@\""
+    gnome-terminal -e "./server noob --print=true --type=OFFLINE_RELEASE --release=true --root=\"../..\" \"$@\""
 fi
+

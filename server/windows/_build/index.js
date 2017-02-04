@@ -1,5 +1,4 @@
 "use strict";
-// http://192.168.1.37:5555/app/xcf?debug=true&xtrack=false&drivers=true&devices=true&xace=true&files=true&protocols=false&x-markdown=false&xideve=true&admin=true&nserver=true&xnode=debug&xfile=debug
 const Base_1 = require("./applications/Base");
 const index_1 = require("./applications/ControlFreak/index");
 const index_2 = require("./applications/xbox/index");

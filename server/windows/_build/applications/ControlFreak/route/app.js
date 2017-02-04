@@ -28,6 +28,7 @@ appRouter.get('/:name', (ctx) => __awaiter(this, void 0, void 0, function* () {
     }
     const variables = _.extend({}, config.relativeVariables);
     app.variables(ctx, variables);
+    variables['XASWEB'] = variables['ROOT'] + 'Code/client/src/';
     if (app.options.print) {
         console.log('Render with', variables);
     }

@@ -79,27 +79,6 @@ function size(item, ignoreRegEx, callback) {
     });
 }
 exports.size = size;
-/**
- *
- * These flags are used to build the result, adaptive.
- * @TODO: sync with dgrid#configureColumn
- * @export
- * @enum {number}
- */
-var NODE_FIELDS;
-(function (NODE_FIELDS) {
-    NODE_FIELDS[NODE_FIELDS["SHOW_ISDIR"] = 1602] = "SHOW_ISDIR";
-    NODE_FIELDS[NODE_FIELDS["SHOW_OWNER"] = 1604] = "SHOW_OWNER";
-    NODE_FIELDS[NODE_FIELDS["SHOW_MIME"] = 1608] = "SHOW_MIME";
-    NODE_FIELDS[NODE_FIELDS["SHOW_SIZE"] = 1616] = "SHOW_SIZE";
-    NODE_FIELDS[NODE_FIELDS["SHOW_PERMISSIONS"] = 1632] = "SHOW_PERMISSIONS";
-    NODE_FIELDS[NODE_FIELDS["SHOW_TIME"] = 1633] = "SHOW_TIME";
-    // @TODO: re-impl. du -ahs/x for windows
-    NODE_FIELDS[NODE_FIELDS["SHOW_FOLDER_SIZE"] = 1634] = "SHOW_FOLDER_SIZE";
-    NODE_FIELDS[NODE_FIELDS["SHOW_FOLDER_HIDDEN"] = 1635] = "SHOW_FOLDER_HIDDEN";
-    NODE_FIELDS[NODE_FIELDS["SHOW_TYPE"] = 1636] = "SHOW_TYPE";
-    NODE_FIELDS[NODE_FIELDS["SHOW_MEDIA_INFO"] = 1637] = "SHOW_MEDIA_INFO";
-})(NODE_FIELDS = exports.NODE_FIELDS || (exports.NODE_FIELDS = {}));
 function FileSizeToString(size) {
     const isNumber = typeof size === 'number', l1KB = 1024, l1MB = l1KB * l1KB, l1GB = l1MB * l1KB, l1TB = l1GB * l1KB, l1PB = l1TB * l1KB;
     if (isNumber) {
@@ -146,9 +125,9 @@ class DirectoryService extends Base_1.BaseService {
                 if (!vfs) {
                     reject('Cant find VFS for ' + mount);
                 }
+                let data = "";
                 try {
                     vfs.readfile(path, {}, (err, meta) => {
-                        let data = "";
                         if (err || !meta || !meta.stream || !meta.stream.on) {
                             reject("error reading file : " + path + err);
                         }
