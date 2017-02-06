@@ -42,8 +42,26 @@ PreviewRouter.get('/:preview/:mount/*', (ctx) => __awaiter(this, void 0, void 0,
         CSS: variables[Base_1.EEKey.VFS_URL] + mount + '/' + filePath.replace('.dhtml', '.css'),
         DOC_BASE_URL: variables[Base_1.EEKey.VFS_URL] + mount + '/' + dir
     };
-    const templateResolved = yield render(rtConfig, tplParams);
-    let content = yield app.directoryService.get(mount + '://' + filePath, false, false, null, ctx.request);
+    let templateResolved = null;
+    let content = null;
+    let error = null;
+    try {
+        templateResolved = yield render(rtConfig, tplParams);
+    }
+    catch (e) {
+        error = 'Error rendering EJS template for ' + mount + '://' + filePath;
+        ctx.body = error;
+        console.error(error, e);
+    }
+    try {
+        content = (yield app.directoryService.get(mount + '://' + filePath, false, false, null, ctx.request));
+    }
+    catch (e) {
+        error = 'cant get file ' + mount + '://' + filePath;
+        ctx.body = error;
+        console.error(error, e);
+        return;
+    }
     // fileContent.match(~\bbackground(-image)?\s*:(.*?)\(\s*('|")?(?<image>.*?)\3?\s*\)~i);
     content = content.replace(/\burl\s*\(\s*["']?([^"'\r\n\)\(]+)["']?\s*\)/gi, function (matchstr, parens) {
         let parts = parens.split('://');

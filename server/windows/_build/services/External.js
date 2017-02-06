@@ -48,6 +48,7 @@ var EFlags;
     // This service can be retrieved from a system daemon
     EFlags[EFlags["SYSTEM_SHARED"] = 0] = "SYSTEM_SHARED";
 })(EFlags = exports.EFlags || (exports.EFlags = {}));
+// ─── Base class to express an external service binary
 class ExternalService extends Base_1.BaseService {
     // @TODO:decorator on Ctor ?
     constructor(config) {
@@ -96,7 +97,7 @@ class ExternalService extends Base_1.BaseService {
     /**
      * Return a list of depending services, using unique service['label']
      *
-     * @returns {List<string>}
+     * @returns {string[]}
      *
      * @memberOf ExternalService
      */

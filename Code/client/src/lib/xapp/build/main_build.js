@@ -62355,14 +62355,14 @@ define('xide/manager/Context',[
                         //special: driver
                         var _start = 'data/system/drivers';
                         if (path.indexOf(_start) != -1) {
-                            var libPath = path.substr(path.indexOf(_start) + (_start.length + 1 ), path.length);
+                            var libPath = path.substr(path.indexOf(_start) + (_start.length + 1), path.length);
                             libPath = libPath.replace('.js', '');
                             modulePath = 'system_drivers/' + libPath;
                         }
 
                         _start = 'user/drivers';
                         if (path.indexOf(_start) != -1) {
-                            var libPath = path.substr(path.indexOf(_start) + (_start.length + 1 ), path.length);
+                            var libPath = path.substr(path.indexOf(_start) + (_start.length + 1), path.length);
                             libPath = libPath.replace('.js', '');
                             modulePath = 'user_drivers/' + libPath;
                         }
@@ -62376,7 +62376,7 @@ define('xide/manager/Context',[
                             if (path.indexOf(vfsConfig['user_drivers']) !== -1) {
                                 var _start = vfsConfig['user_drivers'];
                                 _start = _start.replace(/\/+$/, "");
-                                var libPath = path.substr(path.indexOf(_start) + (_start.length + 1 ), path.length);
+                                var libPath = path.substr(path.indexOf(_start) + (_start.length + 1), path.length);
                                 libPath = libPath.replace('.js', '');
                                 modulePath = 'user_drivers/' + libPath;
                             }
@@ -62543,7 +62543,7 @@ define('xide/manager/Context',[
                                     moduleProto: moduleLoaded.prototype
                                 });
                             }
-                            thiz.setModule(_module,moduleLoaded);
+                            thiz.setModule(_module, moduleLoaded);
                             dfd.resolve(moduleLoaded);
                         });
                     } catch (e) {
@@ -62638,7 +62638,7 @@ define('xide/manager/Context',[
                 if (path.indexOf(mountPath) !== -1) {
                     var _start = mountPath;
                     _start = _start.replace(/\/+$/, "");
-                    var libPath = path.substr(path.indexOf(_start) + (_start.length + 1 ), path.length);
+                    var libPath = path.substr(path.indexOf(_start) + (_start.length + 1), path.length);
                     return libPath;
                 }
             }
@@ -62691,9 +62691,10 @@ define('xide/manager/Context',[
         /*
          * STD - API
          */
-        constructor: function (config) {
+        constructor: function (config, args) {
             this.managers = [];
             this.config = config;
+            this.args = args;
             this.language = 'en';
             this.subscribe(types.EVENTS.ON_CHANGED_CONTENT, this.onDidChangeFileContent);
         },
