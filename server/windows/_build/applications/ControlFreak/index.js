@@ -437,6 +437,7 @@ class ControlFreak extends Base_1.ApplicationBase {
                     // @TODO: v1 context in v2 app?
                     this.deviceServer = context;
                     console_1.console.info('ControlFreak#run : device server ready');
+                    console_1.console.info('ControlFreak	can be accessed at http://0.0.0.0:' + port + '/app/xcf');
                     resolve(context);
                 });
                 try {
