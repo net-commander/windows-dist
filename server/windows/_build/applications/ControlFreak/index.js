@@ -408,7 +408,7 @@ class ControlFreak extends Base_1.ApplicationBase {
         return __awaiter(this, void 0, void 0, function* () {
             process.once('SIGINT', (e) => { return this.stop(); });
             process.on('unhandledRejection', (reason) => {
-                console.error('Unhandled rejection, reason: ' + reason);
+                console.error('Unhandled rejection, reason: ', reason);
             });
             yield this.boot();
             return new Promise((resolve, reject) => {
