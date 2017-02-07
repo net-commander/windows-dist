@@ -37,19 +37,9 @@ const mount = require('koa-mount');
 const qs = require('qs').parse;
 const argv = yargs_parser(process.argv.slice(2));
 const util = require('util');
-//import { RootRequire } from '@dojo/interfaces/loader';
-//const dojoRequire: RootRequire = require('@dojo/loader');
-/*
-const urlp = require('url');
-let url = 'dsfsdf.dhtm?userDirectory=C%3A%5CUsers%5Cmc007%5CDocuments%5CControl-Freak';
-let params = qs(urlp.parse(url).query);
-let first = Object.keys(params)[0];
-if(~first.indexOf('userDirectory')){
-    console.log('----' , params[first]);
-}
-console.log(params);
-console.log(urlp.parse(url));
-*/
+const osTmpdir = require('os-tmpdir');
+const mkdirp = require('mkdirp');
+const console_1 = require("../../console");
 const io = {
     serialize: JSON.stringify
 };
@@ -65,7 +55,16 @@ class ControlFreak extends Base_1.ApplicationBase {
         const NODE_ROOT = options.release ? process.cwd() : path.join(APP_ROOT, 'server/nodejs/');
         const USER_DIRECTORY = path.join(APP_ROOT, '/user');
         const DATA_ROOT = path.join(APP_ROOT, '/data/');
-        const DB_ROOT = path.join(DATA_ROOT, '/_MONGO/');
+        const TMP_PATH = osTmpdir();
+        if (argv.mqtt !== 'false') {
+            try {
+                mkdirp.sync(TMP_PATH + path.sep + '_MONGO');
+            }
+            catch (e) {
+                console_1.console.error('error creating MONGO Database path ' + TMP_PATH + path.sep + '_MONGO');
+            }
+        }
+        const DB_ROOT = path.resolve(TMP_PATH + path.sep + '_MONGO');
         const SYSTEM_ROOT = path.join(DATA_ROOT, '/system/');
         const VFS_CONFIG = {
             'workspace': path.join(USER_DIRECTORY, 'workspace'),
@@ -122,9 +121,9 @@ class ControlFreak extends Base_1.ApplicationBase {
         this.config = params;
         this.config[Base_1.EEKey.NODE_ROOT] = NODE_ROOT;
         if (argv.print === 'true') {
-            console.log("Config", util.inspect(params));
-            console.log('\n\n');
-            console.log("Options", util.inspect(this.options));
+            console_1.console.log("Config", util.inspect(params));
+            console_1.console.log('\n\n');
+            console_1.console.log("Options", util.inspect(this.options));
         }
     }
     externalServices() {
@@ -135,7 +134,7 @@ class ControlFreak extends Base_1.ApplicationBase {
         if (argv['mqtt'] !== 'false') {
             const mongod = new Mongod_1.Mongod({
                 db: this.path(Base_1.EEKey.DB_ROOT)
-            }, searchPaths);
+            }, searchPaths, this.options.print);
             return [mongod];
         }
         else {
@@ -274,7 +273,7 @@ class ControlFreak extends Base_1.ApplicationBase {
                 return Promise.resolve(res);
             }
             catch (e) {
-                console.error('Error stopping ' + last.label(), e);
+                console_1.console.error('Error stopping ' + last.label(), e);
             }
         });
     }
@@ -283,10 +282,11 @@ class ControlFreak extends Base_1.ApplicationBase {
             this._externalServices = this.externalServices();
             return yield Promise.all(this._externalServices.map((service) => __awaiter(this, void 0, void 0, function* () {
                 try {
+                    console_1.console.info('ControlFreak#boot : run external service: ' + service.label());
                     yield service.run();
                 }
                 catch (e) {
-                    console.error('error running service ' + service.label());
+                    console_1.console.error('error running service ' + service.label(), e);
                 }
             })));
         });
@@ -408,14 +408,16 @@ class ControlFreak extends Base_1.ApplicationBase {
         return __awaiter(this, void 0, void 0, function* () {
             process.once('SIGINT', (e) => { return this.stop(); });
             process.on('unhandledRejection', (reason) => {
-                console.error('Unhandled rejection, reason: ', reason);
+                console_1.console.error('Unhandled rejection, reason: ', reason);
             });
             yield this.boot();
             return new Promise((resolve, reject) => {
                 this.setup();
                 _super("run").call(this);
                 this.use(convert(serve(this.path(Base_1.EEKey.APP_ROOT))));
-                this.server.listen(this.options.port || process.env.PORT || 5555, '0.0.0.0');
+                const port = this.options.port || process.env.PORT || 5555;
+                console_1.console.info('ControlFreak#run : create HTTP server at 0.0.0.0:' + port);
+                this.server.listen(port, '0.0.0.0');
                 if (!deviceServer) {
                     return Promise.resolve(true);
                 }
@@ -429,10 +431,12 @@ class ControlFreak extends Base_1.ApplicationBase {
                 const amdRequire = require(path.join(process.cwd(), !this.options.release ? '../dojo/dojo-require' : '/dojo/dojo-require'));
                 const dojoRequire = amdRequire(path.join(this.path(Base_1.EEKey.CLIENT_ROOT), '/lib'), this.path('NODE_ROOT'));
                 const loader = this.options.release ? 'nxappmain/main_server_ts_build' : 'nxappmain/main_server_ts';
+                console_1.console.info('ControlFreak#run : load device server application');
                 // as we don't really consume/mix AMD modules, we get the data over the xide/Context
                 global.process.on('device-server-ready', (context) => {
                     // @TODO: v1 context in v2 app?
                     this.deviceServer = context;
+                    console_1.console.info('ControlFreak#run : device server ready');
                     resolve(context);
                 });
                 try {

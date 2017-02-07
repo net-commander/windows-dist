@@ -48,15 +48,17 @@ const MessageRegEx = {
     newline: /\r?\n/
 };
 class Mongod extends External_1.ExternalService {
-    constructor(config, searchPaths) {
+    constructor(config, searchPaths, debug = false) {
         super(null);
         this.promiseQueue = null;
         this.openPromise = null;
+        this.debug = false;
         this.isRunning = false;
         this.isClosing = false;
         this.isOpening = false;
         this.flags = External_1.EFlags.REQUIRED | External_1.EFlags.SHARED;
         this.mongoConfig = config;
+        this.debug = debug;
         this.searchPaths = searchPaths || [];
     }
     //

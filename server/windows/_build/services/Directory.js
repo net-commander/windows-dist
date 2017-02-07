@@ -444,7 +444,7 @@ class DirectoryService extends Base_1.BaseService {
             return new Promise((resolve, reject) => {
                 const vfs = this.getVFS(mount, this._getRequest(args));
                 if (!vfs) {
-                    reject(`cant get VFS2 for mount '${mount}'`);
+                    reject(`cant get VFS for mount '${mount}'`);
                 }
                 else {
                     vfs.readdir(path, {}, (err, meta) => {

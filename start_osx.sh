@@ -10,5 +10,5 @@ fi
 
 cd server/osx
 
-./server noob --print=true --trial=true --type=OFFLINE_RELEASE --release=true --root="../.."
+./server noob --type=OFFLINE_RELEASE --release=true --root="../.."
 
