@@ -8,6 +8,8 @@ const mkdirp = require("mkdirp");
 const _path = require("path");
 const write = require('write-file-atomic');
 const qs = require('qs').parse;
+const url = require('url');
+//let url = 'http://127.0.0.1:5555/xideve/preview/workspace_user/AM2.html?userDirectory=C%3A%5CUsers%5Cmc007%5CDocuments%5CControl-Freak';
 const permissionError = 'You don\'t have access to this file.';
 const defaultPathMode = parseInt('0700', 8);
 const writeFileOptions = { mode: parseInt('0600', 8) };
@@ -33,8 +35,13 @@ class BaseService extends Resolver_1.ResourceResolver {
     ;
     _getUser(request) {
         if (request) {
-            const urlArgs = qs(request.get('referrer'));
+            let urlArgs = qs(request.get('referrer'));
             let user = urlArgs['userDirectory'];
+            if (user) {
+                return user;
+            }
+            urlArgs = qs(url.parse(request.url).query);
+            user = urlArgs['userDirectory'];
             if (user) {
                 return user;
             }

@@ -39,6 +39,17 @@ const argv = yargs_parser(process.argv.slice(2));
 const util = require('util');
 //import { RootRequire } from '@dojo/interfaces/loader';
 //const dojoRequire: RootRequire = require('@dojo/loader');
+/*
+const urlp = require('url');
+let url = 'dsfsdf.dhtm?userDirectory=C%3A%5CUsers%5Cmc007%5CDocuments%5CControl-Freak';
+let params = qs(urlp.parse(url).query);
+let first = Object.keys(params)[0];
+if(~first.indexOf('userDirectory')){
+    console.log('----' , params[first]);
+}
+console.log(params);
+console.log(urlp.parse(url));
+*/
 const io = {
     serialize: JSON.stringify
 };
@@ -271,7 +282,12 @@ class ControlFreak extends Base_1.ApplicationBase {
         return __awaiter(this, void 0, void 0, function* () {
             this._externalServices = this.externalServices();
             return yield Promise.all(this._externalServices.map((service) => __awaiter(this, void 0, void 0, function* () {
-                yield service.run();
+                try {
+                    yield service.run();
+                }
+                catch (e) {
+                    console.error('error running service ' + service.label());
+                }
             })));
         });
     }
@@ -391,6 +407,9 @@ class ControlFreak extends Base_1.ApplicationBase {
         const _super = name => super[name];
         return __awaiter(this, void 0, void 0, function* () {
             process.once('SIGINT', (e) => { return this.stop(); });
+            process.on('unhandledRejection', (reason) => {
+                console.error('Unhandled rejection, reason: ' + reason);
+            });
             yield this.boot();
             return new Promise((resolve, reject) => {
                 this.setup();

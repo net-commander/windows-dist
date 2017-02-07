@@ -367,7 +367,7 @@ class DirectoryService extends Base_1.BaseService {
     getVFS(mount, request) {
         const resource = this.getResourceByTypeAndName(Resource_1.EResourceType.FILE_PROXY, mount);
         if (resource) {
-            const root = this.resolveAbsolute(resource);
+            const root = this.resolveAbsolute(resource, request);
             try {
                 if (fs.lstatSync(root)) {
                     return Local_1.create({
@@ -377,7 +377,7 @@ class DirectoryService extends Base_1.BaseService {
                 }
             }
             catch (e) {
-                console.warn('cant get VFS for ' + mount);
+                console.warn('cant get VFS for ' + mount, e);
             }
         }
         return null;
@@ -444,7 +444,7 @@ class DirectoryService extends Base_1.BaseService {
             return new Promise((resolve, reject) => {
                 const vfs = this.getVFS(mount, this._getRequest(args));
                 if (!vfs) {
-                    reject(`cant get VFS for mount '${mount}'`);
+                    reject(`cant get VFS2 for mount '${mount}'`);
                 }
                 else {
                     vfs.readdir(path, {}, (err, meta) => {

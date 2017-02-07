@@ -12,6 +12,9 @@
 <link rel="stylesheet" type="text/css" href="<%-CSS%>">
 <script>
     require.config({
+        urlArgs: "userDirectory=<%-USER_DIRECTORY%>"
+    });
+    require.config({
         config: {
             waitSeconds:9999999,
             has: {

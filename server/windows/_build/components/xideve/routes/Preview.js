@@ -40,7 +40,8 @@ PreviewRouter.get('/:preview/:mount/*', (ctx) => __awaiter(this, void 0, void 0,
         VFS_URL: variables[Base_1.EEKey.VFS_URL],
         VFS_VARS: JSON.stringify(variables['VFS_CONFIG'], null, 2),
         CSS: variables[Base_1.EEKey.VFS_URL] + mount + '/' + filePath.replace('.dhtml', '.css'),
-        DOC_BASE_URL: variables[Base_1.EEKey.VFS_URL] + mount + '/' + dir
+        DOC_BASE_URL: variables[Base_1.EEKey.VFS_URL] + mount + '/' + dir,
+        USER_DIRECTORY: encodeURIComponent(app.directoryService._getUser(ctx.request))
     };
     let templateResolved = null;
     let content = null;

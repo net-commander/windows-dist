@@ -38,7 +38,7 @@ class DirectoryService extends Directory_1.DirectoryService {
                 }
             }
             catch (e) {
-                console.warn('cant get VFS for ' + mount);
+                console.warn('cant get VFS for ' + mount + ' for root ' + root);
             }
         }
         return null;
