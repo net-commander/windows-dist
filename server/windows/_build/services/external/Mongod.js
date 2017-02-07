@@ -260,9 +260,13 @@ class Mongod extends External_1.ExternalService {
         return __awaiter(this, void 0, void 0, function* () {
             switch (os.platform()) {
                 case 'win32': {
-                    const mongoInProgramFiles = yield this._tryProgramFiles();
-                    if (mongoInProgramFiles) {
-                        this.searchPaths = this.searchPaths.concat([mongoInProgramFiles]);
+                    try {
+                        const mongoInProgramFiles = yield this._tryProgramFiles();
+                        if (mongoInProgramFiles) {
+                            this.searchPaths = this.searchPaths.concat([mongoInProgramFiles]);
+                        }
+                    }
+                    catch (e) {
                     }
                     break;
                 }
