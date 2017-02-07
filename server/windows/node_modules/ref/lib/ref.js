@@ -306,7 +306,12 @@ exports.refType = function refType (type) {
   var rtn = Object.create(_type)
   rtn.indirection++
   if (_type.name) {
-    rtn.name = _type.name + '*'
+    Object.defineProperty(rtn, 'name', {
+      value: _type.name + '*',
+      configurable: true,
+      enumerable: true,
+      writable: true
+    })
   }
   return rtn
 }
