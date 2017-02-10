@@ -5152,2369 +5152,6 @@ define('xgrid/TreeRenderer',[
     Module.KEYBOARD_HANDLER = KEYBOARD_HANDLER;
     return Module;
 });
-define('xgrid/ColumnHider',[
-	'xdojo/declare',
-    'dojo/has',
-    'dgrid/util/misc',
-    'xide/types',
-    'xide/utils'
-], function (declare, has, misc,types,utils) {
-
-    /*
-     *	Column Hider plugin for dgrid
-     *	Originally contributed by TRT 2011-09-28
-     *
-     *	A dGrid plugin that attaches a menu to a dgrid, along with a way of opening it,
-     *	that will allow you to show and hide columns.  A few caveats:
-     *
-     *	1. Menu placement is entirely based on CSS definitions.
-     *	2. If you want columns initially hidden, you must add "hidden: true" to your
-     *		column definition.
-     *	3. This implementation does NOT support ColumnSet, and has not been tested
-     *		with multi-subrow records.
-     *	4. Column show/hide is controlled via straight up HTML checkboxes.  If you
-     *		are looking for something more fancy, you'll probably need to use this
-     *		definition as a template to write your own plugin.
-     *
-     */
-	return declare('xgrid.ColumnHider',null, {
-        columnHiderActionRootCommand:'View/Columns',
-		// i18nColumnHider: Object
-		//		This object contains all of the internationalized strings for
-		//		the ColumnHider extension as key/value pairs.
-		i18nColumnHider: {},
-
-		// _columnHiderRules: Object
-		//		Hash containing handles returned from addCssRule.
-		_columnHiderRules: null,
-        _runAction:function(action,update,value){
-            if(action && action.command.indexOf(this.columnHiderActionRootCommand)!=-1 ){
-                var col = action.column;
-                var isHidden = this.isColumnHidden(col.id);
-                this.showColumn(col.id,isHidden);
-                update!==false && action.set('value', !this.isColumnHidden(col.id));
-            }
-            return this.inherited(arguments);
-        },
-        /**
-         *
-         * @param permissions
-         * @param actions
-         * @returns {Array}
-         */
-		getColumnHiderActions:function(permissions,actions){
-            var root = this.columnHiderActionRootCommand,
-                thiz = this,
-                columnActions = [],
-                VISIBILITY = types.ACTION_VISIBILITY,
-                node = this.domNode;
-
-            actions = actions || [];
-            var rootAction = _.find(actions,{
-                command:root
-            });
-            if(!rootAction) {
-                columnActions.push(this.createAction({
-                    label:'Columns',
-                    command:root,
-                    icon:'fa-columns',
-                    tab:'View',
-                    group:'Columns',
-                    toggleGroup:thiz.id + 'Columns',
-                    onCreate:function(action){
-                        action.setVisibility(VISIBILITY.RIBBON,{
-                            expand:true
-                        }).setVisibility(VISIBILITY.ACTION_TOOLBAR, false);
-                    }
-                }));
-            }
-            /**
-             *
-             * @param col
-             * @private
-             */
-            function _createEntry(col) {
-
-                var id = col.id,
-                    label = 'Show ' + ( col.label || col.field || ''),
-                    icon = col.icon || 'fa-cogs';
-
-                // Allow cols to opt out of the hider (e.g. for selector column).
-                if (col.unhidable) {
-                    return;
-                }
-                var _action = thiz.createAction(label, root + '/' + label , icon, null, 'View', 'Columns', 'item|view',
-
-                    //oncreate
-                    function(action){
-
-                        var widgetImplementation = {
-                            postMixInProperties: function() {
-                                this.inherited(arguments);
-                                this.checked = this.item.get('value') === true;
-                            },
-                            startup:function(){
-                                this.inherited(arguments);
-                                this.on('change',function(val){
-                                    thiz.showColumn(id,val);
-                                });
-                            }
-                        };
-                        var widgetArgs  ={
-                            checked:!col.hidden,
-                            iconClass:icon,
-                            style:'float:inherit;'
-                        };
-
-
-                        var _visibilityMixin = {
-                            //widgetClass:declare.classFactory('_Checked', [CheckedMenuItem,_ActionValueWidgetMixin], null, widgetImplementation ,null),
-                            widgetArgs:widgetArgs,
-                            actionType : 'multiToggle'
-                        };
-
-                        action.actionType = 'multiToggle';
-
-
-                        action.setVisibility(types.ACTION_VISIBILITY_ALL,utils.cloneKeys(_visibilityMixin,false));
-
-                        label = action.label.replace('Show ','');
-
-
-                        //for ribbons we collapse into 'Checkboxes'
-                        /*
-                        action.setVisibility(VISIBILITY.RIBBON,{
-                            widgetClass:declare.classFactory('_CheckedGroup', [ActionValueWidget], null,{
-                                iconClass:"",
-                                postMixInProperties: function() {
-                                    this.inherited(arguments);
-                                    this.checked = this.item.get('value') == true;
-                                },
-                                startup:function(){
-                                    this.inherited(arguments);
-                                    this.widget.on('change', function (val) {
-                                        thiz.showColumn(id,val);
-                                    }.bind(this));
-                                }
-                            } ,null),
-                            widgetArgs:{
-                                renderer:CheckBox,
-                                checked:!col.hidden,
-                                label:action.label.replace('Show ','')
-                            }
-                        });
-                        */
-
-                    }, /*handler*/ null ,
-                    {
-                        column:col,
-                        filterGroup:"item|view",
-                        tab:'View',
-                        value:!col.hidden,
-                        addPermission:true
-                    },
-                    null, null, permissions, node,thiz,thiz);
-
-                if(_action){
-                    columnActions.push(_action);
-                }
-
-                /**
-
-                columnActions.push(_ActionMixin.createActionParameters(label, root + '/' + label, 'Columns', icon, function () {
-                    console.log('handler');
-
-                }, '', null, null, thiz, thiz, {
-                    column:col,
-                    filterGroup:"item|view",
-                    tab:'View',
-                    value:!col.hidden,
-                    onCreate:function(action){
-
-                        var _action = this;
-
-                        action.owner = thiz;
-
-                        var widgetImplementation = {
-                            postMixInProperties: function() {
-                                this.inherited(arguments);
-                                this.checked = this.item.get('value') == true;
-                            },
-                            startup:function(){
-                                this.inherited(arguments);
-                                this.on('change',function(val){
-                                    thiz.showColumn(id,val);
-                                })
-                            },
-                            destroy:function(){
-
-                                this.inherited(arguments);
-                            }
-                        };
-                        var widgetArgs  ={
-                            checked:!col.hidden,
-                            iconClass:icon,
-                            style:'float:inherit;'
-                        };
-
-                        var _visibilityMixin = {
-                            widgetClass:declare.classFactory('_Checked', [CheckedMenuItem,_ActionValueWidgetMixin], null, widgetImplementation ,null),
-                            widgetArgs:widgetArgs
-                        };
-
-                        action.setVisibility(types.ACTION_VISIBILITY_ALL,_visibilityMixin);
-
-                        label = action.label.replace('Show ','');
-
-
-                        //for ribbons we collapse into 'Checkboxes'
-                        action.setVisibility(VISIBILITY.RIBBON,{
-                            widgetClass:declare.classFactory('_CheckedGroup', [ActionValueWidget], null,{
-                                iconClass:"",
-                                postMixInProperties: function() {
-                                    this.inherited(arguments);
-                                    this.checked = this.item.get('value') == true;
-                                },
-                                startup:function(){
-                                    this.inherited(arguments);
-                                    this.widget.on('change', function (val) {
-                                        thiz.showColumn(id,val);
-                                    }.bind(this));
-                                }
-                            } ,null),
-                            widgetArgs:{
-                                renderer:CheckBox,
-                                checked:!col.hidden,
-                                label:action.label.replace('Show ','')
-                            }
-                        });
-
-                    }
-                }));
-
-                */
-
-            }
-            var subRows = this.subRows,
-                first = true,
-                srLength, cLength, sr, c;
-            for (sr = 0, srLength = subRows.length; sr < srLength; sr++) {
-                for (c = 0, cLength = subRows[sr].length; c < cLength; c++) {
-                    _createEntry(subRows[sr][c]);
-                    if (first) {
-                        first = false;
-                    }
-                }
-            }
-            return columnActions;
-
-        },
-        resize:function(){
-            this.inherited(arguments);
-            this._checkHiddenColumns();
-        },
-        _checkHiddenColumns:function(){
-            var subRows = this.subRows,
-                srLength, cLength, sr, c,
-                totalWidth = $(this.domNode).width();
-
-            for (sr = 0, srLength = subRows.length; sr < srLength; sr++) {
-                for (c = 0, cLength = subRows[sr].length; c < cLength; c++) {
-                    var col = subRows[sr][c];
-                    if(col.minWidth){
-                        if(totalWidth < col.minWidth){
-                            if(!col.unhidable) {
-                                this.showColumn(col.id,false);
-                            }
-                        }else{
-                            this.showColumn(col.id,true);
-                        }
-                    }
-                }
-            }
-        },
-        startup:function(){
-            if(this._started){
-                return;
-            }
-
-            this._columnHiderCheckboxes = {};
-            this._columnHiderRules = {};
-            var res = this.inherited(arguments);
-            this._checkHiddenColumns();
-            var subRows = this.subRows,
-                srLength, cLength, sr, c,
-                thiz = this;
-
-            for (sr = 0, srLength = subRows.length; sr < srLength; sr++) {
-                for (c = 0, cLength = subRows[sr].length; c < cLength; c++) {
-
-                    var col = subRows[sr][c],
-                        id = col.id;
-
-                    if (col.hidden===true) {
-                        // Hide the column (reset first to avoid short-circuiting logic)
-                        col.hidden = false;
-                        thiz._hideColumn(id);
-                        col.hidden = true;
-                    }
-                }
-            }
-            if(this.getActionStore){
-                this.getActionStore().on('update',function(evt){
-                    var action = evt.target;
-                    if(action.command.indexOf('View/Columns')!==-1){
-                        var col = action.column;
-                        thiz.showColumn(col.id,action.get('value'));
-                        thiz.onAfterAction(action);
-
-                    }
-                });
-            }
-            return res;
-
-        },
-		left: function (cell, steps) {
-			return this.right(cell, -steps);
-		},
-		right: function (cell, steps) {
-			if (!cell.element) {
-				cell = this.cell(cell);
-			}
-			var nextCell = this.inherited(arguments),
-				prevCell = cell;
-
-			// Skip over hidden cells
-			while (nextCell.column.hidden) {
-				nextCell = this.inherited(arguments, [nextCell, steps > 0 ? 1 : -1]);
-				if (prevCell.element === nextCell.element) {
-					// No further visible cell found - return original
-					return cell;
-				}
-				prevCell = nextCell;
-			}
-			return nextCell;
-		},
-		isColumnHidden: function (id) {
-			// summary:
-			//		Convenience method to determine current hidden state of a column
-			return !!this._columnHiderRules[id];
-		},
-		_hideColumn: function (id) {
-			// summary:
-			//		Hides the column indicated by the given id.
-
-			// Use misc function directly, since we clean these up ourselves anyway
-			var grid = this,
-                domId = this.template ? this.template.id : this.domNode.id,
-                selectorPrefix = '#' + misc.escapeCssIdentifier(domId) + ' .dgrid-column-',
-				tableRule; // used in IE8 code path
-
-			if (this._columnHiderRules[id]) {
-				return;
-			}
-
-			this._columnHiderRules[id] = misc.addCssRule(selectorPrefix + misc.escapeCssIdentifier(id, '-'), 'display: none;');
-            
-			if (has('ie') === 8 || has('ie') === 10) {
-				// Work around IE8 display issue and IE10 issue where
-				// header/body cells get out of sync when ColumnResizer is also used
-				tableRule = misc.addCssRule('.dgrid-row-table', 'display: inline-table;');
-				window.setTimeout(function () {
-					tableRule.remove();
-					grid.resize();
-				}, 0);
-			}
-		},
-		_showColumn: function (id) {
-			// summary:
-			//		Shows the column indicated by the given id
-			//		(by removing the rule responsible for hiding it).
-
-			if (this._columnHiderRules[id]) {
-				this._columnHiderRules[id].remove();
-				delete this._columnHiderRules[id];
-			}
-		},
-        showColumn:function(id,show){
-            if(this.isColumnHidden(id)){
-                if(show) {
-                    this._showColumn(id);
-                }
-            }else if(!show){
-                this._hideColumn(id);
-            }
-        }
-	});
-});
-
-define('dgrid/extensions/ColumnReorder',[
-	'dojo/_base/lang',
-	'dojo/_base/declare',
-	'dojo/_base/array',
-	'dojo/dom-class',
-	'dojo/on',
-	'dojo/query',
-	'dojo/dnd/Source'
-], function (lang, declare, arrayUtil, domClass, on, DndSource) {
-	var dndTypeRx = /(\d+)(?:-(\d+))?$/; // used to determine subrow from dndType
-
-	// The following 2 functions are used by onDropInternal logic for
-	// retrieving/modifying a given subRow.  The `match` variable in each is
-	// expected to be the result of executing dndTypeRx on a subRow ID.
-
-	function getMatchingSubRow(grid, match) {
-		var hasColumnSets = match[2],
-			rowOrSet = grid[hasColumnSets ? 'columnSets' : 'subRows'][match[1]];
-
-		return hasColumnSets ? rowOrSet[match[2]] : rowOrSet;
-	}
-
-	function setMatchingSubRow(grid, match, subRow) {
-		if (match[2]) {
-			grid.columnSets[match[1]][match[2]] = subRow;
-		}
-		else {
-			grid.subRows[match[1]] = subRow;
-		}
-	}
-
-	// Builds a prefix for a dndtype value based on a grid id.
-	function makeDndTypePrefix(gridId) {
-		return 'dgrid-' + gridId + '-';
-	}
-
-	// Removes the grid id prefix from a dndtype value.  This allows the grid id to contain
-	// a dash-number suffix.  This works only if a column is dropped on the grid from which it
-	// originated.  Otherwise, a dash-number suffix will cause the regex to match on the wrong values.
-	function stripIdPrefix(gridId, dndtype) {
-		return dndtype.slice(makeDndTypePrefix(gridId).length);
-	}
-
-	var ColumnDndSource = declare(DndSource, {
-		// summary:
-		//		Custom dojo/dnd source extension configured specifically for
-		//		dgrid column reordering.
-
-		copyState: function () {
-			return false; // never copy
-		},
-
-		checkAcceptance: function (source) {
-			return source === this; // self-accept only
-		},
-
-		_legalMouseDown: function (evt) {
-			// Overridden to prevent blocking ColumnResizer resize handles.
-			return evt.target.className.indexOf('dgrid-resize-handle') > -1 ? false :
-				this.inherited(arguments);
-		},
-
-		onDropInternal: function (nodes) {
-			var grid = this.grid,
-				match = dndTypeRx.exec(stripIdPrefix(grid.id, nodes[0].getAttribute('dndType'))),
-				structureProperty = match[2] ? 'columnSets' : 'subRows',
-				oldSubRow = getMatchingSubRow(grid, match),
-				columns = grid.columns;
-
-			// First, allow original DnD logic to place node in new location.
-			this.inherited(arguments);
-
-			if (!match) {
-				return;
-			}
-
-			// Then, iterate through the header cells in their new order,
-			// to populate a new row array to assign as a new sub-row to the grid.
-			// (Wait until the next turn to avoid errors in Opera.)
-			setTimeout(function () {
-				var newSubRow = arrayUtil.map(nodes[0].parentNode.childNodes, function (col) {
-						return columns[col.columnId];
-					}),
-					eventObject;
-
-				setMatchingSubRow(grid, match, newSubRow);
-
-				eventObject = {
-					grid: grid,
-					subRow: newSubRow,
-					column: columns[nodes[0].columnId],
-					bubbles: true,
-					cancelable: true,
-					// Set parentType to indicate this is the result of user interaction.
-					parentType: 'dnd'
-				};
-				// Set columnSets or subRows depending on which the grid is using.
-				eventObject[structureProperty] = grid[structureProperty];
-
-				// Emit a custom event which passes the new structure.
-				// Allow calling preventDefault() to cancel the reorder operation.
-				if (on.emit(grid.domNode, 'dgrid-columnreorder', eventObject)) {
-					// Event was not canceled - force processing of modified structure.
-					grid.set(structureProperty, grid[structureProperty]);
-				}
-				else {
-					// Event was canceled - revert the structure and re-render the header
-					// (since the inherited logic invoked above will have shifted cells).
-					setMatchingSubRow(grid, match, oldSubRow);
-					grid.renderHeader();
-					// After re-rendering the header, re-apply the sort arrow if needed.
-					if (grid.sort.length) {
-						grid.updateSortArrow(grid.sort);
-					}
-				}
-			}, 0);
-		}
-	});
-
-	var ColumnReorder = declare('dgrid.ColumnReorder',null,{
-		// summary:
-		//		Extension allowing reordering of columns in a grid via drag'n'drop.
-		//		Reordering of columns within the same subrow or columnset is also
-		//		supported; between different ones is not.
-
-		// columnDndConstructor: Function
-		//		Constructor to call for instantiating DnD sources within the grid's
-		//		header.
-		columnDndConstructor: ColumnDndSource,
-
-		_initSubRowDnd: function (subRow, dndType) {
-			// summary:
-			//		Initializes a dojo/dnd source for one subrow of a grid;
-			//		this could be its only subrow, one of several, or a subrow within a
-			//		columnset.
-
-			var dndParent, c, len, col, th;
-
-			for (c = 0, len = subRow.length; c < len; c++) {
-				col = subRow[c];
-				if (col.reorderable === false) {
-					continue;
-				}
-
-				th = col.headerNode;
-				// Add dojoDndItem class, and a dndType unique to this subrow.
-				domClass.add(th, 'dojoDndItem');
-				th.setAttribute('dndType', dndType);
-
-				if (!dndParent) {
-					dndParent = th.parentNode;
-				}
-			}
-
-			if (dndParent) {
-				this._columnDndSources.push(new this.columnDndConstructor(dndParent, {
-					horizontal: true,
-					grid: this
-				}));
-			}
-			// (If dndParent wasn't set, no columns are draggable)
-		},
-
-		renderHeader: function () {
-			var dndTypePrefix = makeDndTypePrefix(this.id),
-				csLength, cs;
-
-			this.inherited(arguments);
-
-			// After header is rendered, set up a dnd source on each of its subrows.
-
-			this._columnDndSources = [];
-
-			if (this.columnSets) {
-				// Iterate columnsets->subrows->columns.
-				for (cs = 0, csLength = this.columnSets.length; cs < csLength; cs++) {
-					arrayUtil.forEach(this.columnSets[cs], function (subRow, sr) {
-						this._initSubRowDnd(subRow, dndTypePrefix + cs + '-' + sr);
-					}, this);
-				}
-			}
-			else {
-				// Iterate subrows->columns.
-				arrayUtil.forEach(this.subRows, function (subRow, sr) {
-					this._initSubRowDnd(subRow, dndTypePrefix + sr);
-				}, this);
-			}
-		},
-
-		_destroyColumns: function () {
-			if (this._columnDndSources) {
-				// Destroy old dnd sources.
-				arrayUtil.forEach(this._columnDndSources, function (source) {
-					source && source.destroy && source.destroy();
-				});
-			}
-			this.inherited(arguments);
-		}
-	});
-
-	ColumnReorder.ColumnDndSource = ColumnDndSource;
-	return ColumnReorder;
-});
-
-define('dgrid/extensions/ColumnResizer',[
-	'dojo/_base/declare',
-	'dojo/on',
-	'dojo/query',
-	'dojo/_base/lang',
-	'dojo/dom',
-	'dojo/dom-construct',
-	'dojo/dom-geometry',
-	'dojo/has',
-	'../util/misc',
-	'dojo/_base/html'
-], function (declare, listen, query, lang, dom, domConstruct, geom, has, miscUtil) {
-
-	function addRowSpan(table, span, startRow, column, id) {
-		// loop through the rows of the table and add this column's id to
-		// the rows' column
-		for (var i = 1; i < span; i++) {
-			table[startRow + i][column] = id;
-		}
-	}
-	function subRowAssoc(subRows) {
-		// Take a sub-row structure and output an object with key=>value pairs
-		// The keys will be the column id's; the values will be the first-row column
-		// that column's resizer should be associated with.
-
-		var i = subRows.length,
-			l = i,
-			numCols = subRows[0].length,
-			table = new Array(i);
-
-		// create table-like structure in an array so it can be populated
-		// with row-spans and col-spans
-		while (i--) {
-			table[i] = new Array(numCols);
-		}
-
-		var associations = {};
-
-		for (i = 0; i < l; i++) {
-			var row = table[i],
-				subRow = subRows[i];
-
-			// j: counter for table columns
-			// js: counter for subrow structure columns
-			for (var j = 0, js = 0; j < numCols; j++) {
-				var cell = subRow[js], k;
-
-				// if something already exists in the table (row-span), skip this
-				// spot and go to the next
-				if (typeof row[j] !== 'undefined') {
-					continue;
-				}
-				row[j] = cell.id;
-
-				if (cell.rowSpan && cell.rowSpan > 1) {
-					addRowSpan(table, cell.rowSpan, i, j, cell.id);
-				}
-
-				// colSpans are only applicable in the second or greater rows
-				// and only if the colSpan is greater than 1
-				if (i > 0 && cell.colSpan && cell.colSpan > 1) {
-					for (k = 1; k < cell.colSpan; k++) {
-						// increment j and assign the id since this is a span
-						row[++j] = cell.id;
-						if (cell.rowSpan && cell.rowSpan > 1) {
-							addRowSpan(table, cell.rowSpan, i, j, cell.id);
-						}
-					}
-				}
-				associations[cell.id] = subRows[0][j].id;
-				js++;
-			}
-		}
-
-		return associations;
-	}
-
-	function resizeColumnWidth(grid, colId, width, parentType, doResize) {
-		// don't react to widths <= 0, e.g. for hidden columns
-		if (width <= 0) {
-			return;
-		}
-
-		var column = grid.columns[colId],
-			event,
-			rule;
-
-		if (!column) {
-			return;
-		}
-
-		event = {
-			grid: grid,
-			columnId: colId,
-			width: width,
-			bubbles: true,
-			cancelable: true
-		};
-
-		if (parentType) {
-			event.parentType = parentType;
-		}
-
-		if (!grid._resizedColumns || listen.emit(grid.headerNode, 'dgrid-columnresize', event)) {
-			// Update width on column object, then convert value for CSS
-			if (width === 'auto') {
-				delete column.width;
-			}
-			else {
-				column.width = width;
-				width += 'px';
-			}
-
-			rule = grid._columnSizes[colId];
-
-			if (rule) {
-				// Modify existing, rather than deleting + adding
-				rule.set('width', width);
-			}
-			else {
-				// Use miscUtil function directly, since we clean these up ourselves anyway
-				rule = miscUtil.addCssRule('#' + miscUtil.escapeCssIdentifier(grid.domNode.id) +
-					' .dgrid-column-' + miscUtil.escapeCssIdentifier(colId, '-'),
-					'width: ' + width + ';');
-			}
-
-			// keep a reference for future removal
-			grid._columnSizes[colId] = rule;
-
-			if (doResize !== false) {
-				grid.resize();
-			}
-
-			return true;
-		}
-	}
-
-	// Functions for shared resizer node
-
-	var resizerNode, // DOM node for resize indicator, reused between instances
-		resizableCount = 0; // Number of ColumnResizer-enabled grid instances
-	var resizer = {
-		// This object contains functions for manipulating the shared resizerNode
-		create: function () {
-			resizerNode = domConstruct.create('div', { className: 'dgrid-column-resizer' });
-		},
-		destroy: function () {
-			domConstruct.destroy(resizerNode);
-			resizerNode = null;
-		},
-		show: function (grid) {
-			var pos = geom.position(grid.domNode, true);
-			resizerNode.style.top = pos.y + 'px';
-			resizerNode.style.height = pos.h + 'px';
-			document.body.appendChild(resizerNode);
-		},
-		move: function (x) {
-			resizerNode.style.left = x + 'px';
-		},
-		hide: function () {
-			resizerNode.parentNode.removeChild(resizerNode);
-		}
-	};
-
-	return declare('dgrid.ColumnResizer',null, {
-		resizeNode: null,
-
-		// minWidth: Number
-		//		Minimum column width, in px.
-		minWidth: 40,
-
-		// adjustLastColumn: Boolean
-		//		If true, adjusts the last column's width to "auto" at times where the
-		//		browser would otherwise stretch all columns to span the grid.
-		adjustLastColumn: true,
-
-		_resizedColumns: false, // flag indicating if resizer has converted column widths to px
-
-		buildRendering: function () {
-			this.inherited(arguments);
-
-			// Create resizerNode when first grid w/ ColumnResizer is created
-			if (!resizableCount) {
-				resizer.create();
-			}
-			resizableCount++;
-		},
-
-		destroy: function () {
-			this.inherited(arguments);
-
-			// Remove any applied column size styles since we're tracking them directly
-			for (var name in this._columnSizes) {
-				this._columnSizes[name].remove();
-			}
-
-			// If this is the last grid on the page with ColumnResizer, destroy the
-			// shared resizerNode
-			if (!--resizableCount) {
-				resizer.destroy();
-			}
-		},
-
-		resizeColumnWidth: function (colId, width) {
-			// Summary:
-			//      calls grid's styleColumn function to add a style for the column
-			// colId: String
-			//      column id
-			// width: Integer
-			//      new width of the column
-			return resizeColumnWidth(this, colId, width);
-		},
-
-		configStructure: function () {
-			var oldSizes = this._oldColumnSizes = lang.mixin({}, this._columnSizes), // shallow clone
-				k;
-
-			this._resizedColumns = false;
-			this._columnSizes = {};
-
-			this.inherited(arguments);
-
-			// Remove old column styles that are no longer relevant; this is specifically
-			// done *after* calling inherited so that _columnSizes will contain keys
-			// for all columns in the new structure that were assigned widths.
-			for (k in oldSizes) {
-				if (!(k in this._columnSizes)) {
-					oldSizes[k].remove();
-				}
-			}
-			delete this._oldColumnSizes;
-		},
-
-		_configColumn: function (column) {
-			this.inherited(arguments);
-
-			var colId = column.id,
-				rule;
-
-			if ('width' in column) {
-				// Update or add a style rule for the specified width
-				if ((rule = this._oldColumnSizes[colId])) {
-					rule.set('width', column.width + 'px');
-				}
-				else {
-					rule = miscUtil.addCssRule('#' + miscUtil.escapeCssIdentifier(this.domNode.id) +
-						' .dgrid-column-' + miscUtil.escapeCssIdentifier(colId, '-'),
-						'width: ' + column.width + 'px;');
-				}
-				this._columnSizes[colId] = rule;
-			}
-		},
-
-		renderHeader: function () {
-			this.inherited(arguments);
-
-			var grid = this;
-
-			var assoc;
-			if (this.columnSets && this.columnSets.length) {
-				var csi = this.columnSets.length;
-				while (csi--) {
-					assoc = lang.mixin(assoc || {}, subRowAssoc(this.columnSets[csi]));
-				}
-			}
-			else if (this.subRows && this.subRows.length > 1) {
-				assoc = subRowAssoc(this.subRows);
-			}
-
-			var colNodes = query('.dgrid-cell', grid.headerNode),
-				i = colNodes.length;
-			while (i--) {
-				var colNode = colNodes[i],
-					id = colNode.columnId,
-					col = grid.columns[id],
-					childNodes = colNode.childNodes,
-					resizeHandle;
-
-				if (!col || col.resizable === false) {
-					continue;
-				}
-
-				var headerTextNode = domConstruct.create('div', { className: 'dgrid-resize-header-container' });
-				colNode.contents = headerTextNode;
-
-				// move all the children to the header text node
-				while (childNodes.length > 0) {
-					headerTextNode.appendChild(childNodes[0]);
-				}
-
-				resizeHandle = domConstruct.create('div', {
-					className: 'dgrid-resize-handle resizeNode-' + miscUtil.escapeCssIdentifier(id, '-')
-				}, headerTextNode);
-				colNode.appendChild(headerTextNode);
-				resizeHandle.columnId = assoc && assoc[id] || id;
-			}
-
-			if (!grid.mouseMoveListen) {
-				// establish listeners for initiating, dragging, and finishing resize
-				listen(grid.headerNode,
-					'.dgrid-resize-handle:mousedown' +
-						(has('touch') ? ',.dgrid-resize-handle:touchstart' : ''),
-					function (e) {
-						grid._resizeMouseDown(e, this);
-						grid.mouseMoveListen.resume();
-						grid.mouseUpListen.resume();
-					}
-				);
-				grid._listeners.push(grid.mouseMoveListen =
-					listen.pausable(document,
-						'mousemove' + (has('touch') ? ',touchmove' : ''),
-						miscUtil.throttleDelayed(function (e) {
-							grid._updateResizerPosition(e);
-						})
-				));
-				grid._listeners.push(grid.mouseUpListen = listen.pausable(document,
-					'mouseup' + (has('touch') ? ',touchend' : ''),
-					function (e) {
-						grid._resizeMouseUp(e);
-						grid.mouseMoveListen.pause();
-						grid.mouseUpListen.pause();
-					}
-				));
-				// initially pause the move/up listeners until a drag happens
-				grid.mouseMoveListen.pause();
-				grid.mouseUpListen.pause();
-			}
-		}, // end renderHeader
-
-		_resizeMouseDown: function (e, target) {
-			// Summary:
-			//      called when mouse button is pressed on the header
-			// e: Object
-			//      mousedown event object
-
-			// preventDefault actually seems to be enough to prevent browser selection
-			// in all but IE < 9.  setSelectable works for those.
-			e.preventDefault();
-			dom.setSelectable(this.domNode, false);
-			this._startX = this._getResizeMouseLocation(e); //position of the target
-
-			this._targetCell = query('.dgrid-column-' + miscUtil.escapeCssIdentifier(target.columnId, '-'),
-				this.headerNode)[0];
-
-			// Show resizerNode after initializing its x position
-			this._updateResizerPosition(e);
-			resizer.show(this);
-		},
-		_resizeMouseUp: function (e) {
-			// Summary:
-			//      called when mouse button is released
-			// e: Object
-			//      mouseup event object
-
-			var columnSizes = this._columnSizes,
-				colNodes, colWidths, gridWidth;
-
-			if (this.adjustLastColumn) {
-				// For some reason, total column width needs to be 1 less than this
-				gridWidth = this.headerNode.clientWidth - 1;
-			}
-
-			//This is used to set all the column widths to a static size
-			if (!this._resizedColumns) {
-				colNodes = query('.dgrid-cell', this.headerNode);
-
-				if (this.columnSets && this.columnSets.length) {
-					colNodes = colNodes.filter(function (node) {
-						var idx = node.columnId.split('-');
-						return idx[0] === '0' && !(node.columnId in columnSizes);
-					});
-				}
-				else if (this.subRows && this.subRows.length > 1) {
-					colNodes = colNodes.filter(function (node) {
-						return node.columnId.charAt(0) === '0' && !(node.columnId in columnSizes);
-					});
-				}
-
-				// Get a set of sizes before we start mutating, to avoid
-				// weird disproportionate measures if the grid has set
-				// column widths, but no full grid width set
-				colWidths = colNodes.map(function (colNode) {
-					return colNode.offsetWidth;
-				});
-
-				// Set a baseline size for each column based on
-				// its original measure
-				colNodes.forEach(function (colNode, i) {
-					resizeColumnWidth(this, colNode.columnId, colWidths[i], null, false);
-				}, this);
-
-				this._resizedColumns = true;
-			}
-			dom.setSelectable(this.domNode, true);
-
-
-			var cell = this._targetCell,
-				delta = this._getResizeMouseLocation(e) - this._startX, //final change in position of resizer
-				newWidth = cell.offsetWidth + delta, //the new width after resize
-				obj = this._getResizedColumnWidths(),//get current total column widths before resize
-				totalWidth = obj.totalWidth,
-				lastCol = obj.lastColId,
-				lastColWidth = query('.dgrid-column-' + miscUtil.escapeCssIdentifier(lastCol, '-'),
-					this.headerNode)[0].offsetWidth;
-
-			if (newWidth < this.minWidth) {
-				//enforce minimum widths
-				newWidth = this.minWidth;
-			}
-
-			if (resizeColumnWidth(this, cell.columnId, newWidth, e.type)) {
-				if (cell.columnId !== lastCol && this.adjustLastColumn) {
-					if (totalWidth + delta < gridWidth) {
-						//need to set last column's width to auto
-						resizeColumnWidth(this, lastCol, 'auto', e.type);
-					}
-					else if (lastColWidth - delta <= this.minWidth) {
-						//change last col width back to px, unless it is the last column itself being resized...
-						resizeColumnWidth(this, lastCol, this.minWidth, e.type);
-					}
-				}
-			}
-			resizer.hide();
-
-			// Clean up after the resize operation
-			delete this._startX;
-			delete this._targetCell;
-		},
-
-		_updateResizerPosition: function (e) {
-			// Summary:
-			//      updates position of resizer bar as mouse moves
-			// e: Object
-			//      mousemove event object
-
-			if (!this._targetCell) {
-				return; // Release event was already processed
-			}
-
-			var mousePos = this._getResizeMouseLocation(e),
-				delta = mousePos - this._startX, //change from where user clicked to where they drag
-				width = this._targetCell.offsetWidth,
-				left = mousePos;
-			if (width + delta < this.minWidth) {
-				left = this._startX - (width - this.minWidth);
-			}
-			resizer.move(left);
-		},
-
-		_getResizeMouseLocation: function (e) {
-			//Summary:
-			//      returns position of mouse relative to the left edge
-			// e: event object
-			//      mouse move event object
-			var posX = 0;
-			if (e.pageX) {
-				posX = e.pageX;
-			}
-			else if (e.clientX) {
-				posX = e.clientX + document.body.scrollLeft +
-					document.documentElement.scrollLeft;
-			}
-			return posX;
-		},
-		_getResizedColumnWidths: function () {
-			//Summary:
-			//      returns object containing new column width and column id
-			var totalWidth = 0,
-				colNodes = query(
-					(this.columnSets ? '.dgrid-column-set-cell ' : '') + 'tr:first-child .dgrid-cell',
-					this.headerNode);
-
-			var i = colNodes.length;
-			if (!i) {
-				return {};
-			}
-
-			var lastColId = colNodes[i - 1].columnId;
-
-			while (i--) {
-				totalWidth += colNodes[i].offsetWidth;
-			}
-			return {totalWidth: totalWidth, lastColId: lastColId};
-		}
-	});
-});
-
-define('dgrid/_StoreMixin',[
-	'dojo/_base/declare',
-	'dojo/_base/lang',
-	'dojo/Deferred',
-	'dojo/aspect',
-	'dojo/dom-construct',
-	'dojo/has',
-	'dojo/on',
-	'dojo/when'
-], function (declare, lang, Deferred, aspect, domConstruct, has, on, when) {
-	// This module isolates the base logic required by store-aware list/grid
-	// components, e.g. OnDemandList/Grid and the Pagination extension.
-
-	function emitError(err) {
-		// called by _trackError in context of list/grid, if an error is encountered
-		if (typeof err !== 'object') {
-			// Ensure we actually have an error object, so we can attach a reference.
-			err = new Error(err);
-		}
-		else if (err.dojoType === 'cancel') {
-			// Don't fire dgrid-error events for errors due to canceled requests
-			// (unfortunately, the Deferred instrumentation will still log them)
-			return;
-		}
-
-		var event = on.emit(this.domNode, 'dgrid-error', {
-			grid: this,
-			error: err,
-			cancelable: true,
-			bubbles: true
-		});
-		if (event) {
-			console.error(err);
-		}
-	}
-
-	return declare(null, {
-		// collection: Object
-		//		The base object collection (implementing the dstore/api/Store API) before being sorted
-		//		or otherwise processed by the grid. Use it for general purpose store operations such as
-		//		`getIdentity` and `get`, `add`, `put`, and `remove`.
-		collection: null,
-
-		// _renderedCollection: Object
-		//		The object collection from which data is to be fetched. This is the sorted collection.
-		//		Use it when retrieving data to be rendered by the grid.
-		_renderedCollection: null,
-
-		// _rows: Array
-		//		Sparse array of row nodes, used to maintain the grid in response to events from a tracked collection.
-		//		Each node's index corresponds to the index of its data object in the collection.
-		_rows: null,
-
-		// _observerHandle: Object
-		//		The observer handle for the current collection, if trackable.
-		_observerHandle: null,
-
-		// shouldTrackCollection: Boolean
-		//		Whether this instance should track any trackable collection it is passed.
-		shouldTrackCollection: false,
-
-		// getBeforePut: boolean
-		//		If true, a get request will be performed to the store before each put
-		//		as a baseline when saving; otherwise, existing row data will be used.
-		getBeforePut: true,
-
-		// noDataMessage: String
-		//		Message to be displayed when no results exist for a collection, whether at
-		//		the time of the initial query or upon subsequent observed changes.
-		//		Defined by _StoreMixin, but to be implemented by subclasses.
-		noDataMessage: '',
-
-		// loadingMessage: String
-		//		Message displayed when data is loading.
-		//		Defined by _StoreMixin, but to be implemented by subclasses.
-		loadingMessage: '',
-
-		_total: 0,
-
-		constructor: function () {
-			// Create empty objects on each instance, not the prototype
-			this.dirty = {};
-			this._updating = {}; // Tracks rows that are mid-update
-			this._columnsWithSet = {};
-
-			// Reset _columnsWithSet whenever column configuration is reset
-			aspect.before(this, 'configStructure', lang.hitch(this, function () {
-				this._columnsWithSet = {};
-			}));
-		},
-
-		destroy: function () {
-			this.inherited(arguments);
-
-			if (this._renderedCollection) {
-				this._cleanupCollection();
-			}
-		},
-
-		_configColumn: function (column) {
-			// summary:
-			//		Implements extension point provided by Grid to store references to
-			//		any columns with `set` methods, for use during `save`.
-			if (column.set) {
-				this._columnsWithSet[column.field] = column;
-			}
-			this.inherited(arguments);
-		},
-
-		_setCollection: function (collection) {
-			// summary:
-			//		Assigns a new collection to the list/grid, sets up tracking
-			//		if applicable, and tells the list/grid to refresh.
-
-			if (this._renderedCollection) {
-				this.cleanup();
-				this._cleanupCollection({
-					// Only clear the dirty hash if the collection being used is actually from a different store
-					// (i.e. not just a re-sorted / re-filtered version of the same store)
-					shouldRevert: !collection || collection.storage !== this._renderedCollection.storage
-				});
-			}
-
-			this.collection = collection;
-
-			// Avoid unnecessary rendering and processing before the grid has started up
-			if (this._started) {
-				// Once startup is called, List.startup sets the sort property which calls _StoreMixin._applySort
-				// which sets the collection property again.  So _StoreMixin._applySort will be executed again
-				// after startup is called.
-				if (collection) {
-					var renderedCollection = collection;
-					if (this.sort && this.sort.length > 0) {
-						renderedCollection = collection.sort(this.sort);
-					}
-
-					if (renderedCollection.track && this.shouldTrackCollection) {
-						renderedCollection = renderedCollection.track();
-						this._rows = [];
-
-						this._observerHandle = this._observeCollection(
-							renderedCollection,
-							this.contentNode,
-							{ rows: this._rows }
-						);
-					}
-
-					this._renderedCollection = renderedCollection;
-				}
-				this.refresh();
-			}
-		},
-
-		_setStore: function () {
-			if (!this.collection) {
-				console.debug('set(\'store\') call detected, but you probably meant set(\'collection\')');
-			}
-		},
-
-		_getTotal: function () {
-			// summary:
-			//		Retrieves the currently-tracked total (as updated by
-			//		subclasses after store queries, or by _StoreMixin in response to
-			//		updated totalLength in events)
-
-			return this._total;
-		},
-
-		_cleanupCollection: function (options) {
-			// summary:
-			//		Handles cleanup duty for the previous collection;
-			//		called during _setCollection and destroy.
-			// options: Object?
-			//		* shouldRevert: Whether to clear the dirty hash
-
-			options = options || {};
-
-			if (this._renderedCollection.tracking) {
-				this._renderedCollection.tracking.remove();
-			}
-
-			// Remove observer and existing rows so any sub-row observers will be cleaned up
-			if (this._observerHandle) {
-				this._observerHandle.remove();
-				this._observerHandle = this._rows = null;
-			}
-
-			// Discard dirty map, as it applied to a previous collection
-			if (options.shouldRevert !== false) {
-				this.dirty = {};
-			}
-
-			this._renderedCollection = this.collection = null;
-		},
-
-		_applySort: function () {
-			if (this.collection) {
-				this.set('collection', this.collection);
-			}
-		},
-
-		row: function () {
-			// Extend List#row with more appropriate lookup-by-id logic
-			var row = this.inherited(arguments);
-			if (row && row.data && typeof row.id !== 'undefined') {
-
-				if(this.collection) {
-					row.id = this.collection.getIdentity(row.data);
-				}else{
-					console.error('_StoreMixin:have no collection!');
-				}
-
-			}
-			return row;
-		},
-
-		refresh: function () {
-			var result = this.inherited(arguments);
-
-			if (!this.collection) {
-				
-				this.noDataNode = domConstruct.create('div', {
-					className: 'dgrid-no-data',
-					innerHTML: this.noDataMessage
-				}, this.contentNode);
-				
-				this._emit('noData');
-			}
-			//{"values":[{"key":"Marantz-Power","value":"%%PowerState%%"}]}
-			return result;
-		},
-
-		refreshCell: function (cell) {
-			/*
-			 this.inherited(arguments);
-			 var row = cell.row;
-			 var self = this;
-			 */
-			if (!this.collection || !this._createBodyRowCell) {
-				//throw new Error('refreshCell requires a Grid with a collection.');
-				return false;
-			}
-
-			if(!cell.column){
-				return;
-			}
-			if (cell.column && cell.column.selector) {
-				return (new Deferred()).resolve();
-			}
-			this.inherited(arguments);
-			return this.collection.get(cell.row.id).then(lang.hitch(this, '_refreshCellFromItem', cell));
-
-/*
-			return this.collection.get(row.id).then(function (item) {
-
-				var cellElement = cell.element;
-
-				if(cellElement) {
-
-					if (cellElement.widget) {
-						cellElement.widget.destroyRecursive();
-					}
-					domConstruct.empty(cellElement);
-
-					var dirtyItem = self.dirty && self.dirty[row.id];
-					if (dirtyItem) {
-						item = lang.delegate(item, dirtyItem);
-					}
-
-					self._createBodyRowCell(cellElement, cell.column, item);
-				}
-			});
-			*/
-		},
-		_refreshCellFromItem: function (cell, item, options) {
-			if(!cell || !cell.element){
-				return;
-			}
-			var cellElement = cell.element;
-			if (cellElement.widget) {
-				cellElement.widget.destroyRecursive();
-			}
-			domConstruct.empty(cellElement);
-
-			var dirtyItem = this.dirty && this.dirty[cell.row.id];
-			if (dirtyItem) {
-				item = lang.delegate(item, dirtyItem);
-			}
-
-			this._createBodyRowCell(cellElement, cell.column, item, options);
-		},
-		renderArray: function () {
-			var rows = this.inherited(arguments);
-
-			if (!this.collection) {
-				if (rows.length && this.noDataNode) {
-					domConstruct.destroy(this.noDataNode);
-				}
-			}
-			return rows;
-		},
-
-		insertRow: function (object, parent, beforeNode, i, options) {
-			var store = this.collection,
-				dirty = this.dirty,
-				id = store && store.getIdentity(object),
-				dirtyObj,
-				row;
-
-			if (id in dirty && !(id in this._updating)) {
-				dirtyObj = dirty[id];
-			}
-			if (dirtyObj) {
-				// restore dirty object as delegate on top of original object,
-				// to provide protection for subsequent changes as well
-				object = lang.delegate(object, dirtyObj);
-			}
-
-			row = this.inherited(arguments);
-
-			if (options && options.rows) {
-				options.rows[i] = row;
-			}
-
-			// Remove no data message when a new row appears.
-			// Run after inherited logic to prevent confusion due to noDataNode
-			// no longer being present as a sibling.
-			if (this.noDataNode) {
-				domConstruct.destroy(this.noDataNode);
-				this.noDataNode = null;
-			}
-
-			return row;
-		},
-
-		updateDirty: function (id, field, value) {
-			// summary:
-			//		Updates dirty data of a field for the item with the specified ID.
-			var dirty = this.dirty,
-				dirtyObj = dirty[id];
-
-			if (!dirtyObj) {
-				dirtyObj = dirty[id] = {};
-			}
-			dirtyObj[field] = value;
-		},
-
-		save: function () {
-			// Keep track of the store and puts
-			var self = this,
-				store = this.collection,
-				dirty = this.dirty,
-				dfd = new Deferred(),
-				results = {},
-				getFunc = function (id) {
-					// returns a function to pass as a step in the promise chain,
-					// with the id variable closured
-					var data;
-					return (self.getBeforePut || !(data = self.row(id).data)) ?
-						function () {
-							return store.get(id);
-						} :
-						function () {
-							return data;
-						};
-				};
-
-			// function called within loop to generate a function for putting an item
-			function putter(id, dirtyObj) {
-				// Return a function handler
-				return function (object) {
-					var colsWithSet = self._columnsWithSet,
-						updating = self._updating,
-						key, data;
-
-					if (typeof object.set === 'function') {
-						object.set(dirtyObj);
-					} else {
-						// Copy dirty props to the original, applying setters if applicable
-						for (key in dirtyObj) {
-							object[key] = dirtyObj[key];
-						}
-					}
-
-					// Apply any set methods in column definitions.
-					// Note that while in the most common cases column.set is intended
-					// to return transformed data for the key in question, it is also
-					// possible to directly modify the object to be saved.
-					for (key in colsWithSet) {
-						data = colsWithSet[key].set(object);
-						if (data !== undefined) {
-							object[key] = data;
-						}
-					}
-
-					updating[id] = true;
-					// Put it in the store, returning the result/promise
-					return store.put(object).then(function (result) {
-						// Clear the item now that it's been confirmed updated
-						delete dirty[id];
-						delete updating[id];
-						results[id] = result;
-						return results;
-					});
-				};
-			}
-
-			var promise = dfd.then(function () {
-				// Ensure empty object is returned even if nothing was dirty, for consistency
-				return results;
-			});
-
-			// For every dirty item, grab the ID
-			for (var id in dirty) {
-				// Create put function to handle the saving of the the item
-				var put = putter(id, dirty[id]);
-
-				// Add this item onto the promise chain,
-				// getting the item from the store first if desired.
-				promise = promise.then(getFunc(id)).then(put);
-			}
-
-			// Kick off and return the promise representing all applicable get/put ops.
-			// If the success callback is fired, all operations succeeded; otherwise,
-			// save will stop at the first error it encounters.
-			dfd.resolve();
-			return promise;
-		},
-
-		revert: function () {
-			// summary:
-			//		Reverts any changes since the previous save.
-			this.dirty = {};
-			this.refresh();
-		},
-
-		_trackError: function (func) {
-			// summary:
-			//		Utility function to handle emitting of error events.
-			// func: Function|String
-			//		A function which performs some store operation, or a String identifying
-			//		a function to be invoked (sans arguments) hitched against the instance.
-			//		If sync, it can return a value, but may throw an error on failure.
-			//		If async, it should return a promise, which would fire the error
-			//		callback on failure.
-			// tags:
-			//		protected
-
-			if (typeof func === 'string') {
-				func = lang.hitch(this, func);
-			}
-
-			var self = this,
-				promise;
-
-			try {
-				promise = when(func());
-			} catch (err) {
-				// report sync error
-				var dfd = new Deferred();
-				dfd.reject(err);
-				promise = dfd.promise;
-			}
-
-			promise.otherwise(function (err) {
-				emitError.call(self, err);
-			});
-			return promise;
-		},
-
-		removeRow: function (rowElement, preserveDom, options) {
-			var row = {element: rowElement};
-			// Check to see if we are now empty...
-			if (!preserveDom && this.noDataMessage &&
-					(this.up(row).element === rowElement) &&
-					(this.down(row).element === rowElement)) {
-				// ...we are empty, so show the no data message.
-				this.noDataNode = domConstruct.create('div', {
-					className: 'dgrid-no-data',
-					innerHTML: this.noDataMessage
-				}, this.contentNode);
-				this._emit('noData');
-			}
-
-			var rows = (options && options.rows) || this._rows;
-			if (rows) {
-				delete rows[rowElement.rowIndex];
-			}
-
-			return this.inherited(arguments);
-		},
-
-		renderQueryResults: function (results, beforeNode, options) {
-			// summary:
-			//		Renders objects from QueryResults as rows, before the given node.
-
-			options = lang.mixin({ rows: this._rows }, options);
-			var self = this;
-
-			if (!has('dojo-built')) {
-				// Check for null/undefined totalResults to help diagnose faulty services/stores
-				results.totalLength.then(function (total) {
-					if (total == null) {
-						console.warn('Store reported null or undefined totalLength. ' +
-							'Make sure your store (and service, if applicable) are reporting total correctly!');
-					}
-				});
-			}
-
-			return results.then(function (resolvedResults) {
-				var resolvedRows = self.renderArray(resolvedResults, beforeNode, options);
-				delete self._lastCollection; // used only for non-store List/Grid
-				return resolvedRows;
-			});
-		},
-
-		_observeCollection: function (collection, container, options) {
-			var self = this,
-				rows = options.rows,
-				row;
-
-			var handles = [
-				collection.on('delete, update', function (event) {
-					var from = event.previousIndex;
-					var to = event.index;
-
-					if (from !== undefined && rows[from]) {
-						if ('max' in rows && (to === undefined || to < rows.min || to > rows.max)) {
-							rows.max--;
-						}
-
-						row = rows[from];
-
-						// check to make the sure the node is still there before we try to remove it
-						// (in case it was moved to a different place in the DOM)
-						if (row.parentNode === container) {
-							self.removeRow(row, false, options);
-						}
-
-						// remove the old slot
-						rows.splice(from, 1);
-
-						if (event.type === 'delete' ||
-								(event.type === 'update' && (from < to || to === undefined))) {
-							// adjust the rowIndex so adjustRowIndices has the right starting point
-							rows[from] && rows[from].rowIndex--;
-						}
-					}
-					if (event.type === 'delete') {
-						// Reset row in case this is later followed by an add;
-						// only update events should retain the row variable below
-						row = null;
-					}
-				}),
-
-				collection.on('add, update', function (event) {
-					var from = event.previousIndex;
-					var to = event.index;
-					var nextNode;
-
-					function advanceNext() {
-						nextNode = (nextNode.connected || nextNode).nextSibling;
-					}
-
-					// When possible, restrict observations to the actually rendered range
-					if (to !== undefined && (!('max' in rows) || (to >= rows.min && to <= rows.max))) {
-						if ('max' in rows && (from === undefined || from < rows.min || from > rows.max)) {
-							rows.max++;
-						}
-						// Add to new slot (either before an existing row, or at the end)
-						// First determine the DOM node that this should be placed before.
-						if (rows.length) {
-							nextNode = rows[to];
-							if (!nextNode) {
-								nextNode = rows[to - 1];
-								if (nextNode) {
-									// Make sure to skip connected nodes, so we don't accidentally
-									// insert a row in between a parent and its children.
-									advanceNext();
-								}
-							}
-						}
-						else {
-							// There are no rows.  Allow for subclasses to insert new rows somewhere other than
-							// at the end of the parent node.
-							nextNode = self._getFirstRowSibling && self._getFirstRowSibling(container);
-						}
-						// Make sure we don't trip over a stale reference to a
-						// node that was removed, or try to place a node before
-						// itself (due to overlapped queries)
-						if (row && nextNode && row.id === nextNode.id) {
-							advanceNext();
-						}
-						if (nextNode && !nextNode.parentNode) {
-							nextNode = document.getElementById(nextNode.id);
-						}
-						rows.splice(to, 0, undefined);
-						row = self.insertRow(event.target, container, nextNode, to, options);
-						self.highlightRow(row);
-					}
-					// Reset row so it doesn't get reused on the next event
-					row = null;
-				}),
-
-				collection.on('add, delete, update', function (event) {
-					var from = (typeof event.previousIndex !== 'undefined') ? event.previousIndex : Infinity,
-						to = (typeof event.index !== 'undefined') ? event.index : Infinity,
-						adjustAtIndex = Math.min(from, to);
-					from !== to && rows[adjustAtIndex] && self.adjustRowIndices(rows[adjustAtIndex]);
-
-					// the removal of rows could cause us to need to page in more items
-					if (from !== Infinity && self._processScroll && (rows[from] || rows[from - 1])) {
-						self._processScroll();
-					}
-
-					// Fire _onNotification, even for out-of-viewport notifications,
-					// since some things may still need to update (e.g. Pagination's status/navigation)
-					self._onNotification(rows, event, collection);
-
-					// Update _total after _onNotification so that it can potentially
-					// decide whether to perform actions based on whether the total changed
-					if (collection === self._renderedCollection && 'totalLength' in event) {
-						self._total = event.totalLength;
-					}
-				})
-			];
-
-			return {
-				remove: function () {
-					while (handles.length > 0) {
-						handles.pop().remove();
-					}
-				}
-			};
-		},
-
-		_onNotification: function () {
-			// summary:
-			//		Protected method called whenever a store notification is observed.
-			//		Intended to be extended as necessary by mixins/extensions.
-			// rows: Array
-			//		A sparse array of row nodes corresponding to data objects in the collection.
-			// event: Object
-			//		The notification event
-			// collection: Object
-			//		The collection that the notification is relevant to.
-			//		Useful for distinguishing child-level from top-level notifications.
-		}
-	});
-});
-
-define('dgrid/extensions/Pagination',[
-	'../_StoreMixin',
-	'dojo/_base/declare',
-	'dojo/_base/array',
-	'dojo/_base/lang',
-	'dojo/dom-construct',
-	'dojo/dom-class',
-	'dojo/on',
-	'dojo/query',
-	'dojo/string',
-	'dojo/has',
-	'dojo/when',
-	'../util/misc',
-	'dojo/_base/sniff'
-], function (_StoreMixin, declare, arrayUtil, lang, domConstruct, domClass, on, query, string, has, when,
-		miscUtil) {
-
-
-	function cleanupContent(grid) {
-		// Remove any currently-rendered rows, or noDataMessage
-		if (grid.noDataNode) {
-			domConstruct.destroy(grid.noDataNode);
-			delete grid.noDataNode;
-		}
-		else {
-			grid.cleanup();
-		}
-		grid.contentNode.innerHTML = '';
-	}
-	function cleanupLoading(grid) {
-		if (grid.loadingNode) {
-			domConstruct.destroy(grid.loadingNode);
-			delete grid.loadingNode;
-		}
-		else if (grid._oldPageNodes) {
-			// If cleaning up after a load w/ showLoadingMessage: false,
-			// be careful to only clean up rows from the old page, not the new one
-			for (var id in grid._oldPageNodes) {
-				grid.removeRow(grid._oldPageNodes[id]);
-			}
-			delete grid._oldPageNodes;
-		}
-		delete grid._isLoading;
-	}
-
-	return declare(_StoreMixin, {
-		// summary:
-		//		An extension for adding discrete pagination to a List or Grid.
-
-		// rowsPerPage: Number
-		//		Number of rows (items) to show on a given page.
-		rowsPerPage: 10,
-
-		// pagingTextBox: Boolean
-		//		Indicates whether or not to show a textbox for paging.
-		pagingTextBox: false,
-		// previousNextArrows: Boolean
-		//		Indicates whether or not to show the previous and next arrow links.
-		previousNextArrows: true,
-		// firstLastArrows: Boolean
-		//		Indicates whether or not to show the first and last arrow links.
-		firstLastArrows: false,
-
-		// pagingLinks: Number
-		//		The number of page links to show on each side of the current page
-		//		Set to 0 (or false) to disable page links.
-		pagingLinks: 2,
-		// pageSizeOptions: Array[Number]
-		//		This provides options for different page sizes in a drop-down.
-		//		If it is empty (default), no page size drop-down will be displayed.
-		pageSizeOptions: null,
-
-		// showLoadingMessage: Boolean
-		//		If true, clears previous data and displays loading node when requesting
-		//		another page; if false, leaves previous data in place until new data
-		//		arrives, then replaces it immediately.
-		showLoadingMessage: true,
-
-		// i18nPagination: Object
-		//		This object contains all of the internationalized strings as
-		//		key/value pairs.
-		i18nPagination: {
-			status: '${start} - ${end} of ${total} results',
-			gotoFirst: 'Go to first page',
-			gotoNext: 'Go to next page',
-			gotoPrev: 'Go to previous page',
-			gotoLast: 'Go to last page',
-			gotoPage: 'Go to page',
-			jumpPage: 'Jump to page',
-			rowsPerPage: 'Number of rows per page'
-		},
-
-		showFooter: true,
-		_currentPage: 1,
-
-		buildRendering: function () {
-			this.inherited(arguments);
-
-			// add pagination to footer
-			var grid = this,
-				paginationNode = this.paginationNode =
-					domConstruct.create('div', { className: 'dgrid-pagination' }, this.footerNode),
-				statusNode = this.paginationStatusNode =
-					domConstruct.create('div', { className: 'dgrid-status' }, paginationNode),
-				i18n = this.i18nPagination,
-				navigationNode,
-				node;
-
-			statusNode.tabIndex = 0;
-
-            if(this.addUiClasses){
-                domClass.add(this.footerNode,'ui-widget-content');
-            }
-
-			// Initialize UI based on pageSizeOptions and rowsPerPage
-			this._updatePaginationSizeSelect();
-			this._updateRowsPerPageOption();
-
-			// initialize some content into paginationStatusNode, to ensure
-			// accurate results on initial resize call
-			this._updatePaginationStatus(this._total);
-
-			navigationNode = this.paginationNavigationNode =
-				domConstruct.create('div', { className: 'dgrid-navigation' }, paginationNode);
-
-			if (this.firstLastArrows) {
-				// create a first-page link
-				node = this.paginationFirstNode = domConstruct.create('span', {
-					'aria-label': i18n.gotoFirst,
-					className: 'dgrid-first dgrid-page-link',
-					innerHTML: '«',
-					tabIndex: 0
-				}, navigationNode);
-			}
-			if (this.previousNextArrows) {
-				// create a previous link
-				node = this.paginationPreviousNode = domConstruct.create('span', {
-					'aria-label': i18n.gotoPrev,
-					className: 'dgrid-previous dgrid-page-link',
-					innerHTML: '‹',
-					tabIndex: 0
-				}, navigationNode);
-			}
-
-			this.paginationLinksNode = domConstruct.create('span', {
-				className: 'dgrid-pagination-links'
-			}, navigationNode);
-
-			if (this.previousNextArrows) {
-				// create a next link
-				node = this.paginationNextNode = domConstruct.create('span', {
-					'aria-label': i18n.gotoNext,
-					className: 'dgrid-next dgrid-page-link',
-					innerHTML: '›',
-					tabIndex: 0
-				}, navigationNode);
-			}
-			if (this.firstLastArrows) {
-				// create a last-page link
-				node = this.paginationLastNode = domConstruct.create('span', {
-					'aria-label': i18n.gotoLast,
-					className: 'dgrid-last dgrid-page-link',
-					innerHTML: '»',
-					tabIndex: 0
-				}, navigationNode);
-			}
-
-			/* jshint maxlen: 121 */
-			this._listeners.push(on(navigationNode, '.dgrid-page-link:click,.dgrid-page-link:keydown', function (event) {
-				// For keyboard events, only respond to enter
-				if (event.type === 'keydown' && event.keyCode !== 13) {
-					return;
-				}
-
-				var cls = this.className,
-					curr, max;
-
-				if (grid._isLoading || cls.indexOf('dgrid-page-disabled') > -1) {
-					return;
-				}
-
-				curr = grid._currentPage;
-				max = Math.ceil(grid._total / grid.rowsPerPage);
-
-				// determine navigation target based on clicked link's class
-				if (this === grid.paginationPreviousNode) {
-					grid.gotoPage(curr - 1);
-				}
-				else if (this === grid.paginationNextNode) {
-					grid.gotoPage(curr + 1);
-				}
-				else if (this === grid.paginationFirstNode) {
-					grid.gotoPage(1);
-				}
-				else if (this === grid.paginationLastNode) {
-					grid.gotoPage(max);
-				}
-				else if (cls === 'dgrid-page-link') {
-					grid.gotoPage(+this.innerHTML); // the innerHTML has the page number
-				}
-			}));
-		},
-
-		destroy: function () {
-			this.inherited(arguments);
-			if (this._pagingTextBoxHandle) {
-				this._pagingTextBoxHandle.remove();
-			}
-		},
-
-		_updatePaginationSizeSelect: function () {
-			// summary:
-			//		Creates or repopulates the pagination size selector based on
-			//		the values in pageSizeOptions. Called from buildRendering
-			//		and _setPageSizeOptions.
-
-			var pageSizeOptions = this.pageSizeOptions,
-				paginationSizeSelect = this.paginationSizeSelect,
-				handle;
-
-			if (pageSizeOptions && pageSizeOptions.length) {
-				if (!paginationSizeSelect) {
-					// First time setting page options; create the select
-					paginationSizeSelect = this.paginationSizeSelect = domConstruct.create('select', {
-						'aria-label': this.i18nPagination.rowsPerPage,
-						className: 'dgrid-page-size'
-					}, this.paginationNode);
-
-					handle = this._paginationSizeChangeHandle =
-						on(paginationSizeSelect, 'change', lang.hitch(this, function () {
-							this.set('rowsPerPage', +this.paginationSizeSelect.value);
-						}));
-					this._listeners.push(handle);
-				}
-
-				// Repopulate options
-				paginationSizeSelect.options.length = 0;
-				for (var i = 0; i < pageSizeOptions.length; i++) {
-					domConstruct.create('option', {
-						innerHTML: pageSizeOptions[i],
-						selected: this.rowsPerPage === pageSizeOptions[i],
-						value: pageSizeOptions[i]
-					}, paginationSizeSelect);
-				}
-				// Ensure current rowsPerPage value is in options
-				this._updateRowsPerPageOption();
-			}
-			else if (!(pageSizeOptions && pageSizeOptions.length) && paginationSizeSelect) {
-				// pageSizeOptions was removed; remove/unhook the drop-down
-				domConstruct.destroy(paginationSizeSelect);
-				this.paginationSizeSelect = null;
-				this._paginationSizeChangeHandle.remove();
-			}
-		},
-
-		_setPageSizeOptions: function (pageSizeOptions) {
-			this.pageSizeOptions = pageSizeOptions && pageSizeOptions.sort(function (a, b) {
-				return a - b;
-			});
-			this._updatePaginationSizeSelect();
-		},
-
-		_updateRowsPerPageOption: function () {
-			// summary:
-			//		Ensures that an option for rowsPerPage's value exists in the
-			//		paginationSizeSelect drop-down (if one is rendered).
-			//		Called from buildRendering and _setRowsPerPage.
-
-			var rowsPerPage = this.rowsPerPage,
-				pageSizeOptions = this.pageSizeOptions,
-				paginationSizeSelect = this.paginationSizeSelect;
-
-			if (paginationSizeSelect) {
-				if (arrayUtil.indexOf(pageSizeOptions, rowsPerPage) < 0) {
-					this._setPageSizeOptions(pageSizeOptions.concat([rowsPerPage]));
-				}
-				else {
-					paginationSizeSelect.value = '' + rowsPerPage;
-				}
-			}
-		},
-
-		_setRowsPerPage: function (rowsPerPage) {
-			this.rowsPerPage = rowsPerPage;
-			this._updateRowsPerPageOption();
-			this.gotoPage(1);
-		},
-
-		_updateNavigation: function (total) {
-			// summary:
-			//		Update status and navigation controls based on total count from query
-
-			var grid = this,
-				i18n = this.i18nPagination,
-				linksNode = this.paginationLinksNode,
-				currentPage = this._currentPage,
-				pagingLinks = this.pagingLinks,
-				paginationNavigationNode = this.paginationNavigationNode,
-				end = Math.ceil(total / this.rowsPerPage),
-				pagingTextBoxHandle = this._pagingTextBoxHandle,
-				focused = document.activeElement,
-				focusedPage,
-				lastFocusablePageLink,
-				focusableNodes;
-
-			function pageLink(page, addSpace) {
-				var link;
-				var disabled;
-				if (grid.pagingTextBox && page === currentPage && end > 1) {
-					// use a paging text box if enabled instead of just a number
-					link = domConstruct.create('input', {
-						'aria-label': i18n.jumpPage,
-						className: 'dgrid-page-input',
-						type: 'text',
-						value: currentPage
-					}, linksNode);
-					grid._pagingTextBoxHandle = on(link, 'change', function () {
-						var value = +this.value;
-						if (!isNaN(value) && value > 0 && value <= end) {
-							grid.gotoPage(+this.value);
-						}
-					});
-					if (focused && focused.tagName === 'INPUT') {
-						link.focus();
-					}
-				}
-				else {
-					// normal link
-					disabled = page === currentPage;
-					link = domConstruct.create('span', {
-						'aria-label': i18n.gotoPage,
-						className: 'dgrid-page-link' + (disabled ? ' dgrid-page-disabled' : ''),
-						innerHTML: page + (addSpace ? ' ' : ''),
-						tabIndex: disabled ? -1 : 0
-					}, linksNode);
-
-					// Try to restore focus if applicable;
-					// if we need to but can't, try on the previous or next page,
-					// depending on whether we're at the end
-					if (focusedPage === page) {
-						if (!disabled) {
-							link.focus();
-						}
-						else if (page < end) {
-							focusedPage++;
-						}
-						else {
-							lastFocusablePageLink.focus();
-						}
-					}
-
-					if (!disabled) {
-						lastFocusablePageLink = link;
-					}
-				}
-			}
-
-			function setDisabled(link, disabled) {
-				domClass.toggle(link, 'dgrid-page-disabled', disabled);
-				link.tabIndex = disabled ? -1 : 0;
-			}
-
-			function addSkipNode() {
-				// Adds visual indication of skipped page numbers in navigation area
-				domConstruct.create('span', {
-					className: 'dgrid-page-skip',
-					innerHTML: '...'
-				}, linksNode);
-			}
-
-			if (!focused || !miscUtil.contains(this.paginationNavigationNode, focused)) {
-				focused = null;
-			}
-			else if (focused.className === 'dgrid-page-link') {
-				focusedPage = +focused.innerHTML;
-			}
-
-			if (pagingTextBoxHandle) {
-				pagingTextBoxHandle.remove();
-			}
-			linksNode.innerHTML = '';
-			query('.dgrid-first, .dgrid-previous', paginationNavigationNode).forEach(function (link) {
-				setDisabled(link, currentPage === 1);
-			});
-			query('.dgrid-last, .dgrid-next', paginationNavigationNode).forEach(function (link) {
-				setDisabled(link, currentPage >= end);
-			});
-
-			if (pagingLinks && end > 0) {
-				// always include the first page (back to the beginning)
-				pageLink(1, true);
-				var start = currentPage - pagingLinks;
-				if (start > 2) {
-					addSkipNode();
-				}
-				else {
-					start = 2;
-				}
-				// now iterate through all the page links we should show
-				for (var i = start; i < Math.min(currentPage + pagingLinks + 1, end); i++) {
-					pageLink(i, true);
-				}
-				if (currentPage + pagingLinks + 1 < end) {
-					addSkipNode();
-				}
-				// last link
-				if (end > 1) {
-					pageLink(end);
-				}
-			}
-			else if (grid.pagingTextBox) {
-				// The pageLink function is also used to create the paging textbox.
-				pageLink(currentPage);
-			}
-
-			if (focused && focused.tabIndex === -1) {
-				// One of the first/last or prev/next links was focused but
-				// is now disabled, so find something focusable
-				focusableNodes = query('[tabindex="0"]', this.paginationNavigationNode);
-				if (focused === this.paginationPreviousNode || focused === this.paginationFirstNode) {
-					focused = focusableNodes[0];
-				}
-				else if (focusableNodes.length) {
-					focused = focusableNodes[focusableNodes.length - 1];
-				}
-				if (focused) {
-					focused.focus();
-				}
-			}
-		},
-
-		_updatePaginationStatus: function (total) {
-			var count = this.rowsPerPage;
-			var start = Math.min(total, (this._currentPage - 1) * count + 1);
-			this.paginationStatusNode.innerHTML = string.substitute(this.i18nPagination.status, {
-				start: start,
-				end: Math.min(total, start + count - 1),
-				total: total
-			});
-		},
-
-		refresh: function (options) {
-			// summary:
-			//		Re-renders the first page of data, or the current page if
-			//		options.keepCurrentPage is true.
-
-			var self = this;
-			var page = options && options.keepCurrentPage ?
-				Math.min(this._currentPage, Math.ceil(this._total / this.rowsPerPage)) : 1;
-
-			this.inherited(arguments);
-
-			// Reset to first page and return promise from gotoPage
-			return this.gotoPage(page).then(function (results) {
-				// Emit on a separate turn to enable event to be used consistently for
-				// initial render, regardless of whether the backing store is async
-				setTimeout(function () {
-					on.emit(self.domNode, 'dgrid-refresh-complete', {
-						bubbles: true,
-						cancelable: false,
-						grid: self
-					});
-				}, 0);
-
-				return results;
-			});
-		},
-
-		_onNotification: function (rows, event, collection) {
-			var rowsPerPage = this.rowsPerPage;
-			var pageEnd = this._currentPage * rowsPerPage;
-			var needsRefresh = (event.type === 'add' && event.index < pageEnd) ||
-				(event.type === 'delete' && event.previousIndex < pageEnd) ||
-				(event.type === 'update' &&
-					Math.floor(event.index / rowsPerPage) !== Math.floor(event.previousIndex / rowsPerPage));
-
-			if (needsRefresh) {
-				// Refresh the current page to maintain correct number of rows on page
-				this.gotoPage(Math.min(this._currentPage, Math.ceil(event.totalLength / this.rowsPerPage)));
-			}
-			// If we're not updating the whole page, check if we at least need to update status/navigation
-			else if (collection === this._renderedCollection && event.totalLength !== this._total) {
-				this._updatePaginationStatus(event.totalLength);
-				this._updateNavigation(event.totalLength);
-			}
-		},
-
-		renderQueryResults: function (results, beforeNode) {
-			var grid = this,
-				rows = this.inherited(arguments);
-
-			if (!beforeNode) {
-				if (this._topLevelRequest) {
-					// Cancel previous async request that didn't finish
-					this._topLevelRequest.cancel();
-					delete this._topLevelRequest;
-				}
-
-				if (typeof rows.cancel === 'function') {
-					// Store reference to new async request in progress
-					this._topLevelRequest = rows;
-				}
-
-				rows.then(function () {
-					if (grid._topLevelRequest) {
-						// Remove reference to request now that it's finished
-						delete grid._topLevelRequest;
-					}
-				});
-			}
-
-			return rows;
-		},
-
-		insertRow: function () {
-			var oldNodes = this._oldPageNodes,
-				row = this.inherited(arguments);
-
-			if (oldNodes && row === oldNodes[row.id]) {
-				// If the previous row was reused, avoid removing it in cleanup
-				delete oldNodes[row.id];
-			}
-
-			return row;
-		},
-
-		gotoPage: function (page) {
-			// summary:
-			//		Loads the given page.  Note that page numbers start at 1.
-			var grid = this,
-				start = (this._currentPage - 1) * this.rowsPerPage;
-
-			if (!this._renderedCollection) {
-				console.warn('Pagination requires a collection to operate.');
-				return when([]);
-			}
-
-			if (this._renderedCollection.releaseRange) {
-				this._renderedCollection.releaseRange(start, start + this.rowsPerPage);
-			}
-
-			return this._trackError(function () {
-				var count = grid.rowsPerPage,
-					start = (page - 1) * count,
-					options = {
-						start: start,
-						count: count
-					},
-					results,
-					contentNode = grid.contentNode,
-					loadingNode,
-					oldNodes,
-					children,
-					i,
-					len;
-
-				if (grid.showLoadingMessage) {
-					cleanupContent(grid);
-					loadingNode = grid.loadingNode = domConstruct.create('div', {
-						className: 'dgrid-loading',
-						innerHTML: grid.loadingMessage
-					}, contentNode);
-				}
-				else {
-					// Reference nodes to be cleared later, rather than now;
-					// iterate manually since IE < 9 doesn't like slicing HTMLCollections
-					grid._oldPageNodes = oldNodes = {};
-					children = contentNode.children;
-					for (i = 0, len = children.length; i < len; i++) {
-						oldNodes[children[i].id] = children[i];
-					}
-				}
-
-				// set flag to deactivate pagination event handlers until loaded
-				grid._isLoading = true;
-
-				results = grid._renderedCollection.fetchRange({
-					start: start,
-					end: start + count
-				});
-
-				return grid.renderQueryResults(results, null, options).then(function (rows) {
-					cleanupLoading(grid);
-					// Reset scroll Y-position now that new page is loaded.
-					grid.scrollTo({ y: 0 });
-
-					if (grid._rows) {
-						grid._rows.min = start;
-						grid._rows.max = start + count - 1;
-					}
-
-					results.totalLength.then(function (total) {
-						if (!total) {
-							if (grid.noDataNode) {
-								domConstruct.destroy(grid.noDataNode);
-								delete grid.noDataNode;
-							}
-							// If there are no results, display the no data message.
-							grid.noDataNode = domConstruct.create('div', {
-								className: 'dgrid-no-data',
-								innerHTML: grid.noDataMessage
-							}, grid.contentNode);
-						}
-
-						// Update status text based on now-current page and total.
-						grid._total = total;
-						grid._currentPage = page;
-						grid._rowsOnPage = rows.length;
-						grid._updatePaginationStatus(total);
-
-						// It's especially important that _updateNavigation is called only
-						// after renderQueryResults is resolved as well (to prevent jumping).
-						grid._updateNavigation(total);
-					});
-
-					return results;
-				}, function (error) {
-					cleanupLoading(grid);
-					throw error;
-				});
-			});
-		}
-	});
-});
-
 define('dgrid/util/touch',[
 	'dojo/on'
 	//'dojo/query'
@@ -9037,6 +6674,2534 @@ define('xgrid/Selection',[
 
     return _class;
 });
+define('xgrid/Keyboard',[
+	'dojo/_base/declare',
+	'dojo/aspect',
+	'dojo/dom-class',
+	'dojo/on',
+	'dojo/_base/lang',
+	'dojo/has',
+	'dgrid/util/misc',
+	'dojo/_base/sniff',
+	'dcl/dcl'
+], function (declare, aspect, domClass, on, lang, has, miscUtil,dcl) {
+
+	var delegatingInputTypes = {
+			checkbox: 1,
+			radio: 1,
+			button: 1
+		},
+		hasGridCellClass = /\bdgrid-cell\b/,
+		hasGridRowClass = /\bdgrid-row\b/,
+		_debug = false;
+
+    has.add("dom-contains", function(global, doc, element){
+        return !!element.contains; // not supported by FF < 9
+    });
+
+    function contains(parent, node){
+        // summary:
+        //		Checks to see if an element is contained by another element.
+
+        if(has("dom-contains")){
+            return parent.contains(node);
+        }else{
+            return parent.compareDocumentPosition(node) & 8 /* DOCUMENT_POSITION_CONTAINS */;
+        }
+    }
+
+	var _upDownSelect = function(event,who,steps) {
+
+		var prev     = steps < 0,
+			selector = prev ? 'first:' : 'last',
+			s, n, sib, top, left;
+
+		var _current = who.row(event).element;
+		var sel = $(_current); // header reports row as undefined
+
+		var clDisabled = 'ui-state-disabled';
+		function sibling(n, direction) {
+			return n[direction+'All']('[id]:not(.'+clDisabled+'):not(.dgrid-content-parent):first');
+		}
+		var hasLeftRight=false;
+		if (sel.length) {
+			var next = who.up(who._focusedNode,1, true);
+			s = sel;
+			sib = $(next.element);
+			if (!sib.length) {
+				// there is no sibling on required side - do not move selection
+				n = s;
+			} else if (hasLeftRight) {//done somewhere else
+				n = sib;
+			} else {
+				// find up/down side file in icons view
+				top = s.position().top;
+				left = s.position().left;
+				n = s;
+				if (prev) {
+					do {
+						n = n.prev('[id]');
+					} while (n.length && !(n.position().top < top && n.position().left <= left));
+
+					if (n.is('.'+clDisabled)) {
+						n = sibling(n, 'next');
+					}
+				} else {
+					do {
+						n = n.next('[id]');
+					} while (n.length && !(n.position().top > top && n.position().left >= left));
+
+					if (n.is('.'+clDisabled)) {
+						n = sibling(n, 'prev');
+					}
+				}
+			}
+		}
+		return n;
+	};
+	var _rightLeftSelect = function(event,who,steps) {
+
+		var prev     = steps < 0,
+			selector = prev ? 'first:' : 'last',
+			s, n, sib, top, left;
+
+		var _current = who.row(event).element;
+		var sel = $(_current); // header reports row as undefined
+
+		var clDisabled = 'ui-state-disabled';
+		function sibling(n, direction) {
+			return n[direction+'All']('[id]:not(.'+clDisabled+'):not(.dgrid-content-parent):first');
+		}
+		var hasLeftRight=true;
+		if (sel.length) {
+			var next = who.up(who._focusedNode,1, true);
+			s = sel;
+			sib = $(next.element);
+			if (!sib.length) {
+				// there is no sibling on required side - do not move selection
+				n = s;
+			} else if (hasLeftRight) {//done somewhere else
+				n = sib;
+			} else {
+				// find up/down side file in icons view
+				top = s.position().top;
+				left = s.position().left;
+				n = s;
+				if (prev) {
+					do {
+						n = n.prev('[id]');
+					} while (n.length && !(n.position().top < top && n.position().left <= left));
+
+					if (n.is('.'+clDisabled)) {
+						n = sibling(n, 'next');
+					}
+				} else {
+					do {
+						n = n.next('[id]');
+					} while (n.length && !(n.position().top > top && n.position().left >= left));
+
+					if (n.is('.'+clDisabled)) {
+						n = sibling(n, 'prev');
+					}
+				}
+			}
+		}
+		return n;
+	};
+
+	var Implementation = {
+		// summary:
+		//		Adds keyboard navigation capability to a list or grid.
+
+		// pageSkip: Number
+		//		Number of rows to jump by when page up or page down is pressed.
+		pageSkip: 10,
+
+		tabIndex: -1,
+
+		// keyMap: Object
+		//		Hash which maps key codes to functions to be executed (in the context
+		//		of the instance) for key events within the grid's body.
+		keyMap: null,
+
+		// headerKeyMap: Object
+		//		Hash which maps key codes to functions to be executed (in the context
+		//		of the instance) for key events within the grid's header row.
+		headerKeyMap: null,
+
+		postMixInProperties: function () {
+			this.inherited(arguments);
+
+			if (!this.keyMap) {
+				this.keyMap = lang.mixin({}, Implementation.defaultKeyMap);
+			}
+			if (!this.headerKeyMap) {
+				this.headerKeyMap = lang.mixin({}, Implementation.defaultHeaderKeyMap);
+			}
+		},
+
+		postCreate: function () {
+			this.inherited(arguments);
+			var grid = this;
+
+			function handledEvent(event) {
+				// Text boxes and other inputs that can use direction keys should be ignored
+				// and not affect cell/row navigation
+				var target = event.target;
+				return target.type && (!delegatingInputTypes[target.type] || event.keyCode === 32);
+			}
+
+			function enableNavigation(areaNode) {
+
+				var cellNavigation = grid.cellNavigation,
+					isFocusableClass = cellNavigation ? hasGridCellClass : hasGridRowClass,
+					isHeader = areaNode === grid.headerNode,
+					initialNode = areaNode;
+
+				function initHeader() {
+					if (grid._focusedHeaderNode) {
+						// Remove the tab index for the node that previously had it.
+						grid._focusedHeaderNode.tabIndex = -1;
+					}
+					if (grid.showHeader) {
+						if (cellNavigation) {
+							// Get the focused element. Ensure that the focused element
+							// is actually a grid cell, not a column-set-cell or some
+							// other cell that should not be focused
+							var elements = grid.headerNode.getElementsByTagName('th');
+							for (var i = 0, element; (element = elements[i]); ++i) {
+								if (isFocusableClass.test(element.className)) {
+									grid._focusedHeaderNode = initialNode = element;
+									break;
+								}
+							}
+						}
+						else {
+							grid._focusedHeaderNode = initialNode = grid.headerNode;
+						}
+
+						// Set the tab index only if the header is visible.
+						if (initialNode) {
+							initialNode.tabIndex = grid.tabIndex;
+						}
+					}
+				}
+
+				if (isHeader) {
+					// Initialize header now (since it's already been rendered),
+					// and aspect after future renderHeader calls to reset focus.
+					initHeader();
+					aspect.after(grid, 'renderHeader', initHeader, true);
+				}
+				else {
+					aspect.after(grid, 'renderArray', function (rows) {
+						// summary:
+						//		Ensures the first element of a grid is always keyboard selectable after data has been
+						//		retrieved if there is not already a valid focused element.
+
+						var focusedNode = grid._focusedNode || initialNode;
+
+						// do not update the focused element if we already have a valid one
+						if (isFocusableClass.test(focusedNode.className) && miscUtil.contains(areaNode, focusedNode)) {
+							return rows;
+						}
+
+						// ensure that the focused element is actually a grid cell, not a
+						// dgrid-preload or dgrid-content element, which should not be focusable,
+						// even when data is loaded asynchronously
+						var elements = areaNode.getElementsByTagName('*');
+						for (var i = 0, element; (element = elements[i]); ++i) {
+							if (isFocusableClass.test(element.className)) {
+								focusedNode = grid._focusedNode = element;
+								break;
+							}
+						}
+
+						focusedNode.tabIndex = grid.tabIndex;
+						return rows;
+					});
+				}
+
+				grid._listeners.push(on(areaNode, 'mousedown', function (event) {
+					if (!handledEvent(event)) {
+						grid._focusOnNode(event.target, isHeader, event);
+					}
+				}));
+
+				grid._listeners.push(on(areaNode, 'keydown', function (event) {
+					//console.log('keyboardkey down : ',event);
+					// For now, don't squash browser-specific functionalities by letting
+					// ALT and META function as they would natively
+					if (event.metaKey || event.altKey) {
+						return;
+					}
+
+					var handler = grid[isHeader ? 'headerKeyMap' : 'keyMap'][event.keyCode];
+
+					// Text boxes and other inputs that can use direction keys should be ignored
+					// and not affect cell/row navigation
+					if (handler && !handledEvent(event)) {
+						handler.call(grid, event);
+					}
+				}));
+			}
+
+			if (this.tabableHeader) {
+				enableNavigation(this.headerNode);
+				on(this.headerNode, 'dgrid-cellfocusin', function () {
+					grid.scrollTo({ x: this.scrollLeft });
+				});
+			}
+			enableNavigation(this.contentNode);
+
+			this._debouncedEnsureScroll = miscUtil.debounce(this._ensureScroll, this);
+		},
+
+		removeRow: function (rowElement) {
+			if (!this._focusedNode) {
+				// Nothing special to do if we have no record of anything focused
+				return this.inherited(arguments);
+			}
+
+			var self = this,
+				isActive = document.activeElement === this._focusedNode,
+
+					focusedTarget = this[this.cellNavigation ? 'cell' : 'row'](this._focusedNode);
+
+            if(!focusedTarget){
+                console.error('no focus target');
+                return this.inherited(arguments);
+            }
+
+
+				var focusedRow = focusedTarget.row || focusedTarget,
+				sibling;
+			rowElement = rowElement.element || rowElement;
+
+			// If removed row previously had focus, temporarily store information
+			// to be handled in an immediately-following insertRow call, or next turn
+			if (rowElement === focusedRow.element) {
+				sibling = this.down(focusedRow, true);
+
+				// Check whether down call returned the same row, or failed to return
+				// any (e.g. during a partial unrendering)
+				if (!sibling || sibling.element === rowElement) {
+					sibling = this.up(focusedRow, true);
+				}
+
+				this._removedFocus = {
+					active: isActive,
+					rowId: focusedRow.id,
+					columnId: focusedTarget.column && focusedTarget.column.id,
+					siblingId: !sibling || sibling.element === rowElement ? undefined : sibling.id
+				};
+
+				// Call _restoreFocus on next turn, to restore focus to sibling
+				// if no replacement row was immediately inserted.
+				// Pass original row's id in case it was re-inserted in a renderArray
+				// call (and thus was found, but couldn't be focused immediately)
+				setTimeout(function () {
+					if (self._removedFocus) {
+						self._restoreFocus(focusedRow.id);
+					}
+				}, 0);
+
+				// Clear _focusedNode until _restoreFocus is called, to avoid
+				// needlessly re-running this logic
+				this._focusedNode = null;
+			}
+
+			this.inherited(arguments);
+		},
+
+		insertRow: function () {
+			var rowElement = this.inherited(arguments);
+			if (this._removedFocus && !this._removedFocus.wait) {
+				this._restoreFocus(rowElement);
+			}
+			return rowElement;
+		},
+
+		_restoreFocus: function (row) {
+			// summary:
+			//		Restores focus to the newly inserted row if it matches the
+			//		previously removed row, or to the nearest sibling otherwise.
+
+			var focusInfo = this._removedFocus,
+				newTarget,
+				cell;
+
+			row = row && this.row(row);
+			newTarget = row && row.element && row.id === focusInfo.rowId ? row :
+				typeof focusInfo.siblingId !== 'undefined' && this.row(focusInfo.siblingId);
+
+			if (newTarget && newTarget.element) {
+				if (!newTarget.element.parentNode.parentNode) {
+					// This was called from renderArray, so the row hasn't
+					// actually been placed in the DOM yet; handle it on the next
+					// turn (called from removeRow).
+					focusInfo.wait = true;
+					return;
+				}
+				// Should focus be on a cell?
+				if (typeof focusInfo.columnId !== 'undefined') {
+					cell = this.cell(newTarget, focusInfo.columnId);
+					if (cell && cell.element) {
+						newTarget = cell;
+					}
+				}
+				if (focusInfo.active && newTarget.element.offsetHeight !== 0) {
+					// Row/cell was previously focused and is visible, so focus the new one immediately
+					this._focusOnNode(newTarget, false, null);
+				}
+				else {
+					// Row/cell was not focused or is not visible, but we still need to
+					// update _focusedNode and the element's tabIndex/class
+					domClass.add(newTarget.element, 'dgrid-focus');
+					newTarget.element.tabIndex = this.tabIndex;
+					this._focusedNode = newTarget.element;
+				}
+			}
+
+			delete this._removedFocus;
+		},
+
+		addKeyHandler: function (key, callback, isHeader) {
+			// summary:
+			//		Adds a handler to the keyMap on the instance.
+			//		Supports binding additional handlers to already-mapped keys.
+			// key: Number
+			//		Key code representing the key to be handled.
+			// callback: Function
+			//		Callback to be executed (in instance context) when the key is pressed.
+			// isHeader: Boolean
+			//		Whether the handler is to be added for the grid body (false, default)
+			//		or the header (true).
+
+			// Aspects may be about 10% slower than using an array-based appraoch,
+			// but there is significantly less code involved (here and above).
+			return aspect.after( // Handle
+				this[isHeader ? 'headerKeyMap' : 'keyMap'], key, callback, true);
+		},
+
+		_ensureRowScroll: function (rowElement) {
+			// summary:
+			//		Ensures that the entire row is visible within the viewport.
+			//		Called for cell navigation in complex structures.
+
+			var scrollY = this.getScrollPosition().y;
+			if (scrollY > rowElement.offsetTop) {
+				// Row starts above the viewport
+				this.scrollTo({ y: rowElement.offsetTop });
+			}
+			else if (scrollY + this.contentNode.offsetHeight < rowElement.offsetTop + rowElement.offsetHeight) {
+				// Row ends below the viewport
+				this.scrollTo({ y: rowElement.offsetTop - this.contentNode.offsetHeight + rowElement.offsetHeight });
+			}
+		},
+
+		_ensureColumnScroll: function (cellElement) {
+			// summary:
+			//		Ensures that the entire cell is visible in the viewport.
+			//		Called in cases where the grid can scroll horizontally.
+
+			var scrollX = this.getScrollPosition().x;
+			var cellLeft = cellElement.offsetLeft;
+			if (scrollX > cellLeft) {
+				this.scrollTo({ x: cellLeft });
+			}
+			else {
+				var bodyWidth = this.bodyNode.clientWidth;
+				var cellWidth = cellElement.offsetWidth;
+				var cellRight = cellLeft + cellWidth;
+				if (scrollX + bodyWidth < cellRight) {
+					// Adjust so that the right side of the cell and grid body align,
+					// unless the cell is actually wider than the body - then align the left sides
+					this.scrollTo({ x: bodyWidth > cellWidth ? cellRight - bodyWidth : cellLeft });
+				}
+			}
+		},
+
+		_ensureScroll: function (cell, isHeader) {
+			// summary:
+			//		Corrects scroll based on the position of the newly-focused row/cell
+			//		as necessary based on grid configuration and dimensions.
+
+			if(this.cellNavigation && (this.columnSets || this.subRows.length > 1) && !isHeader){
+				this._ensureRowScroll(cell.row.element);
+			}
+			if(this.bodyNode.clientWidth < this.contentNode.offsetWidth){
+				this._ensureColumnScroll(cell.element);
+			}
+		},
+
+		_focusOnNode: function (element,isHeader,event,emit) {
+			var focusedNodeProperty = '_focused' + (isHeader ? 'Header' : '') + 'Node',
+				focusedNode = this[focusedNodeProperty],
+				cellOrRowType = this.cellNavigation ? 'cell' : 'row',
+				cell = this[cellOrRowType](element),
+				inputs,
+				input,
+				numInputs,
+				inputFocused,
+				i;
+
+			element = cell && cell.element;
+
+			if (!element /*|| element==this._focusedNode*/) {
+				//console.error('same el');
+				return;
+			}
+
+			if (this.cellNavigation) {
+				inputs = element.getElementsByTagName('input');
+				for (i = 0, numInputs = inputs.length; i < numInputs; i++) {
+					input = inputs[i];
+					if ((input.tabIndex !== -1 || '_dgridLastValue' in input) && !input.disabled) {
+						input.focus();
+						inputFocused = true;
+						break;
+					}
+				}
+			}
+
+			// Set up event information for dgrid-cellfocusout/in events.
+			// Note that these events are not fired for _restoreFocus.
+			if (event !== null) {
+				event = lang.mixin({ grid: this }, event);
+				if (event.type) {
+					event.parentType = event.type;
+				}
+				if (!event.bubbles) {
+					// IE doesn't always have a bubbles property already true.
+					// Opera throws if you try to set it to true if it is already true.
+					event.bubbles = true;
+				}
+			}
+
+			if (focusedNode) {
+				// Clean up previously-focused element
+				// Remove the class name and the tabIndex attribute
+				domClass.remove(focusedNode, 'dgrid-focus');
+				focusedNode.removeAttribute('tabindex');
+
+				// Expose object representing focused cell or row losing focus, via
+				// event.cell or event.row; which is set depends on cellNavigation.
+				if (event) {
+					event[cellOrRowType] = this[cellOrRowType](focusedNode);
+					on.emit(focusedNode, 'dgrid-cellfocusout', event);
+				}
+			}
+			focusedNode = this[focusedNodeProperty] = element;
+
+			if (event) {
+				// Expose object representing focused cell or row gaining focus, via
+				// event.cell or event.row; which is set depends on cellNavigation.
+				// Note that yes, the same event object is being reused; on.emit
+				// performs a shallow copy of properties into a new event object.
+				event[cellOrRowType] = cell;
+			}
+
+			var isFocusableClass = this.cellNavigation ? hasGridCellClass : hasGridRowClass;
+			if (!inputFocused && isFocusableClass.test(element.className)) {
+
+				element.tabIndex = this.tabIndex;
+				element.focus();
+			}
+			domClass.add(element, 'dgrid-focus');
+
+
+			if (event && emit!==false) {
+				on.emit(focusedNode, 'dgrid-cellfocusin', event);
+			}
+
+			this._debouncedEnsureScroll(cell, isHeader);
+		},
+
+		focusHeader: function (element) {
+			this._focusOnNode(element || this._focusedHeaderNode, true);
+		},
+
+		focus: function (element,emit) {
+			_debug && console.log('focuse : ' + (element ? element.id : ''));
+			var node = element || this._focusedNode;
+			if (node) {
+				if (element==this._focusedNode) {
+					//console.error('same el');
+					//return;
+				}
+				this._focusOnNode(node, false,null,emit);
+			}
+			else {
+				this.contentNode.focus();
+			}
+		}
+	};
+
+	// Common functions used in default keyMap (called in instance context)
+
+	var moveFocusVertical = Implementation.moveFocusVertical = function (event, steps) {
+		if(this.isThumbGrid){
+			var next = _upDownSelect(event,this,steps);
+			if(next && next.length){
+				this._focusOnNode(next[0], false, event);
+				event.preventDefault();
+				return;
+			}
+		}
+		var cellNavigation = this.cellNavigation,
+			target = this[cellNavigation ? 'cell' : 'row'](event),
+			columnId = cellNavigation && target.column.id,
+			next = this.down(this._focusedNode, steps, true);
+
+		// Navigate within same column if cell navigation is enabled
+		if (cellNavigation) {
+			next = this.cell(next, columnId);
+		}
+		this._focusOnNode(next, false, event);
+
+		event.preventDefault();
+	};
+
+	var moveFocusUp = Implementation.moveFocusUp = function (event) {
+		moveFocusVertical.call(this, event, -1);
+	};
+
+	var moveFocusDown = Implementation.moveFocusDown = function (event) {
+		moveFocusVertical.call(this, event, 1);
+	};
+
+	var moveFocusPageUp = Implementation.moveFocusPageUp = function (event) {
+		moveFocusVertical.call(this, event, -this.pageSkip);
+	};
+
+	var moveFocusPageDown = Implementation.moveFocusPageDown = function (event) {
+		moveFocusVertical.call(this, event, this.pageSkip);
+	};
+
+	var moveFocusHorizontal = Implementation.moveFocusHorizontal = function (event, steps) {
+
+		if (!this.cellNavigation && this.isThumbGrid!==true) {
+			return;
+		}
+
+		var isHeader = !this.row(event), // header reports row as undefined
+			currentNode = this['_focused' + (isHeader ? 'Header' : '') + 'Node'];
+
+		//var _row = this.row(event);
+		if(this.isThumbGrid==true){
+
+			var cellNavigation = this.cellNavigation,
+				next = this.down(this._focusedNode, steps, true);
+
+			// Navigate within same column if cell navigation is enabled
+			this._focusOnNode(next, false, event);
+			event.preventDefault();
+			return ;
+		}
+
+		this._focusOnNode(this.right(currentNode, steps), isHeader, event);
+		event.preventDefault();
+	};
+
+	var moveFocusLeft = Implementation.moveFocusLeft = function (event) {
+		moveFocusHorizontal.call(this, event, -1);
+	};
+
+	var moveFocusRight = Implementation.moveFocusRight = function (event) {
+		moveFocusHorizontal.call(this, event, 1);
+	};
+
+	var moveHeaderFocusEnd = Implementation.moveHeaderFocusEnd = function (event, scrollToBeginning) {
+		// Header case is always simple, since all rows/cells are present
+		var nodes;
+		if (this.cellNavigation) {
+			nodes = this.headerNode.getElementsByTagName('th');
+			this._focusOnNode(nodes[scrollToBeginning ? 0 : nodes.length - 1], true, event);
+		}
+		// In row-navigation mode, there's nothing to do - only one row in header
+
+		// Prevent browser from scrolling entire page
+		event.preventDefault();
+	};
+
+	var moveHeaderFocusHome = Implementation.moveHeaderFocusHome = function (event) {
+		moveHeaderFocusEnd.call(this, event, true);
+	};
+
+	var moveFocusEnd = Implementation.moveFocusEnd = function (event, scrollToTop) {
+		// summary:
+		//		Handles requests to scroll to the beginning or end of the grid.
+
+		// Assume scrolling to top unless event is specifically for End key
+		var cellNavigation = this.cellNavigation,
+			contentNode = this.contentNode,
+			contentPos = scrollToTop ? 0 : contentNode.scrollHeight,
+			scrollPos = contentNode.scrollTop + contentPos,
+			endChild = contentNode[scrollToTop ? 'firstChild' : 'lastChild'];
+
+		if(endChild.className.indexOf('dgrid-extra') > -1){
+			endChild = endChild['previousSibling'];
+		}
+
+		var	hasPreload = endChild.className.indexOf('dgrid-preload') > -1,
+			endTarget = hasPreload ? endChild[(scrollToTop ? 'next' : 'previous') + 'Sibling'] : endChild,
+			endPos = endTarget.offsetTop + (scrollToTop ? 0 : endTarget.offsetHeight),
+			handle;
+
+		if (hasPreload) {
+			// Find the nearest dgrid-row to the relevant end of the grid
+			while (endTarget && endTarget.className.indexOf('dgrid-row') < 0) {
+				endTarget = endTarget[(scrollToTop ? 'next' : 'previous') + 'Sibling'];
+			}
+			// If none is found, there are no rows, and nothing to navigate
+			if (!endTarget) {
+				return;
+			}
+		}
+
+		// Grid content may be lazy-loaded, so check if content needs to be
+		// loaded first
+		if (!hasPreload || endChild.offsetHeight < 1) {
+			// End row is loaded; focus the first/last row/cell now
+			if (cellNavigation) {
+				// Preserve column that was currently focused
+				endTarget = this.cell(endTarget, this.cell(event).column.id);
+			}
+			this._focusOnNode(endTarget, false, event);
+		}
+		else {
+			// In IE < 9, the event member references will become invalid by the time
+			// _focusOnNode is called, so make a (shallow) copy up-front
+			if (!has('dom-addeventlistener')) {
+				event = lang.mixin({}, event);
+			}
+
+			// If the topmost/bottommost row rendered doesn't reach the top/bottom of
+			// the contentNode, we are using OnDemandList and need to wait for more
+			// data to render, then focus the first/last row in the new content.
+			handle = aspect.after(this, 'renderArray', function (rows) {
+				var target = rows[scrollToTop ? 0 : rows.length - 1];
+				if (cellNavigation) {
+					// Preserve column that was currently focused
+					target = this.cell(target, this.cell(event).column.id);
+				}
+				this._focusOnNode(target, false, event);
+				handle.remove();
+				return rows;
+			});
+		}
+
+		if (scrollPos === endPos) {
+			// Grid body is already scrolled to end; prevent browser from scrolling
+			// entire page instead
+			event.preventDefault();
+		}
+	};
+
+	var moveFocusHome = Implementation.moveFocusHome = function (event) {
+		moveFocusEnd.call(this, event, true);
+	};
+
+	function preventDefault(event) {
+		event.preventDefault();
+	}
+
+	Implementation.defaultKeyMap = {
+		32: preventDefault, // space
+		33: moveFocusPageUp, // page up
+		34: moveFocusPageDown, // page down
+		35: moveFocusEnd, // end
+		36: moveFocusHome, // home
+		37: moveFocusLeft, // left
+		38: moveFocusUp, // up
+		39: moveFocusRight, // right
+		40: moveFocusDown // down
+	};
+
+	// Header needs fewer default bindings (no vertical), so bind it separately
+	Implementation.defaultHeaderKeyMap = {
+		32: preventDefault, // space
+		35: moveHeaderFocusEnd, // end
+		36: moveHeaderFocusHome, // home
+		37: moveFocusLeft, // left
+		39: moveFocusRight // right
+	};
+
+	var Module = declare(null,Implementation);
+	Module.dcl = dcl(null,Implementation);
+	return Module;
+});
+
+define('xgrid/ColumnHider',[
+	'xdojo/declare',
+    'dojo/has',
+    'dgrid/util/misc',
+    'xide/types',
+    'xide/utils'
+], function (declare, has, misc,types,utils) {
+
+    /*
+     *	Column Hider plugin for dgrid
+     *	Originally contributed by TRT 2011-09-28
+     *
+     *	A dGrid plugin that attaches a menu to a dgrid, along with a way of opening it,
+     *	that will allow you to show and hide columns.  A few caveats:
+     *
+     *	1. Menu placement is entirely based on CSS definitions.
+     *	2. If you want columns initially hidden, you must add "hidden: true" to your
+     *		column definition.
+     *	3. This implementation does NOT support ColumnSet, and has not been tested
+     *		with multi-subrow records.
+     *	4. Column show/hide is controlled via straight up HTML checkboxes.  If you
+     *		are looking for something more fancy, you'll probably need to use this
+     *		definition as a template to write your own plugin.
+     *
+     */
+	return declare('xgrid.ColumnHider',null, {
+        columnHiderActionRootCommand:'View/Columns',
+		// i18nColumnHider: Object
+		//		This object contains all of the internationalized strings for
+		//		the ColumnHider extension as key/value pairs.
+		i18nColumnHider: {},
+
+		// _columnHiderRules: Object
+		//		Hash containing handles returned from addCssRule.
+		_columnHiderRules: null,
+        _runAction:function(action,update,value){
+            if(action && action.command.indexOf(this.columnHiderActionRootCommand)!=-1 ){
+                var col = action.column;
+                var isHidden = this.isColumnHidden(col.id);
+                this.showColumn(col.id,isHidden);
+                update!==false && action.set('value', !this.isColumnHidden(col.id));
+            }
+            return this.inherited(arguments);
+        },
+        /**
+         *
+         * @param permissions
+         * @param actions
+         * @returns {Array}
+         */
+		getColumnHiderActions:function(permissions,actions){
+            var root = this.columnHiderActionRootCommand,
+                thiz = this,
+                columnActions = [],
+                VISIBILITY = types.ACTION_VISIBILITY,
+                node = this.domNode;
+
+            actions = actions || [];
+            var rootAction = _.find(actions,{
+                command:root
+            });
+            if(!rootAction) {
+                columnActions.push(this.createAction({
+                    label:'Columns',
+                    command:root,
+                    icon:'fa-columns',
+                    tab:'View',
+                    group:'Columns',
+                    toggleGroup:thiz.id + 'Columns',
+                    onCreate:function(action){
+                        action.setVisibility(VISIBILITY.RIBBON,{
+                            expand:true
+                        }).setVisibility(VISIBILITY.ACTION_TOOLBAR, false);
+                    }
+                }));
+            }
+            /**
+             *
+             * @param col
+             * @private
+             */
+            function _createEntry(col) {
+
+                var id = col.id,
+                    label = 'Show ' + ( col.label || col.field || ''),
+                    icon = col.icon || 'fa-cogs';
+
+                // Allow cols to opt out of the hider (e.g. for selector column).
+                if (col.unhidable) {
+                    return;
+                }
+                var _action = thiz.createAction(label, root + '/' + label , icon, null, 'View', 'Columns', 'item|view',
+
+                    //oncreate
+                    function(action){
+
+                        var widgetImplementation = {
+                            postMixInProperties: function() {
+                                this.inherited(arguments);
+                                this.checked = this.item.get('value') === true;
+                            },
+                            startup:function(){
+                                this.inherited(arguments);
+                                this.on('change',function(val){
+                                    thiz.showColumn(id,val);
+                                });
+                            }
+                        };
+                        var widgetArgs  ={
+                            checked:!col.hidden,
+                            iconClass:icon,
+                            style:'float:inherit;'
+                        };
+
+
+                        var _visibilityMixin = {
+                            //widgetClass:declare.classFactory('_Checked', [CheckedMenuItem,_ActionValueWidgetMixin], null, widgetImplementation ,null),
+                            widgetArgs:widgetArgs,
+                            actionType : 'multiToggle'
+                        };
+
+                        action.actionType = 'multiToggle';
+
+
+                        action.setVisibility(types.ACTION_VISIBILITY_ALL,utils.cloneKeys(_visibilityMixin,false));
+
+                        label = action.label.replace('Show ','');
+
+
+                        //for ribbons we collapse into 'Checkboxes'
+                        /*
+                        action.setVisibility(VISIBILITY.RIBBON,{
+                            widgetClass:declare.classFactory('_CheckedGroup', [ActionValueWidget], null,{
+                                iconClass:"",
+                                postMixInProperties: function() {
+                                    this.inherited(arguments);
+                                    this.checked = this.item.get('value') == true;
+                                },
+                                startup:function(){
+                                    this.inherited(arguments);
+                                    this.widget.on('change', function (val) {
+                                        thiz.showColumn(id,val);
+                                    }.bind(this));
+                                }
+                            } ,null),
+                            widgetArgs:{
+                                renderer:CheckBox,
+                                checked:!col.hidden,
+                                label:action.label.replace('Show ','')
+                            }
+                        });
+                        */
+
+                    }, /*handler*/ null ,
+                    {
+                        column:col,
+                        filterGroup:"item|view",
+                        tab:'View',
+                        value:!col.hidden,
+                        addPermission:true
+                    },
+                    null, null, permissions, node,thiz,thiz);
+
+                if(_action){
+                    columnActions.push(_action);
+                }
+
+                /**
+
+                columnActions.push(_ActionMixin.createActionParameters(label, root + '/' + label, 'Columns', icon, function () {
+                    console.log('handler');
+
+                }, '', null, null, thiz, thiz, {
+                    column:col,
+                    filterGroup:"item|view",
+                    tab:'View',
+                    value:!col.hidden,
+                    onCreate:function(action){
+
+                        var _action = this;
+
+                        action.owner = thiz;
+
+                        var widgetImplementation = {
+                            postMixInProperties: function() {
+                                this.inherited(arguments);
+                                this.checked = this.item.get('value') == true;
+                            },
+                            startup:function(){
+                                this.inherited(arguments);
+                                this.on('change',function(val){
+                                    thiz.showColumn(id,val);
+                                })
+                            },
+                            destroy:function(){
+
+                                this.inherited(arguments);
+                            }
+                        };
+                        var widgetArgs  ={
+                            checked:!col.hidden,
+                            iconClass:icon,
+                            style:'float:inherit;'
+                        };
+
+                        var _visibilityMixin = {
+                            widgetClass:declare.classFactory('_Checked', [CheckedMenuItem,_ActionValueWidgetMixin], null, widgetImplementation ,null),
+                            widgetArgs:widgetArgs
+                        };
+
+                        action.setVisibility(types.ACTION_VISIBILITY_ALL,_visibilityMixin);
+
+                        label = action.label.replace('Show ','');
+
+
+                        //for ribbons we collapse into 'Checkboxes'
+                        action.setVisibility(VISIBILITY.RIBBON,{
+                            widgetClass:declare.classFactory('_CheckedGroup', [ActionValueWidget], null,{
+                                iconClass:"",
+                                postMixInProperties: function() {
+                                    this.inherited(arguments);
+                                    this.checked = this.item.get('value') == true;
+                                },
+                                startup:function(){
+                                    this.inherited(arguments);
+                                    this.widget.on('change', function (val) {
+                                        thiz.showColumn(id,val);
+                                    }.bind(this));
+                                }
+                            } ,null),
+                            widgetArgs:{
+                                renderer:CheckBox,
+                                checked:!col.hidden,
+                                label:action.label.replace('Show ','')
+                            }
+                        });
+
+                    }
+                }));
+
+                */
+
+            }
+            var subRows = this.subRows,
+                first = true,
+                srLength, cLength, sr, c;
+            for (sr = 0, srLength = subRows.length; sr < srLength; sr++) {
+                for (c = 0, cLength = subRows[sr].length; c < cLength; c++) {
+                    _createEntry(subRows[sr][c]);
+                    if (first) {
+                        first = false;
+                    }
+                }
+            }
+            return columnActions;
+
+        },
+        resize:function(){
+            this.inherited(arguments);
+            this._checkHiddenColumns();
+        },
+        _checkHiddenColumns:function(){
+            var subRows = this.subRows,
+                srLength, cLength, sr, c,
+                totalWidth = $(this.domNode).width();
+
+            for (sr = 0, srLength = subRows.length; sr < srLength; sr++) {
+                for (c = 0, cLength = subRows[sr].length; c < cLength; c++) {
+                    var col = subRows[sr][c];
+                    if(col.minWidth){
+                        if(totalWidth < col.minWidth){
+                            if(!col.unhidable) {
+                                this.showColumn(col.id,false);
+                            }
+                        }else{
+                            this.showColumn(col.id,true);
+                        }
+                    }
+                }
+            }
+        },
+        startup:function(){
+            if(this._started){
+                return;
+            }
+
+            this._columnHiderCheckboxes = {};
+            this._columnHiderRules = {};
+            var res = this.inherited(arguments);
+            this._checkHiddenColumns();
+            var subRows = this.subRows,
+                srLength, cLength, sr, c,
+                thiz = this;
+
+            for (sr = 0, srLength = subRows.length; sr < srLength; sr++) {
+                for (c = 0, cLength = subRows[sr].length; c < cLength; c++) {
+
+                    var col = subRows[sr][c],
+                        id = col.id;
+
+                    if (col.hidden===true) {
+                        // Hide the column (reset first to avoid short-circuiting logic)
+                        col.hidden = false;
+                        thiz._hideColumn(id);
+                        col.hidden = true;
+                    }
+                }
+            }
+            if(this.getActionStore){
+                this.getActionStore().on('update',function(evt){
+                    var action = evt.target;
+                    if(action.command.indexOf('View/Columns')!==-1){
+                        var col = action.column;
+                        thiz.showColumn(col.id,action.get('value'));
+                        thiz.onAfterAction(action);
+
+                    }
+                });
+            }
+            return res;
+
+        },
+		left: function (cell, steps) {
+			return this.right(cell, -steps);
+		},
+		right: function (cell, steps) {
+			if (!cell.element) {
+				cell = this.cell(cell);
+			}
+			var nextCell = this.inherited(arguments),
+				prevCell = cell;
+
+			// Skip over hidden cells
+			while (nextCell.column.hidden) {
+				nextCell = this.inherited(arguments, [nextCell, steps > 0 ? 1 : -1]);
+				if (prevCell.element === nextCell.element) {
+					// No further visible cell found - return original
+					return cell;
+				}
+				prevCell = nextCell;
+			}
+			return nextCell;
+		},
+		isColumnHidden: function (id) {
+			// summary:
+			//		Convenience method to determine current hidden state of a column
+			return !!this._columnHiderRules[id];
+		},
+		_hideColumn: function (id) {
+			// summary:
+			//		Hides the column indicated by the given id.
+
+			// Use misc function directly, since we clean these up ourselves anyway
+			var grid = this,
+                domId = this.template ? this.template.id : this.domNode.id,
+                selectorPrefix = '#' + misc.escapeCssIdentifier(domId) + ' .dgrid-column-',
+				tableRule; // used in IE8 code path
+
+			if (this._columnHiderRules[id]) {
+				return;
+			}
+
+			this._columnHiderRules[id] = misc.addCssRule(selectorPrefix + misc.escapeCssIdentifier(id, '-'), 'display: none;');
+            
+			if (has('ie') === 8 || has('ie') === 10) {
+				// Work around IE8 display issue and IE10 issue where
+				// header/body cells get out of sync when ColumnResizer is also used
+				tableRule = misc.addCssRule('.dgrid-row-table', 'display: inline-table;');
+				window.setTimeout(function () {
+					tableRule.remove();
+					grid.resize();
+				}, 0);
+			}
+		},
+		_showColumn: function (id) {
+			// summary:
+			//		Shows the column indicated by the given id
+			//		(by removing the rule responsible for hiding it).
+
+			if (this._columnHiderRules[id]) {
+				this._columnHiderRules[id].remove();
+				delete this._columnHiderRules[id];
+			}
+		},
+        showColumn:function(id,show){
+            if(this.isColumnHidden(id)){
+                if(show) {
+                    this._showColumn(id);
+                }
+            }else if(!show){
+                this._hideColumn(id);
+            }
+        }
+	});
+});
+
+define('dgrid/_StoreMixin',[
+	'dojo/_base/declare',
+	'dojo/_base/lang',
+	'dojo/Deferred',
+	'dojo/aspect',
+	'dojo/dom-construct',
+	'dojo/has',
+	'dojo/on',
+	'dojo/when'
+], function (declare, lang, Deferred, aspect, domConstruct, has, on, when) {
+	// This module isolates the base logic required by store-aware list/grid
+	// components, e.g. OnDemandList/Grid and the Pagination extension.
+
+	function emitError(err) {
+		// called by _trackError in context of list/grid, if an error is encountered
+		if (typeof err !== 'object') {
+			// Ensure we actually have an error object, so we can attach a reference.
+			err = new Error(err);
+		}
+		else if (err.dojoType === 'cancel') {
+			// Don't fire dgrid-error events for errors due to canceled requests
+			// (unfortunately, the Deferred instrumentation will still log them)
+			return;
+		}
+
+		var event = on.emit(this.domNode, 'dgrid-error', {
+			grid: this,
+			error: err,
+			cancelable: true,
+			bubbles: true
+		});
+		if (event) {
+			console.error(err);
+		}
+	}
+
+	return declare(null, {
+		// collection: Object
+		//		The base object collection (implementing the dstore/api/Store API) before being sorted
+		//		or otherwise processed by the grid. Use it for general purpose store operations such as
+		//		`getIdentity` and `get`, `add`, `put`, and `remove`.
+		collection: null,
+
+		// _renderedCollection: Object
+		//		The object collection from which data is to be fetched. This is the sorted collection.
+		//		Use it when retrieving data to be rendered by the grid.
+		_renderedCollection: null,
+
+		// _rows: Array
+		//		Sparse array of row nodes, used to maintain the grid in response to events from a tracked collection.
+		//		Each node's index corresponds to the index of its data object in the collection.
+		_rows: null,
+
+		// _observerHandle: Object
+		//		The observer handle for the current collection, if trackable.
+		_observerHandle: null,
+
+		// shouldTrackCollection: Boolean
+		//		Whether this instance should track any trackable collection it is passed.
+		shouldTrackCollection: false,
+
+		// getBeforePut: boolean
+		//		If true, a get request will be performed to the store before each put
+		//		as a baseline when saving; otherwise, existing row data will be used.
+		getBeforePut: true,
+
+		// noDataMessage: String
+		//		Message to be displayed when no results exist for a collection, whether at
+		//		the time of the initial query or upon subsequent observed changes.
+		//		Defined by _StoreMixin, but to be implemented by subclasses.
+		noDataMessage: '',
+
+		// loadingMessage: String
+		//		Message displayed when data is loading.
+		//		Defined by _StoreMixin, but to be implemented by subclasses.
+		loadingMessage: '',
+
+		_total: 0,
+
+		constructor: function () {
+			// Create empty objects on each instance, not the prototype
+			this.dirty = {};
+			this._updating = {}; // Tracks rows that are mid-update
+			this._columnsWithSet = {};
+
+			// Reset _columnsWithSet whenever column configuration is reset
+			aspect.before(this, 'configStructure', lang.hitch(this, function () {
+				this._columnsWithSet = {};
+			}));
+		},
+
+		destroy: function () {
+			this.inherited(arguments);
+
+			if (this._renderedCollection) {
+				this._cleanupCollection();
+			}
+		},
+
+		_configColumn: function (column) {
+			// summary:
+			//		Implements extension point provided by Grid to store references to
+			//		any columns with `set` methods, for use during `save`.
+			if (column.set) {
+				this._columnsWithSet[column.field] = column;
+			}
+			this.inherited(arguments);
+		},
+
+		_setCollection: function (collection) {
+			// summary:
+			//		Assigns a new collection to the list/grid, sets up tracking
+			//		if applicable, and tells the list/grid to refresh.
+
+			if (this._renderedCollection) {
+				this.cleanup();
+				this._cleanupCollection({
+					// Only clear the dirty hash if the collection being used is actually from a different store
+					// (i.e. not just a re-sorted / re-filtered version of the same store)
+					shouldRevert: !collection || collection.storage !== this._renderedCollection.storage
+				});
+			}
+
+			this.collection = collection;
+
+			// Avoid unnecessary rendering and processing before the grid has started up
+			if (this._started) {
+				// Once startup is called, List.startup sets the sort property which calls _StoreMixin._applySort
+				// which sets the collection property again.  So _StoreMixin._applySort will be executed again
+				// after startup is called.
+				if (collection) {
+					var renderedCollection = collection;
+					if (this.sort && this.sort.length > 0) {
+						renderedCollection = collection.sort(this.sort);
+					}
+
+					if (renderedCollection.track && this.shouldTrackCollection) {
+						renderedCollection = renderedCollection.track();
+						this._rows = [];
+
+						this._observerHandle = this._observeCollection(
+							renderedCollection,
+							this.contentNode,
+							{ rows: this._rows }
+						);
+					}
+
+					this._renderedCollection = renderedCollection;
+				}
+				this.refresh();
+			}
+		},
+
+		_setStore: function () {
+			if (!this.collection) {
+				console.debug('set(\'store\') call detected, but you probably meant set(\'collection\')');
+			}
+		},
+
+		_getTotal: function () {
+			// summary:
+			//		Retrieves the currently-tracked total (as updated by
+			//		subclasses after store queries, or by _StoreMixin in response to
+			//		updated totalLength in events)
+
+			return this._total;
+		},
+
+		_cleanupCollection: function (options) {
+			// summary:
+			//		Handles cleanup duty for the previous collection;
+			//		called during _setCollection and destroy.
+			// options: Object?
+			//		* shouldRevert: Whether to clear the dirty hash
+
+			options = options || {};
+
+			if (this._renderedCollection.tracking) {
+				this._renderedCollection.tracking.remove();
+			}
+
+			// Remove observer and existing rows so any sub-row observers will be cleaned up
+			if (this._observerHandle) {
+				this._observerHandle.remove();
+				this._observerHandle = this._rows = null;
+			}
+
+			// Discard dirty map, as it applied to a previous collection
+			if (options.shouldRevert !== false) {
+				this.dirty = {};
+			}
+
+			this._renderedCollection = this.collection = null;
+		},
+
+		_applySort: function () {
+			if (this.collection) {
+				this.set('collection', this.collection);
+			}
+		},
+
+		row: function () {
+			// Extend List#row with more appropriate lookup-by-id logic
+			var row = this.inherited(arguments);
+			if (row && row.data && typeof row.id !== 'undefined') {
+
+				if(this.collection) {
+					row.id = this.collection.getIdentity(row.data);
+				}else{
+					console.error('_StoreMixin:have no collection!');
+				}
+
+			}
+			return row;
+		},
+
+		refresh: function () {
+			var result = this.inherited(arguments);
+
+			if (!this.collection) {
+				
+				this.noDataNode = domConstruct.create('div', {
+					className: 'dgrid-no-data',
+					innerHTML: this.noDataMessage
+				}, this.contentNode);
+				
+				this._emit('noData');
+			}
+			//{"values":[{"key":"Marantz-Power","value":"%%PowerState%%"}]}
+			return result;
+		},
+
+		refreshCell: function (cell) {
+			/*
+			 this.inherited(arguments);
+			 var row = cell.row;
+			 var self = this;
+			 */
+			if (!this.collection || !this._createBodyRowCell) {
+				//throw new Error('refreshCell requires a Grid with a collection.');
+				return false;
+			}
+
+			if(!cell.column){
+				return;
+			}
+			if (cell.column && cell.column.selector) {
+				return (new Deferred()).resolve();
+			}
+			this.inherited(arguments);
+			return this.collection.get(cell.row.id).then(lang.hitch(this, '_refreshCellFromItem', cell));
+
+/*
+			return this.collection.get(row.id).then(function (item) {
+
+				var cellElement = cell.element;
+
+				if(cellElement) {
+
+					if (cellElement.widget) {
+						cellElement.widget.destroyRecursive();
+					}
+					domConstruct.empty(cellElement);
+
+					var dirtyItem = self.dirty && self.dirty[row.id];
+					if (dirtyItem) {
+						item = lang.delegate(item, dirtyItem);
+					}
+
+					self._createBodyRowCell(cellElement, cell.column, item);
+				}
+			});
+			*/
+		},
+		_refreshCellFromItem: function (cell, item, options) {
+			if(!cell || !cell.element){
+				return;
+			}
+			var cellElement = cell.element;
+			if (cellElement.widget) {
+				cellElement.widget.destroyRecursive();
+			}
+			domConstruct.empty(cellElement);
+
+			var dirtyItem = this.dirty && this.dirty[cell.row.id];
+			if (dirtyItem) {
+				item = lang.delegate(item, dirtyItem);
+			}
+
+			this._createBodyRowCell(cellElement, cell.column, item, options);
+		},
+		renderArray: function () {
+			var rows = this.inherited(arguments);
+
+			if (!this.collection) {
+				if (rows.length && this.noDataNode) {
+					domConstruct.destroy(this.noDataNode);
+				}
+			}
+			return rows;
+		},
+
+		insertRow: function (object, parent, beforeNode, i, options) {
+			var store = this.collection,
+				dirty = this.dirty,
+				id = store && store.getIdentity(object),
+				dirtyObj,
+				row;
+
+			if (id in dirty && !(id in this._updating)) {
+				dirtyObj = dirty[id];
+			}
+			if (dirtyObj) {
+				// restore dirty object as delegate on top of original object,
+				// to provide protection for subsequent changes as well
+				object = lang.delegate(object, dirtyObj);
+			}
+
+			row = this.inherited(arguments);
+
+			if (options && options.rows) {
+				options.rows[i] = row;
+			}
+
+			// Remove no data message when a new row appears.
+			// Run after inherited logic to prevent confusion due to noDataNode
+			// no longer being present as a sibling.
+			if (this.noDataNode) {
+				domConstruct.destroy(this.noDataNode);
+				this.noDataNode = null;
+			}
+
+			return row;
+		},
+
+		updateDirty: function (id, field, value) {
+			// summary:
+			//		Updates dirty data of a field for the item with the specified ID.
+			var dirty = this.dirty,
+				dirtyObj = dirty[id];
+
+			if (!dirtyObj) {
+				dirtyObj = dirty[id] = {};
+			}
+			dirtyObj[field] = value;
+		},
+
+		save: function () {
+			// Keep track of the store and puts
+			var self = this,
+				store = this.collection,
+				dirty = this.dirty,
+				dfd = new Deferred(),
+				results = {},
+				getFunc = function (id) {
+					// returns a function to pass as a step in the promise chain,
+					// with the id variable closured
+					var data;
+					return (self.getBeforePut || !(data = self.row(id).data)) ?
+						function () {
+							return store.get(id);
+						} :
+						function () {
+							return data;
+						};
+				};
+
+			// function called within loop to generate a function for putting an item
+			function putter(id, dirtyObj) {
+				// Return a function handler
+				return function (object) {
+					var colsWithSet = self._columnsWithSet,
+						updating = self._updating,
+						key, data;
+
+					if (typeof object.set === 'function') {
+						object.set(dirtyObj);
+					} else {
+						// Copy dirty props to the original, applying setters if applicable
+						for (key in dirtyObj) {
+							object[key] = dirtyObj[key];
+						}
+					}
+
+					// Apply any set methods in column definitions.
+					// Note that while in the most common cases column.set is intended
+					// to return transformed data for the key in question, it is also
+					// possible to directly modify the object to be saved.
+					for (key in colsWithSet) {
+						data = colsWithSet[key].set(object);
+						if (data !== undefined) {
+							object[key] = data;
+						}
+					}
+
+					updating[id] = true;
+					// Put it in the store, returning the result/promise
+					return store.put(object).then(function (result) {
+						// Clear the item now that it's been confirmed updated
+						delete dirty[id];
+						delete updating[id];
+						results[id] = result;
+						return results;
+					});
+				};
+			}
+
+			var promise = dfd.then(function () {
+				// Ensure empty object is returned even if nothing was dirty, for consistency
+				return results;
+			});
+
+			// For every dirty item, grab the ID
+			for (var id in dirty) {
+				// Create put function to handle the saving of the the item
+				var put = putter(id, dirty[id]);
+
+				// Add this item onto the promise chain,
+				// getting the item from the store first if desired.
+				promise = promise.then(getFunc(id)).then(put);
+			}
+
+			// Kick off and return the promise representing all applicable get/put ops.
+			// If the success callback is fired, all operations succeeded; otherwise,
+			// save will stop at the first error it encounters.
+			dfd.resolve();
+			return promise;
+		},
+
+		revert: function () {
+			// summary:
+			//		Reverts any changes since the previous save.
+			this.dirty = {};
+			this.refresh();
+		},
+
+		_trackError: function (func) {
+			// summary:
+			//		Utility function to handle emitting of error events.
+			// func: Function|String
+			//		A function which performs some store operation, or a String identifying
+			//		a function to be invoked (sans arguments) hitched against the instance.
+			//		If sync, it can return a value, but may throw an error on failure.
+			//		If async, it should return a promise, which would fire the error
+			//		callback on failure.
+			// tags:
+			//		protected
+
+			if (typeof func === 'string') {
+				func = lang.hitch(this, func);
+			}
+
+			var self = this,
+				promise;
+
+			try {
+				promise = when(func());
+			} catch (err) {
+				// report sync error
+				var dfd = new Deferred();
+				dfd.reject(err);
+				promise = dfd.promise;
+			}
+
+			promise.otherwise(function (err) {
+				emitError.call(self, err);
+			});
+			return promise;
+		},
+
+		removeRow: function (rowElement, preserveDom, options) {
+			var row = {element: rowElement};
+			// Check to see if we are now empty...
+			if (!preserveDom && this.noDataMessage &&
+					(this.up(row).element === rowElement) &&
+					(this.down(row).element === rowElement)) {
+				// ...we are empty, so show the no data message.
+				this.noDataNode = domConstruct.create('div', {
+					className: 'dgrid-no-data',
+					innerHTML: this.noDataMessage
+				}, this.contentNode);
+				this._emit('noData');
+			}
+
+			var rows = (options && options.rows) || this._rows;
+			if (rows) {
+				delete rows[rowElement.rowIndex];
+			}
+
+			return this.inherited(arguments);
+		},
+
+		renderQueryResults: function (results, beforeNode, options) {
+			// summary:
+			//		Renders objects from QueryResults as rows, before the given node.
+
+			options = lang.mixin({ rows: this._rows }, options);
+			var self = this;
+
+			if (!has('dojo-built')) {
+				// Check for null/undefined totalResults to help diagnose faulty services/stores
+				results.totalLength.then(function (total) {
+					if (total == null) {
+						console.warn('Store reported null or undefined totalLength. ' +
+							'Make sure your store (and service, if applicable) are reporting total correctly!');
+					}
+				});
+			}
+
+			return results.then(function (resolvedResults) {
+				var resolvedRows = self.renderArray(resolvedResults, beforeNode, options);
+				delete self._lastCollection; // used only for non-store List/Grid
+				return resolvedRows;
+			});
+		},
+
+		_observeCollection: function (collection, container, options) {
+			var self = this,
+				rows = options.rows,
+				row;
+
+			var handles = [
+				collection.on('delete, update', function (event) {
+					var from = event.previousIndex;
+					var to = event.index;
+
+					if (from !== undefined && rows[from]) {
+						if ('max' in rows && (to === undefined || to < rows.min || to > rows.max)) {
+							rows.max--;
+						}
+
+						row = rows[from];
+
+						// check to make the sure the node is still there before we try to remove it
+						// (in case it was moved to a different place in the DOM)
+						if (row.parentNode === container) {
+							self.removeRow(row, false, options);
+						}
+
+						// remove the old slot
+						rows.splice(from, 1);
+
+						if (event.type === 'delete' ||
+								(event.type === 'update' && (from < to || to === undefined))) {
+							// adjust the rowIndex so adjustRowIndices has the right starting point
+							rows[from] && rows[from].rowIndex--;
+						}
+					}
+					if (event.type === 'delete') {
+						// Reset row in case this is later followed by an add;
+						// only update events should retain the row variable below
+						row = null;
+					}
+				}),
+
+				collection.on('add, update', function (event) {
+					var from = event.previousIndex;
+					var to = event.index;
+					var nextNode;
+
+					function advanceNext() {
+						nextNode = (nextNode.connected || nextNode).nextSibling;
+					}
+
+					// When possible, restrict observations to the actually rendered range
+					if (to !== undefined && (!('max' in rows) || (to >= rows.min && to <= rows.max))) {
+						if ('max' in rows && (from === undefined || from < rows.min || from > rows.max)) {
+							rows.max++;
+						}
+						// Add to new slot (either before an existing row, or at the end)
+						// First determine the DOM node that this should be placed before.
+						if (rows.length) {
+							nextNode = rows[to];
+							if (!nextNode) {
+								nextNode = rows[to - 1];
+								if (nextNode) {
+									// Make sure to skip connected nodes, so we don't accidentally
+									// insert a row in between a parent and its children.
+									advanceNext();
+								}
+							}
+						}
+						else {
+							// There are no rows.  Allow for subclasses to insert new rows somewhere other than
+							// at the end of the parent node.
+							nextNode = self._getFirstRowSibling && self._getFirstRowSibling(container);
+						}
+						// Make sure we don't trip over a stale reference to a
+						// node that was removed, or try to place a node before
+						// itself (due to overlapped queries)
+						if (row && nextNode && row.id === nextNode.id) {
+							advanceNext();
+						}
+						if (nextNode && !nextNode.parentNode) {
+							nextNode = document.getElementById(nextNode.id);
+						}
+						rows.splice(to, 0, undefined);
+						row = self.insertRow(event.target, container, nextNode, to, options);
+						self.highlightRow(row);
+					}
+					// Reset row so it doesn't get reused on the next event
+					row = null;
+				}),
+
+				collection.on('add, delete, update', function (event) {
+					var from = (typeof event.previousIndex !== 'undefined') ? event.previousIndex : Infinity,
+						to = (typeof event.index !== 'undefined') ? event.index : Infinity,
+						adjustAtIndex = Math.min(from, to);
+					from !== to && rows[adjustAtIndex] && self.adjustRowIndices(rows[adjustAtIndex]);
+
+					// the removal of rows could cause us to need to page in more items
+					if (from !== Infinity && self._processScroll && (rows[from] || rows[from - 1])) {
+						self._processScroll();
+					}
+
+					// Fire _onNotification, even for out-of-viewport notifications,
+					// since some things may still need to update (e.g. Pagination's status/navigation)
+					self._onNotification(rows, event, collection);
+
+					// Update _total after _onNotification so that it can potentially
+					// decide whether to perform actions based on whether the total changed
+					if (collection === self._renderedCollection && 'totalLength' in event) {
+						self._total = event.totalLength;
+					}
+				})
+			];
+
+			return {
+				remove: function () {
+					while (handles.length > 0) {
+						handles.pop().remove();
+					}
+				}
+			};
+		},
+
+		_onNotification: function () {
+			// summary:
+			//		Protected method called whenever a store notification is observed.
+			//		Intended to be extended as necessary by mixins/extensions.
+			// rows: Array
+			//		A sparse array of row nodes corresponding to data objects in the collection.
+			// event: Object
+			//		The notification event
+			// collection: Object
+			//		The collection that the notification is relevant to.
+			//		Useful for distinguishing child-level from top-level notifications.
+		}
+	});
+});
+
+define('dgrid/OnDemandList',[
+	'./List',
+	'./_StoreMixin',
+	'dojo/_base/declare',
+	'dojo/_base/lang',
+	'dojo/dom-construct',
+	'dojo/on',
+	'dojo/when',
+	'./util/misc'
+], function (List, _StoreMixin, declare, lang, domConstruct, on, when, miscUtil) {
+
+	return declare([ List, _StoreMixin ], {
+		// summary:
+		//		Extends List to include virtual scrolling functionality, querying a
+		//		dojo/store instance for the appropriate range when the user scrolls.
+
+		// minRowsPerPage: Integer
+		//		The minimum number of rows to request at one time.
+		minRowsPerPage: 2500,
+
+		// maxRowsPerPage: Integer
+		//		The maximum number of rows to request at one time.
+		maxRowsPerPage: 250,
+
+		// maxEmptySpace: Integer
+		//		Defines the maximum size (in pixels) of unrendered space below the
+		//		currently-rendered rows. Setting this to less than Infinity can be useful if you
+		//		wish to limit the initial vertical scrolling of the grid so that the scrolling is
+		// 		not excessively sensitive. With very large grids of data this may make scrolling
+		//		easier to use, albiet it can limit the ability to instantly scroll to the end.
+		maxEmptySpace: Infinity,
+
+		// bufferRows: Integer
+		//	  The number of rows to keep ready on each side of the viewport area so that the user can
+		//	  perform local scrolling without seeing the grid being built. Increasing this number can
+		//	  improve perceived performance when the data is being retrieved over a slow network.
+		bufferRows: 10,
+
+		// farOffRemoval: Integer
+		//		Defines the minimum distance (in pixels) from the visible viewport area
+		//		rows must be in order to be removed.  Setting to Infinity causes rows
+		//		to never be removed.
+		farOffRemoval: 2000,
+
+		// queryRowsOverlap: Integer
+		//		Indicates the number of rows to overlap queries. This helps keep
+		//		continuous data when underlying data changes (and thus pages don't
+		//		exactly align)
+		queryRowsOverlap: 0,
+
+		// pagingMethod: String
+		//		Method (from dgrid/util/misc) to use to either throttle or debounce
+		//		requests.  Default is "debounce" which will cause the grid to wait until
+		//		the user pauses scrolling before firing any requests; can be set to
+		//		"throttleDelayed" instead to progressively request as the user scrolls,
+		//		which generally incurs more overhead but might appear more responsive.
+		pagingMethod: 'debounce',
+
+		// pagingDelay: Integer
+		//		Indicates the delay (in milliseconds) imposed upon pagingMethod, to wait
+		//		before paging in more data on scroll events. This can be increased to
+		//		reduce client-side overhead or the number of requests sent to a server.
+		pagingDelay: miscUtil.defaultDelay,
+
+		// keepScrollPosition: Boolean
+		//		When refreshing the list, controls whether the scroll position is
+		//		preserved, or reset to the top.  This can also be overridden for
+		//		specific calls to refresh.
+		keepScrollPosition: true,
+
+		// rowHeight: Number
+		//		Average row height, computed in renderQuery during the rendering of
+		//		the first range of data.
+		rowHeight: 0,
+
+		postCreate: function () {
+			this.inherited(arguments);
+			var self = this;
+			// check visibility on scroll events
+			on(this.bodyNode, 'scroll',
+				miscUtil[this.pagingMethod](function (event) {
+					self._processScroll(event);
+				}, null, this.pagingDelay)
+			);
+		},
+
+		destroy: function () {
+			this.inherited(arguments);
+			if (this._refreshTimeout) {
+				clearTimeout(this._refreshTimeout);
+			}
+		},
+
+		renderQuery: function (query, options) {
+			// summary:
+			//		Creates a preload node for rendering a query into, and executes the query
+			//		for the first page of data. Subsequent data will be downloaded as it comes
+			//		into view.
+			// query: Function
+			//		Function to be called when requesting new data.
+			// options: Object?
+			//		Optional object containing the following:
+			//		* container: Container to build preload nodes within; defaults to this.contentNode
+
+			var self = this,
+				container = (options && options.container) || this.contentNode,
+				preload = {
+					query: query,
+					count: 0
+				},
+				preloadNode,
+				priorPreload = this.preload;
+
+			// Initial query; set up top and bottom preload nodes
+			var topPreload = {
+				node: domConstruct.create('div', {
+					className: 'dgrid-preload',
+					style: { height: '0' }
+				}, container),
+				count: 0,
+				query: query,
+				next: preload
+			};
+			topPreload.node.rowIndex = 0;
+			preload.node = preloadNode = domConstruct.create('div', {
+				className: 'dgrid-preload'
+			}, container);
+			preload.previous = topPreload;
+
+			// this preload node is used to represent the area of the grid that hasn't been
+			// downloaded yet
+			preloadNode.rowIndex = this.minRowsPerPage;
+
+			if (priorPreload) {
+				// the preload nodes (if there are multiple) are represented as a linked list, need to insert it
+				if ((preload.next = priorPreload.next) &&
+						// is this preload node below the prior preload node?
+						preloadNode.offsetTop >= priorPreload.node.offsetTop) {
+					// the prior preload is above/before in the linked list
+					preload.previous = priorPreload;
+				}
+				else {
+					// the prior preload is below/after in the linked list
+					preload.next = priorPreload;
+					preload.previous = priorPreload.previous;
+				}
+				// adjust the previous and next links so the linked list is proper
+				preload.previous.next = preload;
+				preload.next.previous = preload;
+			}
+			else {
+				this.preload = preload;
+			}
+
+			var loadingNode = domConstruct.create('div', {
+					className: 'dgrid-loading'
+				}, preloadNode, 'before'),
+				innerNode = domConstruct.create('div', {
+					className: 'dgrid-below'
+				}, loadingNode);
+			innerNode.innerHTML = this.loadingMessage;
+
+			// Establish query options, mixing in our own.
+			options = lang.mixin({ start: 0, count: this.minRowsPerPage },
+				'level' in query ? { queryLevel: query.level } : null);
+
+			// Protect the query within a _trackError call, but return the resulting collection
+			return this._trackError(function () {
+				var results = query(options);
+
+				// Render the result set
+				return self.renderQueryResults(results, preloadNode, options).then(function (trs) {
+					return results.totalLength.then(function (total) {
+						var trCount = trs.length,
+							parentNode = preloadNode.parentNode,
+							noDataNode = self.noDataNode;
+
+						if (self._rows) {
+							self._rows.min = 0;
+							self._rows.max = trCount === total ? Infinity : trCount - 1;
+						}
+
+						domConstruct.destroy(loadingNode);
+						if (!('queryLevel' in options)) {
+							self._total = total;
+						}
+						// now we need to adjust the height and total count based on the first result set
+						if (total === 0 && parentNode) {
+							if (noDataNode) {
+								domConstruct.destroy(noDataNode);
+								delete self.noDataNode;
+							}
+							self.noDataNode = noDataNode = domConstruct.create('div', {
+								className: 'dgrid-no-data',
+								innerHTML: self.noDataMessage
+							});
+							self._emit('noData');
+							parentNode.insertBefore(noDataNode, self._getFirstRowSibling(parentNode));
+						}
+						var height = 0;
+						for (var i = 0; i < trCount; i++) {
+							height += self._calcRowHeight(trs[i]);
+						}
+						// only update rowHeight if we actually got results and are visible
+						if (trCount && height) {
+							self.rowHeight = height / trCount;
+						}
+
+						total -= trCount;
+						preload.count = total;
+						preloadNode.rowIndex = trCount;
+						if (total) {
+							preloadNode.style.height = Math.min(total * self.rowHeight, self.maxEmptySpace) + 'px';
+						}
+						else {
+							preloadNode.style.display = 'none';
+						}
+
+						if (self._previousScrollPosition) {
+							// Restore position after a refresh operation w/ keepScrollPosition
+							self.scrollTo(self._previousScrollPosition);
+							delete self._previousScrollPosition;
+						}
+
+						// Redo scroll processing in case the query didn't fill the screen,
+						// or in case scroll position was restored
+						return when(self._processScroll()).then(function () {
+							return trs;
+						});
+					});
+				}).otherwise(function (err) {
+					// remove the loadingNode and re-throw
+					domConstruct.destroy(loadingNode);
+					throw err;
+				});
+			});
+		},
+
+		refresh: function (options) {
+			// summary:
+			//		Refreshes the contents of the grid.
+			// options: Object?
+			//		Optional object, supporting the following parameters:
+			//		* keepScrollPosition: like the keepScrollPosition instance property;
+			//			specifying it in the options here will override the instance
+			//			property's value for this specific refresh call only.
+
+			var self = this,
+				keep = (options && options.keepScrollPosition);
+
+			// Fall back to instance property if option is not defined
+			if (typeof keep === 'undefined') {
+				//keep = this.keepScrollPosition;
+			}
+
+			// Store scroll position to be restored after new total is received
+			if (keep) {
+				this._previousScrollPosition = this.getScrollPosition();
+			}
+
+			this.inherited(arguments);
+			if (this._renderedCollection) {
+				// render the query
+
+				// renderQuery calls _trackError internally
+				return this.renderQuery(function (queryOptions) {
+					return self._renderedCollection.fetchRange({
+						start: queryOptions.start,
+						end: queryOptions.start + queryOptions.count
+					});
+				}).then(function () {
+					// Emit on a separate turn to enable event to be used consistently for
+					// initial render, regardless of whether the backing store is async
+					self._refreshTimeout = setTimeout(function () {
+						on.emit(self.domNode, 'dgrid-refresh-complete', {
+							bubbles: true,
+							cancelable: false,
+							grid: self
+						});
+						self._refreshTimeout = null;
+					}, 0);
+				});
+			}
+		},
+
+		resize: function () {
+			this.inherited(arguments);
+			this._processScroll();
+		},
+
+		cleanup: function () {
+			this.inherited(arguments);
+			this.preload = null;
+		},
+
+		renderQueryResults: function (results) {
+			var rows = this.inherited(arguments);
+			var collection = this._renderedCollection;
+
+			if (collection && collection.releaseRange) {
+				rows.then(function (resolvedRows) {
+					if (resolvedRows[0] && !resolvedRows[0].parentNode.tagName) {
+						// Release this range, since it was never actually rendered;
+						// need to wait until totalLength promise resolves, since
+						// Trackable only adds the range then to begin with
+						results.totalLength.then(function () {
+							collection.releaseRange(resolvedRows[0].rowIndex,
+								resolvedRows[resolvedRows.length - 1].rowIndex + 1);
+						});
+					}
+				});
+			}
+
+			return rows;
+		},
+
+		_getFirstRowSibling: function (container) {
+			// summary:
+			//		Returns the DOM node that a new row should be inserted before
+			//		when there are no other rows in the current result set.
+			//		In the case of OnDemandList, this will always be the last child
+			//		of the container (which will be a trailing preload node).
+			return container.lastChild;
+		},
+
+		_calcRowHeight: function (rowElement) {
+			// summary:
+			//		Calculate the height of a row. This is a method so it can be overriden for
+			//		plugins that add connected elements to a row, like the tree
+
+			var sibling = rowElement.nextSibling;
+
+			// If a next row exists, compare the top of this row with the
+			// next one (in case "rows" are actually rendering side-by-side).
+			// If no next row exists, this is either the last or only row,
+			// in which case we count its own height.
+			if (sibling && !/\bdgrid-preload\b/.test(sibling.className)) {
+				return sibling.offsetTop - rowElement.offsetTop;
+			}
+
+			return rowElement.offsetHeight;
+		},
+
+		lastScrollTop: 0,
+		_processScroll: function (evt) {
+			// summary:
+			//		Checks to make sure that everything in the viewable area has been
+			//		downloaded, and triggering a request for the necessary data when needed.
+
+			if (!this.rowHeight) {
+				return;
+			}
+
+			var grid = this,
+				scrollNode = grid.bodyNode,
+				// grab current visible top from event if provided, otherwise from node
+				visibleTop = (evt && evt.scrollTop) || this.getScrollPosition().y,
+				visibleBottom = scrollNode.offsetHeight + visibleTop,
+				priorPreload, preloadNode, preload = grid.preload,
+				lastScrollTop = grid.lastScrollTop,
+				requestBuffer = grid.bufferRows * grid.rowHeight,
+				searchBuffer = requestBuffer - grid.rowHeight, // Avoid rounding causing multiple queries
+				// References related to emitting dgrid-refresh-complete if applicable
+				lastRows,
+				preloadSearchNext = true;
+
+			// XXX: I do not know why this happens.
+			// munging the actual location of the viewport relative to the preload node by a few pixels in either
+			// direction is necessary because at least WebKit on Windows seems to have an error that causes it to
+			// not quite get the entire element being focused in the viewport during keyboard navigation,
+			// which means it becomes impossible to load more data using keyboard navigation because there is
+			// no more data to scroll to to trigger the fetch.
+			// 1 is arbitrary and just gets it to work correctly with our current test cases; don’t wanna go
+			// crazy and set it to a big number without understanding more about what is going on.
+			// wondering if it has to do with border-box or something, but changing the border widths does not
+			// seem to make it break more or less, so I do not know…
+			var mungeAmount = 1;
+
+			grid.lastScrollTop = visibleTop;
+
+			function removeDistantNodes(preload, distanceOff, traversal, below) {
+				// we check to see the the nodes are "far off"
+				var farOffRemoval = grid.farOffRemoval,
+					preloadNode = preload.node;
+				// by checking to see if it is the farOffRemoval distance away
+				if (distanceOff > 2 * farOffRemoval) {
+					// there is a preloadNode that is far off;
+					// remove rows until we get to in the current viewport
+					var row;
+					var nextRow = preloadNode[traversal];
+					var reclaimedHeight = 0;
+					var count = 0;
+					var toDelete = [];
+					var firstRowIndex = nextRow && nextRow.rowIndex;
+					var lastRowIndex;
+
+					while ((row = nextRow)) {
+						var rowHeight = grid._calcRowHeight(row);
+						if (reclaimedHeight + rowHeight + farOffRemoval > distanceOff ||
+								(nextRow.className.indexOf('dgrid-row') < 0 &&
+									nextRow.className.indexOf('dgrid-loading') < 0)) {
+							// we have reclaimed enough rows or we have gone beyond grid rows
+							break;
+						}
+
+						nextRow = row[traversal];
+						reclaimedHeight += rowHeight;
+						count += row.count || 1;
+						// Just do cleanup here, as we will do a more efficient node destruction in a setTimeout below
+						grid.removeRow(row, true);
+						toDelete.push(row);
+
+						if ('rowIndex' in row) {
+							lastRowIndex = row.rowIndex;
+						}
+					}
+
+					if (grid._renderedCollection.releaseRange &&
+							typeof firstRowIndex === 'number' && typeof lastRowIndex === 'number') {
+						// Note that currently child rows in Tree structures are never unrendered;
+						// this logic will need to be revisited when that is addressed.
+
+						// releaseRange is end-exclusive, and won't remove anything if start >= end.
+						if (below) {
+							grid._renderedCollection.releaseRange(lastRowIndex, firstRowIndex + 1);
+						}
+						else {
+							grid._renderedCollection.releaseRange(firstRowIndex, lastRowIndex + 1);
+						}
+
+						grid._rows[below ? 'max' : 'min'] = lastRowIndex;
+						if (grid._rows.max >= grid._total - 1) {
+							grid._rows.max = Infinity;
+						}
+					}
+					// now adjust the preloadNode based on the reclaimed space
+					preload.count += count;
+					if (below) {
+						preloadNode.rowIndex -= count;
+						adjustHeight(preload);
+					}
+					else {
+						// if it is above, we can calculate the change in exact row changes,
+						// which we must do to not mess with the scroll position
+						preloadNode.style.height = (preloadNode.offsetHeight + reclaimedHeight) + 'px';
+					}
+					// we remove the elements after expanding the preload node so that
+					// the contraction doesn't alter the scroll position
+					var trashBin = document.createElement('div');
+					for (var i = toDelete.length; i--;) {
+						trashBin.appendChild(toDelete[i]);
+					}
+					setTimeout(function () {
+						// we can defer the destruction until later
+						domConstruct.destroy(trashBin);
+					}, 1);
+				}
+			}
+
+			function adjustHeight(preload, noMax) {
+				preload.node.style.height = Math.min(preload.count * grid.rowHeight,
+					noMax ? Infinity : grid.maxEmptySpace) + 'px';
+			}
+			function traversePreload(preload, moveNext) {
+				// Skip past preloads that are not currently connected
+				do {
+					preload = moveNext ? preload.next : preload.previous;
+				} while (preload && !preload.node.offsetWidth);
+				return preload;
+			}
+			while (preload && !preload.node.offsetWidth) {
+				// skip past preloads that are not currently connected
+				preload = preload.previous;
+			}
+			// there can be multiple preloadNodes (if they split, or multiple queries are created),
+			//	so we can traverse them until we find whatever is in the current viewport, making
+			//	sure we don't backtrack
+			while (preload && preload !== priorPreload) {
+				priorPreload = grid.preload;
+				grid.preload = preload;
+				preloadNode = preload.node;
+				var preloadTop = preloadNode.offsetTop;
+				var preloadHeight;
+
+				if (visibleBottom + mungeAmount + searchBuffer < preloadTop) {
+					// the preload is below the line of sight
+					preload = traversePreload(preload, (preloadSearchNext = false));
+				}
+				else if (visibleTop - mungeAmount - searchBuffer >
+						(preloadTop + (preloadHeight = preloadNode.offsetHeight))) {
+					// the preload is above the line of sight
+					preload = traversePreload(preload, (preloadSearchNext = true));
+				}
+				else {
+					// the preload node is visible, or close to visible, better show it
+					var offset = ((preloadNode.rowIndex ? visibleTop - requestBuffer :
+						visibleBottom) - preloadTop) / grid.rowHeight;
+					var count = (visibleBottom - visibleTop + 2 * requestBuffer) / grid.rowHeight;
+					// utilize momentum for predictions
+					var momentum = Math.max(
+						Math.min((visibleTop - lastScrollTop) * grid.rowHeight, grid.maxRowsPerPage / 2),
+						grid.maxRowsPerPage / -2);
+					count += Math.min(Math.abs(momentum), 10);
+					if (preloadNode.rowIndex === 0) {
+						// at the top, adjust from bottom to top
+						offset -= count;
+					}
+					offset = Math.max(offset, 0);
+					if (offset < 10 && offset > 0 && count + offset < grid.maxRowsPerPage) {
+						// connect to the top of the preloadNode if possible to avoid excessive adjustments
+						count += Math.max(0, offset);
+						offset = 0;
+					}
+					count = Math.min(Math.max(count, grid.minRowsPerPage),
+										grid.maxRowsPerPage, preload.count);
+
+					if (count === 0) {
+						preload = traversePreload(preload, preloadSearchNext);
+						continue;
+					}
+
+					count = Math.ceil(count);
+					offset = Math.min(Math.floor(offset), preload.count - count);
+
+					var options = {};
+					preload.count -= count;
+					var beforeNode = preloadNode,
+						keepScrollTo, queryRowsOverlap = grid.queryRowsOverlap,
+						below = (preloadNode.rowIndex > 0 || preloadNode.offsetTop > visibleTop) && preload;
+					if (below) {
+						// add new rows below
+						var previous = preload.previous;
+						if (previous) {
+							removeDistantNodes(previous,
+								visibleTop - (previous.node.offsetTop + previous.node.offsetHeight),
+								'nextSibling');
+							if (offset > 0 && previous.node === preloadNode.previousSibling) {
+								// all of the nodes above were removed
+								offset = Math.min(preload.count, offset);
+								preload.previous.count += offset;
+								adjustHeight(preload.previous, true);
+								preloadNode.rowIndex += offset;
+								queryRowsOverlap = 0;
+							}
+							else {
+								count += offset;
+							}
+							preload.count -= offset;
+						}
+						options.start = preloadNode.rowIndex - queryRowsOverlap;
+						options.count = Math.min(count + queryRowsOverlap, grid.maxRowsPerPage);
+						preloadNode.rowIndex = options.start + options.count;
+					}
+					else {
+						// add new rows above
+						if (preload.next) {
+							// remove out of sight nodes first
+							removeDistantNodes(preload.next, preload.next.node.offsetTop - visibleBottom,
+								'previousSibling', true);
+							beforeNode = preloadNode.nextSibling;
+							if (beforeNode === preload.next.node) {
+								// all of the nodes were removed, can position wherever we want
+								preload.next.count += preload.count - offset;
+								preload.next.node.rowIndex = offset + count;
+								adjustHeight(preload.next);
+								preload.count = offset;
+								queryRowsOverlap = 0;
+							}
+							else {
+								keepScrollTo = true;
+							}
+
+						}
+						options.start = preload.count;
+						options.count = Math.min(count + queryRowsOverlap, grid.maxRowsPerPage);
+					}
+					if (keepScrollTo && beforeNode && beforeNode.offsetWidth) {
+						keepScrollTo = beforeNode.offsetTop;
+					}
+
+					adjustHeight(preload);
+
+					// use the query associated with the preload node to get the next "page"
+					if ('level' in preload.query) {
+						options.queryLevel = preload.query.level;
+					}
+
+					// Avoid spurious queries (ideally this should be unnecessary...)
+					if (!('queryLevel' in options) && (options.start > grid._total || options.count < 0)) {
+						continue;
+					}
+
+					// create a loading node as a placeholder while the data is loaded
+					var loadingNode = domConstruct.create('div', {
+						className: 'dgrid-loading',
+						style: { height: count * grid.rowHeight + 'px' }
+					}, beforeNode, 'before');
+					domConstruct.create('div', {
+						className: 'dgrid-' + (below ? 'below' : 'above'),
+						innerHTML: grid.loadingMessage
+					}, loadingNode);
+					loadingNode.count = count;
+
+					// Query now to fill in these rows.
+					grid._trackError(function () {
+						// Use function to isolate the variables in case we make multiple requests
+						// (which can happen if we need to render on both sides of an island of already-rendered rows)
+						(function (loadingNode, below, keepScrollTo) {
+							/* jshint maxlen: 122 */
+							var rangeResults = preload.query(options);
+							lastRows = grid.renderQueryResults(rangeResults, loadingNode, options).then(function (rows) {
+								var gridRows = grid._rows;
+								if (gridRows && !('queryLevel' in options) && rows.length) {
+									// Update relevant observed range for top-level items
+									if (below) {
+										if (gridRows.max <= gridRows.min) {
+											// All rows were removed; update start of rendered range as well
+											gridRows.min = rows[0].rowIndex;
+										}
+										gridRows.max = rows[rows.length - 1].rowIndex;
+									}
+									else {
+										if (gridRows.max <= gridRows.min) {
+											// All rows were removed; update end of rendered range as well
+											gridRows.max = rows[rows.length - 1].rowIndex;
+										}
+										gridRows.min = rows[0].rowIndex;
+									}
+								}
+
+								// can remove the loading node now
+								beforeNode = loadingNode.nextSibling;
+								domConstruct.destroy(loadingNode);
+								// beforeNode may have been removed if the query results loading node was removed
+								// as a distant node before rendering
+								if (keepScrollTo && beforeNode && beforeNode.offsetWidth) {
+									// if the preload area above the nodes is approximated based on average
+									// row height, we may need to adjust the scroll once they are filled in
+									// so we don't "jump" in the scrolling position
+									var pos = grid.getScrollPosition();
+									grid.scrollTo({
+										// Since we already had to query the scroll position,
+										// include x to avoid TouchScroll querying it again on its end.
+										x: pos.x,
+										y: pos.y + beforeNode.offsetTop - keepScrollTo,
+										// Don't kill momentum mid-scroll (for TouchScroll only).
+										preserveMomentum: true
+									});
+								}
+
+								rangeResults.totalLength.then(function (total) {
+									if (!('queryLevel' in options)) {
+										grid._total = total;
+										if (grid._rows && grid._rows.max >= grid._total - 1) {
+											grid._rows.max = Infinity;
+										}
+									}
+									if (below) {
+										// if it is below, we will use the total from the collection to update
+										// the count of the last preload in case the total changes as
+										// later pages are retrieved
+
+										// recalculate the count
+										below.count = total - below.node.rowIndex;
+										// readjust the height
+										adjustHeight(below);
+									}
+								});
+
+								// make sure we have covered the visible area
+								grid._processScroll();
+								return rows;
+							}, function (e) {
+								domConstruct.destroy(loadingNode);
+								throw e;
+							});
+						})(loadingNode, below, keepScrollTo);
+					});
+
+					preload = preload.previous;
+
+				}
+			}
+
+			// return the promise from the last render
+			return lastRows;
+		}
+	});
+
+});
+
+define('dgrid/OnDemandGrid',[
+	'dojo/_base/declare',
+	'./Grid',
+	'./OnDemandList'
+], function (declare, Grid, OnDemandList) {
+	return declare([ Grid, OnDemandList ], {});
+});
+/** @module xgrid/Defaults **/
+define('xgrid/Defaults',[
+    'xdojo/declare'
+], function (declare) {
+    /**
+     * xGrid defaults
+     * */
+    return declare('xgrid/Defaults', null, {
+        minRowsPerPage: 100,
+        keepScrollPosition: true,
+        rowsPerPage: 30,
+        deselectOnRefresh: false,
+        cellNavigation: false,
+        _skipFirstRender: false,
+        loadingMessage: null,
+        preload: null,
+        childSelector: ".dgrid-row",
+        addUiClasses: false,
+        noDataMessage: '<span class="textWarning">No data....</span>',
+        showExtraSpace:true,
+        expandOnClick:true
+    });
+});
+
 /** module:xide/registry **/
 define('xide/registry',[
 	"dojo/_base/array", // array.forEach array.map
@@ -10201,7808 +10366,6 @@ define('xide/_base/_Widget',[
     dcl.chainAfter(Module,"startup");
     return Module;
 });
-define('xide/mixins/ActionMixin',[
-    "dcl/dcl",
-    "xdojo/declare",
-    "xide/utils"
-], function (dcl,declare,utils) {
-    var Implementation = {
-        store:null,
-        getActionStore:function(){
-            return this.store;
-        },
-        setActionStore:function(store){
-            return this.store = store;
-        },
-        /**
-         * Sort
-         * @param groups
-         * @param groupMap
-         * @returns {*}
-         */
-        sortGroups: function (groups, groupMap) {
-            groups = groups.sort(function (a, b) {
-                if (a.label && b.label && groupMap[a.label] != null && groupMap[b.label] != null) {
-                    var orderA = groupMap[a.label];
-                    var orderB = groupMap[b.label];
-                    return orderB - orderA;
-                }
-                return 100;
-            });
-            return groups;
-        },
-        /**
-         * The visibility filter. There are the events "REGISTER_ACTION" and "SET_ITEM_ACTIONS" a sub-class might listening too.
-         * When receiving a new set of actions, in most cases any income action needs to be filtered agains this value.         *
-         * Please @see {model:xide/action/Action for more}.
-         *
-         * @member visibility {module:xide/types/ACTION_VISIBILITY}
-         * @type {string|null}
-         */
-        visibility: null,
-        /**
-         * All actions, there is also _incomingActions for the last set
-         * type {xide/action/Action[]}
-         */
-        _actions: [],
-        /**
-         *
-         * @param visibility {string|null}
-         */
-        clearActions: function (visibility,_store) {
-            visibility = visibility || this.visibility;
-            var store = _store || this.getActionStore(),
-                actions = store.data;
-
-            if(!store){
-                return;
-            }
-            actions && _.each(actions,function(action){
-                var actionVisibility = action.getVisibility!= null ? action.getVisibility(visibility) : null;
-                if(actionVisibility){
-                    var widget = actionVisibility.widget;
-                    if(widget){
-                        //remove action reference widget
-                        action.removeReference && action.removeReference(widget);
-                        widget.destroy();
-                        this.setVisibilityField(action, 'widget', null);
-                    }
-                }
-            },this);
-        },
-        /**
-         * computeList modifies a set of actions in that way:
-         *
-         * 1. prepare the incoming list of 'actions' by grouping them using the actions.command first path element.
-         * 2. order the inner branches created above, using the action's 'order', 'group' and 'command' field
-         * 3. composite the the entire tree by overriding each top level's 'item' attribute
-         *
-         * @param items {xide/action/Action[]}
-         * @returns {xide/action/Action[]} the modified version of the input
-         * @private
-         */
-        _computeList: function (items, add) {
-            return this._actions;
-        },
-        /**
-         * Return a field from the object's given visibility store
-         * @param action
-         * @param field
-         * @param _default
-         * @returns {*}
-         */
-        getVisibilityField:function(action,field,_default){
-            var actionVisibility = action.getVisibility !=null ? action.getVisibility(this.visibility) : {};
-            return actionVisibility[field] !=null ? actionVisibility[field] : action[field] || _default;
-        },
-        /**
-         * Sets a field in the object's given visibility store
-         * @param action
-         * @param field
-         * @param value
-         * @returns {*}
-         */
-        setVisibilityField:function(action,field,value){
-            var _default = {};
-            if(action.getVisibility) {
-                var actionVisibility = action.getVisibility(this.visibility) || _default;
-                actionVisibility[field] = value;
-            }
-            return actionVisibility;
-        },
-        shouldShowAction:function(action){
-            if(this.getVisibilityField(action,'show')==false){
-                return false;
-            }else if(action.getVisibility && action.getVisibility(this.visibility)==null){
-                return false;
-            }
-            return true;
-        }
-    }
-
-    /**
-     * Provides tools to deal with 'actions' (xide/action/Action). This is the model part for actions which is being used
-     * always together with the render part(xide/widgets/_MenuMixin) in a subclass.
-     *
-     * @mixin module:xide/mixins/ActionMixin
-     */
-    var Module = declare("xide/mixins/ActionMixin", null, Implementation);
-    Module.dcl = dcl(null,Implementation);
-    return Module;
-});
-
-/**
- * @module xide/views/History
- */
-define('xide/views/History',[
-    'dcl/dcl',
-    'xide/utils'
-], function (dcl,utils) {
-    /**
-     * @class module:xide/views/History
-     */
-    return dcl(null, {
-        declaredClass: "xide.views.History",
-        duplicates:false,
-        _history: null,
-        _index: 0,
-        constructor: function (options) {
-            this._history = [];
-            utils.mixin(this,options);
-        },
-
-        destroy:function(){
-            delete this._history;
-        },
-        set: function (data) {
-            this._history = data;
-            this._index = this.length();
-        },
-        pop: function () {
-            this._history.pop();
-            this._index = this.length();
-        },
-        push: function (cmd) {
-            if (this._history.indexOf(cmd) == -1 || this.duplicates===true) {
-                this._history.push(cmd);
-                this._index = this.length();
-            }
-        },
-        length: function () {
-            if(this._history) {
-                return this._history.length;
-            }
-        },
-        getNext: function () {
-            this._index += 1;
-            var cmd = this._history[this._index] || "";
-            this._index = Math.min(this.length(), this._index);
-            return cmd;
-        },
-        getPrev: function () {
-            this._index = Math.max(0, this._index - 1);
-            return this._history[this._index];
-        },
-        remove:function(what){
-            this._history && this._history.remove(what);
-            this._index = Math.min(this.length(), this._index);
-        },
-        getNow: function () {
-            var index = Math.max(0, this._index - 1);
-            if(this._history) {
-                return this._history[index];
-            }
-        },
-        setNow: function (what) {
-            if(this._history) {
-                this._history.remove(what);
-                this._history.push(what);
-            }
-        },
-        indexOf:function(what){
-            if(this._history) {
-                return this._history.indexOf(what);
-            }
-            return -1;
-        }
-    });
-});
-define('xaction/ActionContext',[
-    "dcl/dcl",
-    "xdojo/declare",
-    'xide/types',
-    'dojo/aspect',
-    'xide/views/History'
-], function (dcl, declare, types, aspect, History) {
-    var _debug = false;
-    /**
-     * Mixin to handle different action contexts.
-     *
-     * @mixin module:xaction/ActionContext
-     */
-    var Implementation = {
-        currentActionEmitter: null,
-        _history: null,
-        isEmpty: function () {
-            var _emitter = this.getCurrentEmitter();
-            if (_emitter) {
-                return _emitter.getActionStore().getAll().length == 0;
-            }
-            return true;
-        },
-        getCurrentEmitter: function () {
-            return this.currentActionEmitter;
-        },
-        _onRemoveEmitter: function (emitter) {
-            this._history.remove(emitter);
-            var _next = this._history.getNow();
-            var cEmitter = this.currentActionEmitter;
-            if (cEmitter == emitter) {
-                this.currentActionEmitter = null;
-            }
-            var _last = _next;
-            if (_last) {
-                this.setActionEmitter(_last);
-            }
-        },
-        refreshActions: function (actions) {
-            var _self = this;
-            _.each(actions, function (action) {
-                if (_self.renderAction) {
-                    _self.renderAction(action, null, null, null, null);
-                } else {
-                    console.error('renderAction not implemented for refresh actions ' + _self.declaredClass);
-                }
-            });
-        },
-        setActionEmitter: function (emitter, what, event) {
-            if (emitter && emitter.getActionStore && !emitter.getActionStore()) {
-                _debug && console.warn('setActionEmitter: emitter returns null action store! abort ' + emitter.declaredClass, emitter);
-                return;
-            }
-            if (this.currentActionEmitter == emitter) {
-                if (!emitter) {
-                    this.setActionStore(null);
-                }
-                return;
-            }
-            _debug && console.log('setActionEmitter ' + this.id + ' ' + this.declaredClass + ' for : ' + what + ' emitter : ' + emitter.id);
-            try {
-                var cEmitter = this.currentActionEmitter;
-                if (cEmitter) {
-                    if (cEmitter.getActionStore) {
-                        var store = cEmitter.getActionStore();
-                        if (store) {
-                            store._all = null;
-                        } else {
-                            _debug && console.warn('setActionEmitter no store');
-                        }
-                        this.clearActions();
-                    } else {
-                        _debug && console.warn('setActionEmitter current emitter has no getActionStore', cEmitter);
-                    }
-                    cEmitter && cEmitter.onDeactivateActionContext && cEmitter.onDeactivateActionContext(this, event);
-                }
-            } catch (e) {
-                logError(e, 'setActionEmitter crash');
-            }
-            if (emitter && !emitter.getActionStore) {
-                _debug && console.error('not an action emitter ' + emitter.declaredClass);
-                return;
-            }
-            this.currentActionEmitter = emitter;
-            if (!emitter) {
-                this.setActionStore(null);
-                return;
-            }
-            var newEmitterStore = emitter.getActionStore();
-            if (!newEmitterStore) {
-                _debug && console.error('new emitter has no action store ! ' + emitter.declaredClass);
-                return;
-            }
-
-            newEmitterStore.__all = null;
-            emitter && emitter.onUseActionStore && emitter.onUseActionStore(newEmitterStore, emitter);
-            this.setActionStore(newEmitterStore, emitter);
-            newEmitterStore.addRenderer(this);
-            emitter && emitter.onActivateActionContext && emitter.onActivateActionContext(this, event);
-            this._emit('setActionEmitter', {
-                emitter: emitter
-            });
-            !this._history && (this._history = new History());
-            this._history.setNow(emitter);
-        },
-        _registerActionEmitter: function (emitter) {
-
-            if(this[this.id +'_emitter_'+emitter.id]){
-                return;
-            }
-
-            this[this.id +'_emitter_'+emitter.id]=true;
-
-            if (emitter && !emitter.getActionStore) {
-                _debug && console.error('_registerActionEmitter: is not an action provider');
-                return;
-            }
-            if (!emitter || !emitter.on) {
-                _debug && console.warn('register action emitter : emitter = null');
-                return false;
-            }
-            var thiz = this,
-                handler = function (what, e) {
-                    thiz.setActionEmitter(emitter, what, e);
-                },
-                _handle = emitter._on('selectionChanged', function (e) {
-                    e[thiz.id + '_aceDid'] = true;
-                    var type = e.why == 'clear' ? 'selectionCleared' : 'selectionChanged';
-                    handler(type, e);
-                });
-
-
-
-            emitter.on('click', function (e) {
-                if(e.__did){
-                    return;
-                }
-                e.__did = true;
-                var doHandler = true;
-                if (emitter.handleActionClick) {
-                    doHandler = emitter.handleActionClick(e);
-                }
-                doHandler && handler('click', e);
-            });
-            !this._history && (this._history = new History());
-            emitter._on(types.EVENTS.ON_VIEW_SHOW, function (view) {
-                if (thiz._history.indexOf(view)) {
-                    view.view && (view = view.view);
-                    thiz.setActionEmitter(view, types.EVENTS.ON_VIEW_SHOW, view);
-                }
-            });
-        },
-        destroy: function () {
-            this.inherited && this.inherited(arguments);
-            this._history && this._history.destroy() && delete this._history;
-        },
-        addActionEmitter: function (emitter) {
-            if (!emitter) {
-                _debug && console.warn('addActionEmitter::emitter is null');
-                return;
-            }
-            var thiz = this;
-            !this._history && (this._history = new History());
-            if (!emitter.getActionStore) {
-                _debug && console.error('invalid emitter ', emitter);
-                return;
-            }
-
-            this._history.push(emitter);
-            thiz._registerActionEmitter(emitter);
-            function remove(emitter) {
-                thiz._onRemoveEmitter(emitter);
-            }
-
-            aspect.after(emitter, 'destroy', function () {
-                remove(emitter);
-            }, true);
-
-            emitter._on('destroy', function () {
-                try {
-                    remove(emitter);
-                } catch (e) {
-                    logError(e, 'addActionEmitter');
-                }
-            }, true);
-        }
-    };
-    //package via declare
-    var Module = declare('xaction/ActionContext', null, Implementation);
-    //package via dcl
-    Module.dcl = dcl(null, Implementation);
-    return Module;
-});
-/** @module xide/model/Path */
-define('xide/model/Path',[
-    "xide/utils",
-    "dcl/dcl"
-], function (utils, dcl) {
-    var Path = dcl(null, {
-        declaredClass: "xide.model.Path",
-        /**
-         * @class xide.model.Path
-         * @constructor
-         */
-        constructor: function (path, hasLeading, hasTrailing) {
-            path = path || '.';  // if empty string, use '.'
-            if (typeof path == 'string') {
-                this.path = path;
-                this.getSegments();
-            } else {
-                this.segments = path;
-                this.hasLeading = hasLeading !== null ? hasLeading : false;
-                this.hasTrailing = hasTrailing !== null ? hasLeading : false;
-            }
-        },
-
-        endsWith: function (tail) {
-            var segments = utils.clone(this.segments);
-            var tailSegments = (new Path(tail)).getSegments();
-            while (tailSegments.length > 0 && segments.length > 0) {
-                if (tailSegments.pop() != segments.pop()) {
-                    return false;
-                }
-            }
-            return true;
-        },
-        getExtension: function () {
-            if (!this.extension) {
-                this.extension = this.path.substr(this.path.lastIndexOf('.') + 1);
-            }
-            return this.extension;
-        },
-        segment: function (index) {
-            var segs = this.getSegments();
-            if (segs.length < index) {
-                return null;
-            }
-            return segs[index];
-        },
-        /**
-         * Return all items under this path
-         * @param items {String[]}
-         * @param recursive {boolean}
-         * @returns {String[]}
-         */
-        getChildren: function (items, recursive) {
-            var result = [];
-            var root = this,
-                path = this.toString();
-
-            function addChild(child) {
-                var _path = typeof child !== 'string' ? child.toString() : child;
-                if (_path !== path && result.indexOf(_path) == -1) {
-                    result.push(_path);
-                }
-            }
-
-            _.each(items, function (item) {
-                var child = new Path(item);
-                //root match
-                if (child.startsWith(root)) {
-                    if (recursive) {
-                        addChild(child.toString());
-                    } else {
-
-                        var diff = child.relativeTo(path);
-                        if (diff) {
-                            var diffSegments = diff.getSegments();
-                            //direct child
-                            if (diffSegments.length == 1) {
-                                addChild(child);
-                            } else if (diffSegments.length > 1) {
-
-                                //make sure that its parent has been added:
-                                var parent = child.getParentPath();
-                                var parentDiff = parent.relativeTo(path);
-
-                                //check diff again
-                                if (parentDiff.getSegments().length == 1) {
-                                    addChild(parent.toString());
-                                }
-                            }
-                        }
-                    }
-
-                }
-            });
-            return result;
-        },
-        getSegments: function () {
-            if (!this.segments) {
-                var path = this.path;
-                this.segments = path.split('/');
-                if (path.charAt(0) == '/') {
-                    this.hasLeading = true;
-                }
-                if (path.charAt(path.length - 1) == '/') {
-                    this.hasTrailing = true;
-                    // If the path ends in '/', split() will create an array whose last element
-                    // is an empty string. Remove that here.
-                    this.segments.pop();
-                }
-                this._canonicalize();
-            }
-            return this.segments;
-        },
-        isAbsolute: function () {
-            return this.hasLeading;
-        },
-        getParentPath: function () {
-            if (!this._parentPath) {
-                var parentSegments = utils.clone(this.segments);
-                parentSegments.pop();
-                this._parentPath = new Path(parentSegments, this.hasLeading);
-            }
-            return utils.clone(this._parentPath);
-        },
-        _clone: function () {
-            return new Path(utils.clone(this.segments), this.hasLeading, this.hasTrailing);
-        },
-        append: function (tail) {
-            tail = tail || "";
-            if (typeof tail == 'string') {
-                tail = new Path(tail);
-            }
-            if (tail.isAbsolute()) {
-                return tail;
-            }
-            var mySegments = this.segments;
-            var tailSegments = tail.getSegments();
-            var newSegments = mySegments.concat(tailSegments);
-            var result = new Path(newSegments, this.hasLeading, tail.hasTrailing);
-            if (tailSegments[0] == ".." || tailSegments[0] == ".") {
-                result._canonicalize();
-            }
-            return result;
-        },
-        toString: function () {
-            var result = [];
-            if (this.hasLeading) {
-                result.push('/');
-            }
-            for (var i = 0; i < this.segments.length; i++) {
-                if (i > 0) {
-                    result.push('/');
-                }
-                result.push(this.segments[i]);
-            }
-            if (this.hasTrailing) {
-                result.push('/');
-            }
-            return result.join("");
-        },
-        removeRelative: function () {
-            var segs = this.getSegments();
-            if (segs.length > 0 && segs[1] == ".") {
-                return this.removeFirstSegments(1);
-            }
-            return this;
-        },
-        relativeTo: function (base, ignoreFilename) {
-            if (typeof base == 'string') {
-                base = new Path(base);
-            }
-            var mySegments = this.segments;
-            if (this.isAbsolute()) {
-                return this;
-            }
-            var baseSegments = base.getSegments();
-            var commonLength = this.matchingFirstSegments(base);
-            var baseSegmentLength = baseSegments.length;
-            if (ignoreFilename) {
-                baseSegmentLength = baseSegmentLength - 1;
-            }
-            var differenceLength = baseSegmentLength - commonLength;
-            var newSegmentLength = differenceLength + mySegments.length - commonLength;
-            if (newSegmentLength == 0) {
-                return Path.EMPTY;
-            }
-            var newSegments = [];
-            for (var i = 0; i < differenceLength; i++) {
-                newSegments.push('..');
-            }
-            for (var i = commonLength; i < mySegments.length; i++) {
-                newSegments.push(mySegments[i]);
-            }
-            return new Path(newSegments, false, this.hasTrailing);
-        },
-        startsWith: function (anotherPath) {
-            var count = this.matchingFirstSegments(anotherPath);
-            return anotherPath._length() == count;
-        },
-        _length: function () {
-            return this.segments.length;
-        },
-        matchingFirstSegments: function (anotherPath) {
-            var mySegments = this.segments;
-            var pathSegments = anotherPath.getSegments();
-            var max = Math.min(mySegments.length, pathSegments.length);
-            var count = 0;
-            for (var i = 0; i < max; i++) {
-                if (mySegments[i] != pathSegments[i]) {
-                    return count;
-                }
-                count++;
-            }
-            return count;
-        },
-        removeFirstSegments: function (count) {
-            return new Path(this.segments.slice(count, this.segments.length), this.hasLeading, this.hasTrailing);
-        },
-        removeMatchingLastSegments: function (anotherPath) {
-            var match = this.matchingFirstSegments(anotherPath);
-            return this.removeLastSegments(match);
-        },
-        removeMatchingFirstSegments: function (anotherPath) {
-            var match = this.matchingFirstSegments(anotherPath);
-            return this._clone().removeFirstSegments(match);
-        },
-        removeLastSegments: function (count) {
-            if (!count) {
-                count = 1;
-            }
-            return new Path(this.segments.slice(0, this.segments.length - count), this.hasLeading, this.hasTrailing);
-        },
-        lastSegment: function () {
-            return this.segments[this.segments.length - 1];
-        },
-        firstSegment: function (length) {
-            return this.segments[length || 0];
-        },
-        equals: function (anotherPath) {
-            if (this.segments.length != anotherPath.segments.length) {
-                return false;
-            }
-            for (var i = 0; i < this.segments.length; i++) {
-                if (anotherPath.segments[i] != this.segments[i]) {
-                    return false;
-                }
-            }
-            return true;
-        },
-        _canonicalize: function () {
-            var doIt;
-            var segments = this.segments;
-            for (var i = 0; i < segments.length; i++) {
-                if (segments[i] == "." || segments[i] == "..") {
-                    doIt = true;
-                    break;
-                }
-            }
-            if (doIt) {
-                var stack = [];
-                for (var i = 0; i < segments.length; i++) {
-                    if (segments[i] == "..") {
-                        if (stack.length == 0) {
-                            // if the stack is empty we are going out of our scope
-                            // so we need to accumulate segments.  But only if the original
-                            // path is relative.  If it is absolute then we can't go any higher than
-                            // root so simply toss the .. references.
-                            if (!this.hasLeading) {
-                                stack.push(segments[i]); //stack push
-                            }
-                        } else {
-                            // if the top is '..' then we are accumulating segments so don't pop
-                            if (".." == stack[stack.length - 1]) {
-                                stack.push("..");
-                            } else {
-                                stack.pop();
-                            }
-                        }
-                        //collapse current references
-                    } else if (segments[i] != "." || this.segments.length == 1) {
-                        stack.push(segments[i]); //stack push
-                    }
-                }
-                //if the number of segments hasn't changed, then no modification needed
-                if (stack.length == segments.length) {
-                    return;
-                }
-                this.segments = stack;
-            }
-        }
-
-    });
-    Path.EMPTY = new Path("");
-    return Path;
-});
-define('xide/utils/ObjectUtils',[
-    'xide/utils',
-    'require',
-    "dojo/Deferred",
-    'xide/lodash'
-], function (utils, require, Deferred, lodash) {
-    var _debug = false;
-    "use strict";
-
-    utils.delegate = (function () {
-        // boodman/crockford delegation w/ cornford optimization
-        function TMP() {
-        }
-
-        return function (obj, props) {
-            TMP.prototype = obj;
-            var tmp = new TMP();
-            TMP.prototype = null;
-            if (props) {
-                lang._mixin(tmp, props);
-            }
-            return tmp; // Object
-        };
-    })();
-
-    /////////////////////////////////////////////////////////////////////////////////////////////
-    //
-    //  Loader utils
-    //
-    //////////////////////////////////////////////////////////////////////////////////////////////
-    utils.debounce = function (who, methodName, _function, delay, options, now, args) {
-        var _place = who[methodName + '_debounced'];
-        if (!_place) {
-            _place = who[methodName + '_debounced'] = lodash.debounce(_function, delay, options);
-        }
-        if (now === true) {
-            if (!who[methodName + '_debouncedFirst']) {
-                who[methodName + '_debouncedFirst'] = true;
-                _function.apply(who, args);
-            }
-        }
-        return _place();
-    };
-
-
-    utils.pluck = function (items, prop) {
-        return lodash.map(items, prop);
-    };
-
-    /**
-     * Trigger downloadable file
-     * @param filename
-     * @param text
-     */
-    utils.download = function (filename, text) {
-        var element = document.createElement('a');
-        text = lodash.isString(text) ? text : JSON.stringify(text, null, 2);
-        element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
-        element.setAttribute('download', filename);
-        element.style.display = 'none';
-        document.body.appendChild(element);
-        element.click();
-        document.body.removeChild(element);
-    };
-
-    /**
-     * Ask require registry at this path
-     * @param mixed
-     * @returns {*}
-     */
-    utils.hasObject = function (mixed) {
-        var result = null;
-        var _re = require;
-        try {
-            result = _re(mixed);
-        } catch (e) {
-            console.error('error in utils.hasObject ', e);
-        }
-        return result;
-    };
-    /**
-     * Safe require.toUrl
-     * @param mid {string}
-     */
-    utils.toUrl = function (mid) {
-        var _require = require;
-        //make sure cache bust is off otherwise it appends ?time
-        _require({
-            cacheBust: null,
-            waitSeconds: 5
-        });
-        return _require.toUrl(mid);
-    }
-    /**
-     * Returns a module by module path
-     * @param mixed {String|Object}
-     * @param _default {Object} default object
-     * @returns {Object|Promise}
-     */
-    utils.getObject = function (mixed, _default) {
-        var result = null;
-        if (utils.isString(mixed)) {
-            var _re = require;
-            try {
-                result = _re(mixed);
-            } catch (e) {
-                _debug && console.warn('utils.getObject::require failed for ' + mixed);
-            }
-            //not a loaded module yet
-            try {
-                if (!result) {
-                    var deferred = new Deferred();
-                    //try loader
-                    result = _re([
-                        mixed
-                    ], function (module) {
-                        deferred.resolve(module);
-                    });
-                    return deferred.promise;
-                }
-            } catch (e) {
-                _debug && console.error('error in requiring ' + mixed, e);
-            }
-            return result;
-
-        } else if (utils.isObject(mixed)) {
-            return mixed;//reflect
-        }
-        return result !== null ? result : _default;
-    };
-
-
-    /////////////////////////////////////////////////////////////////////////////////////////////
-    //
-    //  True object utils
-    //
-    //////////////////////////////////////////////////////////////////////////////////////////////
-    utils.toArray = function (obj) {
-        var result = [];
-        for (var c in obj) {
-            result.push({
-                name: c,
-                value: obj[c]
-            });
-        }
-        return result;
-    };
-    /**
-     * Array to object conversion
-     * @param arr
-     * @returns {Object}
-     */
-    utils.toObject = function (arr, lodash) {
-        if (!arr) {
-            return {};
-        }
-        if (lodash !== false) {
-            return lodash.object(lodash.map(arr, lodash.values));
-        } else {
-            //CI related back compat hack
-            if (utils.isObject(arr) && arr[0]) {
-                return arr[0];
-            }
-
-            var rv = {};
-            for (var i = 0; i < arr.length; ++i) {
-                rv[i] = arr[i];
-            }
-            return rv;
-        }
-    };
-
-    /**
-     * Gets an object property by string, eg: utils.byString(someObj, 'part3[0].name');
-     * @deprecated, see objectAtPath below
-     * @param o {Object}    : the object
-     * @param s {String}    : the path within the object
-     * @param defaultValue {Object|String|Number} : an optional default value
-     * @returns {*}
-     */
-    utils.byString = function (o, s, defaultValue) {
-        s = s.replace(/\[(\w+)\]/g, '.$1'); // convert indexes to properties
-        s = s.replace(/^\./, '');           // strip a leading dot
-        var a = s.split('.');
-        while (a.length) {
-            var n = a.shift();
-            if (n in o) {
-                o = o[n];
-            } else {
-                return;
-            }
-        }
-        return o;
-    };
-
-    /////////////////////////////////////////////////////////////////////////////////////////////
-    //
-    //  Object path
-    //
-    //////////////////////////////////////////////////////////////////////////////////////////////
-    /**
-     * Internals
-     */
-
-        //cache
-    var toStr = Object.prototype.toString,
-        _hasOwnProperty = Object.prototype.hasOwnProperty;
-
-    /**
-     * @private
-     * @param type
-     * @returns {*}
-     */
-    function toString(type) {
-        return toStr.call(type);
-    }
-
-    /**
-     * @private
-     * @param key
-     * @returns {*}
-     */
-    function getKey(key) {
-        var intKey = parseInt(key, 10);
-        if (intKey.toString() === key) {
-            return intKey;
-        }
-        return key;
-    }
-
-    /**
-     * internal set value at path in object
-     * @private
-     * @param obj
-     * @param path
-     * @param value
-     * @param doNotReplace
-     * @returns {*}
-     */
-    function set(obj, path, value, doNotReplace) {
-        if (lodash.isNumber(path)) {
-            path = [path];
-        }
-        if (lodash.isEmpty(path)) {
-            return obj;
-        }
-        if (lodash.isString(path)) {
-            return set(obj, path.split('.').map(getKey), value, doNotReplace);
-        }
-        var currentPath = path[0];
-
-        if (path.length === 1) {
-            var oldVal = obj[currentPath];
-            if (oldVal === void 0 || !doNotReplace) {
-                obj[currentPath] = value;
-            }
-            return oldVal;
-        }
-
-        if (obj[currentPath] === void 0) {
-            //check if we assume an array
-            if (lodash.isNumber(path[1])) {
-                obj[currentPath] = [];
-            } else {
-                obj[currentPath] = {};
-            }
-        }
-        return set(obj[currentPath], path.slice(1), value, doNotReplace);
-    }
-
-    /**
-     * deletes an property by a path
-     * @param obj
-     * @param path
-     * @returns {*}
-     */
-    function del(obj, path) {
-        if (lodash.isNumber(path)) {
-            path = [path];
-        }
-        if (lodash.isEmpty(obj)) {
-            return void 0;
-        }
-
-        if (lodash.isEmpty(path)) {
-            return obj;
-        }
-        if (lodash.isString(path)) {
-            return del(obj, path.split('.'));
-        }
-
-        var currentPath = getKey(path[0]);
-        var oldVal = obj[currentPath];
-
-        if (path.length === 1) {
-            if (oldVal !== void 0) {
-                if (lodash.isArray(obj)) {
-                    obj.splice(currentPath, 1);
-                } else {
-                    delete obj[currentPath];
-                }
-            }
-        } else {
-            if (obj[currentPath] !== void 0) {
-                return del(obj[currentPath], path.slice(1));
-            }
-        }
-        return obj;
-    }
-
-    /**
-     * Private helper class
-     * @private
-     * @type {{}}
-     */
-    var objectPath = {};
-
-    objectPath.has = function (obj, path) {
-        if (lodash.isEmpty(obj)) {
-            return false;
-        }
-        if (lodash.isNumber(path)) {
-            path = [path];
-        } else if (lodash.isString(path)) {
-            path = path.split('.');
-        }
-
-        if (lodash.isEmpty(path) || path.length === 0) {
-            return false;
-        }
-
-        for (var i = 0; i < path.length; i++) {
-            var j = path[i];
-            if ((lodash.isObject(obj) || lodash.isArray(obj)) && _hasOwnProperty.call(obj, j)) {
-                obj = obj[j];
-            } else {
-                return false;
-            }
-        }
-
-        return true;
-    };
-
-    /**
-     * Define private public 'ensure exists'
-     * @param obj
-     * @param path
-     * @param value
-     * @returns {*}
-     */
-    objectPath.ensureExists = function (obj, path, value) {
-        return set(obj, path, value, true);
-    };
-
-    /**
-     * Define private public 'set'
-     * @param obj
-     * @param path
-     * @param value
-     * @param doNotReplace
-     * @returns {*}
-     */
-    objectPath.set = function (obj, path, value, doNotReplace) {
-        return set(obj, path, value, doNotReplace);
-    };
-
-    /**
-     Define private public 'insert'
-     * @param obj
-     * @param path
-     * @param value
-     * @param at
-     */
-    objectPath.insert = function (obj, path, value, at) {
-        var arr = objectPath.get(obj, path);
-        at = ~~at;
-        if (!lodash.isArray(arr)) {
-            arr = [];
-            objectPath.set(obj, path, arr);
-        }
-        arr.splice(at, 0, value);
-    };
-
-    /**
-     * Define private public 'empty'
-     * @param obj
-     * @param path
-     * @returns {*}
-     */
-    objectPath.empty = function (obj, path) {
-        if (lodash.isEmpty(path)) {
-            return obj;
-        }
-        if (lodash.isEmpty(obj)) {
-            return void 0;
-        }
-
-        var value, i;
-        if (!(value = objectPath.get(obj, path))) {
-            return obj;
-        }
-
-        if (lodash.isString(value)) {
-            return objectPath.set(obj, path, '');
-        } else if (lodash.isBoolean(value)) {
-            return objectPath.set(obj, path, false);
-        } else if (lodash.isNumber(value)) {
-            return objectPath.set(obj, path, 0);
-        } else if (lodash.isArray(value)) {
-            value.length = 0;
-        } else if (lodash.isObject(value)) {
-            for (i in value) {
-                if (_hasOwnProperty.call(value, i)) {
-                    delete value[i];
-                }
-            }
-        } else {
-            return objectPath.set(obj, path, null);
-        }
-    };
-
-    /**
-     * Define private public 'push'
-     * @param obj
-     * @param path
-     */
-    objectPath.push = function (obj, path /*, values */) {
-        var arr = objectPath.get(obj, path);
-        if (!lodash.isArray(arr)) {
-            arr = [];
-            objectPath.set(obj, path, arr);
-        }
-        arr.push.apply(arr, Array.prototype.slice.call(arguments, 2));
-    };
-
-    /**
-     * Define private public 'coalesce'
-     * @param obj
-     * @param paths
-     * @param defaultValue
-     * @returns {*}
-     */
-    objectPath.coalesce = function (obj, paths, defaultValue) {
-        var value;
-        for (var i = 0, len = paths.length; i < len; i++) {
-            if ((value = objectPath.get(obj, paths[i])) !== void 0) {
-                return value;
-            }
-        }
-        return defaultValue;
-    };
-
-    /**
-     * Define private public 'get'
-     * @param obj
-     * @param path
-     * @param defaultValue
-     * @returns {*}
-     */
-    objectPath.get = function (obj, path, defaultValue) {
-        if (lodash.isNumber(path)) {
-            path = [path];
-        }
-        if (lodash.isEmpty(path)) {
-            return obj;
-        }
-        if (lodash.isEmpty(obj)) {
-            //lodash doesnt seem to work with html nodes
-            if (obj && obj.innerHTML === null) {
-                return defaultValue;
-            }
-        }
-        if (lodash.isString(path)) {
-            return objectPath.get(obj, path.split('.'), defaultValue);
-        }
-        var currentPath = getKey(path[0]);
-        if (path.length === 1) {
-            if (obj && obj[currentPath] === void 0) {
-                return defaultValue;
-            }
-            if (obj) {
-                return obj[currentPath];
-            }
-        }
-        if (!obj) {
-            return defaultValue;
-        }
-        return objectPath.get(obj[currentPath], path.slice(1), defaultValue);
-    };
-
-    /**
-     * Define private public 'del'
-     * @param obj
-     * @param path
-     * @returns {*}
-     */
-    objectPath.del = function (obj, path) {
-        return del(obj, path);
-    };
-    /////////////////////////////////////////////////////////////////////////////////////////////
-    //
-    //  Object path public xide/utils mixin
-    //
-    //////////////////////////////////////////////////////////////////////////////////////////////
-    /**
-     *  Returns a value by a give object path
-     *
-     *  //works also with arrays
-     *    objectPath.get(obj, "a.c.1");  //returns "f"
-     *    objectPath.get(obj, ["a","c","1"]);  //returns "f"
-     *
-     * @param obj {object}
-     * @param path {string}
-     * @param _default {object|null}
-     * @returns {*}
-     */
-    utils.getAt = function (obj, path, _default) {
-        return objectPath.get(obj, path, _default);
-    };
-
-    /**
-     * Sets a value in an object/array at a given path.
-     * @example
-     *
-     * utils.setAt(obj, "a.h", "m"); // or utils.setAt(obj, ["a","h"], "m");
-     *
-     * //set will create intermediate object/arrays
-     * objectPath.set(obj, "a.j.0.f", "m");
-     *
-     * @param obj{Object|Array}
-     * @param path {string}
-     * @param value {mixed}
-     * @returns {Object|Array}
-     */
-    utils.setAt = function (obj, path, value) {
-        return objectPath.set(obj, path, value);
-    };
-
-    /**
-     * Returns there is anything at given path within an object/array.
-     * @param obj
-     * @param path
-     */
-    utils.hasAt = function (obj, path) {
-        return objectPath.has(obj, path);
-    };
-
-    /**
-     * Ensures at given path, otherwise _default will be placed
-     * @param obj
-     * @param path
-     * @returns {*}
-     */
-    utils.ensureAt = function (obj, path, _default) {
-        return objectPath.ensureExists(obj, path, _default);
-    };
-    /**
-     * Deletes at given path
-     * @param obj
-     * @param path
-     * @returns {*}
-     */
-    utils.deleteAt = function (obj, path) {
-        return objectPath.del(obj, path);
-    };
-
-    /**
-     *
-     * @param to
-     * @param from
-     * @returns {*}
-     */
-    utils.merge = function (to, from) {
-        for (var n in from) {
-            if (typeof to[n] != 'object') {
-                to[n] = from[n];
-            } else if (typeof from[n] == 'object') {
-                to[n] = utils.merge(to[n], from[n]);
-            }
-        }
-
-        return to;
-    };
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //
-    //  Dojo's most wanted
-    //
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    /**
-     * Clones objects (including DOM nodes) and all children.
-     * Warning: do not clone cyclic structures.
-     * @param src {*} The object to clone.
-     * @returns {*}
-     */
-    utils.clone = function (src) {
-        if (!src || typeof src != "object" || utils.isFunction(src)) {
-            // null, undefined, any non-object, or function
-            return src; // anything
-        }
-        if (src.nodeType && "cloneNode" in src) {
-            // DOM Node
-            return src.cloneNode(true); // Node
-        }
-        if (src instanceof Date) {
-            // Date
-            return new Date(src.getTime()); // Date
-        }
-        if (src instanceof RegExp) {
-            // RegExp
-            return new RegExp(src); // RegExp
-        }
-        var r, i, l;
-        if (utils.isArray(src)) {
-            // array
-            r = [];
-            for (i = 0, l = src.length; i < l; ++i) {
-                if (i in src) {
-                    r.push(utils.clone(src[i]));
-                }
-            }
-            // we don't clone functions for performance reasons
-            // }else if(d.isFunction(src)){
-            // // function
-            // r = function(){ return src.apply(this, arguments); };
-        } else {
-            // generic objects
-            r = src.constructor ? new src.constructor() : {};
-        }
-        return utils._mixin(r, src, utils.clone);
-    };
-
-    /**
-     * Copies/adds all properties of source to dest; returns dest.
-     * @description All properties, including functions (sometimes termed "methods"), excluding any non-standard extensions
-     * found in Object.prototype, are copied/added to dest. Copying/adding each particular property is
-     * delegated to copyFunc (if any); copyFunc defaults to the Javascript assignment operator if not provided.
-     * Notice that by default, _mixin executes a so-called "shallow copy" and aggregate types are copied/added by reference.
-     * @param dest {object} The object to which to copy/add all properties contained in source.
-     * @param source {object} The object from which to draw all properties to copy into dest.
-     * @param copyFunc {function} The process used to copy/add a property in source; defaults to the Javascript assignment operator.
-     * @returns {object} dest, as modified
-     * @private
-     */
-    utils._mixin = function (dest, source, copyFunc) {
-        var name, s, i, empty = {};
-        for (name in source) {
-            // the (!(name in empty) || empty[name] !== s) condition avoids copying properties in "source"
-            // inherited from Object.prototype.	 For example, if dest has a custom toString() method,
-            // don't overwrite it with the toString() method that source inherited from Object.prototype
-            s = source[name];
-            if (!(name in dest) || (dest[name] !== s && (!(name in empty) || empty[name] !== s))) {
-                dest[name] = copyFunc ? copyFunc(s) : s;
-            }
-        }
-
-        return dest; // Object
-    };
-    /**
-     * Copies/adds all properties of one or more sources to dest; returns dest.
-     * @param dest {object} The object to which to copy/add all properties contained in source. If dest is falsy, then
-     * a new object is manufactured before copying/adding properties begins.
-     *
-     * @param sources One of more objects from which to draw all properties to copy into dest. sources are processed
-     * left-to-right and if more than one of these objects contain the same property name, the right-most
-     * value "wins".
-     *
-     * @returns {object} dest, as modified
-     *
-     * @example
-     * make a shallow copy of an object
-     * var copy = utils.mixin({}, source);
-     *
-     * @example
-     *
-     * many class constructors often take an object which specifies
-     *        values to be configured on the object. In this case, it is
-     *        often simplest to call `lang.mixin` on the `this` object:
-     *        declare("acme.Base", null, {
-    *			constructor: function(properties){
-    *				//property configuration:
-    *				lang.mixin(this, properties);
-    *				console.log(this.quip);
-    *			},
-    *			quip: "I wasn't born yesterday, you know - I've seen movies.",
-    *			* ...
-    *		});
-     *
-     *        //create an instance of the class and configure it
-     *        var b = new acme.Base({quip: "That's what it does!" });
-     *
-     */
-    utils.mixin = function (dest, sources) {
-        if (sources) {
-            if (!dest) {
-                dest = {};
-            }
-            var l = arguments.length;
-            for (var i = 1; i < l; i++) {
-                utils._mixin(dest, arguments[i]);
-            }
-            return dest; // Object
-        }
-        return dest;
-    };
-
-    /**
-     * Clone object keys
-     * @param defaults
-     * @returns {{}}
-     */
-    utils.cloneKeys = function (defaults, skipEmpty) {
-        var result = {};
-        for (var _class in defaults) {
-            if (skipEmpty === true && !(_class in defaults)) {
-                continue;
-            }
-            result[_class] = defaults[_class];
-        }
-        return result;
-    };
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //
-    //  STD
-    /**
-     *
-     * @param what
-     * @returns {*}
-     */
-    utils.isArray = function (what) {
-        return lodash.isArray(what);
-    };
-    /**
-     *
-     * @param what
-     * @returns {*}
-     */
-    utils.isObject = function (what) {
-        return lodash.isObject(what);
-    };
-    /**
-     *
-     * @param what
-     * @returns {*}
-     */
-    utils.isString = function (what) {
-        return lodash.isString(what);
-    };
-    /**
-     *
-     * @param what
-     * @returns {*}
-     */
-    utils.isNumber = function (what) {
-        return lodash.isNumber(what);
-    };
-    /**
-     * Return true if it is a Function
-     * @param it
-     * @returns {*}
-     */
-    utils.isFunction = function (it) {
-        return lodash.isFunction(it);
-    };
-    return utils;
-});
-define('xide/cache/Circular',[], function () {
-
-    function CircularBuffer(capacity){
-        if(!(this instanceof CircularBuffer))return new CircularBuffer(capacity);
-        if(typeof capacity=="object"&&
-            Array.isArray(capacity["_buffer"])&&
-            typeof capacity._capacity=="number"&&
-            typeof capacity._first=="number"&&
-            typeof capacity._size=="number"){
-            for(var prop in capacity){
-                if(capacity.hasOwnProperty(prop))this[prop]=capacity[prop];
-            }
-        } else {
-            if(typeof capacity!="number"||capacity%1!=0||capacity<1)
-                throw new TypeError("Invalid capacity");
-            this._buffer=new Array(capacity);
-            this._capacity=capacity;
-            this._first=0;
-            this._size=0;
-        }
-    }
-    CircularBuffer.prototype = {
-        size: function () {
-            return this._size;
-        },
-        capacity: function () {
-            return this._capacity;
-        },
-        enq: function (value) {
-            if (this._first > 0)this._first--; else this._first = this._capacity - 1;
-            this._buffer[this._first] = value;
-            if (this._size < this._capacity)this._size++;
-        },
-        push: function (value) {
-            if (this._size == this._capacity) {
-                this._buffer[this._first] = value;
-                this._first = (this._first + 1) % this._capacity;
-            } else {
-                this._buffer[(this._first + this._size) % this._capacity] = value;
-                this._size++;
-            }
-        },
-        deq: function () {
-            if (this._size == 0)throw new RangeError("dequeue on empty buffer");
-            var value = this._buffer[(this._first + this._size - 1) % this._capacity];
-            this._size--;
-            return value;
-        },
-        pop: function () {
-            return this.deq();
-        },
-        shift: function () {
-            if (this._size == 0)throw new RangeError("shift on empty buffer");
-            var value = this._buffer[this._first];
-            if (this._first == this._capacity - 1)this._first = 0; else this._first++;
-            this._size--;
-            return value;
-        },
-        get: function (start, end) {
-            if (this._size == 0 && start == 0 && (end == undefined || end == 0))return [];
-            if (typeof start != "number" || start % 1 != 0 || start < 0)throw new TypeError("Invalid start");
-            if (start >= this._size)throw new RangeError("Index past end of buffer: " + start);
-
-            if (end == undefined)return this._buffer[(this._first + start) % this._capacity];
-
-            if (typeof end != "number" || end % 1 != 0 || end < 0)throw new TypeError("Invalid end");
-            if (end >= this._size)throw new RangeError("Index past end of buffer: " + end);
-
-            if (this._first + start >= this._capacity) {
-                //make sure first+start and first+end are in a normal range
-                start -= this._capacity; //becomes a negative number
-                end -= this._capacity;
-            }
-            if (this._first + end < this._capacity)
-                return this._buffer.slice(this._first + start, this._first + end + 1);
-            else
-                return this._buffer.slice(this._first + start, this._capacity).concat(this._buffer.slice(0, this._first + end + 1 - this._capacity));
-        },
-        toarray: function () {
-            if (this._size == 0)return [];
-            return this.get(0, this._size - 1);
-        }
-    };
-
-    return CircularBuffer;
-});
-/** @module xaction/Action **/
-define('xaction/Action',[
-    'dcl/dcl',
-    'xide/model/Base',
-    'xide/types',
-    'xide/utils/ObjectUtils',
-    'xide/utils',
-    'xide/mixins/EventedMixin',
-    'xide/cache/Circular'
-], function (dcl, Base, types, ObjectUtils, utils, EventedMixin, Circular) {
-
-    var Cache = null;//new Circular(100);
-    /***
-     * Extend the core types for action visibility(main menu,...) options/enums:
-     * 1. 'Main menu',
-     * 2. 'Context menu'
-     * 3. 'Action toolbar'
-     * 4. 'Property view'
-     */
-    utils.mixin(types, {
-        /**
-         * ActionVisibility
-         * @enum module:xide/types/ACTION_VISIBILITY
-         * @memberOf module:xide/types
-         */
-        ACTION_VISIBILITY: {
-            /**
-             * Enable visibility in main menu, which does
-             * render actions in a menu bar whereby 'sub' levels
-             * are rendered as sub level menus.
-             *
-             * @default null, means not visible. Actually in xjs its 1/0/{}
-             * @type {int|Object|xaction/Action}
-             * @constant
-             */
-            MAIN_MENU: 'MAIN_MENU',
-
-            /**
-             * Enable visivibilty in context menu.
-             *
-             * Different to the main menu, all actions
-             * are 'flatted'. The action's group field
-             * will auto-create separators among these
-             * groups.
-             *
-             * @default null, means not visible. Actually in xjs its 1/0/{}
-             * @type {int|Object|xaction/Action}
-             * @constant
-             */
-            CONTEXT_MENU: 'CONTEXT_MENU',
-
-            QUICK_LAUNCH: 'QUICK_LAUNCH',
-
-            /**
-             * Enable visivibilty in primary action toolbar.
-             *
-             * Same as in the "Context Menu", actions will
-             * rendered out flat, just the label is being removed.
-             *
-             * @default null, means not visible. Actually in xjs its 1/0/{}
-             * @type {int|Object|xaction/Action}
-             * @constant
-             */
-            ACTION_TOOLBAR: 'ACTION_TOOLBAR',
-
-            /**
-             * Enable visibility in an item's property view (if such exists).
-             *
-             * Same as in the "Context Menu", actions will
-             * rendered out flat, just the label is being removed.
-             *
-             * @default null, means not visible. Actually in xjs its 1/0/{}
-             * @type {int|Object|xaction/Action}
-             * @constant
-             */
-            PROPERTY_VIEW: 'PROPERTY_VIEW',
-
-            /**
-             * Enable visibility the ribbon toolbar (if such exists).
-             *
-             * Same as in the "Context Menu", actions will
-             * rendered out flat, just the label is being removed.
-             *
-             * @default null, means not visible. Actually in xjs its 1/0/{}
-             * @type {int|Object|xaction/Action}
-             * @constant
-             */
-            RIBBON: 'RIBBON',
-
-            /**
-             * A mixin to be used whilst creating the widget
-             * @type {object}
-             */
-            widgetArgs: null,
-
-            /**
-             * Util for the constructor yo create a visibilty. A visibility is a key/value store where the
-             * key is ACTION_VISIBILITY
-             * and its value is stored in this.ACTION_VISIBILITY_val ! Thus you'r accessing this store in a doc-friendly
-             * and enum like function
-             * @example
-             *  this.getVisibility(types.ACTION_VISIBILITY.MAIN_MENU)'     *
-             *
-             * the returning value is of type {object}, or {integer(1|0)}
-             * @type {function}
-             * @returns {module:xide/types/ACTION_VISIBILITY}
-             */
-            factory: function () {
-
-                var _in = arguments[1] || utils.clone(types.ACTION_VISIBILITY),
-                    _args = arguments;
-
-                //
-                // A mode when we have the arguments like (1,1,1,2).
-                //  This clones types.ACTION_VISIBILITY and blends in an integer mask
-
-                if (_args[0].length > 0 && _.isNumber(_args[0][0])) {
-
-                    var _FlagArgs = _args[0],
-                        _val = null,
-                        _index = 0;
-
-                    //integer case, sets this[propIndex] to something
-                    _.each(_in, function (index, prop) {
-                        if (typeof _in[prop] !== 'function') {
-                            if (_index < _FlagArgs.length) {
-                                //set the value per key but preserve the actualy key by storing
-                                //the value in a new key_val field
-                                _in[prop + '_val'] = _FlagArgs[_index];
-                            }
-                        }
-                        _index++;
-                    });
-                }
-
-                // A modus when we have the arguments like (MAIN_MENU,something). set value in this.ENUM_val
-                if (_.isString(_args[0][0])) {
-                    if (_args[0][2] === true) {
-                        utils.mixin(_in[_args[0][0] + '_val'], _args[0][2]);
-                    } else {
-                        _in[_args[0][0] + '_val'] = _args[0][1];
-                        return _in;
-                    }
-                    return _args[1];
-                }
-                return _in;
-            }
-        }
-    });
-    types.ACTION_VISIBILITY_ALL = 'ACTION_VISIBILITY_ALL';
-    /**
-     * Basic model to represent an 'action'. Its just a structure
-     * object with some factory methods and built-in store to have
-     * versions of it self per 'ACTION_VISIBILITY' which may alter
-     * rendering for such visibility.
-     *
-     * Please read {@link module:xide/types}
-     *
-     * @class module:xaction/Action
-     * @augments xide/model/Base
-     */
-    var Module = dcl([Base.dcl, EventedMixin.dcl], {
-        declaredClass: "xaction/Action",
-        disabled: false,
-        destroy: function () {
-            if (Cache && Cache.size() < 100) {
-                delete this._properties;
-                delete this._visibility;
-                delete this.keyboardMappings;
-                delete this.group;
-                delete this.tab;
-                delete this.owner;
-                delete this.item;
-                delete this.icon;
-                delete this.actionType;
-                delete this.label;
-                delete this.title;
-                delete this.type;
-                delete this.onCreate;
-                delete this.onChange;
-                delete this.addPermission;
-                delete this._store;
-                delete this.parameters;
-                delete this.handler;
-                Cache.push(this);
-            }
-        },
-        /**
-         * Turn on/off this action
-         * @type {boolean}
-         * @default true
-         */
-        enabled: true,
-        /**
-         * The object or bean we're up to. This is mostly the user's selection.
-         * @type {Object|Object[]|Array}
-         */
-        object: null,
-        /**
-         * Show/hide this action in ui
-         * @member show {boolean}
-         */
-        show: true,
-        /**
-         * A group for this action. This is being used in interface only.
-         * @type {string|Object=}
-         */
-        group: '',
-        /**
-         * A comma separated list of bean types. This specifies on which bean types
-         * this action can be applied
-         * @type {string|Object=}
-         */
-        types: '',
-        /**
-         * A identifier of a command within a "bean action context". This should be human readable.
-         * Remember, this is being used for populating menu items in toolbars.
-         * @example "Edit/Copy", "Views/Log" and so forth
-         * @type {string|integer}
-         */
-        command: null,
-        /**
-         * Icon class. You can use font-awesome, dijit icon classes or Elusive icons
-         * @type {string}
-         * @default fa-play
-         */
-        icon: 'fa-play',
-        /**
-         * An event key when the action is performed. This will be published automatically when this action
-         * is performed.
-         * @type {string|null}
-         * @default null
-         */
-        event: null,
-        /**
-         * The function to be invoked
-         * @type {function|null}
-         */
-        handler: null,
-        /**
-         * The tab (visual)
-         * @type {string|null}
-         * @default null
-         */
-        tab: null,
-
-        /**
-         * A store to override per visibility an action attributes like label, icon, renderer, handler
-         * or whatever this action needs. This acts as store per VISIBILITY "Zone" as descried in the enumerations. Its
-         * one simple object or single integer store.
-         *
-         * This storage must be fast as its used in mouse-over, don't use any dojo/dstore or whatever fancy stuff; the
-         * operations in the consumer side are already heavy enough (loadash 'group' and 'sort' come up to 5000 calls for
-         * just 10 actions)
-         *
-         * @see {module:xide/types/ACTION_VISIBILITY}
-         * @type {xide/types/ACTION_VISIBILITY}
-         * @augments {xide/types/ACTION_VISIBILITY}
-         * @default null
-         * @property
-         * @member
-         *
-         * @example
-         * {
-         *      MAIN_MENU:"MAIN_MENU",
-         *      MAIN_MENU_val:0
-         *      //or MAIN_MENU_val:1
-         *      ACTION_TOOLBAR:"ACTION_TOOLBAR",
-         *      ACTION_TOOLBAR_val:{
-         *          icon:"fa or el or dijit", //supports font-awesome, elusive or dojo/dijit
-         *          label:"" // in some cases like an action bar you may override this per visibility to hide a label 
-         *      }
-         * }
-         *
-         */
-        visibility_: null,
-        /**
-         * An action might contain a value. For instance the action might toggle
-         * a checkbox...
-         *
-         * @type {object|*|null}
-         */
-        value: null,
-        /**
-         * Sets visibility options per visibility type.
-         *
-         * @param {mixed} arguments will blend a number of integers into a copy of
-         * xide/types/ACTION_VISIBILITY. Be aware of the exact order!
-         * @example
-         *
-         *
-         //Example 1. : set the visibility per type
-         setVisibility(1,1,0);// will result in:
-         {
-                 MAIN_MENU:1,
-                 CONTEXT_MENU:1,
-                 ACTION_TOOLBAR:0
-         }
-
-         //Example 2. : set the visibility per type. @TODO:specify merge filter bits
-         setVisibility(types.ACTION_VISIBILITY.MAIN_MENU,{
-                label:null  //don't show a label
-            });
-
-         */
-        setVisibility: function () {
-            if (arguments.length == 2 && _.isString(arguments[0]) && arguments[0] == types.ACTION_VISIBILITY_ALL) {
-                var _obj = arguments[1],
-                    _vis = types.ACTION_VISIBILITY,
-                    thiz = this;
-
-                //track vis key in all
-                [_vis.MAIN_MENU, _vis.ACTION_TOOLBAR, _vis.CONTEXT_MENU, _vis.RIBBON].forEach(function (vis) {
-                    thiz.setVisibility(vis, utils.cloneKeys(_obj, false));
-                });
-                return this;
-
-            }
-            var _args = _.isArray(arguments[0]) ? arguments[0] : arguments;
-            this.visibility_ = types.ACTION_VISIBILITY.factory(_args, this.visibility_);
-            return this;
-        },
-        /**
-         * Visibility getter
-         * @param key
-         * @returns {module:xide/types/ACTION_VISIBILITY}
-         */
-        getVisibility: function (key) {
-            if (!this.visibility_) {
-                this.setVisibility(types.ACTION_VISIBILITY_ALL, {});
-            }
-            if (this.visibility_) {
-                if (this.visibility_[key + '_val'] == null) {
-                    this.visibility_[key + '_val'] = {
-                        vis: key
-                    };
-                }
-                return this.visibility_[key + '_val'];
-            }
-            return {};
-        },
-        /**
-         *
-         * @param _visibility
-         * @param who
-         * @param newItem
-         * @returns {boolean}
-         */
-        shouldDestroyWidget: function (_visibility, who, newItem) {
-            var visibility = this.getVisibility != null ? this.getVisibility(_visibility) : null;
-            var destroy = true;
-            if (visibility && visibility.permanent) {
-                destroy = !(_.isFunction(visibility.permanent) ? visibility.permanent(this, who, newItem) : visibility.permanent);
-            }
-            return destroy;
-        }
-
-    });
-    /**
-     * Static factory
-     * @param label {string}
-     * @param icon
-     * @param command
-     * @param permanent
-     * @param operation
-     * @param btypes
-     * @param group
-     * @param visibility
-     * @param register
-     * @param handler
-     * @param mixin
-     * @static
-     * @memberOf xaction/Action
-     *
-     * @example for queuing a clip board action:
-     *
-     *  var _copyAction  = Action.create('Copy', 'fa-copy', 'Edit/Copy', true, types.OPERATION_INT.CLIPBOARD_COPY, types.ITEM_TYPE.FILE, 'clipboard', null, true, _clipboardManager);
-     *  _copy.accelKey = 'CTRL+C';
-     *
-     * @returns {module:xaction/Action}
-     */
-    Module.create = function (label, icon, command, permanent, operation, btypes, group, visibility, register, handler, mixin) {
-        var _action = null;
-
-        var _args = {
-            permanent: permanent,
-            command: command,
-            icon: icon,
-            label: label,
-            owner: this,
-            types: btypes,
-            operation: operation,
-            group: group,
-            handler: handler,
-            title: label
-        };
-        if (Cache && Cache.size()) {
-            _action = Cache.deq(0);
-            //console.log('re-use');
-            utils.mixin(_action, _args);
-        } else {
-            //console.log('-create!');
-            _action = new Module(_args);
-        }
-        /*
-         var VISIBILITY = types.ACTION_VISIBILITY,
-         VISIBILITIES = [
-         VISIBILITY.ACTION_TOOLBAR,
-         VISIBILITY.RIBBON,
-         VISIBILITY.MAIN_MENU,
-         VISIBILITY.CONTEXT_MENU
-         ];
-         */
-        utils.mixin(_action, mixin);
-        return _action;
-    };
-    /**
-     * Simple wrapper for action.create
-     * @param label {string}
-     * @param icon
-     * @param command
-     * @param group
-     * @param handler
-     * @param mixin
-     * @returns {module:xaction/Action}
-     */
-    Module.createDefault = function (label, icon, command, group, handler, mixin) {
-        return Module.create(label, icon, command, false, null, null, group || 'nogroup', null, false, handler, mixin);
-    };
-    return Module;
-});
-
-/** @module xaction/DefaultActions **/
-define('xaction/DefaultActions',[
-    "dcl/dcl",
-    'dcl/inherited',
-    "xdojo/declare",
-    'xide/types',
-    'xide/utils',
-    'xlang/i18'
-], function (dcl,inherited,declare,types,utils,i18) {
-    /**
-     * @mixin module:xide/action/DefaultActions
-     */
-    var Module = declare("xaction/DefaultActions", null , {});
-    /**
-     *
-     * @param title
-     * @param command
-     * @param group
-     * @param icon
-     * @param handler
-     * @param accelKey
-     * @param keyCombo
-     * @param keyProfile
-     * @param keyTarget
-     * @param keyScope
-     * @param mixin
-     * @returns {{title: *, command: *, group: *, icon: *, handler: *, accelKey: *, keyCombo: *, keyProfile: *, keyTarget: *, keyScope: *}}
-     */
-    Module.createActionParameters=function(title, command, group, icon, handler, accelKey, keyCombo, keyProfile, keyTarget, keyScope,mixin){
-        return {
-            title:title,
-            command: command,
-            group: group,
-            icon: icon,
-            handler: handler,
-            accelKey: accelKey,
-            keyCombo: keyCombo,
-            keyProfile: keyProfile,
-            keyTarget: keyTarget,
-            keyScope: keyScope,
-            mixin:mixin
-        };
-    };
-    /**
-     *
-     * @param label
-     * @param command
-     * @param icon
-     * @param keycombo
-     * @param tab
-     * @param group
-     * @param filterGroup
-     * @param onCreate
-     * @param handler
-     * @param mixin
-     * @param shouldShow
-     * @param shouldDisable
-     * @param container
-     * @returns {*}
-     */
-    var createAction = function(label,command,icon,keycombo,tab,group,filterGroup,onCreate,handler,mixin,shouldShow,shouldDisable,container){
-        if(keycombo) {
-            if (_.isString(keycombo)) {
-                keycombo = [keycombo];
-            }
-        }
-
-        mixin = utils.mixin({
-            filterGroup:filterGroup || "item|view",
-            tab:tab||'File',
-            onCreate: onCreate || function (action){},
-            shouldShow:shouldShow||function(){return true;},
-            shouldDisable:shouldDisable||function(){return false;}
-        },mixin);
-
-        var _action = Module.createActionParameters(
-            label,
-            command,
-            group || 'File',//Group
-            icon, handler || null, "", keycombo, null, container, null, mixin);
-
-        utils.mixin(_action,mixin);
-
-        return _action;
-    };
-
-    /**
-     * Find action in permission
-     * @param what
-     * @returns {boolean}
-     */
-    function hasAction(permissions,what){
-        return _.contains(permissions,what);
-    }
-
-    /**
-     * After action default handler, trys:
-     * - this::onAfterAction
-     * - emit onAfterAction
-     *
-     * @param dfdResult
-     * @param event
-     * @param action
-     * @private
-     */
-    function _afterAction(dfdResult,event,action) {
-        var who = this;
-        // call onAfterAction with this results
-        var onAfterActionDfd = null;
-        who.onAfterAction && (onAfterActionDfd = who.onAfterAction(action, dfdResult, event));
-
-        who._emit && who._emit('onAfterAction', {
-            action: action,
-            result: dfdResult,
-            source: who,
-            afterAction: onAfterActionDfd
-        });
-    }
-    /**
-     * Default handler, does
-     * - try this::runAction || action#handler
-     * - call afterAction
-     *
-     * As last cal
-     * @param action {module:xaction/ActionModel}
-     * @param event
-     */
-    function defaultHandler(action,event){
-        var actionDfd,
-            who = this;
-
-        who && who.onBeforeAction && who.onBeforeAction(action);
-        if(who.runAction){
-            actionDfd = who.runAction.apply(who,[action,null,event]);
-        }else if(action.handler){
-            actionDfd = action.handler.apply(who,[action,null,event]);
-        }
-        if(actionDfd && actionDfd.then){
-            actionDfd.then(function(actionResult){
-                _afterAction.apply(who,[actionResult,event,action]);
-            });
-
-        }else{
-            _afterAction.apply(who,[actionDfd,event,action]);
-        }
-        return actionDfd;
-    }
-
-    /**
-     *
-     * @param permissions
-     * @param grid
-     * @param owner
-     * @returns {Array}
-     */
-    function getDefaultActions(permissions,grid,owner){
-        /**
-         *
-         * @param selection
-         * @param reference
-         * @param visibility
-         * @returns {boolean}
-         */
-        function shouldDisableDefaultEmptySelection(selection,reference,visibility){
-            selection = selection || grid ? grid.getSelection() : [];
-
-            if(!selection || !selection.length){
-                return true;
-            }
-            return false;
-        }
-        /**
-         *
-         * @param selection
-         * @param reference
-         * @param visibility
-         * @returns {boolean}
-         */
-        function shouldDisableDefaultFileOnly(selection,reference,visibility){
-
-            if(shouldDisableDefaultEmptySelection.apply(this,arguments)){
-                return true;
-            }
-            selection = selection || grid ? grid.getSelection() : [];
-
-            if(selection && selection[0].isDir === true){
-                return true;
-            }
-            return false;
-        }
-
-        var root = 'File/',
-            thiz = this,
-            renderActions = [],
-            VISIBILITY = types.ACTION_VISIBILITY,
-            result = [],
-            ACTION = types.ACTION,
-            ACTION_ICON = types.ACTION_ICON,
-            creator = owner || grid;
-
-        /**
-         *
-         * @param label
-         * @param command
-         * @param icon
-         * @param keycombo
-         * @param tab
-         * @param group
-         * @param filterGroup
-         * @param onCreate
-         * @param handler
-         * @param mixin
-         * @param shouldShow
-         * @param shouldDisable
-         */
-        function addAction(label,command,icon,keycombo,tab,group,filterGroup,onCreate,handler,mixin,shouldShow,shouldDisable){
-            var action = null;
-            mixin = mixin || {};
-            utils.mixin(mixin,{owner:owner || grid});
-
-            if(mixin.addPermission || hasAction(permissions,command)){
-
-                handler = handler || defaultHandler;
-
-                action = createAction(label,command,icon,keycombo,tab,group,filterGroup,onCreate,handler,mixin,shouldShow,shouldDisable,grid.domNode);
-
-                if(action) {
-                    if (owner && owner.addAction) {
-                        owner.addAction(null, action);
-                    }
-                    result.push(action);
-                }
-            }
-        }
-        if(hasAction(permissions, ACTION.CLIPBOARD) && grid.getClipboardActions){
-            result.push(creator.createAction({
-                label: 'Clipboard',
-                command: 'Edit/Clipboard',
-                icon: 'fa-clipboard',
-                tab: 'Edit',
-                group: 'Clipboard',
-                mixin:{
-                    addPermission:true,
-                    dynamic:true,
-                    quick:true
-                },
-                onCreate:function(action){
-                    action.setVisibility(VISIBILITY.RIBBON,{
-                        expand:true,
-                        tab:"File"
-                    });
-                }
-            }));
-
-            result = result.concat(grid.getClipboardActions(addAction));
-        }
-
-        result.push(creator.createAction({
-            label: 'Show',
-            command: 'View/Show',
-            icon: 'fa-eye',
-            tab: 'View',
-            group: 'Show',
-            mixin:{
-                addPermission:true,
-                dynamic:true
-            },
-            onCreate:function(action){
-                action.setVisibility(VISIBILITY.RIBBON,{
-                    expand:true
-                });
-            }
-        }));
-
-
-        if(hasAction(permissions,ACTION.LAYOUT) && grid.getRendererActions){
-            result = result.concat(grid.getRendererActions());
-        }
-
-        if(hasAction(permissions,ACTION.COLUMNS) && grid.getColumnHiderActions){
-            result = result.concat(grid.getColumnHiderActions(permissions));
-        }
-        ///////////////////////////////////////
-        //
-        //  Open/Edit
-        //
-        //
-        result.push(creator.createAction({
-            label: 'Edit',
-            command: 'File/Edit',
-            icon: ACTION_ICON.EDIT,
-            tab: 'Home',
-            group: 'Open',
-            keycombo: ['f4', 'enter','dblclick'],
-            mixin:{
-                quick:true
-            },
-            shouldDisable:shouldDisableDefaultFileOnly
-        }));
-
-
-        ///////////////////////////////////////
-        //
-        //  Organize
-        //
-        result.push(creator.createAction({
-            label: 'Delete',
-            command: 'File/Delete',
-            icon: ACTION_ICON.DELETE,
-            tab: 'Home',
-            group: 'Organize',
-            keycombo: ['f8','delete'],
-            mixin:{
-                quick:true
-            },
-            shouldDisable:shouldDisableDefaultEmptySelection
-        }));
-
-        addAction('Rename','File/Rename','fa-edit',['f2'],'Home','Organize','item',null,null,null,null,shouldDisableDefaultEmptySelection);
-
-        result.push(creator.createAction({
-            label: 'Reload',
-            command: 'File/Reload',
-            icon: ACTION_ICON.RELOAD,
-            tab: 'Home',
-            group: 'File',
-            keycombo: ['ctrl l'],
-            mixin:{
-                quick:true
-            }
-        }));
-        addAction('Create archive','File/Compress',ACTION_ICON.COMPRESS,['ctrl z'],'Home','Organize','item|view',null,null,null,null,shouldDisableDefaultEmptySelection);
-
-        ///////////////////////////////////////
-        //
-        //  File
-        //
-        addAction('Extract','File/Extract',ACTION_ICON.EXTRACT,['ctrl e'],'Home','File','item|view',null,null,null,null,function(){
-            return true;
-            //return shouldDisableDefaultFileOnly.apply(this,arguments);
-        });
-
-        result.push(creator.createAction({
-            label: 'Download',
-            command: 'File/Download',
-            icon: ACTION_ICON.DOWNLOAD,
-            tab: 'Home',
-            group: 'File',
-            keycombo: ['ctrl down'],
-            mixin:{
-                quick:true
-            }
-        }));
-
-        //////////////////////////////////////////
-        //
-        //  New
-        //
-        if(hasAction(permissions,ACTION.NEW_DIRECTORY)|| hasAction(permissions,ACTION.NEW_FILE)) {
-
-            addAction('New','File/New','fa-magic',null,'Home','New','item|view',null,null,{},null,null);
-/*
-            result.push(creator.createAction({
-                label: 'New',
-                command: 'File/New',
-                icon: 'fa-magic',
-                tab: 'Home',
-                group: 'File',
-                keycombo: ['ctrl down'],
-                mixin:{
-                    quick:true
-                }
-            }));*/
-
-        }
-        addAction('New Folder',ACTION.NEW_DIRECTORY,'fa-folder',['f7'],'Home','New','item|view',null,null,{quick:true},null,null);
-        addAction('New File',ACTION.NEW_FILE,'el-icon-file',['ctrl f4'],'Home','New','item|view',null,null,{quick:true},null,null);
-
-
-        //////////////////////////////////////////
-        //
-        //  Preview
-        //
-        if(hasAction(permissions,ACTION.PREVIEW)) {
-            result.push(creator.createAction({
-                label: 'Preview',
-                command: 'File/Preview',
-                icon: 'fa-eye',
-                tab: 'Home',
-                group: 'Open',
-                keycombo: ['f3'],
-                mixin:{
-                    quick:true
-                },
-                shouldDisable:shouldDisableDefaultFileOnly
-            }));
-        }
-
-        ///////////////////////////////////////
-        //
-        //  Selection
-        //
-        if(hasAction(permissions,ACTION.SELECTION)) {
-            result.push(createAction('Select', 'File/Select', 'fa-hand-o-up', null, 'Home', 'Select', 'item|view', function(action){
-                action.setVisibility(VISIBILITY.RIBBON,{
-                    expand:true
-                });
-            }, null, null, null, null,grid.domNode));
-
-            var _mixin = {
-                    owner:owner || grid
-                },
-                container = grid.domNode;
-
-            result.push(createAction('Select all', 'File/Select/All', 'fa-th', ['ctrl a'], 'Home', 'Select', 'item|view', null, function(){
-                grid.selectAll();
-            }, _mixin, null, null,container));
-
-            result.push(createAction('Select none', 'File/Select/None', 'fa-square-o', 'ctrl d', 'Home', 'Select', 'item|view', null, function(){
-                grid.deselectAll();
-            }, _mixin, null, null,container));
-
-            result.push(createAction('Invert selection', 'File/Select/Invert', 'fa-square', ['ctrl i'], 'Home', 'Select', 'item|view', null, function(){
-                grid.invertSelection();
-            }, _mixin, null, null,container));
-        }
-        return result;
-    }
-
-    Module.createAction = createAction;
-    Module.hasAction = hasAction;
-    Module.getDefaultActions = getDefaultActions;
-    Module.defaultHandler = defaultHandler;
-
-    return Module;
-});
-define('dijit/Viewport',[
-	"dojo/Evented",
-    "dojo/window" // getBox()
-], function(Evented, winUtils){
-
-	// module:
-	//		dijit/Viewport
-
-	/*=====
-	return {
-		// summary:
-		//		Utility singleton to watch for viewport resizes, avoiding duplicate notifications
-		//		which can lead to infinite loops.
-		// description:
-		//		Usage: Viewport.on("resize", myCallback).
-		//
-		//		myCallback() is called without arguments in case it's _WidgetBase.resize(),
-		//		which would interpret the argument as the size to make the widget.
-	};
-	=====*/
-
-	var Viewport = new Evented();
-
-	var focusedNode;
-
-
-	Viewport.getEffectiveBox = function(/*Document*/ doc){
-		// summary:
-		//		Get the size of the viewport, or on mobile devices, the part of the viewport not obscured by the
-		//		virtual keyboard.
-
-		var box = winUtils.getBox(doc);
-
-		// Account for iOS virtual keyboard, if it's being shown.  Unfortunately no direct way to check or measure.
-		var tag = focusedNode && focusedNode.tagName && focusedNode.tagName.toLowerCase();
-		return box;
-	};
-
-	return Viewport;
-});
-
-define('dijit/main',[
-	"dojo/_base/kernel"
-], function(dojo){
-	// module:
-	//		dijit/main
-
-/*=====
-return {
-	// summary:
-	//		The dijit package main module.
-	//		Deprecated.   Users should access individual modules (ex: dijit/registry) directly.
-};
-=====*/
-
-	return dojo.dijit;
-});
-
-define('dijit/place',[
-	"dojo/_base/array", // array.forEach array.map array.some
-	"dojo/dom-geometry", // domGeometry.position
-	"dojo/dom-style", // domStyle.getComputedStyle
-	"dojo/_base/kernel", // kernel.deprecated
-	"dojo/_base/window", // win.body
-	"./Viewport", // getEffectiveBox
-	"./main"	// dijit (defining dijit.place to match API doc)
-], function(array, domGeometry, domStyle, kernel, win, Viewport, dijit){
-
-	// module:
-	//		dijit/place
-
-
-	function _place(/*DomNode*/ node, choices, layoutNode, aroundNodeCoords){
-		// summary:
-		//		Given a list of spots to put node, put it at the first spot where it fits,
-		//		of if it doesn't fit anywhere then the place with the least overflow
-		// choices: Array
-		//		Array of elements like: {corner: 'TL', pos: {x: 10, y: 20} }
-		//		Above example says to put the top-left corner of the node at (10,20)
-		// layoutNode: Function(node, aroundNodeCorner, nodeCorner, size)
-		//		for things like tooltip, they are displayed differently (and have different dimensions)
-		//		based on their orientation relative to the parent.	 This adjusts the popup based on orientation.
-		//		It also passes in the available size for the popup, which is useful for tooltips to
-		//		tell them that their width is limited to a certain amount.	 layoutNode() may return a value expressing
-		//		how much the popup had to be modified to fit into the available space.	 This is used to determine
-		//		what the best placement is.
-		// aroundNodeCoords: Object
-		//		Size of aroundNode, ex: {w: 200, h: 50}
-
-		// get {x: 10, y: 10, w: 100, h:100} type obj representing position of
-		// viewport over document
-		var view = Viewport.getEffectiveBox(node.ownerDocument);
-
-		// This won't work if the node is inside a <div style="position: relative">,
-		// so reattach it to <body>.	 (Otherwise, the positioning will be wrong
-		// and also it might get cutoff.)
-		if(!node.parentNode || String(node.parentNode.tagName).toLowerCase() != "body"){
-			win.body(node.ownerDocument).appendChild(node);
-		}
-
-		var best = null;
-		array.some(choices, function(choice){
-			var corner = choice.corner;
-			var pos = choice.pos;
-			var overflow = 0;
-
-			// calculate amount of space available given specified position of node
-			var spaceAvailable = {
-				w: {
-					'L': view.l + view.w - pos.x,
-					'R': pos.x - view.l,
-					'M': view.w
-				}[corner.charAt(1)],
-				h: {
-					'T': view.t + view.h - pos.y,
-					'B': pos.y - view.t,
-					'M': view.h
-				}[corner.charAt(0)]
-			};
-
-			// Clear left/right position settings set earlier so they don't interfere with calculations,
-			// specifically when layoutNode() (a.k.a. Tooltip.orient()) measures natural width of Tooltip
-			var s = node.style;
-			s.left = s.right = "auto";
-
-			// configure node to be displayed in given position relative to button
-			// (need to do this in order to get an accurate size for the node, because
-			// a tooltip's size changes based on position, due to triangle)
-			if(layoutNode){
-				var res = layoutNode(node, choice.aroundCorner, corner, spaceAvailable, aroundNodeCoords);
-				overflow = typeof res == "undefined" ? 0 : res;
-			}
-
-			// get node's size
-			var style = node.style;
-			var oldDisplay = style.display;
-			var oldVis = style.visibility;
-			if(style.display == "none"){
-				style.visibility = "hidden";
-				style.display = "";
-			}
-			var bb = domGeometry.position(node);
-			style.display = oldDisplay;
-			style.visibility = oldVis;
-
-			// coordinates and size of node with specified corner placed at pos,
-			// and clipped by viewport
-			var
-				startXpos = {
-					'L': pos.x,
-					'R': pos.x - bb.w,
-					'M': Math.max(view.l, Math.min(view.l + view.w, pos.x + (bb.w >> 1)) - bb.w) // M orientation is more flexible
-				}[corner.charAt(1)],
-				startYpos = {
-					'T': pos.y,
-					'B': pos.y - bb.h,
-					'M': Math.max(view.t, Math.min(view.t + view.h, pos.y + (bb.h >> 1)) - bb.h)
-				}[corner.charAt(0)],
-				startX = Math.max(view.l, startXpos),
-				startY = Math.max(view.t, startYpos),
-				endX = Math.min(view.l + view.w, startXpos + bb.w),
-				endY = Math.min(view.t + view.h, startYpos + bb.h),
-				width = endX - startX,
-				height = endY - startY;
-
-			overflow += (bb.w - width) + (bb.h - height);
-
-			if(best == null || overflow < best.overflow){
-				best = {
-					corner: corner,
-					aroundCorner: choice.aroundCorner,
-					x: startX,
-					y: startY,
-					w: width,
-					h: height,
-					overflow: overflow,
-					spaceAvailable: spaceAvailable
-				};
-			}
-
-			return !overflow;
-		});
-
-		// In case the best position is not the last one we checked, need to call
-		// layoutNode() again.
-		if(best.overflow && layoutNode){
-			layoutNode(node, best.aroundCorner, best.corner, best.spaceAvailable, aroundNodeCoords);
-		}
-
-		// And then position the node.  Do this last, after the layoutNode() above
-		// has sized the node, due to browser quirks when the viewport is scrolled
-		// (specifically that a Tooltip will shrink to fit as though the window was
-		// scrolled to the left).
-
-		var top = best.y,
-			side = best.x,
-			body = win.body(node.ownerDocument);
-
-		if(/relative|absolute/.test(domStyle.get(body, "position"))){
-			// compensate for margin on <body>, see #16148
-			top -= domStyle.get(body, "marginTop");
-			side -= domStyle.get(body, "marginLeft");
-		}
-
-		var s = node.style;
-		s.top = top + "px";
-		s.left = side + "px";
-		s.right = "auto";	// needed for FF or else tooltip goes to far left
-
-		return best;
-	}
-
-	var reverse = {
-		// Map from corner to kitty-corner
-		"TL": "BR",
-		"TR": "BL",
-		"BL": "TR",
-		"BR": "TL"
-	};
-
-	var place = {
-		// summary:
-		//		Code to place a DOMNode relative to another DOMNode.
-		//		Load using require(["dijit/place"], function(place){ ... }).
-
-		at: function(node, pos, corners, padding, layoutNode){
-			// summary:
-			//		Positions node kitty-corner to the rectangle centered at (pos.x, pos.y) with width and height of
-			//		padding.x * 2 and padding.y * 2, or zero if padding not specified.  Picks first corner in corners[]
-			//		where node is fully visible, or the corner where it's most visible.
-			//
-			//		Node is assumed to be absolutely or relatively positioned.
-			// node: DOMNode
-			//		The node to position
-			// pos: dijit/place.__Position
-			//		Object like {x: 10, y: 20}
-			// corners: String[]
-			//		Array of Strings representing order to try corners of the node in, like ["TR", "BL"].
-			//		Possible values are:
-			//
-			//		- "BL" - bottom left
-			//		- "BR" - bottom right
-			//		- "TL" - top left
-			//		- "TR" - top right
-			// padding: dijit/place.__Position?
-			//		Optional param to set padding, to put some buffer around the element you want to position.
-			//		Defaults to zero.
-			// layoutNode: Function(node, aroundNodeCorner, nodeCorner)
-			//		For things like tooltip, they are displayed differently (and have different dimensions)
-			//		based on their orientation relative to the parent.  This adjusts the popup based on orientation.
-			// example:
-			//		Try to place node's top right corner at (10,20).
-			//		If that makes node go (partially) off screen, then try placing
-			//		bottom left corner at (10,20).
-			//	|	place(node, {x: 10, y: 20}, ["TR", "BL"])
-			var choices = array.map(corners, function(corner){
-				var c = {
-					corner: corner,
-					aroundCorner: reverse[corner],	// so TooltipDialog.orient() gets aroundCorner argument set
-					pos: {x: pos.x,y: pos.y}
-				};
-				if(padding){
-					c.pos.x += corner.charAt(1) == 'L' ? padding.x : -padding.x;
-					c.pos.y += corner.charAt(0) == 'T' ? padding.y : -padding.y;
-				}
-				return c;
-			});
-
-			return _place(node, choices, layoutNode);
-		},
-
-		around: function(
-			/*DomNode*/		node,
-			/*DomNode|dijit/place.__Rectangle*/ anchor,
-			/*String[]*/	positions,
-			/*Boolean*/		leftToRight,
-			/*Function?*/	layoutNode){
-
-			// summary:
-			//		Position node adjacent or kitty-corner to anchor
-			//		such that it's fully visible in viewport.
-			// description:
-			//		Place node such that corner of node touches a corner of
-			//		aroundNode, and that node is fully visible.
-			// anchor:
-			//		Either a DOMNode or a rectangle (object with x, y, width, height).
-			// positions:
-			//		Ordered list of positions to try matching up.
-			//
-			//		- before: places drop down to the left of the anchor node/widget, or to the right in the case
-			//			of RTL scripts like Hebrew and Arabic; aligns either the top of the drop down
-			//			with the top of the anchor, or the bottom of the drop down with bottom of the anchor.
-			//		- after: places drop down to the right of the anchor node/widget, or to the left in the case
-			//			of RTL scripts like Hebrew and Arabic; aligns either the top of the drop down
-			//			with the top of the anchor, or the bottom of the drop down with bottom of the anchor.
-			//		- before-centered: centers drop down to the left of the anchor node/widget, or to the right
-			//			in the case of RTL scripts like Hebrew and Arabic
-			//		- after-centered: centers drop down to the right of the anchor node/widget, or to the left
-			//			in the case of RTL scripts like Hebrew and Arabic
-			//		- above-centered: drop down is centered above anchor node
-			//		- above: drop down goes above anchor node, left sides aligned
-			//		- above-alt: drop down goes above anchor node, right sides aligned
-			//		- below-centered: drop down is centered above anchor node
-			//		- below: drop down goes below anchor node
-			//		- below-alt: drop down goes below anchor node, right sides aligned
-			// layoutNode: Function(node, aroundNodeCorner, nodeCorner)
-			//		For things like tooltip, they are displayed differently (and have different dimensions)
-			//		based on their orientation relative to the parent.	 This adjusts the popup based on orientation.
-			// leftToRight:
-			//		True if widget is LTR, false if widget is RTL.   Affects the behavior of "above" and "below"
-			//		positions slightly.
-			// example:
-			//	|	placeAroundNode(node, aroundNode, {'BL':'TL', 'TR':'BR'});
-			//		This will try to position node such that node's top-left corner is at the same position
-			//		as the bottom left corner of the aroundNode (ie, put node below
-			//		aroundNode, with left edges aligned).	If that fails it will try to put
-			//		the bottom-right corner of node where the top right corner of aroundNode is
-			//		(ie, put node above aroundNode, with right edges aligned)
-			//
-
-			// If around is a DOMNode (or DOMNode id), convert to coordinates.
-			var aroundNodePos;
-			if(typeof anchor == "string" || "offsetWidth" in anchor || "ownerSVGElement" in anchor){
-				aroundNodePos = domGeometry.position(anchor, true);
-
-				// For above and below dropdowns, subtract width of border so that popup and aroundNode borders
-				// overlap, preventing a double-border effect.  Unfortunately, difficult to measure the border
-				// width of either anchor or popup because in both cases the border may be on an inner node.
-				if(/^(above|below)/.test(positions[0])){
-					var anchorBorder = domGeometry.getBorderExtents(anchor),
-						anchorChildBorder = anchor.firstChild ? domGeometry.getBorderExtents(anchor.firstChild) : {t:0,l:0,b:0,r:0},
-						nodeBorder =  domGeometry.getBorderExtents(node),
-						nodeChildBorder = node.firstChild ? domGeometry.getBorderExtents(node.firstChild) : {t:0,l:0,b:0,r:0};
-					aroundNodePos.y += Math.min(anchorBorder.t + anchorChildBorder.t, nodeBorder.t + nodeChildBorder.t);
-					aroundNodePos.h -=  Math.min(anchorBorder.t + anchorChildBorder.t, nodeBorder.t+ nodeChildBorder.t) +
-						Math.min(anchorBorder.b + anchorChildBorder.b, nodeBorder.b + nodeChildBorder.b);
-				}
-			}else{
-				aroundNodePos = anchor;
-			}
-
-			// Compute position and size of visible part of anchor (it may be partially hidden by ancestor nodes w/scrollbars)
-			if(anchor.parentNode){
-				// ignore nodes between position:relative and position:absolute
-				var sawPosAbsolute = domStyle.getComputedStyle(anchor).position == "absolute";
-				var parent = anchor.parentNode;
-				while(parent && parent.nodeType == 1 && parent.nodeName != "BODY"){  //ignoring the body will help performance
-					var parentPos = domGeometry.position(parent, true),
-						pcs = domStyle.getComputedStyle(parent);
-					if(/relative|absolute/.test(pcs.position)){
-						sawPosAbsolute = false;
-					}
-					if(!sawPosAbsolute && /hidden|auto|scroll/.test(pcs.overflow)){
-						var bottomYCoord = Math.min(aroundNodePos.y + aroundNodePos.h, parentPos.y + parentPos.h);
-						var rightXCoord = Math.min(aroundNodePos.x + aroundNodePos.w, parentPos.x + parentPos.w);
-						aroundNodePos.x = Math.max(aroundNodePos.x, parentPos.x);
-						aroundNodePos.y = Math.max(aroundNodePos.y, parentPos.y);
-						aroundNodePos.h = bottomYCoord - aroundNodePos.y;
-						aroundNodePos.w = rightXCoord - aroundNodePos.x;
-					}
-					if(pcs.position == "absolute"){
-						sawPosAbsolute = true;
-					}
-					parent = parent.parentNode;
-				}
-			}			
-
-			var x = aroundNodePos.x,
-				y = aroundNodePos.y,
-				width = "w" in aroundNodePos ? aroundNodePos.w : (aroundNodePos.w = aroundNodePos.width),
-				height = "h" in aroundNodePos ? aroundNodePos.h : (kernel.deprecated("place.around: dijit/place.__Rectangle: { x:"+x+", y:"+y+", height:"+aroundNodePos.height+", width:"+width+" } has been deprecated.  Please use { x:"+x+", y:"+y+", h:"+aroundNodePos.height+", w:"+width+" }", "", "2.0"), aroundNodePos.h = aroundNodePos.height);
-
-			// Convert positions arguments into choices argument for _place()
-			var choices = [];
-			function push(aroundCorner, corner){
-				choices.push({
-					aroundCorner: aroundCorner,
-					corner: corner,
-					pos: {
-						x: {
-							'L': x,
-							'R': x + width,
-							'M': x + (width >> 1)
-						}[aroundCorner.charAt(1)],
-						y: {
-							'T': y,
-							'B': y + height,
-							'M': y + (height >> 1)
-						}[aroundCorner.charAt(0)]
-					}
-				})
-			}
-			array.forEach(positions, function(pos){
-				var ltr =  leftToRight;
-				switch(pos){
-					case "above-centered":
-						push("TM", "BM");
-						break;
-					case "below-centered":
-						push("BM", "TM");
-						break;
-					case "after-centered":
-						ltr = !ltr;
-						// fall through
-					case "before-centered":
-						push(ltr ? "ML" : "MR", ltr ? "MR" : "ML");
-						break;
-					case "after":
-						ltr = !ltr;
-						// fall through
-					case "before":
-						push(ltr ? "TL" : "TR", ltr ? "TR" : "TL");
-						push(ltr ? "BL" : "BR", ltr ? "BR" : "BL");
-						break;
-					case "below-alt":
-						ltr = !ltr;
-						// fall through
-					case "below":
-						// first try to align left borders, next try to align right borders (or reverse for RTL mode)
-						push(ltr ? "BL" : "BR", ltr ? "TL" : "TR");
-						push(ltr ? "BR" : "BL", ltr ? "TR" : "TL");
-						break;
-					case "above-alt":
-						ltr = !ltr;
-						// fall through
-					case "above":
-						// first try to align left borders, next try to align right borders (or reverse for RTL mode)
-						push(ltr ? "TL" : "TR", ltr ? "BL" : "BR");
-						push(ltr ? "TR" : "TL", ltr ? "BR" : "BL");
-						break;
-					default:
-						// To assist dijit/_base/place, accept arguments of type {aroundCorner: "BL", corner: "TL"}.
-						// Not meant to be used directly.  Remove for 2.0.
-						push(pos.aroundCorner, pos.corner);
-				}
-			});
-
-			var position = _place(node, choices, layoutNode, {w: width, h: height});
-			position.aroundNodePos = aroundNodePos;
-
-			return position;
-		}
-	};
-
-	/*=====
-	place.__Position = {
-		// x: Integer
-		//		horizontal coordinate in pixels, relative to document body
-		// y: Integer
-		//		vertical coordinate in pixels, relative to document body
-	};
-	place.__Rectangle = {
-		// x: Integer
-		//		horizontal offset in pixels, relative to document body
-		// y: Integer
-		//		vertical offset in pixels, relative to document body
-		// w: Integer
-		//		width in pixels.   Can also be specified as "width" for backwards-compatibility.
-		// h: Integer
-		//		height in pixels.   Can also be specified as "height" for backwards-compatibility.
-	};
-	=====*/
-
-	return dijit.place = place;	// setting dijit.place for back-compat, remove for 2.0
-});
-
-/** @module xide/popup **/
-define('xide/popup',[
-    "dojo/dom-geometry", // domGeometry.isBodyLtr
-    "dojo/dom-style", // domStyle.set
-    "dojo/_base/lang", // lang.hitch
-    "dijit/place",
-    "xide/$",
-    "dcl/dcl"
-], function (domGeometry, domStyle,lang,place,$,dcl) {
-    /**
-     * jQuery port of dijit/popup and deals with native HTML elements only.
-     * @class module:xide/popup
-     */
-    var instance = null;
-    var Module = dcl(null, {
-        // _stack: dijit/_WidgetBase[]
-        //		Stack of currently popped up widgets.
-        //		(someone opened _stack[0], and then it opened _stack[1], etc.)
-        _stack: [],
-        // _beginZIndex: Number
-        //		Z-index of the first popup.   (If first popup opens other
-        //		popups they get a higher z-index.)
-        _beginZIndex: 1000,
-        _idGen: 1,
-        _repositionAll: function(){
-            // summary:
-            //		If screen has been scrolled, reposition all the popups in the stack.
-            //		Then set timer to check again later.
-
-            if(this._firstAroundNode){	// guard for when clearTimeout() on IE doesn't work
-                var oldPos = this._firstAroundPosition,
-                    newPos = domGeometry.position(this._firstAroundNode, true),
-                    dx = newPos.x - oldPos.x,
-                    dy = newPos.y - oldPos.y;
-
-                if(dx || dy){
-                    this._firstAroundPosition = newPos;
-                    for(var i = 0; i < this._stack.length; i++){
-                        var style = this._stack[i].wrapper.style;
-                        style.top = (parseFloat(style.top) + dy) + "px";
-                        if(style.right == "auto"){
-                            style.left = (parseFloat(style.left) + dx) + "px";
-                        }else{
-                            style.right = (parseFloat(style.right) - dx) + "px";
-                        }
-                    }
-                }
-
-                this._aroundMoveListener = setTimeout(lang.hitch(this, "_repositionAll"), dx || dy ? 10 : 50);
-            }
-        },
-        /**
-         * Initialization for widgets that will be used as popups.
-         * Puts widget inside a wrapper DIV (if not already in one),and returns pointer to that wrapper DIV.
-         * @param node
-         * @returns {HTMLElement}
-         * @private
-         */
-        _createWrapper: function(node,args){
-            var wrapper = $(node).data('_popupWrapper');
-            var owner = $(node).data('owner') || (_.isObject(args) && args.owner ? args.owner : null);
-            if(!wrapper){
-                var $wrapper = $("<div class='xPopup' style='display:none' role='region'></div>" );
-                $('body').append(wrapper);
-                $wrapper.append($(node));
-                wrapper = $wrapper[0];
-                var s = node.style;
-                s.display = "";
-                s.visibility = "";
-                s.position = "";
-                s.top = "0px";
-                if(owner){
-                    if(owner._on){
-                        owner._on('destroy',function(e){
-                            $wrapper.remove();
-                        });
-                    }
-                }
-                $(node).data('_popupWrapper',wrapper);
-            }
-            return wrapper;
-        },
-        /**
-         * Moves the popup widget off-screen.
-         * Do not use this method to hide popups when not in use, because
-         * that will create an accessibility issue: the offscreen popup is
-         * still in the tabbing order.
-         * @param node {HTMLElement}
-         * @returns {*}
-         */
-        moveOffScreen: function(node,args){
-            // Create wrapper if not already there
-            var wrapper = this._createWrapper(node,args);
-            // Besides setting visibility:hidden, move it out of the viewport, see #5776, #10111, #13604
-            var ltr = true,
-                style = {
-                    visibility: "hidden",
-                    top: "-9999px",
-                    display: ""
-                };
-            style[ltr ? "left" : "right"] = "-9999px";
-            style[ltr ? "right" : "left"] = "auto";
-            $(wrapper).css(style);
-            return wrapper;
-        },
-        /**
-         * Hide this popup widget (until it is ready to be shown).
-         * Initialization for widgets that will be used as popups.
-         * Also puts widget inside a wrapper DIV (if not already in one)
-         * If popup widget needs to layout it should
-         * do so when it is made visible, and popup._onShow() is called.
-         * @param widget {HTMLElement}
-         */
-        hide: function(widget,args){
-            // Create wrapper if not already there
-            var wrapper = this._createWrapper(widget,args);
-            $(wrapper).css({
-                display: "none",
-                height: "auto",			// Open() may have limited the height to fit in the viewport,
-                overflowY: "visible",	// and set overflowY to "auto".
-                border: ""			// Open() may have moved border from popup to wrapper.
-            });
-            // Open() may have moved border from popup to wrapper.  Move it back.
-            var node = widget;
-            if("_originalStyle" in node){
-                node.style.cssText = node._originalStyle;
-            }
-        },
-        getTopPopup: function(){
-            // summary:
-            //		Compute the closest ancestor popup that's *not* a child of another popup.
-            //		Ex: For a TooltipDialog with a button that spawns a tree of menus, find the popup of the button.
-            var stack = this._stack;
-            for(var pi = stack.length - 1; pi > 0 && stack[pi].parent === stack[pi - 1].widget; pi--){
-                /* do nothing, just trying to get right value for pi */
-            }
-            return stack[pi];
-        },
-        /**
-         * Popup the widget at the specified position
-         * example:
-         *   opening at the mouse position
-         *      popup.open({popup: menuWidget, x: evt.pageX, y: evt.pageY});
-         *
-         * example:
-         *  opening the widget as a dropdown
-         *      popup.open({parent: this, popup: menuWidget, around: this.domNode, onClose: function(){...}});
-         *
-         *  Note that whatever widget called dijit/popup.open() should also listen to its own _onBlur callback
-         *  (fired from _base/focus.js) to know that focus has moved somewhere else and thus the popup should be closed.
-         * @param args
-         * @returns {*}
-         */
-        open: function(args){
-            // summary:
-            //		Popup the widget at the specified position
-            //
-
-            var last = null;
-
-
-
-            var isLTR = true;
-            var self = this,
-                stack = this._stack,
-                widget = args.popup,
-                node = args.popup,
-                orient = args.orient || ["below", "below-alt", "above", "above-alt"],
-                ltr = args.parent ? args.parent.isLeftToRight() : isLTR,
-                around = args.around,
-                owner = $(node).data('owner'),
-                extraClass = args.extraClass || "",
-                id = (args.around && args.around.id) ? (args.around.id + "_dropdown") : ("popup_" + this._idGen++);
-
-            // If we are opening a new popup that isn't a child of a currently opened popup, then
-            // close currently opened popup(s).   This should happen automatically when the old popups
-            // gets the _onBlur() event, except that the _onBlur() event isn't reliable on IE, see [22198].
-            while(stack.length && (!args.parent || $.contains(args.parent.domNode,stack[stack.length - 1].widget.domNode))){
-                this.close(stack[stack.length - 1].widget);
-            }
-
-            // Get pointer to popup wrapper, and create wrapper if it doesn't exist.  Remove display:none (but keep
-            // off screen) so we can do sizing calculations.
-            var wrapper = this.moveOffScreen(widget,args);
-            var $wrapper = $(wrapper);
-            // Limit height to space available in viewport either above or below aroundNode (whichever side has more
-            // room), adding scrollbar if necessary. Can't add scrollbar to widget because it may be a <table> (ex:
-            // dijit/Menu), so add to wrapper, and then move popup's border to wrapper so scroll bar inside border.
-            var maxHeight, popupSize = domGeometry.position(node);
-            if("maxHeight" in args && args.maxHeight != -1){
-                maxHeight = args.maxHeight || Infinity;	// map 0 --> infinity for back-compat of _HasDropDown.maxHeight
-            }else{
-                var viewport = {
-                    t:0,
-                    l:0,
-                    h:$(window).height(),
-                    w:$(window).width()
-                };
-                var aroundPos = around ? domGeometry.position(around, false) : {y: args.y - (args.padding||0), h: (args.padding||0) * 2};
-                maxHeight = Math.floor(Math.max(aroundPos.y, viewport.h - (aroundPos.y + aroundPos.h)));
-            }
-            //maxHeight = 300;
-            if(popupSize.h > maxHeight){
-                // Get style of popup's border.  Unfortunately domStyle.get(node, "border") doesn't work on FF or IE,
-                // and domStyle.get(node, "borderColor") etc. doesn't work on FF, so need to use fully qualified names.
-                var cs = domStyle.getComputedStyle(node),
-                    borderStyle = cs.borderLeftWidth + " " + cs.borderLeftStyle + " " + cs.borderLeftColor;
-
-                $wrapper.css({
-                    'overflow-y': "scroll",
-                    height: maxHeight + "px",
-                    border: borderStyle	// so scrollbar is inside border
-                });
-                node._originalStyle = node.style.cssText;
-                node.style.border = "none";
-            }
-            $wrapper.attr({
-                id: id,
-                "class": "xPopup " + (widget.baseClass || widget["class"] || "").split(" ")[0] + "Popup" + ' ' + (args.css ? args.css : ""),
-                dijitPopupParent: args.parent ? args.parent.id : ""
-            });
-            $wrapper.css('z-index',this._beginZIndex + stack.length);
-            if(stack.length === 0 && around){
-                // First element on stack. Save position of aroundNode and setup listener for changes to that position.
-                this._firstAroundNode = around;
-                //this._firstAroundPosition = domGeometry.position(around, true);
-                var offset = $(around).offset();
-                this._firstAroundPosition = {
-                    w:$(around).width(),
-                    h:$(around).height(),
-                    x:offset.left,
-                    y:offset.top
-                };
-                //this._aroundMoveListener = setTimeout(lang.hitch(this, "_repositionAll"), 50);
-                this._aroundMoveListener = setTimeout(function(){
-                    self._repositionAll();
-                }, 50);
-            }
-
-            // position the wrapper node and make it visible
-            var layoutFunc = null ; //widget.orient ? lang.hitch(widget, "orient") : null;
-            var best = around ?
-                place.around(wrapper, around, orient, ltr, layoutFunc) :
-                place.at(wrapper, args, orient == 'R' ? ['TR', 'BR', 'TL', 'BL'] : ['TL', 'BL', 'TR', 'BR'], args.padding,
-                    layoutFunc);
-
-            wrapper.style.visibility = "visible";
-            node.style.visibility = "visible";	// counteract effects from _HasDropDown
-
-
-            var handlers = [];
-            $(wrapper).on('keydown',function(evt){
-                if(evt.keyCode == 27 && args.onCancel){//esape
-                    evt.stopPropagation();
-                    evt.preventDefault();
-                    args.onCancel();
-                }else if(evt.keyCode == 9){//tab
-                    evt.stopPropagation();
-                    evt.preventDefault();
-                    var topPopup = self.getTopPopup();
-                    if(topPopup && topPopup.onCancel){
-                        topPopup.onCancel();
-                    }
-                }
-            });
-            // watch for cancel/execute events on the popup and notify the caller
-            // (for a menu, "execute" means clicking an item)
-            if(widget.onCancel && args.onCancel){
-                handlers.push(widget.on("cancel", args.onCancel));
-            }
-
-            $(node).css('display','block');
-            /*
-             handlers.push(widget.on(widget.onExecute ? "execute" : "change", lang.hitch(this, function(){
-             var topPopup = this.getTopPopup();
-             if(topPopup && topPopup.onExecute){
-             topPopup.onExecute();
-             }
-             })));
-             */
-            stack.push({
-                widget: widget,
-                wrapper: wrapper,
-                parent: args.parent,
-                onExecute: args.onExecute,
-                onCancel: args.onCancel,
-                onClose: args.onClose,
-                handlers: handlers
-            });
-            if(widget.onOpen){
-                // TODO: in 2.0 standardize onShow() (used by StackContainer) and onOpen() (used here)
-                widget.onOpen(best);
-            }
-            $(wrapper).addClass(extraClass);
-            return best;
-        },
-        close: function(/*Widget?*/ popup){
-            // summary:
-            //		Close specified popup and any popups that it parented.
-            //		If no popup is specified, closes all popups.
-            var stack = this._stack;
-            // Basically work backwards from the top of the stack closing popups
-            // until we hit the specified popup, but IIRC there was some issue where closing
-            // a popup would cause others to close too.  Thus if we are trying to close B in [A,B,C]
-            // closing C might close B indirectly and then the while() condition will run where stack==[A]...
-            // so the while condition is constructed defensively.
-            while((popup && _.some(stack, function(elem){
-                return elem.widget == popup;
-            })) ||
-
-            (!popup && stack.length)){
-                var top = stack.pop(),
-                    widget = top.widget,
-                    onClose = top.onClose;
-
-                if(widget.onClose){
-                    widget.onClose();
-                }
-
-                var h;
-
-                while(h = top.handlers.pop()){
-                    h.remove();
-                }
-
-                // Hide the widget and it's wrapper unless it has already been destroyed in above onClose() etc.
-                if(widget && widget){
-                    this.hide(widget);
-                }
-                if(onClose){
-                    onClose();
-                }
-            }
-
-            $(popup).css('display','none');
-
-            if(stack.length === 0 && this._aroundMoveListener){
-                clearTimeout(this._aroundMoveListener);
-                this._firstAroundNode = this._firstAroundPosition = this._aroundMoveListener = null;
-            }
-        }
-    });
-    instance  = new Module();
-    return instance;
-});
-/** @module xide/widgets/_MenuMixin **/
-define('xide/widgets/_MenuMixin4',[
-    'dcl/dcl',
-    'xide/types',
-    'xide/utils',
-    'xide/registry',
-    'xaction/Action',
-    'xaction/DefaultActions',
-    "xide/popup"
-], function (dcl, types, utils, registry, Action, DefaultActions,popup) {
-
-    var createCallback = function (func, menu, item) {
-        return function (event) {
-            /*
-            if(item) {
-
-                var _parent = item.parent();
-                _parent.data('open', false);
-                _parent[0] && popup.close(_parent[0]);
-
-            }
-            */
-            return func(event, menu, item);
-        };
-    };
-
-    var ACTION = types.ACTION;
-    var _debug = false;
-    var _debugWidgets = false;
-    /**
-     * Mixin which provides utils for menu & action related render tasks.
-     * @mixin module:xide/widgets/_MenuMixin
-     */
-    var _Module = dcl(null, {
-        actionStores: null,
-        correctSubMenu: false,
-        _didInit: null,
-        actionFilter: null,
-        hideSubsFirst: false,
-        collapseSmallGroups: 0,
-        containerClass: '',
-        lastTree:null,
-        onActionAdded: function (actions) {
-            this.setActionStore(this.getActionStore(), actions.owner || this, false, true, actions);
-        },
-        onActionRemoved: function (evt) {
-            this.clearAction(evt.target);
-        },
-        clearAction: function (action) {
-            var self = this;
-            if (action) {
-                var actionVisibility = action.getVisibility !== null ? action.getVisibility(self.visibility) : {};
-                if (actionVisibility) {
-                    var widget = actionVisibility.widget;
-                    widget && action.removeReference && action.removeReference(widget);
-                    if (widget && widget.destroy) {
-                        widget.destroy();
-                    }
-                    delete actionVisibility.widget;
-                    actionVisibility.widget = null;
-                }
-            }
-        },
-        removeCustomActions: function () {
-            var oldStore = this.store;
-            var oldActions = oldStore._find({
-                    custom: true
-                });
-
-            var menuData = this.menuData;
-            _.each(oldActions, function (action) {
-                oldStore.removeSync(action.command);
-                var oldMenuItem = _.find(menuData, {
-                    command: action.command
-                });
-                oldMenuItem && menuData.remove(oldMenuItem);
-            });
-        },
-        /**
-         * Return a field from the object's given visibility store
-         * @param action
-         * @param field
-         * @param _default
-         * @returns {*}
-         */
-        getVisibilityField: function (action, field, _default) {
-            var actionVisibility = action.getVisibility !== null ? action.getVisibility(this.visibility) : {};
-            return actionVisibility[field] !== null ? actionVisibility[field] : action[field] || _default;
-        },
-        /**
-         * Sets a field in the object's given visibility store
-         * @param action
-         * @param field
-         * @param value
-         * @returns {*}
-         */
-        setVisibilityField: function (action, field, value) {
-            var _default = {};
-            if (action.getVisibility) {
-                var actionVisibility = action.getVisibility(this.visibility) || _default;
-                actionVisibility[field] = value;
-            }
-            return actionVisibility;
-        },
-        shouldShowAction: function (action) {
-            if (this.getVisibilityField(action, 'show') === false) {
-                return false;
-            } else if (action.getVisibility && action.getVisibility(this.visibility) == null) {
-                return false;
-            }
-            return true;
-        },
-        addActionStore: function (store) {
-            if (!this.actionStores) {
-                this.actionStores = [];
-            }
-            if (this.actionStores.indexOf(store) == -1) {
-                this.actionStores.push(store);
-            }
-        },
-        /**
-
-         tree structure :
-
-         {
-            root: {
-                Block:{
-                    grouped:{
-                        Step:[action,action]
-                    }
-                }
-            },
-            rootActions: string['File','Edit',...],
-
-            allActionPaths: string[command],
-
-            allActions:[action]
-         }
-
-         * @param store
-         * @param owner
-         * @returns {{root: {}, rootActions: Array, allActionPaths: *, allActions: *}}
-         */
-        constructor: function (options, node) {
-            this.target = node;
-            utils.mixin(this, options);
-        },
-        onClose: function (e) {
-            this._rootMenu && this._rootMenu.parent().removeClass('open');
-        },
-        onOpen: function () {
-            this._rootMenu && this._rootMenu.parent().addClass('open');
-        },
-        isLeftToRight: function () {
-            return false;
-        },
-        init: function (opts) {
-            if (this._didInit) {
-                return;
-            }
-            this._didInit = true;
-            var options = this.getDefaultOptions();
-            options = $.extend({}, options, opts);
-            var self = this;
-            var root = $(document);
-            this.__on(root, 'click', null, function (e) {
-                if (!self.isOpen) {
-                    return;
-                }
-                self.isOpen = false;
-                self.onClose(e);
-                $('.dropdown-context').css({
-                    display: ''
-                }).find('.drop-left').removeClass('drop-left');
-            });
-            if (options.preventDoubleContext) {
-                this.__on(root, 'contextmenu', '.dropdown-context', function (e) {
-                    e.preventDefault();
-                });
-            }
-            this.__on(root, 'mouseenter', '.dropdown-submenu', function (e) {
-                try {
-                    var _root = $(e.currentTarget);
-                    var $sub = _root.find('.dropdown-context-sub:first');
-                    var didPopup = false;
-                    if ($sub.length === 0) {
-                        $sub = _root.data('sub');
-                        if ($sub) {
-                            didPopup = true;
-                        } else {
-                            return;
-                        }
-                    }
-                    var data = $sub.data('data');
-                    var level = data ? data[0].level : 0;
-                    var isFirst = level === 1;
-                    if (self.menu) {
-                        if (!$.contains(self.menu[0], _root[0])) {
-                            return;
-                        }
-                    }
-
-                    var _disabled = _root.hasClass('disabled');
-                    if (_disabled) {
-                        $sub.css('display', 'none');
-                        return;
-                    } else {
-                        $sub.css('display', 'block');
-                    }
-
-                    if (isFirst) {
-                        $sub.css('display', 'initial');
-                        $sub.css('position', 'initial');
-                        function close() {
-                            var _wrapper = $sub.data('_popupWrapper');
-                            popup.close({
-                                domNode: $sub[0],
-                                _popupWrapper: _wrapper
-                            });
-                        }
-
-                        if (!didPopup) {
-                            _root.data('sub', $sub);
-                            $sub.data('owner', self);
-                            $sub.on('mouseleave', function () {
-                                close();
-                            });
-                            _root.on('mouseleave', function () {
-                            });
-                        }
-
-                        popup.open({
-                            //parent: self,
-                            popup: $sub[0],
-                            around: _root[0],
-                            orient: ['below', 'above'],
-                            maxHeight: -1,
-                            owner: self,
-                            onExecute: function () {
-                                self.closeDropDown(true);
-                            },
-                            onCancel: function () {
-                                close();
-                            },
-                            onClose: function () {
-                                //console.log('close');
-                                //domAttr.set(self._popupStateNode, "popupActive", false);
-                                //domClass.remove(self._popupStateNode, "dijitHasDropDownOpen");
-                                //self._set("_opened", false);	// use set() because _CssStateMixin is watching
-                            }
-                        });
-                        return;
-                    } else {
-                        if (!$sub.data('didSetup')) {
-                            $sub.data('didSetup', true);
-                            _root.on('mouseleave', function () {
-                                $sub.css('display', '');
-                            });
-                        }
-                    }
-
-                    //reset top
-                    $sub.css({
-                        top: 0
-                    });
-
-                    var autoH = $sub.height() + 0;
-                    var totalH = $('html').height();
-                    var pos = $sub.offset();
-                    var overlapYDown = totalH - (pos.top + autoH);
-                    if ((pos.top + autoH) > totalH) {
-                        $sub.css({
-                            top: overlapYDown - 30
-                        }).fadeIn(options.fadeSpeed);
-                    }
-                    ////////////////////////////////////////////////////////////
-                    var subWidth = $sub.width(),
-                        subLeft = $sub.offset().left,
-                        collision = (subWidth + subLeft) > window.innerWidth;
-
-                    if (collision) {
-                        $sub.addClass('drop-left');
-                    }
-                } catch (e) {
-                    logError(e);
-                }
-            });
-        },
-        getDefaultOptions: function () {
-            return {
-                fadeSpeed: 0,
-                above: 'auto',
-                left: 'auto',
-                preventDoubleContext: false,
-                compress: true
-            };
-        },
-        buildMenuItems: function ($menu, data, id, subMenu, addDynamicTag) {
-            //this._debugMenu && console.log('build - menu items ', arguments);
-            var linkTarget = '',
-                self = this,
-                visibility = this.visibility;
-
-            for (var i = 0; i < data.length; i++) {
-                var item = data[i],
-                    $sub,
-                    widget = item.widget;
-
-                if (typeof item.divider !== 'undefined' && !item.widget) {
-                    var divider = '<li class="divider';
-                    divider += (addDynamicTag) ? ' dynamic-menu-item' : '';
-                    divider += '"></li>';
-                    item.widget = divider;
-                    $menu.append(divider);
-                    divider.data('item',item);
-
-                } else if (typeof item.header !== 'undefined' && !item.widget) {
-                    var header = item.vertical ? '<li class="divider-vertical' : '<li class="nav-header testClass';
-                    header += (addDynamicTag) ? ' dynamic-menu-item' : '';
-                    header += '">' + item.header + '</li>';
-                    header = $(header);
-                    item.widget = header;
-                    $menu.append(header);
-                    header.data('item',item);
-
-                } else if (typeof item.menu_item_src !== 'undefined') {
-
-                } else {
-
-                    if (!widget && typeof item.target !== 'undefined') {
-                        linkTarget = ' target="' + item.target + '"';
-                    }
-                    if (typeof item.subMenu !== 'undefined' && !widget) {
-                        var sub_menu = '<li tabindex="-1" class="dropdown-submenu ' + this.containerClass;
-                        sub_menu += (addDynamicTag) ? ' dynamic-menu-item' : '';
-                        sub_menu += '"><a>';
-
-                        if (typeof item.icon !== 'undefined') {
-                            sub_menu += '<span class="icon ' + item.icon + '"></span> ';
-                        }
-                        sub_menu += item.text + '';
-                        sub_menu += '</a></li>';
-                        $sub = $(sub_menu);
-
-                    } else {
-                        if (!widget) {
-                            if (item.render) {
-                                $sub = item.render(item, $menu);
-                            } else {
-                                var element = '<li tabindex="-1" class="" ';
-                                element += (addDynamicTag) ? ' class="dynamic-menu-item"' : '';
-                                element += '><a >';
-                                if (typeof data[i].icon !== 'undefined') {
-                                    element += '<span class="' + item.icon + '"></span> ';
-                                }
-                                element += item.text + '</a></li>';
-                                $sub = $(element);
-                                if (item.postRender) {
-                                    item.postRender($sub);
-                                }
-                            }
-                        }
-                    }
-
-                    if (typeof item.action !== 'undefined' && !item.widget) {
-                        if (item.addClickHandler && item.addClickHandler() === false) {
-                        } else {
-                            var $action = item.action;
-                            if ($sub && $sub.find) {
-                                var trigger = $sub.find('a');
-                                trigger.addClass('context-event');
-                                var handler = createCallback($action, item, $sub);
-                                trigger.data('handler',handler).on('click',handler);
-                            }
-                        }
-                    }
-
-                    if ($sub && !widget) {
-
-                        item.widget = $sub;
-                        $sub.menu = $menu;
-                        $sub.data('item', item);
-
-                        item.$menu = $menu;
-                        item.$sub = $sub;
-
-                        item._render = function () {
-                            if (item.index === 0) {
-                                this.$menu.prepend(this.$sub);
-                            } else {
-                                this.$menu.append(this.$sub);
-                            }
-                        };
-                        if (!item.lazy) {
-                            item._render();
-                        }
-                    }
-
-                    if ($sub) {
-                        $sub.attr('level', item.level);
-                    }
-
-                    if (typeof item.subMenu != 'undefined' && !item.subMenuData) {
-                        var subMenuData = self.buildMenu(item.subMenu, id, true);
-                        $menu.subMenuData = subMenuData;
-                        item.subMenuData = subMenuData;
-                        $menu.find('li:last').append(subMenuData);
-                        subMenuData.attr('level', item.subMenu.level);
-                        if (self.hideSubsFirst) {
-                            subMenuData.css('display', 'none');
-                        }
-                        $menu.data('item', item);
-                    } else {
-                        if (item.subMenu && item.subMenuData) {
-                            this.buildMenuItems(item.subMenuData, item.subMenu, id, true);
-                        }
-                    }
-                }
-
-                if (!$menu._didOnClick) {
-                    $menu.on('click', '.dropdown-menu > li > input[type="checkbox"] ~ label, .dropdown-menu > li > input[type="checkbox"], .dropdown-menu.noclose > li', function (e) {
-                        e.stopPropagation();
-                    });
-                    $menu._didOnClick = true;
-                }
-
-            }
-            return $menu;
-        },
-        buildMenu: function (data, id, subMenu) {
-            var subClass = (subMenu) ? (' dropdown-context-sub ' + this.containerClass ) : ' scrollable-menu ';
-            var $menu = $('<ul tabindex="-1" aria-expanded="true" role="menu" class="dropdown-menu dropdown-context' + subClass + '" id="dropdown-' + id + '"></ul>');
-            if (!subMenu) {
-                this._rootMenu = $menu;
-            }
-            var result = this.buildMenuItems($menu, data, id, subMenu);
-            $menu.data('data', data);
-            return result;
-        },
-        createNewAction: function (command) {
-            var segments = command.split('/');
-            var lastSegment = segments[segments.length - 1];
-            var action = new Action({
-                command: command,
-                label: lastSegment,
-                group: lastSegment,
-                dynamic: true
-            });
-            return action;
-        },
-        findAction: function (command) {
-            var stores = this.actionStores,
-                action = null;
-            _.each(stores, function (store) {
-                var _action = store ? store.getSync(command) : null;
-                if (_action) {
-                    action = _action;
-                }
-            });
-
-            return action;
-        },
-        getAction: function (command, store) {
-            store = store || this.store;
-            var action = null;
-            if (store) {
-                action = this.findAction(command);
-                if (!action) {
-                    action = this.createNewAction(command);
-                }
-            }
-            return action;
-        },
-        getActions: function (query) {
-            var result = [];
-            var stores = this.actionStores,
-                visibility = this.visibility;
-
-            query = query || this.actionFilter;
-            _.each(stores, function (store) {
-                store && (result = result.concat(store._find(query)));
-                //store && (result2= result2.concat(store._find(query)));
-            });
-            result = result.filter(function (action) {
-                var actionVisibility = action.getVisibility != null ? action.getVisibility(visibility) : {};
-                return !(action.show === false || actionVisibility === false || actionVisibility.show === false);
-            });
-            /*
-            console.log('action: ',[result,result2]);
-            */
-            return result;
-        },
-        toActions: function (commands, store) {
-            var result = [],
-                self = this;
-            _.each(commands, function (path) {
-                var _action = self.getAction(path, store);
-                _action && result.push(_action);
-            });
-            return result;
-        },
-        onRunAction: function (action, owner, e) {
-            var command = action.command;
-            action = this.findAction(command);
-            return DefaultActions.defaultHandler.apply(action.owner || owner, [action, e]);
-        },
-        getActionProperty: function (action, visibility, prop) {
-            var value = prop in action ? action[prop] : null;
-            if (visibility && prop in visibility) {
-                value = visibility[prop];
-            }
-            return value;
-        },
-        toMenuItem: function (action, owner, label, icon, visibility, showKeyCombo, lazy) {
-            var self = this,
-                labelLocalized = self.localize(label),
-                actionType = visibility.actionType || action.actionType;
-
-            var item = {
-                text: labelLocalized,
-                icon: icon,
-                data: action,
-                owner: owner,
-                command: action.command,
-                lazy: lazy,
-                addClickHandler: function () {
-                    return actionType !== types.ACTION_TYPE.MULTI_TOGGLE;
-
-                },
-                render: function (data, $menu) {
-                    if (self.renderItem) {
-                        return self.renderItem(this, data, $menu, this.data, owner, label, icon, visibility, showKeyCombo, lazy);
-                    }
-                    var action = this.data;
-                    var parentAction = action.getParent ? action.getParent() : null;
-                    var closeOnClick = self.getActionProperty(action, visibility, 'closeOnClick');
-                    var keyComboString = ' \n';
-                    var element = null;
-                    if (action.keyboardMappings && showKeyCombo !== false) {
-                        var mappings = action.keyboardMappings;
-                        var keyCombos = mappings[0].keys;
-                        if (keyCombos && keyCombos.length) {
-                            keyComboString += '' + keyCombos.join(' | ').toUpperCase() + '';
-                        }
-                    }
-
-                    if (actionType === types.ACTION_TYPE.MULTI_TOGGLE) {
-                        element = '<li tabindex="-1" class="" >';
-                        var id = action._store.id + '_' + action.command + '_' + self.id;
-                        var checked = action.get('value');
-                        //checkbox-circle
-                        element += '<div class="action-checkbox checkbox checkbox-success ">';
-                        element += '<input id="' + id + '" type="checkbox" ' + (checked === true ? 'checked' : '') + '>';
-                        element += '<label for="' + id + '">';
-                        element += self.localize(data.text);
-                        element += '</label>';
-                        element += '<span style="max-width:100px;margin-right:20px" class="text-muted pull-right ellipsis keyboardShortCut">' + keyComboString + '</span>';
-                        element += '</li>';
-
-                        $menu.addClass('noclose');
-                        var result = $(element);
-                        var checkBox = result.find('INPUT');
-                        checkBox.on('change', function (e) {
-                            action._originReference = data;
-                            action._originEvent = e;
-                            action.set('value', checkBox[0].checked);
-                            action._originReference = null;
-                        });
-                        self.setVisibilityField(action, 'widget', data);
-                        return result;
-                    }
-                    closeOnClick === false && $menu.addClass('noclose');
-                    if (actionType === types.ACTION_TYPE.SINGLE_TOGGLE && parentAction) {
-                        var value = action.value || action.get('value');
-                        var parentValue = parentAction.get('value');
-                        if (value == parentValue) {
-                            icon = 'fa fa-check';
-                        }
-                    }
-
-                    var title = data.text || labelLocalized || self.localize(action.title);
-
-
-                    //default:
-                    element = '<li tabindex="-1"><a title="' + title + ' ' + keyComboString + '">';
-                    var _icon = data.icon || icon;
-
-                    //icon
-                    if (typeof _icon !== 'undefined') {
-                        //already html string
-                        if (/<[a-z][\s\S]*>/i.test(_icon)) {
-                            element += _icon;
-                        } else {
-                            element += '<span class="icon ' + _icon + '"/> ';
-                        }
-                    }
-                    element += data.text;
-                    element += '<span style="max-width:100px" class="text-muted pull-right ellipsis keyboardShortCut">' + (showKeyCombo ? keyComboString : "") + '</span></a></li>';
-                    self.setVisibilityField(action, 'widget', data);
-                    return $(element);
-                },
-                get: function (key) {
-                },
-                set: function (key, value) {
-                    //_debugWidgets && _.isString(value) && console.log('set ' + key + ' ' + value);
-                    var widget = this.widget;
-
-                    function updateCheckbox(widget, checked) {
-                        var what = widget.find("input[type=checkbox]");
-                        if (what) {
-                            if (checked) {
-                                what.prop("checked", true);
-                            } else {
-                                what.removeAttr('checked');
-                            }
-                        }
-                    }
-
-                    if (widget) {
-                        if (key === 'disabled') {
-                            if (widget.toggleClass) {
-                                widget.toggleClass('disabled', value);
-                            }
-                        }
-                        if (key === 'icon') {
-                            var _iconNode = widget.find('.icon');
-                            if (_iconNode) {
-                                _iconNode.attr('class', 'icon');
-                                this._lastIcon = this.icon;
-                                this.icon = value;
-                                _iconNode.addClass(value);
-                            }
-                        }
-                        if (key === 'value') {
-                            if (actionType === types.ACTION_TYPE.MULTI_TOGGLE ||
-                                actionType === types.ACTION_TYPE.SINGLE_TOGGLE) {
-                                updateCheckbox(widget, value);
-                            }
-                        }
-                    }
-                },
-                action: function (e, data, menu) {
-                    _debug && console.log('menu action', data);
-                    return self.onRunAction(data.data, owner, e);
-                },
-                destroy: function () {
-                    if (this.widget) {
-                        this.widget.remove();
-                    }
-                }
-            };
-            return item;
-        },
-        attach: function (selector, data) {
-            this.target = selector;
-            this.menu = this.addContext(selector, data);
-            this.domNode = this.menu[0];
-            this.id = this.domNode.id;
-            registry.add(this);
-            return this.menu;
-        },
-        addReference: function (action, item) {
-            if (action.addReference) {
-                action.addReference(item, {
-                    properties: {
-                        "value": true,
-                        "disabled": true,
-                        "enabled": true
-                    }
-                }, true);
-            }
-        },
-        onDidRenderActions: function (store, owner) {
-            if (owner && owner.refreshActions) {
-                owner.refreshActions();
-            }
-        },
-        getActionData: function (action) {
-            var actionVisibility = action.getVisibility != null ? action.getVisibility(this.visibility) : {};
-            return {
-                label: actionVisibility.label != null ? actionVisibility.label : action.label,
-                icon: actionVisibility.icon != null ? actionVisibility.icon : action.icon,
-                command: actionVisibility.command != null ? actionVisibility.command : action.command,
-                visibility: actionVisibility,
-                group: actionVisibility.group != null ? actionVisibility.group : action.group,
-                tab: actionVisibility.tab != null ? actionVisibility.tab : action.tab,
-                expand: actionVisibility.expand != null ? actionVisibility.expand : false,
-                widget: actionVisibility.widget
-            };
-        },
-        _clearAction: function (action) {
-
-        },
-        _findParentData: function (oldMenuData, parentCommand) {
-            var parent = _.find(oldMenuData, {
-                command: parentCommand
-            });
-            if (parent) {
-                return parent;
-            }
-            for (var i = 0; i < oldMenuData.length; i++) {
-                var data = oldMenuData[i];
-                if (data.subMenu) {
-                    var found = this._findParentData(data.subMenu, parentCommand);
-                    if (found) {
-                        return found;
-                    }
-                }
-            }
-            return null;
-        },
-        _clear: function () {
-            var actions = this.getActions();
-            var store = this.store;
-            if (store) {
-                this.actionStores.remove(store);
-            }
-            var self = this;
-            actions = actions.concat(this._tmpActions);
-            _.each(actions, function (action) {
-                if (action) {
-                    var actionVisibility = action.getVisibility != null ? action.getVisibility(self.visibility) : {};
-                    if (actionVisibility) {
-                        var widget = actionVisibility.widget;
-                        action.removeReference && action.removeReference(widget);
-                        if (widget && widget.destroy) {
-                            widget.destroy();
-                        }
-                        delete actionVisibility.widget;
-                        actionVisibility.widget = null;
-                    }
-                }
-            });
-            this.$navBar && this.$navBar.empty();
-        },
-        buildActionTree: function (store, owner) {
-            var self = this,
-                allActions = self.getActions(),
-                visibility = self.visibility;
-
-            self.wireStore(store, function (evt) {
-                if (evt.type === 'update') {
-                    var action = evt.target;
-                    if (action.refreshReferences) {
-                        action.refreshReferences(evt.property, evt.value);
-                    }
-                }
-            });
-
-            //return all actions with non-empty tab field
-            var tabbedActions = allActions.filter(function (action) {
-                    var _vis = (action.visibility_ || {})[visibility + '_val'] || {};
-                    if (action) {
-                        return _vis.tab || action.tab;
-                    }
-                }),
-
-                //group all tabbed actions : { Home[actions], View[actions] }
-                groupedTabs = _.groupBy(tabbedActions, function (action) {
-                    var _vis = (action.visibility_ || {})[visibility + '_val'] || {};
-                    if (action) {
-                        return _vis.tab || action.tab;
-                    }
-                }),
-                //now flatten them
-                _actionsFlattened = [];
-
-
-            _.each(groupedTabs, function (items) {
-                _actionsFlattened = _actionsFlattened.concat(items);
-            });
-
-            var rootActions = [];
-            _.each(tabbedActions, function (action) {
-                var rootCommand = action.getRoot();
-                rootActions.indexOf(rootCommand) == -1 && rootActions.push(rootCommand);
-            });
-
-            //owner sort of top level
-            store.menuOrder && (rootActions = owner.sortGroups(rootActions, store.menuOrder));
-
-            var tree = {};
-            //stats to count groups per tab
-            var biggestTab = rootActions[0];
-            var nbGroupsBiggest = 0;
-
-            _.each(rootActions, function (level) {
-                // collect all actions at level (File/View/...)
-                var menuActions = owner.getItemsAtBranch(allActions, level);
-                // convert action command strings to Action references
-                var grouped = self.toActions(menuActions, store);
-
-                // expand filter -------------------
-                var addedExpanded = [];
-                var toRemove = [];
-                _.each(grouped, function (action) {
-                    var actionData = self.getActionData(action);
-                    if (actionData.expand) {
-                        var children = action.getChildren();
-                        children && children.length && (addedExpanded = addedExpanded.concat(children));
-                        toRemove.push(action);
-                    }
-                });
-                grouped = grouped.concat(addedExpanded);
-                grouped = grouped.filter(function (action) {
-                    return toRemove.indexOf(action) == -1;
-                });
-                // expand filter ---------------    end
-
-                // group all actions by group
-                var groupedActions = _.groupBy(grouped, function (action) {
-                    var _vis = (action.visibility_ || {})[visibility + '_val'] || {};
-                    if (action) {
-                        return _vis.group || action.group;
-                    }
-                });
-
-                var _actions = [];
-                _.each(groupedActions, function (items, level) {
-                    if (level !== 'undefined') {
-                        _actions = _actions.concat(items);
-                    }
-                });
-
-                //flatten out again
-                menuActions = _.pluck(_actions, 'command');
-                menuActions.grouped = groupedActions;
-                tree[level] = menuActions;
-
-                //update stats
-                if (self.collapseSmallGroups) {
-                    var nbGroups = _.keys(menuActions.grouped).length;
-                    if (nbGroups > nbGroupsBiggest) {
-                        nbGroupsBiggest = nbGroups;
-                        biggestTab = level;
-                    }
-                }
-            });
-
-            //now move over any tab with less than 2 groups to the next bigger tab
-            this.collapseSmallGroups && _.each(tree, function (actions, level) {
-                if (_.keys(actions.grouped).length < self.collapseSmallGroups) {
-                    //append tab groups of the biggest tab
-                    tree[biggestTab] && _.each(actions.grouped, function (group, name) {
-                        tree[biggestTab].grouped[name] = group;
-                    });
-                    //copy manually commands to that tab
-                    tree[biggestTab] && _.each(actions, function (action) {
-                        tree[biggestTab].push(action);
-                    });
-                    tree[biggestTab] && delete tree[level];
-                }
-            });
-            var result = {
-                root: tree,
-                rootActions: rootActions,
-                allActionPaths: _.pluck(allActions, 'command'),
-                allActions: allActions
-            };
-
-            this.lastTree = result;
-            return result;
-        }
-    });
-    var Module = dcl(null, {
-        actionStores: null,
-        correctSubMenu: false,
-        _didInit: null,
-        actionFilter: null,
-        hideSubsFirst: false,
-        collapseSmallGroups: 0,
-        containerClass: '',
-        lastTree:null,
-        ITEM_TAG : "li",
-        CONTAINER_TAG : "ul",
-        ITEM_CLASS : "actionItem",
-        onActionAdded: function (actions) {
-            this.setActionStore(this.getActionStore(), actions.owner || this, false, true, actions);
-        },
-        onActionRemoved: function (evt) {
-            this.clearAction(evt.target);
-        },
-        clearAction: function (action) {
-            var self = this;
-            if (action) {
-                var actionVisibility = action.getVisibility !== null ? action.getVisibility(self.visibility) : {};
-                if (actionVisibility) {
-                    var widget = actionVisibility.widget;
-                    widget && action.removeReference && action.removeReference(widget);
-                    if (widget && widget.destroy) {
-                        widget.destroy();
-                    }
-                    delete actionVisibility.widget;
-                    actionVisibility.widget = null;
-                }
-            }
-        },
-        removeCustomActions: function () {
-            var oldStore = this.store;
-            var oldActions = oldStore._find({
-                custom: true
-            });
-
-            var menuData = this.menuData;
-            _.each(oldActions, function (action) {
-                oldStore.removeSync(action.command);
-                var oldMenuItem = _.find(menuData, {
-                    command: action.command
-                });
-                oldMenuItem && menuData.remove(oldMenuItem);
-            });
-        },
-        /**
-         * Return a field from the object's given visibility store
-         * @param action
-         * @param field
-         * @param _default
-         * @returns {*}
-         */
-        getVisibilityField: function (action, field, _default) {
-            var actionVisibility = action.getVisibility !== null ? action.getVisibility(this.visibility) : {};
-            return actionVisibility[field] !== null ? actionVisibility[field] : action[field] || _default;
-        },
-        /**
-         * Sets a field in the object's given visibility store
-         * @param action
-         * @param field
-         * @param value
-         * @returns {*}
-         */
-        setVisibilityField: function (action, field, value) {
-            var _default = {};
-            if (action.getVisibility) {
-                var actionVisibility = action.getVisibility(this.visibility) || _default;
-                actionVisibility[field] = value;
-            }
-            return actionVisibility;
-        },
-        shouldShowAction: function (action) {
-            if (this.getVisibilityField(action, 'show') === false) {
-                return false;
-            } else if (action.getVisibility && action.getVisibility(this.visibility) == null) {
-                return false;
-            }
-            return true;
-        },
-        addActionStore: function (store) {
-            if (!this.actionStores) {
-                this.actionStores = [];
-            }
-            if (this.actionStores.indexOf(store) == -1) {
-                this.actionStores.push(store);
-            }
-        },
-        /**
-
-         tree structure :
-
-         {
-            root: {
-                Block:{
-                    grouped:{
-                        Step:[action,action]
-                    }
-                }
-            },
-            rootActions: string['File','Edit',...],
-
-            allActionPaths: string[command],
-
-            allActions:[action]
-         }
-
-         * @param store
-         * @param owner
-         * @returns {{root: {}, rootActions: Array, allActionPaths: *, allActions: *}}
-         */
-        constructor: function (options, node) {
-            this.target = node;
-            utils.mixin(this, options);
-        },
-        onClose: function (e) {
-            this._rootMenu && this._rootMenu.parent().removeClass('open');
-        },
-        onOpen: function () {
-            this._rootMenu && this._rootMenu.parent().addClass('open');
-        },
-        isLeftToRight: function () {
-            return false;
-        },
-        init: function (opts) {
-            if (this._didInit) {
-                return;
-            }
-            this._didInit = true;
-            var options = this.getDefaultOptions();
-            options = $.extend({}, options, opts);
-            var self = this;
-            var root = $(document);
-            this.__on(root, 'click', null, function (e) {
-                if (!self.isOpen) {
-                    return;
-                }
-                self.isOpen = false;
-                self.onClose(e);
-                $('.dropdown-context').css({
-                    display: ''
-                }).find('.drop-left').removeClass('drop-left');
-            });
-            if (options.preventDoubleContext) {
-                this.__on(root, 'contextmenu', '.dropdown-context', function (e) {
-                    e.preventDefault();
-                });
-            }
-            this.__on(root, 'mouseenter', '.dropdown-submenu', function (e) {
-                try {
-                    var _root = $(e.currentTarget);
-                    var $sub = _root.find('.dropdown-context-sub:first');
-                    var didPopup = false;
-                    if ($sub.length === 0) {
-                        $sub = _root.data('sub');
-                        if ($sub) {
-                            didPopup = true;
-                        } else {
-                            return;
-                        }
-                    }
-                    var data = $sub.data('data');
-                    var level = data ? data[0].level : 0;
-                    var isFirst = level === 1;
-                    if (self.menu) {
-                        if (!$.contains(self.menu[0], _root[0])) {
-                            return;
-                        }
-                    }
-
-                    var _disabled = _root.hasClass('disabled');
-                    if (_disabled) {
-                        $sub.css('display', 'none');
-                        return;
-                    } else {
-                        $sub.css('display', 'block');
-                    }
-
-                    if (isFirst) {
-                        $sub.css('display', 'initial');
-                        $sub.css('position', 'initial');
-                        function close() {
-                            var _wrapper = $sub.data('_popupWrapper');
-                            popup.close({
-                                domNode: $sub[0],
-                                _popupWrapper: _wrapper
-                            });
-                        }
-
-                        if (!didPopup) {
-                            _root.data('sub', $sub);
-                            $sub.data('owner', self);
-                            $sub.on('mouseleave', function () {
-                                close();
-                            });
-                            _root.on('mouseleave', function () {
-                            });
-                        }
-
-                        popup.open({
-                            //parent: self,
-                            popup: $sub[0],
-                            around: _root[0],
-                            orient: ['below', 'above'],
-                            maxHeight: -1,
-                            owner: self,
-                            onExecute: function () {
-                                self.closeDropDown(true);
-                            },
-                            onCancel: function () {
-                                close();
-                            },
-                            onClose: function () {
-                                //console.log('close');
-                                //domAttr.set(self._popupStateNode, "popupActive", false);
-                                //domClass.remove(self._popupStateNode, "dijitHasDropDownOpen");
-                                //self._set("_opened", false);	// use set() because _CssStateMixin is watching
-                            }
-                        });
-                        return;
-                    } else {
-                        if (!$sub.data('didSetup')) {
-                            $sub.data('didSetup', true);
-                            _root.on('mouseleave', function () {
-                                $sub.css('display', '');
-                            });
-                        }
-                    }
-
-                    //reset top
-                    $sub.css({
-                        top: 0
-                    });
-
-                    var autoH = $sub.height() + 0;
-                    var totalH = $('html').height();
-                    var pos = $sub.offset();
-                    var overlapYDown = totalH - (pos.top + autoH);
-                    if ((pos.top + autoH) > totalH) {
-                        $sub.css({
-                            top: overlapYDown - 30
-                        }).fadeIn(options.fadeSpeed);
-                    }
-                    ////////////////////////////////////////////////////////////
-                    var subWidth = $sub.width(),
-                        subLeft = $sub.offset().left,
-                        collision = (subWidth + subLeft) > window.innerWidth;
-
-                    if (collision) {
-                        $sub.addClass('drop-left');
-                    }
-                } catch (e) {
-                    logError(e);
-                }
-            });
-        },
-        getDefaultOptions: function () {
-            return {
-                fadeSpeed: 0,
-                above: 'auto',
-                left: 'auto',
-                preventDoubleContext: false,
-                compress: true
-            };
-        },
-        buildMenuItems: function ($menu, data, id, subMenu, addDynamicTag) {
-            //this._debugMenu && console.log('build - menu items ', arguments);
-            var linkTarget = '',
-                self = this,
-                visibility = this.visibility;
-
-            var ITEM_TAG_START = '<' + this.ITEM_TAG + ' ';
-            var ITEM_TAG_END = '</' + this.ITEM_TAG + '>';
-            var ITEM_CLASS = this.ITEM_CLASS;
-            for (var i = 0; i < data.length; i++) {
-                var item = data[i],
-                    $sub,
-                    widget = item.widget;
-
-                if (typeof item.divider !== 'undefined' && !item.widget) {
-                    var divider = ITEM_TAG_START + 'class="divider';
-                    divider += (addDynamicTag) ? ' dynamic-menu-item' : '';
-                    divider += '">' + ITEM_TAG_END;
-                    item.widget = divider;
-                    $menu.append(divider);
-                    divider.data('item',item);
-
-                } else if (typeof item.header !== 'undefined' && !item.widget) {
-                    var header = item.vertical ? '<li class="divider-vertical' : '<li class="nav-header testClass';
-                    header += (addDynamicTag) ? ' dynamic-menu-item' : '';
-                    header += '">' + item.header + '</li>';
-                    header = $(header);
-                    item.widget = header;
-                    $menu.append(header);
-                    header.data('item',item);
-
-                } else if (typeof item.menu_item_src !== 'undefined') {
-
-
-
-                } else {
-
-                    if (!widget && typeof item.target !== 'undefined') {
-                        linkTarget = ' target="' + item.target + '"';
-                    }
-
-                    if (typeof item.subMenu !== 'undefined' && !widget) {
-                        var sub_menu = ITEM_TAG_START + 'tabindex="-1" class="dropdown-submenu ' + ITEM_CLASS + this.containerClass;
-                        sub_menu += (addDynamicTag) ? ' dynamic-menu-item' : '';
-                        sub_menu += '"><a>';
-
-                        if (typeof item.icon !== 'undefined') {
-                            sub_menu += '<span class="icon ' + item.icon + '"></span> ';
-                        }
-                        sub_menu += item.text + '';
-                        sub_menu += '</a>'+ITEM_TAG_END;
-                        $sub = $(sub_menu);
-
-                    } else {
-                        if (!widget) {
-                            if (item.render) {
-                                $sub = item.render(item, $menu);
-                            } else {
-                                var element = ITEM_TAG_START + ' tabindex="-1" ';
-                                element += (addDynamicTag) ? ' class="dynamic-menu-item"' : '';
-                                element += '><a >';
-                                if (typeof data[i].icon !== 'undefined') {
-                                    element += '<span class="' + item.icon + '"></span> ';
-                                }
-                                element += item.text + '</a>' + ITEM_TAG_END;
-                                $sub = $(element);
-                                if (item.postRender) {
-                                    item.postRender($sub);
-                                }
-                            }
-                        }
-                    }
-
-                    if (typeof item.action !== 'undefined' && !item.widget) {
-                        if (item.addClickHandler && item.addClickHandler() === false) {
-                        } else {
-                            var $action = item.action;
-                            if ($sub && $sub.find) {
-                                var trigger = $sub.find('a');
-                                trigger.addClass('context-event');
-                                var handler = createCallback($action, item, $sub);
-                                trigger.data('handler',handler).on('click',handler);
-                                //trigger.data('handler',handler).on('click',function(e){
-                                    //return func(event, menu, item);
-                                //});
-
-                                /*
-                                trigger.data('handler',handler).on('click',function(e){
-                                    handler();
-                                    var _parent = $sub.parent();
-                                    _parent.data('open',false);
-                                    _parent[0] && popup.close(_parent[0]);
-                                });
-                                */
-                            }
-                        }
-                    }
-
-                    if ($sub && !widget) {
-                        item.widget = $sub;
-                        $sub.menu = $menu;
-                        $sub.data('item', item);
-                        item.$menu = $menu;
-                        item.$sub = $sub;
-                        item._render = function () {
-                            if (item.index === 0) {
-                                this.$menu.prepend(this.$sub);
-                            } else {
-                                this.$menu.append(this.$sub);
-                            }
-                        };
-                        if (!item.lazy) {
-                            item._render();
-                        }
-                    }
-                    if ($sub) {
-                        $sub.attr('level', item.level);
-                    }
-                    if (typeof item.subMenu != 'undefined' && !item.subMenuData) {
-                        var subMenuData = self.buildMenu(item.subMenu, id, true);
-                        $menu.subMenuData = subMenuData;
-                        item.subMenuData = subMenuData;
-                        $menu.find(this.ITEM_TAG +':last').append(subMenuData);
-                        subMenuData.attr('level', item.subMenu.level);
-                        if (self.hideSubsFirst) {
-                            subMenuData.css('display', 'none');
-                        }
-                        $menu.data('item', item);
-                    } else {
-                        if (item.subMenu && item.subMenuData) {
-                            this.buildMenuItems(item.subMenuData, item.subMenu, id, true);
-                        }
-                    }
-                }
-
-                if (!$menu._didOnClick) {
-                    $menu.on('click', '.dropdown-menu > li > input[type="checkbox"] ~ label, .dropdown-menu > li > input[type="checkbox"], .dropdown-menu.noclose > li', function (e) {
-                        e.stopPropagation();
-                    });
-                    $menu._didOnClick = true;
-                }
-
-            }
-            return $menu;
-        },
-        buildMenu: function (data, id, subMenu) {
-            var subClass = (subMenu) ? (' dropdown-context-sub ' + this.containerClass ) : ' scrollable-menu ';
-            var $menu = $('<ul tabindex="-1" aria-expanded="true" role="menu" class="dropdown-menu dropdown-context' + subClass + '" id="dropdown-' + id + '"></ul>');
-            if (!subMenu) {
-                this._rootMenu = $menu;
-            }
-            var result = this.buildMenuItems($menu, data, id, subMenu);
-            $menu.data('data', data);
-            return result;
-        },
-        createNewAction: function (command) {
-            var segments = command.split('/');
-            var lastSegment = segments[segments.length - 1];
-            var action = new Action({
-                command: command,
-                label: lastSegment,
-                group: lastSegment,
-                dynamic: true
-            });
-            return action;
-        },
-        findAction: function (command) {
-            var stores = this.actionStores,
-                action = null;
-            _.each(stores, function (store) {
-                var _action = store ? store.getSync(command) : null;
-                if (_action) {
-                    action = _action;
-                }
-            });
-
-            return action;
-        },
-        getAction: function (command, store) {
-            store = store || this.store;
-            var action = null;
-            if (store) {
-                action = this.findAction(command);
-                if (!action) {
-                    action = this.createNewAction(command);
-                }
-            }
-            return action;
-        },
-        getActions: function (query) {
-            var result = [];
-            var stores = this.actionStores,
-                visibility = this.visibility;
-
-            query = query || this.actionFilter;
-            _.each(stores, function (store) {
-                store && (result = result.concat(store._find(query)));
-                //store && (result2= result2.concat(store._find(query)));
-            });
-            result = result.filter(function (action) {
-                var actionVisibility = action.getVisibility != null ? action.getVisibility(visibility) : {};
-                return !(action.show === false || actionVisibility === false || actionVisibility.show === false);
-
-            });
-
-            return result;
-        },
-        toActions: function (commands, store) {
-            var result = [],
-                self = this;
-            _.each(commands, function (path) {
-                var _action = self.getAction(path, store);
-                _action && result.push(_action);
-            });
-            return result;
-        },
-        onRunAction: function (action, owner, e) {
-            var command = action.command;
-            action = this.findAction(command);
-            return DefaultActions.defaultHandler.apply(action.owner || owner, [action, e]);
-        },
-        getActionProperty: function (action, visibility, prop) {
-            var value = prop in action ? action[prop] : null;
-            if (visibility && prop in visibility) {
-                value = visibility[prop];
-            }
-            return value;
-        },
-        toMenuItem: function (action, owner, label, icon, visibility, showKeyCombo, lazy) {
-            var self = this,
-                labelLocalized = self.localize(label),
-                actionType = visibility.actionType || action.actionType;
-
-            var ITEM_CLASS = this.ITEM_CLASS;
-            var ITEM_TAG_START = '<' + this.ITEM_TAG + ' class="'+ ITEM_CLASS + '" ';
-            var ITEM_TAG_END = '</' + this.ITEM_TAG + '>';
-
-            var item = {
-                text: labelLocalized,
-                icon: icon,
-                data: action,
-                owner: owner,
-                command: action.command,
-                lazy: lazy,
-                addClickHandler: function () {
-                    return actionType !== types.ACTION_TYPE.MULTI_TOGGLE;
-
-                },
-                render: function (data, $menu) {
-                    if (self.renderItem) {
-                        return self.renderItem(this, data, $menu, this.data, owner, label, icon, visibility, showKeyCombo, lazy);
-                    }
-                    var action = this.data;
-                    var parentAction = action.getParent ? action.getParent() : null;
-                    var closeOnClick = self.getActionProperty(action, visibility, 'closeOnClick');
-                    var keyComboString = ' \n';
-                    var element = null;
-                    if (action.keyboardMappings && showKeyCombo !== false) {
-                        var mappings = action.keyboardMappings;
-                        var keyCombos = mappings[0].keys;
-                        if (keyCombos && keyCombos.length) {
-                            keyComboString += '' + keyCombos.join(' | ').toUpperCase() + '';
-                        }
-                    }
-
-                    if (actionType === types.ACTION_TYPE.MULTI_TOGGLE) {
-                        element = ITEM_TAG_START + 'tabindex="-1" class="" >';
-                        var id = action._store.id + '_' + action.command + '_' + self.id;
-                        var checked = action.get('value');
-                        //checkbox-circle
-                        element += '<div class="action-checkbox checkbox checkbox-success ">';
-                        element += '<input id="' + id + '" type="checkbox" ' + (checked === true ? 'checked' : '') + '>';
-                        element += '<label for="' + id + '">';
-                        element += self.localize(data.text);
-                        element += '</label>';
-                        element += '<span style="max-width:100px;margin-right:20px" class="text-muted pull-right ellipsis keyboardShortCut">' + keyComboString + '</span>';
-                        element += ITEM_TAG_END;
-
-                        $menu.addClass('noclose');
-                        var result = $(element);
-                        var checkBox = result.find('INPUT');
-                        checkBox.on('change', function (e) {
-                            action._originReference = data;
-                            action._originEvent = e;
-                            action.set('value', checkBox[0].checked);
-                            action._originReference = null;
-                        });
-                        self.setVisibilityField(action, 'widget', data);
-                        return result;
-                    }
-                    closeOnClick === false && $menu.addClass('noclose');
-                    if (actionType === types.ACTION_TYPE.SINGLE_TOGGLE && parentAction) {
-                        var value = action.value || action.get('value');
-                        var parentValue = parentAction.get('value');
-                        if (value == parentValue) {
-                            icon = 'fa fa-check';
-                        }
-                    }
-
-                    var title = data.text || labelLocalized || self.localize(action.title);
-
-                    //default:
-                    element = ITEM_TAG_START +  'class="'+ITEM_CLASS + '" ' +  'tabindex="-1"><a title="' + title + ' ' + keyComboString + '">';
-                    var _icon = data.icon || icon;
-
-                    //icon
-                    if (typeof _icon !== 'undefined') {
-                        //already html string
-                        if (/<[a-z][\s\S]*>/i.test(_icon)) {
-                            element += _icon;
-                        } else {
-                            element += '<span class="icon ' + _icon + '"/> ';
-                        }
-                    }
-                    element += data.text;
-                    element += '<span style="max-width:100px" class="text-muted pull-right ellipsis keyboardShortCut">' + (showKeyCombo ? keyComboString : "") + '</span></a>'+ITEM_TAG_END;
-                    self.setVisibilityField(action, 'widget', data);
-                    return $(element);
-                },
-                get: function (key) {
-                },
-                set: function (key, value) {
-                    //_debugWidgets && _.isString(value) && console.log('set ' + key + ' ' + value);
-                    var widget = this.widget;
-
-                    function updateCheckbox(widget, checked) {
-                        var what = widget.find("input[type=checkbox]");
-                        if (what) {
-                            if (checked) {
-                                what.prop("checked", true);
-                            } else {
-                                what.removeAttr('checked');
-                            }
-                        }
-                    }
-
-                    if (widget) {
-                        if (key === 'disabled') {
-                            if (widget.toggleClass) {
-                                widget.toggleClass('disabled', value);
-                            }
-                        }
-                        if (key === 'icon') {
-                            var _iconNode = widget.find('.icon');
-                            if (_iconNode) {
-                                _iconNode.attr('class', 'icon');
-                                this._lastIcon = this.icon;
-                                this.icon = value;
-                                _iconNode.addClass(value);
-                            }
-                        }
-                        if (key === 'value') {
-                            if (actionType === types.ACTION_TYPE.MULTI_TOGGLE ||
-                                actionType === types.ACTION_TYPE.SINGLE_TOGGLE) {
-                                updateCheckbox(widget, value);
-                            }
-                        }
-                    }
-                },
-                action: function (e, data, menu) {
-                    return self.onRunAction(data.data, owner, e);
-                },
-                destroy: function () {
-                    if (this.widget) {
-                        this.widget.remove();
-                    }
-                }
-            };
-            return item;
-        },
-        attach: function (selector, data) {
-            this.target = selector;
-            this.menu = this.addContext(selector, data);
-            this.domNode = this.menu[0];
-            this.id = this.domNode.id;
-            registry.add(this);
-            return this.menu;
-        },
-        addReference: function (action, item) {
-            if (action.addReference) {
-                action.addReference(item, {
-                    properties: {
-                        "value": true,
-                        "disabled": true,
-                        "enabled": true
-                    }
-                }, true);
-            }
-        },
-        onDidRenderActions: function (store, owner) {
-            if (owner && owner.refreshActions) {
-                owner.refreshActions();
-            }
-        },
-        getActionData: function (action) {
-            var actionVisibility = action.getVisibility != null ? action.getVisibility(this.visibility) : {};
-            return {
-                label: actionVisibility.label != null ? actionVisibility.label : action.label,
-                icon: actionVisibility.icon != null ? actionVisibility.icon : action.icon,
-                command: actionVisibility.command != null ? actionVisibility.command : action.command,
-                visibility: actionVisibility,
-                group: actionVisibility.group != null ? actionVisibility.group : action.group,
-                tab: actionVisibility.tab != null ? actionVisibility.tab : action.tab,
-                expand: actionVisibility.expand != null ? actionVisibility.expand : false,
-                widget: actionVisibility.widget
-            };
-        },
-        _clearAction: function (action) {
-
-        },
-        _findParentData: function (oldMenuData, parentCommand) {
-            var parent = _.find(oldMenuData, {
-                command: parentCommand
-            });
-            if (parent) {
-                return parent;
-            }
-            for (var i = 0; i < oldMenuData.length; i++) {
-                var data = oldMenuData[i];
-                if (data.subMenu) {
-                    var found = this._findParentData(data.subMenu, parentCommand);
-                    if (found) {
-                        return found;
-                    }
-                }
-            }
-            return null;
-        },
-        _clear: function () {
-            var actions = this.getActions();
-            var store = this.store;
-            if (store) {
-                this.actionStores.remove(store);
-            }
-            var self = this;
-            actions = actions.concat(this._tmpActions);
-            _.each(actions, function (action) {
-                if (action) {
-                    var actionVisibility = action.getVisibility != null ? action.getVisibility(self.visibility) : {};
-                    if (actionVisibility) {
-                        var widget = actionVisibility.widget;
-                        action.removeReference && action.removeReference(widget);
-                        if (widget && widget.destroy) {
-                            widget.destroy();
-                        }
-                        delete actionVisibility.widget;
-                        actionVisibility.widget = null;
-                    }
-                }
-            });
-            this.$navBar && this.$navBar.empty();
-        },
-        buildActionTree: function (store, owner) {
-            var self = this,
-                allActions = self.getActions(),
-                visibility = self.visibility;
-
-            self.wireStore(store, function (evt) {
-                if (evt.type === 'update') {
-                    var action = evt.target;
-                    if (action.refreshReferences) {
-                        action.refreshReferences(evt.property, evt.value);
-                    }
-                }
-            });
-
-            //return all actions with non-empty tab field
-            var tabbedActions = allActions.filter(function (action) {
-                    var _vis = (action.visibility_ || {})[visibility + '_val'] || {};
-                    if (action) {
-                        return _vis.tab || action.tab;
-                    }
-                }),
-
-                //group all tabbed actions : { Home[actions], View[actions] }
-                groupedTabs = _.groupBy(tabbedActions, function (action) {
-                    var _vis = (action.visibility_ || {})[visibility + '_val'] || {};
-                    if (action) {
-                        return _vis.tab || action.tab;
-                    }
-                }),
-                //now flatten them
-                _actionsFlattened = [];
-
-
-            _.each(groupedTabs, function (items) {
-                _actionsFlattened = _actionsFlattened.concat(items);
-            });
-
-            var rootActions = [];
-            _.each(tabbedActions, function (action) {
-                var rootCommand = action.getRoot();
-                rootActions.indexOf(rootCommand) == -1 && rootActions.push(rootCommand);
-            });
-
-            //owner sort of top level
-            store.menuOrder && (rootActions = owner.sortGroups(rootActions, store.menuOrder));
-
-            var tree = {};
-            //stats to count groups per tab
-            var biggestTab = rootActions[0];
-            var nbGroupsBiggest = 0;
-
-            _.each(rootActions, function (level) {
-                // collect all actions at level (File/View/...)
-                var menuActions = owner.getItemsAtBranch(allActions, level);
-                // convert action command strings to Action references
-                var grouped = self.toActions(menuActions, store);
-
-                // expand filter -------------------
-                var addedExpanded = [];
-                var toRemove = [];
-                _.each(grouped, function (action) {
-                    var actionData = self.getActionData(action);
-                    if (actionData.expand) {
-                        var children = action.getChildren();
-                        children && children.length && (addedExpanded = addedExpanded.concat(children));
-                        toRemove.push(action);
-                    }
-                });
-                grouped = grouped.concat(addedExpanded);
-                grouped = grouped.filter(function (action) {
-                    return toRemove.indexOf(action) == -1;
-                });
-                // expand filter ---------------    end
-
-                // group all actions by group
-                var groupedActions = _.groupBy(grouped, function (action) {
-                    var _vis = (action.visibility_ || {})[visibility + '_val'] || {};
-                    if (action) {
-                        return _vis.group || action.group;
-                    }
-                });
-
-                var _actions = [];
-                _.each(groupedActions, function (items, level) {
-                    if (level !== 'undefined') {
-                        _actions = _actions.concat(items);
-                    }
-                });
-
-                //flatten out again
-                menuActions = _.pluck(_actions, 'command');
-                menuActions.grouped = groupedActions;
-                tree[level] = menuActions;
-
-                //update stats
-                if (self.collapseSmallGroups) {
-                    var nbGroups = _.keys(menuActions.grouped).length;
-                    if (nbGroups > nbGroupsBiggest) {
-                        nbGroupsBiggest = nbGroups;
-                        biggestTab = level;
-                    }
-                }
-            });
-
-            //now move over any tab with less than 2 groups to the next bigger tab
-            this.collapseSmallGroups && _.each(tree, function (actions, level) {
-                if (_.keys(actions.grouped).length < self.collapseSmallGroups) {
-                    //append tab groups of the biggest tab
-                    tree[biggestTab] && _.each(actions.grouped, function (group, name) {
-                        tree[biggestTab].grouped[name] = group;
-                    });
-                    //copy manually commands to that tab
-                    tree[biggestTab] && _.each(actions, function (action) {
-                        tree[biggestTab].push(action);
-                    });
-                    tree[biggestTab] && delete tree[level];
-                }
-            });
-            var result = {
-                root: tree,
-                rootActions: rootActions,
-                allActionPaths: _.pluck(allActions, 'command'),
-                allActions: allActions
-            };
-
-            this.lastTree = result;
-            return result;
-        }
-    });
-    dcl.chainAfter(Module, 'destroy');
-    return Module;
-});
-
-
-
-/** @module xide/widgets/ActionToolbar4 **/
-define('xide/widgets/ActionToolbar4',[
-    "dcl/dcl",
-    'xide/types',
-    'xide/utils',
-    'xide/_base/_Widget',
-    "xide/mixins/ActionMixin",
-    'xaction/ActionContext',
-    "xide/model/Path",
-    'xlang/i18',
-    "xide/widgets/_MenuMixin4",
-    "xide/popup"
-], function (dcl,types,utils,_XWidget,
-             ActionMixin,ActionContext,Path,i18,
-             _MenuMixin4,popup){
-
-    var OPEN_DELAY = 200;
-    var ContainerClass =  dcl([_XWidget,ActionContext.dcl,ActionMixin.dcl],{
-        templateString:'<div attachTo="navigation" class="actionToolbar">'+
-        '<nav attachTo="navigationRoot" class="" role="navigation">'+
-        '<ul attachTo="navBar" class="nav navbar-nav"/>'+
-        '</nav>'+
-        '</div>'
-    });
-    /**
-     * @class module:xide/widgets/ActionToolbar4
-     */
-    var ActionRendererClass = dcl(null,{
-        ITEM_TAG : "div",
-        CONTAINER_TAG : "div",
-        ITEM_CLASS : "actionItem",
-        renderTopLevel:function(name,where){
-            where = where || $(this.getRootContainer());
-            var item =$('<li tabindex="-1" class="dropdown">' +
-                '<a href="#" class="dropdown-toggle" data-toggle="dropdown">' + i18.localize(name) +'<b class="caret"></b></a>'+
-                '</li>');
-
-            where.append(item);
-            return item;
-        },
-        getRootContainer:function(){
-            return this.navBar;
-        }
-    });
-    var Module = dcl([ContainerClass,_MenuMixin4,ActionRendererClass,_XWidget.StoreMixin],{
-        declaredClass:'xide.widgets.Actiontoolbar',
-        target:null,
-        hideSubsFirst:true,
-        visibility: types.ACTION_VISIBILITY.ACTION_TOOLBAR,
-        actionFilter:{
-            quick:true
-        },
-        _renderItem:function(item,data,$menu,action, owner, label, icon, visibility, showKeyCombo, lazy){
-            var self = this;
-            var labelLocalized = self.localize(label);
-            var actionType = visibility.actionType || action.actionType;
-            var parentAction = action.getParent ? action.getParent() : null;
-            var closeOnClick = self.getActionProperty(action, visibility, 'closeOnClick');
-            var keyComboString = ' \n';
-            var element = null;
-            if (action.keyboardMappings && showKeyCombo !== false) {
-                var mappings = action.keyboardMappings;
-                var keyCombos = mappings[0].keys;
-                if (keyCombos && keyCombos.length) {
-                    keyComboString += '' + keyCombos.join(' | ').toUpperCase() + '';
-                }
-            }
-
-            if (actionType === types.ACTION_TYPE.MULTI_TOGGLE) {
-                element = '<li class="" >';
-                var id = action._store.id + '_' + action.command + '_' + self.id;
-                var checked = action.get('value');
-                //checkbox-circle
-                element += '<div class="action-checkbox checkbox checkbox-success ">';
-                element += '<input id="' + id + '" type="checkbox" ' + (checked === true ? 'checked' : '') + '>';
-                element += '<label for="' + id + '">';
-                element += self.localize(data.text);
-                element += '</label>';
-                element += '<span style="max-width:100px;margin-right:20px" class="text-muted pull-right ellipsis keyboardShortCut">' + keyComboString + '</span>';
-                element += '</div>';
-
-                $menu.addClass('noclose');
-                var result = $(element);
-                var checkBox = result.find('INPUT');
-                checkBox.on('change', function (e) {
-                    action._originReference = data;
-                    action._originEvent = e;
-                    action.set('value', checkBox[0].checked);
-                    action._originReference = null;
-                });
-                self.setVisibilityField(action, 'widget', data);
-                return result;
-            }
-            closeOnClick === false && $menu.addClass('noclose');
-            if (actionType === types.ACTION_TYPE.SINGLE_TOGGLE && parentAction) {
-                var value = action.value || action.get('value');
-                var parentValue = parentAction.get('value');
-                if (value == parentValue) {
-                    icon = 'fa fa-check';
-                }
-            }
-            var title = data.text || labelLocalized || self.localize(action.title);
-
-            //default:
-            element = '<li class="" title="' + title + ' ' + keyComboString + '">';
-            var _icon = data.icon || icon;
-            //icon
-            if (typeof _icon !== 'undefined') {
-                //already html string
-                if (/<[a-z][\s\S]*>/i.test(_icon)) {
-                    element += _icon;
-                } else {
-                    element += '<span style="" class="icon ' + _icon + '"/> ';
-                }
-            }
-            element +='<a class="">';
-            element += data.text;
-            element += '</a></li>';
-            self.setVisibilityField(action, 'widget', data);
-            return $(element);
-        },
-        init2: function(opts){
-            var options = this.getDefaultOptions();
-            options = $.extend({}, options, opts);
-            var self = this;
-            var root = $(document);
-            this.__on(root,'click',null,function(e){
-                if(!self.isOpen){
-                    return;
-                }
-                self.isOpen=false;
-                self.onClose(e)
-                $('.dropdown-context').css({
-                    display:''
-                }).find('.drop-left').removeClass('drop-left');
-            });
-            if(options.preventDoubleContext){
-                this.__on(root,'contextmenu', '.dropdown-context', function (e) {
-                    e.preventDefault();
-                });
-            }
-
-            function correctPosition(_root,$sub){
-                var level = 0;
-                var _levelAttr = $sub.attr('level');
-                if(!_levelAttr){
-                    _levelAttr = parseInt($sub.parent().attr('level'),10) || 0;
-                }
-
-                if(_levelAttr===0){
-                    $sub.css({
-                        left:0
-                    });
-                }
-                var parent = _root.parent();
-                var parentTopAbs = parent.offset().top;
-                var rootOffset = _root.offset();
-                var rootPos = _root.position();
-                var rootHeight = _root.height();
-                var parentDelta = parentTopAbs - rootOffset.top;
-                var newTop = (rootPos.top + rootHeight) + parentDelta;
-                var offset = 0;
-                if(_levelAttr!==0) {
-                    newTop += offset;
-                }
-                $sub.css({
-                    top:-2
-                });
-                var subHeight = $sub.height() + 0;
-                var totalH = $('html').height();
-                var pos = $sub.offset();
-                var posWrapper = $sub.offset();
-                var overlapYDown = totalH - (pos.top + subHeight);
-                if((pos.top + subHeight) > totalH){
-                    $sub.css({
-                        top: overlapYDown - 30
-                    });
-                }
-                ////////////////////////////////////////////////////////////
-                var subWidth = $sub.width(),
-                    subLeft = $sub.offset().left,
-                    collision = (subWidth+subLeft) > window.innerWidth;
-
-                if(collision){
-                    $sub.addClass('drop-left');
-                }
-            }
-
-            function mouseEnterHandler(e){
-                var _root = $(e.currentTarget);
-                var $sub = _root.find('.dropdown-context-sub:first');
-                var didPopup = false;
-                if ($sub.length === 0) {
-                    $sub = _root.data('sub');
-                    if($sub){
-                        didPopup = true;
-                    }else {
-                        return;
-                    }
-                }
-
-                var data = $sub.data('data');
-                var level = data ? data[0].level : 0;
-                var isFirst = level ===1;
-
-                $sub.css('display', 'none');
-                $sub.data('left',false);
-                _root.data('left',false);
-                if(isFirst) {
-                    $sub.css('display', 'initial');
-                    $sub.css('position', 'initial');
-                    function close() {
-                        $sub.data('open',false);
-                        popup.close($sub[0]);
-                    }
-                    if(_root.data('didSetup')!==true){
-                        _root.data('didSetup',true);
-                        _root.data('sub',$sub);
-                        _root.on('mouseleave', function (e) {
-                            var _thisSub = _root.data('sub');
-                            var next = e.toElement;
-                            if(next==_thisSub[0] || $.contains(_thisSub[0],next)){
-                                return;
-                            }
-                            close();
-                        });
-                    }
-                    if (!didPopup) {
-                        _root.data('sub', $sub);
-                        $sub.data('owner', self);
-                        if(!$sub.data('didSetup')){
-                            $sub.data('root',_root);
-                            $sub.on('mouseleave', function () {
-                                $sub.data('left',true);
-                                close();
-
-                            });
-                            $sub.data('didSetup',true);
-                            $sub.on('mouseenter', function(e){
-                                $sub.data('entered',true);
-                            });
-                        }
-                    }
-                    function open() {
-                        if($sub.data('open')){
-                            return;
-                        }
-                        $sub.data('open',true);
-                        var wrapper = popup.open({
-                            popup: $sub[0],
-                            around: _root[0],
-                            orient: ['below', 'above'],
-                            maxHeight: -1,
-                            owner: self,
-                            extraClass: 'ActionToolbar',
-                            onExecute: function () {
-                                self.closeDropDown(true);
-                            },
-                            onCancel: function () {
-                                close();
-                            },
-                            onClose: function () {
-                                _root.data('left',true);
-                                close();
-                            }
-                        });
-                        correctPosition(_root,$sub,$(wrapper));
-                    }
-                    open();
-                    /*
-                     //clearTimeout($sub.data('openTimer'));
-                     return;
-                     $sub.data('openTimer',setTimeout(function(){
-                     if($sub.data('left')!==true) {
-
-                     }else{
-                     console.log('left');
-                     $sub.css('display', 'none');
-                     }
-                     },OPEN_DELAY));
-                     return;
-                     */
-                }else{
-                    $sub.css('display','block');
-                    if(!$sub.data('didSetup')){
-                        $sub.data('didSetup',true);
-                        $sub.on('mouseleave',function(){
-                            $sub.css('display','');
-                            $sub.data('left',true);
-
-                        });
-                    }
-                    if(!_root.data('didSetup')){
-                        _root.data('didSetup',true);
-                        _root.on('mouseleave',function(){
-                            _root.data('left',true);
-                            $sub.css('display','');
-
-                        });
-                    }
-                }
-                var autoH = $sub.height() + 0;
-                var totalH = $('html').height();
-                var pos = $sub.offset();
-                var overlapYDown = totalH - (pos.top + autoH);
-                if ((pos.top + autoH) > totalH) {
-                    $sub.css({
-                        top: overlapYDown - 30
-                    }).fadeIn(options.fadeSpeed);
-                }
-                ////////////////////////////////////////////////////////////
-                var subWidth = $sub.width(),
-                    subLeft = $sub.offset().left,
-                    collision = (subWidth + subLeft) > window.innerWidth;
-
-                if (collision) {
-                    $sub.addClass('drop-left');
-                }
-            }
-            this.__on(root,'mouseenter', '.dropdown-submenu', mouseEnterHandler.bind(this));
-        },
-        resize:function(){
-            this._height = this.$navBar.height();
-            if (this._height > 0){
-                this.$navBar.css('width',this.$navigation.width());
-                this.$navigationRoot.css('width',this.$navigation.width());
-                this.$navigation.css('height',this._height);
-                this.$navigationRoot.css('height', this._height);
-            }
-        },
-        destroy:function(){
-            utils.destroy(this.$navBar[0]);
-            utils.destroy(this.$navigation[0]);
-        },
-        buildMenu:function (data, id, subMenu,update) {
-            var subClass = (subMenu) ? ' dropdown-context-sub' : ' scrollable-menu ',
-                menuString = '<ul aria-expanded="true" role="menu" class="dropdown-menu dropdown-context' + subClass + '" id="dropdown-' + id + '"></ul>',
-                $menu = update ? (this._rootMenu || this.$navBar || $(menuString)) : $(menuString);
-
-            if(!subMenu){
-                this._rootMenu = $menu;
-            }
-            $menu.data('data',data);
-            return this.buildMenuItems($menu, data, id, subMenu);
-        },
-        setActionStore: function (store, owner,subscribe,update,itemActions) {
-            if(!update && store && this.store && store!=this.store){
-                this.removeCustomActions();
-            }
-            if(!update){
-                this._clear();
-                this.addActionStore(store);
-            }
-            if(!store){
-                return;
-            }
-            this.store = store;
-            var self = this,
-                visibility = self.visibility,
-                rootContainer = $(self.getRootContainer());
-
-            var tree = update ? self.lastTree : self.buildActionTree(store,owner);
-
-            var allActions = tree.allActions,
-                rootActions = tree.rootActions,
-                allActionPaths = tree.allActionPaths,
-                oldMenuData = self.menuData;
-
-            if(subscribe!==false) {
-                if(!this['_handleAdded_' + store.id]) {
-                    this.addHandle('added', store._on('onActionsAdded', function (actions) {
-                        self.onActionAdded(actions);
-                    }));
-
-                    this.addHandle('delete', store.on('delete', function (evt) {
-                        self.onActionRemoved(evt);
-                    }));
-                    this['_handleAdded_' + store.id]=true;
-                }
-            }
-
-            // final menu data
-            var data = [];
-            if(!update) {
-                _.each(tree.root, function (menuActions, level) {
-                    var lastGroup = '';
-                    _.each(menuActions, function (command) {
-                        var action = self.getAction(command, store);
-                        var isDynamicAction = false;
-                        if (!action) {
-                            isDynamicAction = true;
-                            action = self.createAction(command);
-                        }
-                        if (action) {
-
-                            var renderData = self.getActionData(action),
-                                icon = renderData.icon,
-                                label = renderData.label,
-                                visibility = renderData.visibility,
-                                group = renderData.group,
-                                lastHeader = {
-                                    header: ''
-                                };
-
-
-                            if (visibility === false) {
-                                return;
-                            }
-
-                            /*
-                             if (!isDynamicAction && group && groupedActions[group] && groupedActions[group].length >= 1) {
-                             //if (lastGroup !== group) {
-                             var name = groupedActions[group].length >= 2 ? i18.localize(group) : "";
-                             lastHeader = {divider: name,vertial:true};
-                             data.push(lastHeader);
-                             lastGroup = group;
-                             //}
-                             }
-                             */
-
-                            var item = self.toMenuItem(action, owner, '', icon, visibility || {}, false);
-                            data.push(item);
-                            item.level = 0;
-                            visibility.widget = item;
-
-                            self.addReference(action, item);
-
-                            var childPaths = new Path(command).getChildren(allActionPaths, false),
-                                isContainer = childPaths.length > 0;
-
-                            function parseChildren(command, parent) {
-                                var childPaths = new Path(command).getChildren(allActionPaths, false),
-                                    isContainer = childPaths.length > 0,
-                                    childActions = isContainer ? self.toActions(childPaths, store) : null;
-                                if (childActions) {
-                                    var subs = [];
-                                    _.each(childActions, function (child) {
-                                        var _renderData = self.getActionData(child);
-                                        var _item = self.toMenuItem(child, owner, _renderData.label, _renderData.icon, _renderData.visibility,false);
-                                        var parentLevel = parent.level || 0;
-                                        _item.level = parentLevel + 1;
-                                        self.addReference(child, _item);
-                                        subs.push(_item);
-                                        var _childPaths = new Path(child.command).getChildren(allActionPaths, false),
-                                            _isContainer = _childPaths.length > 0;
-                                        if (_isContainer) {
-                                            parseChildren(child.command, _item);
-                                        }
-                                    });
-                                    parent.subMenu = subs;
-                                }
-                            }
-                            parseChildren(command, item);
-                            self.buildMenuItems(rootContainer, [item], "-" + new Date().getTime());
-
-                        }
-                    });
-                });
-                self.onDidRenderActions(store, owner);
-                this.menuData = data;
-            }else{
-                if(itemActions || !_.isEmpty(itemActions)) {
-
-                    _.each(itemActions, function (newAction) {
-                        if (newAction) {
-                            var action = self.getAction(newAction.command);
-                            if (action){
-
-
-                                var renderData = self.getActionData(action),
-                                    icon = renderData.icon,
-                                    label = renderData.label,
-                                    aVisibility = renderData.visibility,
-                                    group = renderData.group,
-                                    item = self.toMenuItem(action, owner, label, icon, aVisibility || {},null,false);
-
-                                if(aVisibility.widget){
-                                    return;
-                                }
-
-                                aVisibility.widget = item;
-
-                                self.addReference(newAction, item);
-
-                                if(!action.getParentCommand){
-                                    return;
-                                }
-                                var parentCommand = action.getParentCommand();
-                                var parent = self._findParentData(oldMenuData,parentCommand);
-                                if(parent && parent.subMenu){
-                                    parent.lazy = true;
-                                    parent.subMenu.push(item);
-                                }else{
-                                    oldMenuData.splice(0, 0, item);
-                                }
-                            } else {
-                                console.error('cant find action ' + newAction.command);
-                            }
-                        }
-                    });
-                    self.buildMenu(oldMenuData, self.id,null,update);
-                }
-            }
-            this.resize();
-        },
-        startup:function(){
-            this.correctSubMenu = true;
-            this.init2({
-                preventDoubleContext: false
-            });
-            this.menu = this.$navigation;
-        }
-    });
-    dcl.chainAfter(Module,'destroy');
-    return Module;
-});
-
-
-/** @module xide/widgets/ActionToolbar **/
-define('xide/widgets/ActionToolbar',[
-    "xide/widgets/ActionToolbar4"
-], function (ActionToolbar4) {
-    return ActionToolbar4;
-});
-
-
-/** @module xgrid/Toolbar **/
-define('xgrid/Toolbar',[
-    "xdojo/declare",
-    'xide/utils',
-    'xide/types',
-    'xide/widgets/ActionToolbar'
-], function (declare,utils,types,ActionToolbar) {
-    /**
-     *
-     * @class module:xgrid/Toolbar
-     */
-    var Implementation = {
-        _toolbar:null,
-        toolbarClass:null,
-        toolbarInitiallyHidden:false,
-        runAction:function(action){
-            if(action.command==types.ACTION.TOOLBAR){
-                this.showToolbar(this._toolbar==null);
-                return true;
-            }
-            return this.inherited(arguments);
-        },
-        getToolbar:function(){
-            return this._toolbar;
-        },
-        /**
-         *
-         * @param show
-         * @param toolbarClass
-         * @param where
-         * @param setEmitter
-         * @param args
-         * @returns {null}
-         */
-        showToolbar:function(show,toolbarClass,where,setEmitter,args){
-            //remember toolbar class
-            toolbarClass = toolbarClass || this.toolbarClass;
-            if(toolbarClass) {
-                this.toolbarClass = toolbarClass;
-            }
-            if(show==null){
-                show = this._toolbar==null;
-            }
-            if(show && !this._toolbar){
-                var toolbar = utils.addWidget(toolbarClass || ActionToolbar ,utils.mixin({
-                        style:'min-height:30px;height:auto;width:100%'
-                    },args),this,where||this.header,true);
-
-                if(setEmitter !==false) {
-                    toolbar.addActionEmitter(this);
-                    //at this point the actions are rendered!
-                    toolbar.setActionEmitter(this);
-                    this.refreshActions && this.refreshActions();
-                }
-                this._toolbar = toolbar;
-                this.add && this.add(toolbar);
-                this._emit('showToolbar',toolbar);
-            }
-            if(!show && this._toolbar){
-                utils.destroy(this._toolbar,true,this);
-                $(where||this.header).css('height','auto');
-            }
-            this.resize();
-            return this._toolbar;
-        },
-        getState:function(state) {
-            state = this.inherited(arguments) || {};
-            state.toolbar = this._toolbar!==null;
-            return state;
-        },
-        setState:function(state) {
-            if(state && state.toolbar){
-                this.showToolbar(state.toolbar);
-            }
-            return this.inherited(arguments);
-        },
-        startup:function(){
-            var thiz = this;
-            if(this._started){
-                return;
-            }
-            this._on('onAddActions', function (evt) {
-                var actions = evt.actions,
-                    action = types.ACTION.TOOLBAR;
-                if(!evt.store.getSync(action) && this.hasPermission(action)) {
-                    actions.push(thiz.createAction({
-                        label: 'Toolbar',
-                        command: action,
-                        icon: types.ACTION_ICON.TOOLBAR,
-                        tab: 'View',
-                        group: 'Show',
-                        keycombo:['ctrl b'],
-                        mixin:{
-                            actionType:'multiToggle',
-                            value:false,
-                            id:utils.createUUID()
-                        },
-                        onCreate:function(action){
-                            action.value = thiz._toolbar!==null;
-                        },
-                        onChange:function(property,value){
-                            thiz.showToolbar(value);
-                            thiz.onAfterAction(types.ACTION.TOOLBAR);
-                        }
-                    }));
-                }
-            });
-            this.inherited(arguments);
-            this.showToolbar(!this.toolbarInitiallyHidden);
-        }
-    };
-    //package via declare
-    var _class = declare('xgrid.Toolbar',null,Implementation);
-    _class.Implementation = Implementation;
-    return _class;
-});
-define('xide/_Popup',[
-    'dcl/dcl'
-],function (dcl){
-
-    var zIndexStart = 200;
-
-    var Module = dcl(null,{});
-
-    Module.nextZ = function(incr){
-        zIndexStart++;
-        if(incr){
-            zIndexStart+=incr;
-        }
-        return zIndexStart;
-    }
-
-    if(typeof window !=='undefined'){
-        window['__nextZ'] = Module.nextZ;
-    }
-
-    Module.setStartIndex=function(index){
-        zIndexStart = index;
-    }
-
-    return Module;
-});
-define('xide/widgets/_MenuKeyboard',[
-    "dcl/dcl",
-    "xide/$",
-    "xide/lodash",
-    "xide/mixins/EventedMixin"
-], function (dcl, $, _, EventedMixin) {
-
-    var skip = [
-        '.divider',
-        '.nav-header',
-        '.disabled'
-    ];
-
-    var Module = dcl(EventedMixin.dcl, {
-        owner: null,
-        /**
-         *
-         * @param owner
-         */
-        setup: function (owner) {
-            this.owner = owner;
-        },
-        /**
-         * Return parent action container for an element
-         * @param $el {jQuery}
-         * @param $max {jQuery}
-         * @param dataIdentifier {string} The data identifier to find some object in $el
-         * @returns {jQuery|null}
-         */
-        findNavigationContainerElement: function ($el, $max, dataIdentifier) {
-            if (!$el || !$el[0]) {
-                return null;
-            }
-            if ($el && $max && $el[0] == $max[0]) {
-                return $el;
-            }
-
-            var data = $el.data(dataIdentifier || 'data');
-            if (data && data != null) {
-                return $el;
-            }
-            return this.findNavigationContainerElement($el.parent(), $max, dataIdentifier);
-        },
-        /**
-         *
-         * @param $el
-         * @param $max
-         * @param dataIdentifier
-         * @returns {jQuery|null}
-         */
-        findNavigationElement: function ($el, $max, dataIdentifier) {
-            if (!$el || !$el[0]) {
-                return null;
-            }
-            if ($el && $max && $el[0] == $max[0]) {
-                return $el;
-            }
-            var data = $el.data(dataIdentifier || 'item') || $el.data(dataIdentifier || 'data');
-            if (data && !_.isEmpty(data)) {
-                return $el;
-            }
-            return this.findNavigationElement($el.parent());
-        },
-        /**
-         *
-         * @param $el {jQuery}
-         * @param $max {jQuery}
-         * @param dataIdentifier {string} The data identifier to find some object in $el
-         * @param findParent
-         * @returns {{element: Object, data: (*|{}), parent: *}}
-         */
-        toNavigationData: function ($el, $max, dataIdentifier, findParent) {
-            var element = this.findNavigationElement($el, $max, dataIdentifier);
-            if (element) {
-                var data = element.data(dataIdentifier || 'item') || element.data(dataIdentifier || 'data');
-                if (data) {
-                    return {
-                        element: element,
-                        data: data,
-                        parent: findParent !== false ? this.findNavigationContainerElement($el, $max, dataIdentifier) : null
-                    };
-                }
-            }
-        },
-        /**
-         *
-         * @param $parent
-         * @param $origin
-         * @param direction
-         * @returns {*}
-         */
-        next: function ($parent, $origin, direction) {
-            if ($origin) {
-                var result = $origin[direction == 1 ? 'next' : 'prev']();
-                if (!this.canSelect(result)) {
-                    return this.next($parent, result, direction);
-                } else {
-                    return result;
-                }
-            }
-        },
-        /**
-         * Return valid children
-         * @param $el{jQuery}
-         * @returns {*}
-         */
-        canSelect: function ($el) {
-            return $($el).is(skip.join(',')) == false;
-        },
-        /**
-         *
-         * @param $parent{jQuery}
-         * @param all {boolean}
-         * @returns {HTMLElement[]}
-         */
-        children: function ($parent, all) {
-            var self = this;
-            return $parent.children('LI').filter(function (i, child) {
-                if (all !== true) {
-                    return self.canSelect(child);
-                } else {
-                    return child;
-                }
-            });
-        },
-        /**
-         *
-         * @param $el {jQuery}
-         */
-        close: function ($el) {
-            var _parent = $el.parent();
-            var _parentParent = $el.parent().parent();
-            _parent.css('display', '');
-            _parent.removeClass('open');
-            $el.removeClass('open');
-            $el.removeClass('focus');
-            $el.removeClass('active');
-            _parentParent.removeClass('open');
-            _parentParent.focus();
-        },
-        /**
-         * Opens the very root menu by a given origin
-         * @param $el
-         * @param $next
-         * @param direction {init} left = -1, right = 1
-         * @returns {*}
-         */
-        openRoot: function ($el, $next, direction) {
-            var _next = $next || this.topMost($el).parent()[direction === -1 ? 'prev' : 'next']();
-            var _trigger = $(_next.find('A')[0]);
-            _trigger.trigger('click');
-            var _navData = this.toNavigationData($(_next.find('UL')[0]), this.owner.getRootContainer());
-            if (_navData) {
-                return this.activate($(this.children(_navData.element)[0]), _navData.element, true);
-            }
-
-        },
-        destroy: function () {
-            delete this.owner;
-        },
-        /**
-         *
-         * @param $el {jQuery}
-         */
-        open: function ($el) {
-            $el.css('display', 'block');
-            var _navData = this.toNavigationData($el, this.owner.getRootContainer(), 'data', null, null);
-            var firstInner = this.children(_navData.parent)[0];
-            if (firstInner) {
-                _navData = this.toNavigationData($(firstInner), this.owner.getRootContainer());
-                this.activate(_navData.element, _navData.parent, true);
-            }
-        },
-        topMost: function ($el) {
-            if ($el) {
-                var data = $el.data();
-                if (data.item || data.data) {
-                    var next = $el.parent();
-                    var parentData = next.data();
-                    if (next && next[0] && (parentData.item || parentData.data)) {
-                        return this.topMost(next);
-                    }
-                    return $el;
-                }
-            }
-        },
-        keyboardHandler: function (event, $parent) {
-            var origin = $parent.data('currentTarget');
-            if (event.keyCode === 13) {
-                var trigger = origin.find("A");
-                var handler = trigger.data('handler');
-                if (handler) {
-                    var actionResult = handler();
-                    if (actionResult && actionResult.then) {
-                        actionResult.then(function () {
-                            origin.focus();
-                        });
-                    }
-                    return;
-                }
-                //perform action
-                origin.find("A").click();
-                origin.focus();
-                return;
-            }
-
-            var vertical = event.keyCode == 38 || event.keyCode == 40 || event.keyCode == 36 || event.keyCode == 35;
-            var horizontal = event.keyCode == 37 || event.keyCode == 39;
-            var direction = vertical ? (event.keyCode == 38 || event.keyCode == 36) ? -1 : 1 : (event.keyCode == 37 ? -1 : 1 );
-            var max = !!(event.keyCode == 36 || event.keyCode == 35 );
-
-            var nextElement = null;
-            var nextData = {};
-            var navData = null;
-            if (vertical) {
-                nextElement = max ? direction == 1 ? $(_.last(this.children($parent))) : $(_.first(this.children($parent))) : this.next($parent, origin, direction);
-                nextElement && (nextData = nextElement.data('item'));
-            }
-            if (horizontal) {
-                var data = origin.data('item');
-                if (data) {
-                    if (direction > 0) {
-                        //sub - items?, open them
-                        if (data.subMenuData) {
-                            var isOpen = data.subMenuData.css('display') === 'block';
-                            if (!isOpen) {
-                                return this.open(data.subMenuData);
-                            } else {
-                                //root bounce
-                                if (this.openRoot(origin, null, 1)) {
-                                    return;
-                                }
-                            }
-                        } else {
-                            //root bounce
-                            if (this.openRoot(origin, null, 1)) {
-                                return;
-                            }
-                        }
-                    } else {
-                        //left
-                        this.close(origin);
-                        navData = this.toNavigationData(origin, this.owner.getRootContainer());
-                        //root bounce
-                        if (_.isEmpty(navData.parent.parent().data())) {
-                            return this.openRoot(origin, null, -1);
-                        }
-                        return;
-                    }
-                }
-            }
-            if (nextElement && nextData) {
-                navData = this.toNavigationData(nextElement, this.owner.getRootContainer());
-                this.activate(navData.element, navData.parent, true);
-            }
-        },
-        initContainer: function ($container) {
-            var self = this;
-            if (!$container.data('didSetup')) {
-                $container.data('didSetup', true);
-                this.__on($container, 'keydown', null, function (evt) {
-                    if (($(evt.target).parent()[0] == $container[0])) {
-                        self.keyboardHandler(evt, $container);
-                    }
-                });
-            }
-        },
-        activate: function ($next, $parent, clear) {
-            if ($parent) {
-                this.initContainer($parent);
-            }
-            if (clear && $parent) {
-                this.children($parent, true).each(function (i, c) {
-                    $(c).removeClass('focus');
-                    $(c).removeClass('open');
-                    $(c).removeClass('active');
-                    var _s = $(c).find('.dropdown-context-sub');
-                    if (_s[0] && _s.css('display') === 'block') {
-                        _s.css('display', '');
-                        _s.removeClass('open');
-                        _s.removeClass('active');
-                    }
-                });
-            }
-            $next.addClass('focus');
-            $next.addClass('active');
-            $next.focus();
-            $parent.addClass('open');
-            $parent.data('currentTarget', $next);
-            return true;
-        },
-        clear: function ($parent) {
-            this.children($parent, true).each(function (i, c) {
-                $(c).removeClass('focus');
-                $(c).removeClass('open');
-                $(c).removeClass('active');
-                var _s = $(c).find('.dropdown-context-sub');
-                if (_s[0] && _s.css('display') === 'block') {
-                    _s.css('display', '');
-                    _s.removeClass('open');
-                }
-            });
-        }
-    });
-    return Module;
-});
-define('xide/widgets/ContextMenu',[
-    'dcl/dcl',
-    'xide/types',
-    'xlang/i18',
-    "xide/widgets/_Widget",
-    'xide/_base/_Widget',
-    "xide/mixins/ActionMixin",
-    'xaction/ActionContext',
-    "xide/widgets/_MenuMixin4",
-    "xide/model/Path",
-    "xide/_Popup",
-    "xide/$",
-    "xide/lodash",
-    "xide/widgets/_MenuKeyboard"
-], function (dcl, types, i18, _Widget, _XWidget, ActionMixin, ActionContext, MenuMixinClass, Path, _Popup, $, _, _MenuKeyboard) {
-    var ActionRendererClass = dcl(null, {
-        renderTopLevel: function (name, where) {
-            where = where || $(this.getRootContainer());
-            var item = $('<li class="dropdown">' +
-                '<a href="#" class="dropdown-toggle" data-toggle="dropdown">' + i18.localize(name) + '<b class="caret"></b></a>' +
-                '</li>');
-            where.append(item);
-            return item;
-
-        },
-        getRootContainer: function () {
-            return this.navBar;
-        }
-    });
-    var _debugTree = false;
-    var _debugMenuData = false;
-    var _debugOldMenuData = false;
-    var KeyboardControl = _MenuKeyboard;
-
-    var ContextMenu = dcl([_Widget.dcl, ActionContext.dcl, ActionMixin.dcl, ActionRendererClass, MenuMixinClass, _XWidget.StoreMixin], {
-        target: null,
-        openTarget: null,
-        visibility: types.ACTION_VISIBILITY.CONTEXT_MENU,
-        correctSubMenu: true,
-        limitTo: null,
-        declaredClass: 'xide.widgets.ContextMenu',
-        menuData: null,
-        addContext: function (selector, data) {
-            this.menuData = data;
-            var id,
-                $menu,
-                self = this,
-                target = this.openTarget ? this.openTarget : $(self.target);
-
-            if (typeof data.id !== 'undefined' && typeof data.data !== 'undefined') {
-                id = data.id;
-                $menu = $('body').find('#dropdown-' + id)[0];
-                if (typeof $menu === 'undefined') {
-                    $menu = self.buildMenu(data.data, id);
-                    selector.append($menu);
-                }
-            } else {
-                var d = new Date();
-                id = d.getTime();
-                $menu = self.buildMenu(data, id);
-                selector.append($menu);
-            }
-
-            var options = this.getDefaultOptions();
-
-            this.keyboardController = new KeyboardControl();
-            this.keyboardController.setup(this);
-
-            function mouseEnterHandlerSubs(e) {
-                var navigationData = this.keyboardController.toNavigationData($(e.target), this.getRootContainer());
-                if (!navigationData) {
-                    return;
-                }
-                this.keyboardController.clear(navigationData.parent);
-                this.menu.focus();
-                navigationData.element.focus();
-                this.menu.data('currentTarget', navigationData.element);
-
-            }
-
-            function setupContainer($container) {
-                self.__on($container, 'mouseenter', 'LI', mouseEnterHandlerSubs.bind(self));
-            }
-
-            function constextMenuHandler(e) {
-                if (self.limitTo) {
-                    var $target = $(e.target);
-                    $target = $target.parent();
-                    if (!$target.hasClass(self.limitTo)) {
-                        return;
-                    }
-                }
-                self.openEvent = e;
-                self.isOpen = true;
-                this.lastFocused = document.activeElement;
-                self.onOpen(e);
-                e.preventDefault();
-                e.stopPropagation();
-                $('.dropdown-context:not(.dropdown-context-sub)').hide();
-
-                var $dd = $('#dropdown-' + id);
-                $dd.css('zIndex', _Popup.nextZ(1));
-                if (!$dd.data('init')) {
-                    $dd.data('init', true);
-                    setupContainer($dd);
-                    self.keyboardController.initContainer($dd);
-                }
-
-                if (typeof options.above == 'boolean' && options.above) {
-                    $dd.css({
-                        top: e.pageY - 20 - $('#dropdown-' + id).height(),
-                        left: e.pageX - 13
-                    }).fadeIn(options.fadeSpeed);
-
-                } else if (typeof options.above == 'string' && options.above == 'auto') {
-                    $dd.removeClass('dropdown-context-up');
-                    var autoH = $dd.height() + 0;
-                    if ((e.pageY + autoH) > $('html').height()) {
-                        var top = e.pageY - 20 - autoH;
-                        if (top < 0) {
-                            top = 20;
-                        }
-                        $dd.css({
-                            top: top + 20,
-                            left: e.pageX - 13
-                        }).fadeIn(options.fadeSpeed);
-
-                    } else {
-                        $dd.css({
-                            top: e.pageY - 10,
-                            left: e.pageX - 13
-                        }).fadeIn(options.fadeSpeed);
-                    }
-                }
-
-                if (typeof options.left == 'boolean' && options.left) {
-                    $dd.addClass('dropdown-context-left').css({
-                        left: e.pageX - $dd.width()
-                    }).fadeIn(options.fadeSpeed);
-                } else if (typeof options.left == 'string' && options.left == 'auto') {
-                    $dd.removeClass('dropdown-context-left');
-                    var autoL = $dd.width() - 12;
-                    if ((e.pageX + autoL) > $('html').width()) {
-                        $dd.addClass('dropdown-context-left').css({
-                            left: e.pageX - $dd.width() + 13
-                        });
-                    }
-                }
-                this.keyboardController.activate($(this.keyboardController.children($dd)[0]), $dd);
-            }
-
-            this.__on(target, 'contextmenu', null, constextMenuHandler.bind(this));
-
-            this.__on($menu, 'keydown', function (e) {
-                if (e.keyCode == 27) {
-                    var navData = this.keyboardController.toNavigationData($(e.target), this.getRootContainer());
-                    navData && navData.element && this.keyboardController.close(navData.element);
-                    $(this.lastFocused).focus();
-                }
-            }.bind(this));
-
-            return $menu;
-        },
-        onRootAction: function () {
-            return null;
-        },
-        buildMenu: function (data, id, subMenu, update) {
-            var subClass = (subMenu) ? ' dropdown-context-sub' : ' scrollable-menu ',
-                menuString = '<ul tabindex="-1" aria-expanded="true" role="menu" class="dropdown-menu dropdown-context' + subClass + '" id="dropdown-' + id + '"></ul>',
-                $menu = update ? (this._rootMenu || $(menuString)) : $(menuString);
-
-            if (!subMenu) {
-                this._rootMenu = $menu;
-                this._rootMenu.addClass('contextMenu')
-            }
-            $menu.data('data', data);
-            return this.buildMenuItems($menu, data, id, subMenu);
-        },
-        onActionAdded: function (actions) {
-            this.setActionStore(this.getActionStore(), this, false, true, actions);
-        },
-        clearAction: function (action) {
-            var self = this;
-            if (action) {
-                var actionVisibility = action.getVisibility !== null ? action.getVisibility(self.visibility) : {};
-                if (actionVisibility) {
-                    var widget = actionVisibility.widget;
-                    action.removeReference && action.removeReference(widget);
-                    if (widget && widget.destroy) {
-                        widget.destroy();
-                    }
-                    delete actionVisibility.widget;
-                    actionVisibility.widget = null;
-                }
-            }
-        },
-        onActionRemoved: function (evt) {
-            this.clearAction(evt.target);
-        },
-        removeCustomActions: function () {
-            var oldStore = this.store;
-            if (!oldStore) {
-                console.warn('removeCustomActions : have no store');
-                return;
-            }
-            var oldActions = oldStore._find({
-                custom: true
-            });
-            var menuData = this.menuData;
-            _.each(oldActions, function (action) {
-                oldStore.removeSync(action.command);
-                var oldMenuItem = _.find(menuData, {
-                    command: action.command
-                });
-                oldMenuItem && menuData.remove(oldMenuItem);
-            });
-        },
-        setActionStore: function (store, owner, subscribe, update, itemActions) {
-            if (!update) {
-                if(this.store==store){
-                    return;
-                }
-                this._clear();
-                this.addActionStore(store);
-            }
-
-            var self = this,
-                visibility = self.visibility,
-                rootContainer = $(self.getRootContainer());
-
-            this.store = store;
-            if(!store){
-                return;
-            }
-            var tree = update ? self.lastTree : self.buildActionTree(store, owner);
-            var allActions = tree.allActions,
-                rootActions = tree.rootActions,
-                allActionPaths = tree.allActionPaths,
-                oldMenuData = self.menuData;
-            var data = [];
-            if (subscribe !== false) {
-                if (!this['_handleAdded_' + store.id]) {
-                    this.addHandle('added', store._on('onActionsAdded', function (actions) {
-                        self.onActionAdded(actions);
-                    }));
-
-                    this.addHandle('delete', store.on('delete', function (evt) {
-                        self.onActionRemoved(evt);
-                    }));
-                    this['_handleAdded_' + store.id] = true;
-                }
-            }
-            if (!update) {
-                _.each(tree.root, function (menuActions, level) {
-                    var root = self.onRootAction(level, rootContainer),
-                        lastGroup = '',
-                        lastHeader = {
-                            header: ''
-                        },
-                        groupedActions = menuActions.grouped;
-
-                    _.each(menuActions, function (command) {
-                        var action = self.getAction(command, store),
-                            isDynamicAction = false;
-
-                        if (!action) {
-                            isDynamicAction = true;
-                            action = self.createAction(command);
-                        }
-                        if (action) {
-                            var renderData = self.getActionData(action);
-                            var icon = renderData.icon,
-                                label = renderData.label,
-                                visibility = renderData.visibility,
-                                group = renderData.group;
-
-                            if (visibility.widget) {
-                                return;
-                            }
-                            if (!isDynamicAction && group && groupedActions[group] && groupedActions[group].length >= 1) {
-                                if (lastGroup !== group) {
-                                    var name = groupedActions[group].length >= 2 ? i18.localize(group) : "";
-                                    lastHeader = {header: name};
-                                    data.push(lastHeader);
-                                    lastGroup = group;
-                                }
-                            }
-                            var item = self.toMenuItem(action, owner, label, icon, visibility || {}, true);
-                            data.push(item);
-                            visibility.widget = item;
-                            self.addReference(action, item);
-                            function parseChildren(command, parent) {
-                                var childPaths = new Path(command).getChildren(allActionPaths, false),
-                                    isContainer = childPaths.length > 0,
-                                    childActions = isContainer ? self.toActions(childPaths, store) : null;
-                                if (childActions) {
-                                    var subs = [];
-                                    _.each(childActions, function (child) {
-                                        var _renderData = self.getActionData(child);
-                                        var _item = self.toMenuItem(child, owner, _renderData.label, _renderData.icon, _renderData.visibility, true);
-                                        self.addReference(child, _item);
-                                        subs.push(_item);
-
-                                        var _childPaths = new Path(child.command).getChildren(allActionPaths, false),
-                                            _isContainer = _childPaths.length > 0;
-                                        if (_isContainer) {
-                                            parseChildren(child.command, _item);
-                                        }
-                                    });
-                                    parent.subMenu = subs;
-                                }
-                            }
-                            parseChildren(command, item);
-                        }
-                    });
-                });
-                self.attach($('body'), data);
-                self.onDidRenderActions(store, owner);
-            } else {
-                if (itemActions || !_.isEmpty(itemActions)) {
-                    _.each(itemActions, function (newAction) {
-                        if (newAction) {
-                            var action = self.getAction(newAction.command);
-                            if (action) {
-                                var renderData = self.getActionData(action),
-                                    icon = renderData.icon,
-                                    label = renderData.label,
-                                    aVisibility = renderData.visibility,
-                                    group = renderData.group,
-                                    item = self.toMenuItem(action, owner, label, icon, aVisibility || {}, null, false);
-
-                                aVisibility.widget = item;
-
-                                self.addReference(newAction, item);
-
-                                var parentCommand = action.getParentCommand();
-                                var parent = self._findParentData(oldMenuData, parentCommand);
-                                if (parent && parent.subMenu) {
-                                    parent.lazy = true;
-                                    parent.subMenu.push(item);
-                                } else {
-                                    oldMenuData.splice(0, 0, item);
-                                }
-                            } else {
-                                console.error('cant find action ' + newAction.command);
-                            }
-                        }
-                    });
-                    self.buildMenu(oldMenuData, self.id, null, update);
-                }
-            }
-        }
-    });
-    return ContextMenu;
-});
-/** module:xgrid/ContextMenu **/
-define('xgrid/ContextMenu',[
-    'dojo/_base/declare',
-    'xide/utils',
-    'xide/widgets/ContextMenu',
-    'xide/types'
-], function (declare, utils, ContextMenu, types) {
-    return declare("xgrid.ContextMenu", null, {
-        contextMenu: null,
-        getContextMenu: function () {
-            return this.contextMenu;
-        },
-        _createContextMenu: function () {
-            var _ctorArgs = this.contextMenuArgs || {};
-            var node = this.contentNode;
-            var mixin = {
-                owner: this,
-                delegate: this,
-                _actionFilter: {
-                    quick: true
-                }
-            };
-            utils.mixin(_ctorArgs, mixin);
-            var contextMenu = new ContextMenu(_ctorArgs, node);
-            contextMenu.openTarget = node;
-            //@TODO: remove back dijit compat
-            //contextMenu.limitTo=null;
-            contextMenu.init({preventDoubleContext: false});
-            contextMenu._registerActionEmitter(this);
-            $(node).one('contextmenu',function(e){
-                e.preventDefault();
-                if(!this.store) {
-                    contextMenu.setActionStore(this.getActionStore(), this);
-                }
-            }.bind(this));
-            this.contextMenu = contextMenu;
-            this.add(contextMenu);
-        },
-        startup: function () {
-            if (this._started) {
-                return;
-            }
-            this.inherited(arguments);
-            if (this.hasPermission(types.ACTION.CONTEXT_MENU)) {
-                this._createContextMenu();
-            }
-        }
-    });
-});
-define('xgrid/Keyboard',[
-	'dojo/_base/declare',
-	'dojo/aspect',
-	'dojo/dom-class',
-	'dojo/on',
-	'dojo/_base/lang',
-	'dojo/has',
-	'dgrid/util/misc',
-	'dojo/_base/sniff',
-	'dcl/dcl'
-], function (declare, aspect, domClass, on, lang, has, miscUtil,dcl) {
-
-	var delegatingInputTypes = {
-			checkbox: 1,
-			radio: 1,
-			button: 1
-		},
-		hasGridCellClass = /\bdgrid-cell\b/,
-		hasGridRowClass = /\bdgrid-row\b/,
-		_debug = false;
-
-    has.add("dom-contains", function(global, doc, element){
-        return !!element.contains; // not supported by FF < 9
-    });
-
-    function contains(parent, node){
-        // summary:
-        //		Checks to see if an element is contained by another element.
-
-        if(has("dom-contains")){
-            return parent.contains(node);
-        }else{
-            return parent.compareDocumentPosition(node) & 8 /* DOCUMENT_POSITION_CONTAINS */;
-        }
-    }
-
-	var _upDownSelect = function(event,who,steps) {
-
-		var prev     = steps < 0,
-			selector = prev ? 'first:' : 'last',
-			s, n, sib, top, left;
-
-		var _current = who.row(event).element;
-		var sel = $(_current); // header reports row as undefined
-
-		var clDisabled = 'ui-state-disabled';
-		function sibling(n, direction) {
-			return n[direction+'All']('[id]:not(.'+clDisabled+'):not(.dgrid-content-parent):first');
-		}
-		var hasLeftRight=false;
-		if (sel.length) {
-			var next = who.up(who._focusedNode,1, true);
-			s = sel;
-			sib = $(next.element);
-			if (!sib.length) {
-				// there is no sibling on required side - do not move selection
-				n = s;
-			} else if (hasLeftRight) {//done somewhere else
-				n = sib;
-			} else {
-				// find up/down side file in icons view
-				top = s.position().top;
-				left = s.position().left;
-				n = s;
-				if (prev) {
-					do {
-						n = n.prev('[id]');
-					} while (n.length && !(n.position().top < top && n.position().left <= left));
-
-					if (n.is('.'+clDisabled)) {
-						n = sibling(n, 'next');
-					}
-				} else {
-					do {
-						n = n.next('[id]');
-					} while (n.length && !(n.position().top > top && n.position().left >= left));
-
-					if (n.is('.'+clDisabled)) {
-						n = sibling(n, 'prev');
-					}
-				}
-			}
-		}
-		return n;
-	};
-	var _rightLeftSelect = function(event,who,steps) {
-
-		var prev     = steps < 0,
-			selector = prev ? 'first:' : 'last',
-			s, n, sib, top, left;
-
-		var _current = who.row(event).element;
-		var sel = $(_current); // header reports row as undefined
-
-		var clDisabled = 'ui-state-disabled';
-		function sibling(n, direction) {
-			return n[direction+'All']('[id]:not(.'+clDisabled+'):not(.dgrid-content-parent):first');
-		}
-		var hasLeftRight=true;
-		if (sel.length) {
-			var next = who.up(who._focusedNode,1, true);
-			s = sel;
-			sib = $(next.element);
-			if (!sib.length) {
-				// there is no sibling on required side - do not move selection
-				n = s;
-			} else if (hasLeftRight) {//done somewhere else
-				n = sib;
-			} else {
-				// find up/down side file in icons view
-				top = s.position().top;
-				left = s.position().left;
-				n = s;
-				if (prev) {
-					do {
-						n = n.prev('[id]');
-					} while (n.length && !(n.position().top < top && n.position().left <= left));
-
-					if (n.is('.'+clDisabled)) {
-						n = sibling(n, 'next');
-					}
-				} else {
-					do {
-						n = n.next('[id]');
-					} while (n.length && !(n.position().top > top && n.position().left >= left));
-
-					if (n.is('.'+clDisabled)) {
-						n = sibling(n, 'prev');
-					}
-				}
-			}
-		}
-		return n;
-	};
-
-	var Implementation = {
-		// summary:
-		//		Adds keyboard navigation capability to a list or grid.
-
-		// pageSkip: Number
-		//		Number of rows to jump by when page up or page down is pressed.
-		pageSkip: 10,
-
-		tabIndex: -1,
-
-		// keyMap: Object
-		//		Hash which maps key codes to functions to be executed (in the context
-		//		of the instance) for key events within the grid's body.
-		keyMap: null,
-
-		// headerKeyMap: Object
-		//		Hash which maps key codes to functions to be executed (in the context
-		//		of the instance) for key events within the grid's header row.
-		headerKeyMap: null,
-
-		postMixInProperties: function () {
-			this.inherited(arguments);
-
-			if (!this.keyMap) {
-				this.keyMap = lang.mixin({}, Implementation.defaultKeyMap);
-			}
-			if (!this.headerKeyMap) {
-				this.headerKeyMap = lang.mixin({}, Implementation.defaultHeaderKeyMap);
-			}
-		},
-
-		postCreate: function () {
-			this.inherited(arguments);
-			var grid = this;
-
-			function handledEvent(event) {
-				// Text boxes and other inputs that can use direction keys should be ignored
-				// and not affect cell/row navigation
-				var target = event.target;
-				return target.type && (!delegatingInputTypes[target.type] || event.keyCode === 32);
-			}
-
-			function enableNavigation(areaNode) {
-
-				var cellNavigation = grid.cellNavigation,
-					isFocusableClass = cellNavigation ? hasGridCellClass : hasGridRowClass,
-					isHeader = areaNode === grid.headerNode,
-					initialNode = areaNode;
-
-				function initHeader() {
-					if (grid._focusedHeaderNode) {
-						// Remove the tab index for the node that previously had it.
-						grid._focusedHeaderNode.tabIndex = -1;
-					}
-					if (grid.showHeader) {
-						if (cellNavigation) {
-							// Get the focused element. Ensure that the focused element
-							// is actually a grid cell, not a column-set-cell or some
-							// other cell that should not be focused
-							var elements = grid.headerNode.getElementsByTagName('th');
-							for (var i = 0, element; (element = elements[i]); ++i) {
-								if (isFocusableClass.test(element.className)) {
-									grid._focusedHeaderNode = initialNode = element;
-									break;
-								}
-							}
-						}
-						else {
-							grid._focusedHeaderNode = initialNode = grid.headerNode;
-						}
-
-						// Set the tab index only if the header is visible.
-						if (initialNode) {
-							initialNode.tabIndex = grid.tabIndex;
-						}
-					}
-				}
-
-				if (isHeader) {
-					// Initialize header now (since it's already been rendered),
-					// and aspect after future renderHeader calls to reset focus.
-					initHeader();
-					aspect.after(grid, 'renderHeader', initHeader, true);
-				}
-				else {
-					aspect.after(grid, 'renderArray', function (rows) {
-						// summary:
-						//		Ensures the first element of a grid is always keyboard selectable after data has been
-						//		retrieved if there is not already a valid focused element.
-
-						var focusedNode = grid._focusedNode || initialNode;
-
-						// do not update the focused element if we already have a valid one
-						if (isFocusableClass.test(focusedNode.className) && miscUtil.contains(areaNode, focusedNode)) {
-							return rows;
-						}
-
-						// ensure that the focused element is actually a grid cell, not a
-						// dgrid-preload or dgrid-content element, which should not be focusable,
-						// even when data is loaded asynchronously
-						var elements = areaNode.getElementsByTagName('*');
-						for (var i = 0, element; (element = elements[i]); ++i) {
-							if (isFocusableClass.test(element.className)) {
-								focusedNode = grid._focusedNode = element;
-								break;
-							}
-						}
-
-						focusedNode.tabIndex = grid.tabIndex;
-						return rows;
-					});
-				}
-
-				grid._listeners.push(on(areaNode, 'mousedown', function (event) {
-					if (!handledEvent(event)) {
-						grid._focusOnNode(event.target, isHeader, event);
-					}
-				}));
-
-				grid._listeners.push(on(areaNode, 'keydown', function (event) {
-					//console.log('keyboardkey down : ',event);
-					// For now, don't squash browser-specific functionalities by letting
-					// ALT and META function as they would natively
-					if (event.metaKey || event.altKey) {
-						return;
-					}
-
-					var handler = grid[isHeader ? 'headerKeyMap' : 'keyMap'][event.keyCode];
-
-					// Text boxes and other inputs that can use direction keys should be ignored
-					// and not affect cell/row navigation
-					if (handler && !handledEvent(event)) {
-						handler.call(grid, event);
-					}
-				}));
-			}
-
-			if (this.tabableHeader) {
-				enableNavigation(this.headerNode);
-				on(this.headerNode, 'dgrid-cellfocusin', function () {
-					grid.scrollTo({ x: this.scrollLeft });
-				});
-			}
-			enableNavigation(this.contentNode);
-
-			this._debouncedEnsureScroll = miscUtil.debounce(this._ensureScroll, this);
-		},
-
-		removeRow: function (rowElement) {
-			if (!this._focusedNode) {
-				// Nothing special to do if we have no record of anything focused
-				return this.inherited(arguments);
-			}
-
-			var self = this,
-				isActive = document.activeElement === this._focusedNode,
-
-					focusedTarget = this[this.cellNavigation ? 'cell' : 'row'](this._focusedNode);
-
-            if(!focusedTarget){
-                console.error('no focus target');
-                return this.inherited(arguments);
-            }
-
-
-				var focusedRow = focusedTarget.row || focusedTarget,
-				sibling;
-			rowElement = rowElement.element || rowElement;
-
-			// If removed row previously had focus, temporarily store information
-			// to be handled in an immediately-following insertRow call, or next turn
-			if (rowElement === focusedRow.element) {
-				sibling = this.down(focusedRow, true);
-
-				// Check whether down call returned the same row, or failed to return
-				// any (e.g. during a partial unrendering)
-				if (!sibling || sibling.element === rowElement) {
-					sibling = this.up(focusedRow, true);
-				}
-
-				this._removedFocus = {
-					active: isActive,
-					rowId: focusedRow.id,
-					columnId: focusedTarget.column && focusedTarget.column.id,
-					siblingId: !sibling || sibling.element === rowElement ? undefined : sibling.id
-				};
-
-				// Call _restoreFocus on next turn, to restore focus to sibling
-				// if no replacement row was immediately inserted.
-				// Pass original row's id in case it was re-inserted in a renderArray
-				// call (and thus was found, but couldn't be focused immediately)
-				setTimeout(function () {
-					if (self._removedFocus) {
-						self._restoreFocus(focusedRow.id);
-					}
-				}, 0);
-
-				// Clear _focusedNode until _restoreFocus is called, to avoid
-				// needlessly re-running this logic
-				this._focusedNode = null;
-			}
-
-			this.inherited(arguments);
-		},
-
-		insertRow: function () {
-			var rowElement = this.inherited(arguments);
-			if (this._removedFocus && !this._removedFocus.wait) {
-				this._restoreFocus(rowElement);
-			}
-			return rowElement;
-		},
-
-		_restoreFocus: function (row) {
-			// summary:
-			//		Restores focus to the newly inserted row if it matches the
-			//		previously removed row, or to the nearest sibling otherwise.
-
-			var focusInfo = this._removedFocus,
-				newTarget,
-				cell;
-
-			row = row && this.row(row);
-			newTarget = row && row.element && row.id === focusInfo.rowId ? row :
-				typeof focusInfo.siblingId !== 'undefined' && this.row(focusInfo.siblingId);
-
-			if (newTarget && newTarget.element) {
-				if (!newTarget.element.parentNode.parentNode) {
-					// This was called from renderArray, so the row hasn't
-					// actually been placed in the DOM yet; handle it on the next
-					// turn (called from removeRow).
-					focusInfo.wait = true;
-					return;
-				}
-				// Should focus be on a cell?
-				if (typeof focusInfo.columnId !== 'undefined') {
-					cell = this.cell(newTarget, focusInfo.columnId);
-					if (cell && cell.element) {
-						newTarget = cell;
-					}
-				}
-				if (focusInfo.active && newTarget.element.offsetHeight !== 0) {
-					// Row/cell was previously focused and is visible, so focus the new one immediately
-					this._focusOnNode(newTarget, false, null);
-				}
-				else {
-					// Row/cell was not focused or is not visible, but we still need to
-					// update _focusedNode and the element's tabIndex/class
-					domClass.add(newTarget.element, 'dgrid-focus');
-					newTarget.element.tabIndex = this.tabIndex;
-					this._focusedNode = newTarget.element;
-				}
-			}
-
-			delete this._removedFocus;
-		},
-
-		addKeyHandler: function (key, callback, isHeader) {
-			// summary:
-			//		Adds a handler to the keyMap on the instance.
-			//		Supports binding additional handlers to already-mapped keys.
-			// key: Number
-			//		Key code representing the key to be handled.
-			// callback: Function
-			//		Callback to be executed (in instance context) when the key is pressed.
-			// isHeader: Boolean
-			//		Whether the handler is to be added for the grid body (false, default)
-			//		or the header (true).
-
-			// Aspects may be about 10% slower than using an array-based appraoch,
-			// but there is significantly less code involved (here and above).
-			return aspect.after( // Handle
-				this[isHeader ? 'headerKeyMap' : 'keyMap'], key, callback, true);
-		},
-
-		_ensureRowScroll: function (rowElement) {
-			// summary:
-			//		Ensures that the entire row is visible within the viewport.
-			//		Called for cell navigation in complex structures.
-
-			var scrollY = this.getScrollPosition().y;
-			if (scrollY > rowElement.offsetTop) {
-				// Row starts above the viewport
-				this.scrollTo({ y: rowElement.offsetTop });
-			}
-			else if (scrollY + this.contentNode.offsetHeight < rowElement.offsetTop + rowElement.offsetHeight) {
-				// Row ends below the viewport
-				this.scrollTo({ y: rowElement.offsetTop - this.contentNode.offsetHeight + rowElement.offsetHeight });
-			}
-		},
-
-		_ensureColumnScroll: function (cellElement) {
-			// summary:
-			//		Ensures that the entire cell is visible in the viewport.
-			//		Called in cases where the grid can scroll horizontally.
-
-			var scrollX = this.getScrollPosition().x;
-			var cellLeft = cellElement.offsetLeft;
-			if (scrollX > cellLeft) {
-				this.scrollTo({ x: cellLeft });
-			}
-			else {
-				var bodyWidth = this.bodyNode.clientWidth;
-				var cellWidth = cellElement.offsetWidth;
-				var cellRight = cellLeft + cellWidth;
-				if (scrollX + bodyWidth < cellRight) {
-					// Adjust so that the right side of the cell and grid body align,
-					// unless the cell is actually wider than the body - then align the left sides
-					this.scrollTo({ x: bodyWidth > cellWidth ? cellRight - bodyWidth : cellLeft });
-				}
-			}
-		},
-
-		_ensureScroll: function (cell, isHeader) {
-			// summary:
-			//		Corrects scroll based on the position of the newly-focused row/cell
-			//		as necessary based on grid configuration and dimensions.
-
-			if(this.cellNavigation && (this.columnSets || this.subRows.length > 1) && !isHeader){
-				this._ensureRowScroll(cell.row.element);
-			}
-			if(this.bodyNode.clientWidth < this.contentNode.offsetWidth){
-				this._ensureColumnScroll(cell.element);
-			}
-		},
-
-		_focusOnNode: function (element,isHeader,event,emit) {
-			var focusedNodeProperty = '_focused' + (isHeader ? 'Header' : '') + 'Node',
-				focusedNode = this[focusedNodeProperty],
-				cellOrRowType = this.cellNavigation ? 'cell' : 'row',
-				cell = this[cellOrRowType](element),
-				inputs,
-				input,
-				numInputs,
-				inputFocused,
-				i;
-
-			element = cell && cell.element;
-
-			if (!element /*|| element==this._focusedNode*/) {
-				//console.error('same el');
-				return;
-			}
-
-			if (this.cellNavigation) {
-				inputs = element.getElementsByTagName('input');
-				for (i = 0, numInputs = inputs.length; i < numInputs; i++) {
-					input = inputs[i];
-					if ((input.tabIndex !== -1 || '_dgridLastValue' in input) && !input.disabled) {
-						input.focus();
-						inputFocused = true;
-						break;
-					}
-				}
-			}
-
-			// Set up event information for dgrid-cellfocusout/in events.
-			// Note that these events are not fired for _restoreFocus.
-			if (event !== null) {
-				event = lang.mixin({ grid: this }, event);
-				if (event.type) {
-					event.parentType = event.type;
-				}
-				if (!event.bubbles) {
-					// IE doesn't always have a bubbles property already true.
-					// Opera throws if you try to set it to true if it is already true.
-					event.bubbles = true;
-				}
-			}
-
-			if (focusedNode) {
-				// Clean up previously-focused element
-				// Remove the class name and the tabIndex attribute
-				domClass.remove(focusedNode, 'dgrid-focus');
-				focusedNode.removeAttribute('tabindex');
-
-				// Expose object representing focused cell or row losing focus, via
-				// event.cell or event.row; which is set depends on cellNavigation.
-				if (event) {
-					event[cellOrRowType] = this[cellOrRowType](focusedNode);
-					on.emit(focusedNode, 'dgrid-cellfocusout', event);
-				}
-			}
-			focusedNode = this[focusedNodeProperty] = element;
-
-			if (event) {
-				// Expose object representing focused cell or row gaining focus, via
-				// event.cell or event.row; which is set depends on cellNavigation.
-				// Note that yes, the same event object is being reused; on.emit
-				// performs a shallow copy of properties into a new event object.
-				event[cellOrRowType] = cell;
-			}
-
-			var isFocusableClass = this.cellNavigation ? hasGridCellClass : hasGridRowClass;
-			if (!inputFocused && isFocusableClass.test(element.className)) {
-
-				element.tabIndex = this.tabIndex;
-				element.focus();
-			}
-			domClass.add(element, 'dgrid-focus');
-
-
-			if (event && emit!==false) {
-				on.emit(focusedNode, 'dgrid-cellfocusin', event);
-			}
-
-			this._debouncedEnsureScroll(cell, isHeader);
-		},
-
-		focusHeader: function (element) {
-			this._focusOnNode(element || this._focusedHeaderNode, true);
-		},
-
-		focus: function (element,emit) {
-			_debug && console.log('focuse : ' + (element ? element.id : ''));
-			var node = element || this._focusedNode;
-			if (node) {
-				if (element==this._focusedNode) {
-					//console.error('same el');
-					//return;
-				}
-				this._focusOnNode(node, false,null,emit);
-			}
-			else {
-				this.contentNode.focus();
-			}
-		}
-	};
-
-	// Common functions used in default keyMap (called in instance context)
-
-	var moveFocusVertical = Implementation.moveFocusVertical = function (event, steps) {
-		if(this.isThumbGrid){
-			var next = _upDownSelect(event,this,steps);
-			if(next && next.length){
-				this._focusOnNode(next[0], false, event);
-				event.preventDefault();
-				return;
-			}
-		}
-		var cellNavigation = this.cellNavigation,
-			target = this[cellNavigation ? 'cell' : 'row'](event),
-			columnId = cellNavigation && target.column.id,
-			next = this.down(this._focusedNode, steps, true);
-
-		// Navigate within same column if cell navigation is enabled
-		if (cellNavigation) {
-			next = this.cell(next, columnId);
-		}
-		this._focusOnNode(next, false, event);
-
-		event.preventDefault();
-	};
-
-	var moveFocusUp = Implementation.moveFocusUp = function (event) {
-		moveFocusVertical.call(this, event, -1);
-	};
-
-	var moveFocusDown = Implementation.moveFocusDown = function (event) {
-		moveFocusVertical.call(this, event, 1);
-	};
-
-	var moveFocusPageUp = Implementation.moveFocusPageUp = function (event) {
-		moveFocusVertical.call(this, event, -this.pageSkip);
-	};
-
-	var moveFocusPageDown = Implementation.moveFocusPageDown = function (event) {
-		moveFocusVertical.call(this, event, this.pageSkip);
-	};
-
-	var moveFocusHorizontal = Implementation.moveFocusHorizontal = function (event, steps) {
-
-		if (!this.cellNavigation && this.isThumbGrid!==true) {
-			return;
-		}
-
-		var isHeader = !this.row(event), // header reports row as undefined
-			currentNode = this['_focused' + (isHeader ? 'Header' : '') + 'Node'];
-
-		//var _row = this.row(event);
-		if(this.isThumbGrid==true){
-
-			var cellNavigation = this.cellNavigation,
-				next = this.down(this._focusedNode, steps, true);
-
-			// Navigate within same column if cell navigation is enabled
-			this._focusOnNode(next, false, event);
-			event.preventDefault();
-			return ;
-		}
-
-		this._focusOnNode(this.right(currentNode, steps), isHeader, event);
-		event.preventDefault();
-	};
-
-	var moveFocusLeft = Implementation.moveFocusLeft = function (event) {
-		moveFocusHorizontal.call(this, event, -1);
-	};
-
-	var moveFocusRight = Implementation.moveFocusRight = function (event) {
-		moveFocusHorizontal.call(this, event, 1);
-	};
-
-	var moveHeaderFocusEnd = Implementation.moveHeaderFocusEnd = function (event, scrollToBeginning) {
-		// Header case is always simple, since all rows/cells are present
-		var nodes;
-		if (this.cellNavigation) {
-			nodes = this.headerNode.getElementsByTagName('th');
-			this._focusOnNode(nodes[scrollToBeginning ? 0 : nodes.length - 1], true, event);
-		}
-		// In row-navigation mode, there's nothing to do - only one row in header
-
-		// Prevent browser from scrolling entire page
-		event.preventDefault();
-	};
-
-	var moveHeaderFocusHome = Implementation.moveHeaderFocusHome = function (event) {
-		moveHeaderFocusEnd.call(this, event, true);
-	};
-
-	var moveFocusEnd = Implementation.moveFocusEnd = function (event, scrollToTop) {
-		// summary:
-		//		Handles requests to scroll to the beginning or end of the grid.
-
-		// Assume scrolling to top unless event is specifically for End key
-		var cellNavigation = this.cellNavigation,
-			contentNode = this.contentNode,
-			contentPos = scrollToTop ? 0 : contentNode.scrollHeight,
-			scrollPos = contentNode.scrollTop + contentPos,
-			endChild = contentNode[scrollToTop ? 'firstChild' : 'lastChild'];
-
-		if(endChild.className.indexOf('dgrid-extra') > -1){
-			endChild = endChild['previousSibling'];
-		}
-
-		var	hasPreload = endChild.className.indexOf('dgrid-preload') > -1,
-			endTarget = hasPreload ? endChild[(scrollToTop ? 'next' : 'previous') + 'Sibling'] : endChild,
-			endPos = endTarget.offsetTop + (scrollToTop ? 0 : endTarget.offsetHeight),
-			handle;
-
-		if (hasPreload) {
-			// Find the nearest dgrid-row to the relevant end of the grid
-			while (endTarget && endTarget.className.indexOf('dgrid-row') < 0) {
-				endTarget = endTarget[(scrollToTop ? 'next' : 'previous') + 'Sibling'];
-			}
-			// If none is found, there are no rows, and nothing to navigate
-			if (!endTarget) {
-				return;
-			}
-		}
-
-		// Grid content may be lazy-loaded, so check if content needs to be
-		// loaded first
-		if (!hasPreload || endChild.offsetHeight < 1) {
-			// End row is loaded; focus the first/last row/cell now
-			if (cellNavigation) {
-				// Preserve column that was currently focused
-				endTarget = this.cell(endTarget, this.cell(event).column.id);
-			}
-			this._focusOnNode(endTarget, false, event);
-		}
-		else {
-			// In IE < 9, the event member references will become invalid by the time
-			// _focusOnNode is called, so make a (shallow) copy up-front
-			if (!has('dom-addeventlistener')) {
-				event = lang.mixin({}, event);
-			}
-
-			// If the topmost/bottommost row rendered doesn't reach the top/bottom of
-			// the contentNode, we are using OnDemandList and need to wait for more
-			// data to render, then focus the first/last row in the new content.
-			handle = aspect.after(this, 'renderArray', function (rows) {
-				var target = rows[scrollToTop ? 0 : rows.length - 1];
-				if (cellNavigation) {
-					// Preserve column that was currently focused
-					target = this.cell(target, this.cell(event).column.id);
-				}
-				this._focusOnNode(target, false, event);
-				handle.remove();
-				return rows;
-			});
-		}
-
-		if (scrollPos === endPos) {
-			// Grid body is already scrolled to end; prevent browser from scrolling
-			// entire page instead
-			event.preventDefault();
-		}
-	};
-
-	var moveFocusHome = Implementation.moveFocusHome = function (event) {
-		moveFocusEnd.call(this, event, true);
-	};
-
-	function preventDefault(event) {
-		event.preventDefault();
-	}
-
-	Implementation.defaultKeyMap = {
-		32: preventDefault, // space
-		33: moveFocusPageUp, // page up
-		34: moveFocusPageDown, // page down
-		35: moveFocusEnd, // end
-		36: moveFocusHome, // home
-		37: moveFocusLeft, // left
-		38: moveFocusUp, // up
-		39: moveFocusRight, // right
-		40: moveFocusDown // down
-	};
-
-	// Header needs fewer default bindings (no vertical), so bind it separately
-	Implementation.defaultHeaderKeyMap = {
-		32: preventDefault, // space
-		35: moveHeaderFocusEnd, // end
-		36: moveHeaderFocusHome, // home
-		37: moveFocusLeft, // left
-		39: moveFocusRight // right
-	};
-
-	var Module = declare(null,Implementation);
-	Module.dcl = dcl(null,Implementation);
-	return Module;
-});
-
-define('dgrid/OnDemandList',[
-	'./List',
-	'./_StoreMixin',
-	'dojo/_base/declare',
-	'dojo/_base/lang',
-	'dojo/dom-construct',
-	'dojo/on',
-	'dojo/when',
-	'./util/misc'
-], function (List, _StoreMixin, declare, lang, domConstruct, on, when, miscUtil) {
-
-	return declare([ List, _StoreMixin ], {
-		// summary:
-		//		Extends List to include virtual scrolling functionality, querying a
-		//		dojo/store instance for the appropriate range when the user scrolls.
-
-		// minRowsPerPage: Integer
-		//		The minimum number of rows to request at one time.
-		minRowsPerPage: 2500,
-
-		// maxRowsPerPage: Integer
-		//		The maximum number of rows to request at one time.
-		maxRowsPerPage: 250,
-
-		// maxEmptySpace: Integer
-		//		Defines the maximum size (in pixels) of unrendered space below the
-		//		currently-rendered rows. Setting this to less than Infinity can be useful if you
-		//		wish to limit the initial vertical scrolling of the grid so that the scrolling is
-		// 		not excessively sensitive. With very large grids of data this may make scrolling
-		//		easier to use, albiet it can limit the ability to instantly scroll to the end.
-		maxEmptySpace: Infinity,
-
-		// bufferRows: Integer
-		//	  The number of rows to keep ready on each side of the viewport area so that the user can
-		//	  perform local scrolling without seeing the grid being built. Increasing this number can
-		//	  improve perceived performance when the data is being retrieved over a slow network.
-		bufferRows: 10,
-
-		// farOffRemoval: Integer
-		//		Defines the minimum distance (in pixels) from the visible viewport area
-		//		rows must be in order to be removed.  Setting to Infinity causes rows
-		//		to never be removed.
-		farOffRemoval: 2000,
-
-		// queryRowsOverlap: Integer
-		//		Indicates the number of rows to overlap queries. This helps keep
-		//		continuous data when underlying data changes (and thus pages don't
-		//		exactly align)
-		queryRowsOverlap: 0,
-
-		// pagingMethod: String
-		//		Method (from dgrid/util/misc) to use to either throttle or debounce
-		//		requests.  Default is "debounce" which will cause the grid to wait until
-		//		the user pauses scrolling before firing any requests; can be set to
-		//		"throttleDelayed" instead to progressively request as the user scrolls,
-		//		which generally incurs more overhead but might appear more responsive.
-		pagingMethod: 'debounce',
-
-		// pagingDelay: Integer
-		//		Indicates the delay (in milliseconds) imposed upon pagingMethod, to wait
-		//		before paging in more data on scroll events. This can be increased to
-		//		reduce client-side overhead or the number of requests sent to a server.
-		pagingDelay: miscUtil.defaultDelay,
-
-		// keepScrollPosition: Boolean
-		//		When refreshing the list, controls whether the scroll position is
-		//		preserved, or reset to the top.  This can also be overridden for
-		//		specific calls to refresh.
-		keepScrollPosition: true,
-
-		// rowHeight: Number
-		//		Average row height, computed in renderQuery during the rendering of
-		//		the first range of data.
-		rowHeight: 0,
-
-		postCreate: function () {
-			this.inherited(arguments);
-			var self = this;
-			// check visibility on scroll events
-			on(this.bodyNode, 'scroll',
-				miscUtil[this.pagingMethod](function (event) {
-					self._processScroll(event);
-				}, null, this.pagingDelay)
-			);
-		},
-
-		destroy: function () {
-			this.inherited(arguments);
-			if (this._refreshTimeout) {
-				clearTimeout(this._refreshTimeout);
-			}
-		},
-
-		renderQuery: function (query, options) {
-			// summary:
-			//		Creates a preload node for rendering a query into, and executes the query
-			//		for the first page of data. Subsequent data will be downloaded as it comes
-			//		into view.
-			// query: Function
-			//		Function to be called when requesting new data.
-			// options: Object?
-			//		Optional object containing the following:
-			//		* container: Container to build preload nodes within; defaults to this.contentNode
-
-			var self = this,
-				container = (options && options.container) || this.contentNode,
-				preload = {
-					query: query,
-					count: 0
-				},
-				preloadNode,
-				priorPreload = this.preload;
-
-			// Initial query; set up top and bottom preload nodes
-			var topPreload = {
-				node: domConstruct.create('div', {
-					className: 'dgrid-preload',
-					style: { height: '0' }
-				}, container),
-				count: 0,
-				query: query,
-				next: preload
-			};
-			topPreload.node.rowIndex = 0;
-			preload.node = preloadNode = domConstruct.create('div', {
-				className: 'dgrid-preload'
-			}, container);
-			preload.previous = topPreload;
-
-			// this preload node is used to represent the area of the grid that hasn't been
-			// downloaded yet
-			preloadNode.rowIndex = this.minRowsPerPage;
-
-			if (priorPreload) {
-				// the preload nodes (if there are multiple) are represented as a linked list, need to insert it
-				if ((preload.next = priorPreload.next) &&
-						// is this preload node below the prior preload node?
-						preloadNode.offsetTop >= priorPreload.node.offsetTop) {
-					// the prior preload is above/before in the linked list
-					preload.previous = priorPreload;
-				}
-				else {
-					// the prior preload is below/after in the linked list
-					preload.next = priorPreload;
-					preload.previous = priorPreload.previous;
-				}
-				// adjust the previous and next links so the linked list is proper
-				preload.previous.next = preload;
-				preload.next.previous = preload;
-			}
-			else {
-				this.preload = preload;
-			}
-
-			var loadingNode = domConstruct.create('div', {
-					className: 'dgrid-loading'
-				}, preloadNode, 'before'),
-				innerNode = domConstruct.create('div', {
-					className: 'dgrid-below'
-				}, loadingNode);
-			innerNode.innerHTML = this.loadingMessage;
-
-			// Establish query options, mixing in our own.
-			options = lang.mixin({ start: 0, count: this.minRowsPerPage },
-				'level' in query ? { queryLevel: query.level } : null);
-
-			// Protect the query within a _trackError call, but return the resulting collection
-			return this._trackError(function () {
-				var results = query(options);
-
-				// Render the result set
-				return self.renderQueryResults(results, preloadNode, options).then(function (trs) {
-					return results.totalLength.then(function (total) {
-						var trCount = trs.length,
-							parentNode = preloadNode.parentNode,
-							noDataNode = self.noDataNode;
-
-						if (self._rows) {
-							self._rows.min = 0;
-							self._rows.max = trCount === total ? Infinity : trCount - 1;
-						}
-
-						domConstruct.destroy(loadingNode);
-						if (!('queryLevel' in options)) {
-							self._total = total;
-						}
-						// now we need to adjust the height and total count based on the first result set
-						if (total === 0 && parentNode) {
-							if (noDataNode) {
-								domConstruct.destroy(noDataNode);
-								delete self.noDataNode;
-							}
-							self.noDataNode = noDataNode = domConstruct.create('div', {
-								className: 'dgrid-no-data',
-								innerHTML: self.noDataMessage
-							});
-							self._emit('noData');
-							parentNode.insertBefore(noDataNode, self._getFirstRowSibling(parentNode));
-						}
-						var height = 0;
-						for (var i = 0; i < trCount; i++) {
-							height += self._calcRowHeight(trs[i]);
-						}
-						// only update rowHeight if we actually got results and are visible
-						if (trCount && height) {
-							self.rowHeight = height / trCount;
-						}
-
-						total -= trCount;
-						preload.count = total;
-						preloadNode.rowIndex = trCount;
-						if (total) {
-							preloadNode.style.height = Math.min(total * self.rowHeight, self.maxEmptySpace) + 'px';
-						}
-						else {
-							preloadNode.style.display = 'none';
-						}
-
-						if (self._previousScrollPosition) {
-							// Restore position after a refresh operation w/ keepScrollPosition
-							self.scrollTo(self._previousScrollPosition);
-							delete self._previousScrollPosition;
-						}
-
-						// Redo scroll processing in case the query didn't fill the screen,
-						// or in case scroll position was restored
-						return when(self._processScroll()).then(function () {
-							return trs;
-						});
-					});
-				}).otherwise(function (err) {
-					// remove the loadingNode and re-throw
-					domConstruct.destroy(loadingNode);
-					throw err;
-				});
-			});
-		},
-
-		refresh: function (options) {
-			// summary:
-			//		Refreshes the contents of the grid.
-			// options: Object?
-			//		Optional object, supporting the following parameters:
-			//		* keepScrollPosition: like the keepScrollPosition instance property;
-			//			specifying it in the options here will override the instance
-			//			property's value for this specific refresh call only.
-
-			var self = this,
-				keep = (options && options.keepScrollPosition);
-
-			// Fall back to instance property if option is not defined
-			if (typeof keep === 'undefined') {
-				//keep = this.keepScrollPosition;
-			}
-
-			// Store scroll position to be restored after new total is received
-			if (keep) {
-				this._previousScrollPosition = this.getScrollPosition();
-			}
-
-			this.inherited(arguments);
-			if (this._renderedCollection) {
-				// render the query
-
-				// renderQuery calls _trackError internally
-				return this.renderQuery(function (queryOptions) {
-					return self._renderedCollection.fetchRange({
-						start: queryOptions.start,
-						end: queryOptions.start + queryOptions.count
-					});
-				}).then(function () {
-					// Emit on a separate turn to enable event to be used consistently for
-					// initial render, regardless of whether the backing store is async
-					self._refreshTimeout = setTimeout(function () {
-						on.emit(self.domNode, 'dgrid-refresh-complete', {
-							bubbles: true,
-							cancelable: false,
-							grid: self
-						});
-						self._refreshTimeout = null;
-					}, 0);
-				});
-			}
-		},
-
-		resize: function () {
-			this.inherited(arguments);
-			this._processScroll();
-		},
-
-		cleanup: function () {
-			this.inherited(arguments);
-			this.preload = null;
-		},
-
-		renderQueryResults: function (results) {
-			var rows = this.inherited(arguments);
-			var collection = this._renderedCollection;
-
-			if (collection && collection.releaseRange) {
-				rows.then(function (resolvedRows) {
-					if (resolvedRows[0] && !resolvedRows[0].parentNode.tagName) {
-						// Release this range, since it was never actually rendered;
-						// need to wait until totalLength promise resolves, since
-						// Trackable only adds the range then to begin with
-						results.totalLength.then(function () {
-							collection.releaseRange(resolvedRows[0].rowIndex,
-								resolvedRows[resolvedRows.length - 1].rowIndex + 1);
-						});
-					}
-				});
-			}
-
-			return rows;
-		},
-
-		_getFirstRowSibling: function (container) {
-			// summary:
-			//		Returns the DOM node that a new row should be inserted before
-			//		when there are no other rows in the current result set.
-			//		In the case of OnDemandList, this will always be the last child
-			//		of the container (which will be a trailing preload node).
-			return container.lastChild;
-		},
-
-		_calcRowHeight: function (rowElement) {
-			// summary:
-			//		Calculate the height of a row. This is a method so it can be overriden for
-			//		plugins that add connected elements to a row, like the tree
-
-			var sibling = rowElement.nextSibling;
-
-			// If a next row exists, compare the top of this row with the
-			// next one (in case "rows" are actually rendering side-by-side).
-			// If no next row exists, this is either the last or only row,
-			// in which case we count its own height.
-			if (sibling && !/\bdgrid-preload\b/.test(sibling.className)) {
-				return sibling.offsetTop - rowElement.offsetTop;
-			}
-
-			return rowElement.offsetHeight;
-		},
-
-		lastScrollTop: 0,
-		_processScroll: function (evt) {
-			// summary:
-			//		Checks to make sure that everything in the viewable area has been
-			//		downloaded, and triggering a request for the necessary data when needed.
-
-			if (!this.rowHeight) {
-				return;
-			}
-
-			var grid = this,
-				scrollNode = grid.bodyNode,
-				// grab current visible top from event if provided, otherwise from node
-				visibleTop = (evt && evt.scrollTop) || this.getScrollPosition().y,
-				visibleBottom = scrollNode.offsetHeight + visibleTop,
-				priorPreload, preloadNode, preload = grid.preload,
-				lastScrollTop = grid.lastScrollTop,
-				requestBuffer = grid.bufferRows * grid.rowHeight,
-				searchBuffer = requestBuffer - grid.rowHeight, // Avoid rounding causing multiple queries
-				// References related to emitting dgrid-refresh-complete if applicable
-				lastRows,
-				preloadSearchNext = true;
-
-			// XXX: I do not know why this happens.
-			// munging the actual location of the viewport relative to the preload node by a few pixels in either
-			// direction is necessary because at least WebKit on Windows seems to have an error that causes it to
-			// not quite get the entire element being focused in the viewport during keyboard navigation,
-			// which means it becomes impossible to load more data using keyboard navigation because there is
-			// no more data to scroll to to trigger the fetch.
-			// 1 is arbitrary and just gets it to work correctly with our current test cases; don’t wanna go
-			// crazy and set it to a big number without understanding more about what is going on.
-			// wondering if it has to do with border-box or something, but changing the border widths does not
-			// seem to make it break more or less, so I do not know…
-			var mungeAmount = 1;
-
-			grid.lastScrollTop = visibleTop;
-
-			function removeDistantNodes(preload, distanceOff, traversal, below) {
-				// we check to see the the nodes are "far off"
-				var farOffRemoval = grid.farOffRemoval,
-					preloadNode = preload.node;
-				// by checking to see if it is the farOffRemoval distance away
-				if (distanceOff > 2 * farOffRemoval) {
-					// there is a preloadNode that is far off;
-					// remove rows until we get to in the current viewport
-					var row;
-					var nextRow = preloadNode[traversal];
-					var reclaimedHeight = 0;
-					var count = 0;
-					var toDelete = [];
-					var firstRowIndex = nextRow && nextRow.rowIndex;
-					var lastRowIndex;
-
-					while ((row = nextRow)) {
-						var rowHeight = grid._calcRowHeight(row);
-						if (reclaimedHeight + rowHeight + farOffRemoval > distanceOff ||
-								(nextRow.className.indexOf('dgrid-row') < 0 &&
-									nextRow.className.indexOf('dgrid-loading') < 0)) {
-							// we have reclaimed enough rows or we have gone beyond grid rows
-							break;
-						}
-
-						nextRow = row[traversal];
-						reclaimedHeight += rowHeight;
-						count += row.count || 1;
-						// Just do cleanup here, as we will do a more efficient node destruction in a setTimeout below
-						grid.removeRow(row, true);
-						toDelete.push(row);
-
-						if ('rowIndex' in row) {
-							lastRowIndex = row.rowIndex;
-						}
-					}
-
-					if (grid._renderedCollection.releaseRange &&
-							typeof firstRowIndex === 'number' && typeof lastRowIndex === 'number') {
-						// Note that currently child rows in Tree structures are never unrendered;
-						// this logic will need to be revisited when that is addressed.
-
-						// releaseRange is end-exclusive, and won't remove anything if start >= end.
-						if (below) {
-							grid._renderedCollection.releaseRange(lastRowIndex, firstRowIndex + 1);
-						}
-						else {
-							grid._renderedCollection.releaseRange(firstRowIndex, lastRowIndex + 1);
-						}
-
-						grid._rows[below ? 'max' : 'min'] = lastRowIndex;
-						if (grid._rows.max >= grid._total - 1) {
-							grid._rows.max = Infinity;
-						}
-					}
-					// now adjust the preloadNode based on the reclaimed space
-					preload.count += count;
-					if (below) {
-						preloadNode.rowIndex -= count;
-						adjustHeight(preload);
-					}
-					else {
-						// if it is above, we can calculate the change in exact row changes,
-						// which we must do to not mess with the scroll position
-						preloadNode.style.height = (preloadNode.offsetHeight + reclaimedHeight) + 'px';
-					}
-					// we remove the elements after expanding the preload node so that
-					// the contraction doesn't alter the scroll position
-					var trashBin = document.createElement('div');
-					for (var i = toDelete.length; i--;) {
-						trashBin.appendChild(toDelete[i]);
-					}
-					setTimeout(function () {
-						// we can defer the destruction until later
-						domConstruct.destroy(trashBin);
-					}, 1);
-				}
-			}
-
-			function adjustHeight(preload, noMax) {
-				preload.node.style.height = Math.min(preload.count * grid.rowHeight,
-					noMax ? Infinity : grid.maxEmptySpace) + 'px';
-			}
-			function traversePreload(preload, moveNext) {
-				// Skip past preloads that are not currently connected
-				do {
-					preload = moveNext ? preload.next : preload.previous;
-				} while (preload && !preload.node.offsetWidth);
-				return preload;
-			}
-			while (preload && !preload.node.offsetWidth) {
-				// skip past preloads that are not currently connected
-				preload = preload.previous;
-			}
-			// there can be multiple preloadNodes (if they split, or multiple queries are created),
-			//	so we can traverse them until we find whatever is in the current viewport, making
-			//	sure we don't backtrack
-			while (preload && preload !== priorPreload) {
-				priorPreload = grid.preload;
-				grid.preload = preload;
-				preloadNode = preload.node;
-				var preloadTop = preloadNode.offsetTop;
-				var preloadHeight;
-
-				if (visibleBottom + mungeAmount + searchBuffer < preloadTop) {
-					// the preload is below the line of sight
-					preload = traversePreload(preload, (preloadSearchNext = false));
-				}
-				else if (visibleTop - mungeAmount - searchBuffer >
-						(preloadTop + (preloadHeight = preloadNode.offsetHeight))) {
-					// the preload is above the line of sight
-					preload = traversePreload(preload, (preloadSearchNext = true));
-				}
-				else {
-					// the preload node is visible, or close to visible, better show it
-					var offset = ((preloadNode.rowIndex ? visibleTop - requestBuffer :
-						visibleBottom) - preloadTop) / grid.rowHeight;
-					var count = (visibleBottom - visibleTop + 2 * requestBuffer) / grid.rowHeight;
-					// utilize momentum for predictions
-					var momentum = Math.max(
-						Math.min((visibleTop - lastScrollTop) * grid.rowHeight, grid.maxRowsPerPage / 2),
-						grid.maxRowsPerPage / -2);
-					count += Math.min(Math.abs(momentum), 10);
-					if (preloadNode.rowIndex === 0) {
-						// at the top, adjust from bottom to top
-						offset -= count;
-					}
-					offset = Math.max(offset, 0);
-					if (offset < 10 && offset > 0 && count + offset < grid.maxRowsPerPage) {
-						// connect to the top of the preloadNode if possible to avoid excessive adjustments
-						count += Math.max(0, offset);
-						offset = 0;
-					}
-					count = Math.min(Math.max(count, grid.minRowsPerPage),
-										grid.maxRowsPerPage, preload.count);
-
-					if (count === 0) {
-						preload = traversePreload(preload, preloadSearchNext);
-						continue;
-					}
-
-					count = Math.ceil(count);
-					offset = Math.min(Math.floor(offset), preload.count - count);
-
-					var options = {};
-					preload.count -= count;
-					var beforeNode = preloadNode,
-						keepScrollTo, queryRowsOverlap = grid.queryRowsOverlap,
-						below = (preloadNode.rowIndex > 0 || preloadNode.offsetTop > visibleTop) && preload;
-					if (below) {
-						// add new rows below
-						var previous = preload.previous;
-						if (previous) {
-							removeDistantNodes(previous,
-								visibleTop - (previous.node.offsetTop + previous.node.offsetHeight),
-								'nextSibling');
-							if (offset > 0 && previous.node === preloadNode.previousSibling) {
-								// all of the nodes above were removed
-								offset = Math.min(preload.count, offset);
-								preload.previous.count += offset;
-								adjustHeight(preload.previous, true);
-								preloadNode.rowIndex += offset;
-								queryRowsOverlap = 0;
-							}
-							else {
-								count += offset;
-							}
-							preload.count -= offset;
-						}
-						options.start = preloadNode.rowIndex - queryRowsOverlap;
-						options.count = Math.min(count + queryRowsOverlap, grid.maxRowsPerPage);
-						preloadNode.rowIndex = options.start + options.count;
-					}
-					else {
-						// add new rows above
-						if (preload.next) {
-							// remove out of sight nodes first
-							removeDistantNodes(preload.next, preload.next.node.offsetTop - visibleBottom,
-								'previousSibling', true);
-							beforeNode = preloadNode.nextSibling;
-							if (beforeNode === preload.next.node) {
-								// all of the nodes were removed, can position wherever we want
-								preload.next.count += preload.count - offset;
-								preload.next.node.rowIndex = offset + count;
-								adjustHeight(preload.next);
-								preload.count = offset;
-								queryRowsOverlap = 0;
-							}
-							else {
-								keepScrollTo = true;
-							}
-
-						}
-						options.start = preload.count;
-						options.count = Math.min(count + queryRowsOverlap, grid.maxRowsPerPage);
-					}
-					if (keepScrollTo && beforeNode && beforeNode.offsetWidth) {
-						keepScrollTo = beforeNode.offsetTop;
-					}
-
-					adjustHeight(preload);
-
-					// use the query associated with the preload node to get the next "page"
-					if ('level' in preload.query) {
-						options.queryLevel = preload.query.level;
-					}
-
-					// Avoid spurious queries (ideally this should be unnecessary...)
-					if (!('queryLevel' in options) && (options.start > grid._total || options.count < 0)) {
-						continue;
-					}
-
-					// create a loading node as a placeholder while the data is loaded
-					var loadingNode = domConstruct.create('div', {
-						className: 'dgrid-loading',
-						style: { height: count * grid.rowHeight + 'px' }
-					}, beforeNode, 'before');
-					domConstruct.create('div', {
-						className: 'dgrid-' + (below ? 'below' : 'above'),
-						innerHTML: grid.loadingMessage
-					}, loadingNode);
-					loadingNode.count = count;
-
-					// Query now to fill in these rows.
-					grid._trackError(function () {
-						// Use function to isolate the variables in case we make multiple requests
-						// (which can happen if we need to render on both sides of an island of already-rendered rows)
-						(function (loadingNode, below, keepScrollTo) {
-							/* jshint maxlen: 122 */
-							var rangeResults = preload.query(options);
-							lastRows = grid.renderQueryResults(rangeResults, loadingNode, options).then(function (rows) {
-								var gridRows = grid._rows;
-								if (gridRows && !('queryLevel' in options) && rows.length) {
-									// Update relevant observed range for top-level items
-									if (below) {
-										if (gridRows.max <= gridRows.min) {
-											// All rows were removed; update start of rendered range as well
-											gridRows.min = rows[0].rowIndex;
-										}
-										gridRows.max = rows[rows.length - 1].rowIndex;
-									}
-									else {
-										if (gridRows.max <= gridRows.min) {
-											// All rows were removed; update end of rendered range as well
-											gridRows.max = rows[rows.length - 1].rowIndex;
-										}
-										gridRows.min = rows[0].rowIndex;
-									}
-								}
-
-								// can remove the loading node now
-								beforeNode = loadingNode.nextSibling;
-								domConstruct.destroy(loadingNode);
-								// beforeNode may have been removed if the query results loading node was removed
-								// as a distant node before rendering
-								if (keepScrollTo && beforeNode && beforeNode.offsetWidth) {
-									// if the preload area above the nodes is approximated based on average
-									// row height, we may need to adjust the scroll once they are filled in
-									// so we don't "jump" in the scrolling position
-									var pos = grid.getScrollPosition();
-									grid.scrollTo({
-										// Since we already had to query the scroll position,
-										// include x to avoid TouchScroll querying it again on its end.
-										x: pos.x,
-										y: pos.y + beforeNode.offsetTop - keepScrollTo,
-										// Don't kill momentum mid-scroll (for TouchScroll only).
-										preserveMomentum: true
-									});
-								}
-
-								rangeResults.totalLength.then(function (total) {
-									if (!('queryLevel' in options)) {
-										grid._total = total;
-										if (grid._rows && grid._rows.max >= grid._total - 1) {
-											grid._rows.max = Infinity;
-										}
-									}
-									if (below) {
-										// if it is below, we will use the total from the collection to update
-										// the count of the last preload in case the total changes as
-										// later pages are retrieved
-
-										// recalculate the count
-										below.count = total - below.node.rowIndex;
-										// readjust the height
-										adjustHeight(below);
-									}
-								});
-
-								// make sure we have covered the visible area
-								grid._processScroll();
-								return rows;
-							}, function (e) {
-								domConstruct.destroy(loadingNode);
-								throw e;
-							});
-						})(loadingNode, below, keepScrollTo);
-					});
-
-					preload = preload.previous;
-
-				}
-			}
-
-			// return the promise from the last render
-			return lastRows;
-		}
-	});
-
-});
-
-define('dgrid/OnDemandGrid',[
-	'dojo/_base/declare',
-	'./Grid',
-	'./OnDemandList'
-], function (declare, Grid, OnDemandList) {
-	return declare([ Grid, OnDemandList ], {});
-});
-/** @module xgrid/Defaults **/
-define('xgrid/Defaults',[
-    'xdojo/declare'
-], function (declare) {
-    /**
-     * xGrid defaults
-     * */
-    return declare('xgrid/Defaults', null, {
-        minRowsPerPage: 100,
-        keepScrollPosition: true,
-        rowsPerPage: 30,
-        deselectOnRefresh: false,
-        cellNavigation: false,
-        _skipFirstRender: false,
-        loadingMessage: null,
-        preload: null,
-        childSelector: ".dgrid-row",
-        addUiClasses: false,
-        noDataMessage: '<span class="textWarning">No data....</span>',
-        showExtraSpace:true,
-        expandOnClick:true
-    });
-});
-
 define('xide/widgets/TemplatedWidgetBase',[
     'dcl/dcl',
     'xide/utils',
@@ -18306,6 +10669,301 @@ define('xgrid/Clipboard',[
     _class.Implementation = Implementation;
 
     return _class;
+});
+/** @module xide/model/Path */
+define('xide/model/Path',[
+    "xide/utils",
+    "dcl/dcl"
+], function (utils, dcl) {
+    var Path = dcl(null, {
+        declaredClass: "xide.model.Path",
+        /**
+         * @class xide.model.Path
+         * @constructor
+         */
+        constructor: function (path, hasLeading, hasTrailing) {
+            path = path || '.';  // if empty string, use '.'
+            if (typeof path == 'string') {
+                this.path = path;
+                this.getSegments();
+            } else {
+                this.segments = path;
+                this.hasLeading = hasLeading !== null ? hasLeading : false;
+                this.hasTrailing = hasTrailing !== null ? hasLeading : false;
+            }
+        },
+
+        endsWith: function (tail) {
+            var segments = utils.clone(this.segments);
+            var tailSegments = (new Path(tail)).getSegments();
+            while (tailSegments.length > 0 && segments.length > 0) {
+                if (tailSegments.pop() != segments.pop()) {
+                    return false;
+                }
+            }
+            return true;
+        },
+        getExtension: function () {
+            if (!this.extension) {
+                this.extension = this.path.substr(this.path.lastIndexOf('.') + 1);
+            }
+            return this.extension;
+        },
+        segment: function (index) {
+            var segs = this.getSegments();
+            if (segs.length < index) {
+                return null;
+            }
+            return segs[index];
+        },
+        /**
+         * Return all items under this path
+         * @param items {String[]}
+         * @param recursive {boolean}
+         * @returns {String[]}
+         */
+        getChildren: function (items, recursive) {
+            var result = [];
+            var root = this,
+                path = this.toString();
+
+            function addChild(child) {
+                var _path = typeof child !== 'string' ? child.toString() : child;
+                if (_path !== path && result.indexOf(_path) == -1) {
+                    result.push(_path);
+                }
+            }
+
+            _.each(items, function (item) {
+                var child = new Path(item);
+                //root match
+                if (child.startsWith(root)) {
+                    if (recursive) {
+                        addChild(child.toString());
+                    } else {
+
+                        var diff = child.relativeTo(path);
+                        if (diff) {
+                            var diffSegments = diff.getSegments();
+                            //direct child
+                            if (diffSegments.length == 1) {
+                                addChild(child);
+                            } else if (diffSegments.length > 1) {
+
+                                //make sure that its parent has been added:
+                                var parent = child.getParentPath();
+                                var parentDiff = parent.relativeTo(path);
+
+                                //check diff again
+                                if (parentDiff.getSegments().length == 1) {
+                                    addChild(parent.toString());
+                                }
+                            }
+                        }
+                    }
+
+                }
+            });
+            return result;
+        },
+        getSegments: function () {
+            if (!this.segments) {
+                var path = this.path;
+                this.segments = path.split('/');
+                if (path.charAt(0) == '/') {
+                    this.hasLeading = true;
+                }
+                if (path.charAt(path.length - 1) == '/') {
+                    this.hasTrailing = true;
+                    // If the path ends in '/', split() will create an array whose last element
+                    // is an empty string. Remove that here.
+                    this.segments.pop();
+                }
+                this._canonicalize();
+            }
+            return this.segments;
+        },
+        isAbsolute: function () {
+            return this.hasLeading;
+        },
+        getParentPath: function () {
+            if (!this._parentPath) {
+                var parentSegments = utils.clone(this.segments);
+                parentSegments.pop();
+                this._parentPath = new Path(parentSegments, this.hasLeading);
+            }
+            return utils.clone(this._parentPath);
+        },
+        _clone: function () {
+            return new Path(utils.clone(this.segments), this.hasLeading, this.hasTrailing);
+        },
+        append: function (tail) {
+            tail = tail || "";
+            if (typeof tail == 'string') {
+                tail = new Path(tail);
+            }
+            if (tail.isAbsolute()) {
+                return tail;
+            }
+            var mySegments = this.segments;
+            var tailSegments = tail.getSegments();
+            var newSegments = mySegments.concat(tailSegments);
+            var result = new Path(newSegments, this.hasLeading, tail.hasTrailing);
+            if (tailSegments[0] == ".." || tailSegments[0] == ".") {
+                result._canonicalize();
+            }
+            return result;
+        },
+        toString: function () {
+            var result = [];
+            if (this.hasLeading) {
+                result.push('/');
+            }
+            for (var i = 0; i < this.segments.length; i++) {
+                if (i > 0) {
+                    result.push('/');
+                }
+                result.push(this.segments[i]);
+            }
+            if (this.hasTrailing) {
+                result.push('/');
+            }
+            return result.join("");
+        },
+        removeRelative: function () {
+            var segs = this.getSegments();
+            if (segs.length > 0 && segs[1] == ".") {
+                return this.removeFirstSegments(1);
+            }
+            return this;
+        },
+        relativeTo: function (base, ignoreFilename) {
+            if (typeof base == 'string') {
+                base = new Path(base);
+            }
+            var mySegments = this.segments;
+            if (this.isAbsolute()) {
+                return this;
+            }
+            var baseSegments = base.getSegments();
+            var commonLength = this.matchingFirstSegments(base);
+            var baseSegmentLength = baseSegments.length;
+            if (ignoreFilename) {
+                baseSegmentLength = baseSegmentLength - 1;
+            }
+            var differenceLength = baseSegmentLength - commonLength;
+            var newSegmentLength = differenceLength + mySegments.length - commonLength;
+            if (newSegmentLength == 0) {
+                return Path.EMPTY;
+            }
+            var newSegments = [];
+            for (var i = 0; i < differenceLength; i++) {
+                newSegments.push('..');
+            }
+            for (var i = commonLength; i < mySegments.length; i++) {
+                newSegments.push(mySegments[i]);
+            }
+            return new Path(newSegments, false, this.hasTrailing);
+        },
+        startsWith: function (anotherPath) {
+            var count = this.matchingFirstSegments(anotherPath);
+            return anotherPath._length() == count;
+        },
+        _length: function () {
+            return this.segments.length;
+        },
+        matchingFirstSegments: function (anotherPath) {
+            var mySegments = this.segments;
+            var pathSegments = anotherPath.getSegments();
+            var max = Math.min(mySegments.length, pathSegments.length);
+            var count = 0;
+            for (var i = 0; i < max; i++) {
+                if (mySegments[i] != pathSegments[i]) {
+                    return count;
+                }
+                count++;
+            }
+            return count;
+        },
+        removeFirstSegments: function (count) {
+            return new Path(this.segments.slice(count, this.segments.length), this.hasLeading, this.hasTrailing);
+        },
+        removeMatchingLastSegments: function (anotherPath) {
+            var match = this.matchingFirstSegments(anotherPath);
+            return this.removeLastSegments(match);
+        },
+        removeMatchingFirstSegments: function (anotherPath) {
+            var match = this.matchingFirstSegments(anotherPath);
+            return this._clone().removeFirstSegments(match);
+        },
+        removeLastSegments: function (count) {
+            if (!count) {
+                count = 1;
+            }
+            return new Path(this.segments.slice(0, this.segments.length - count), this.hasLeading, this.hasTrailing);
+        },
+        lastSegment: function () {
+            return this.segments[this.segments.length - 1];
+        },
+        firstSegment: function (length) {
+            return this.segments[length || 0];
+        },
+        equals: function (anotherPath) {
+            if (this.segments.length != anotherPath.segments.length) {
+                return false;
+            }
+            for (var i = 0; i < this.segments.length; i++) {
+                if (anotherPath.segments[i] != this.segments[i]) {
+                    return false;
+                }
+            }
+            return true;
+        },
+        _canonicalize: function () {
+            var doIt;
+            var segments = this.segments;
+            for (var i = 0; i < segments.length; i++) {
+                if (segments[i] == "." || segments[i] == "..") {
+                    doIt = true;
+                    break;
+                }
+            }
+            if (doIt) {
+                var stack = [];
+                for (var i = 0; i < segments.length; i++) {
+                    if (segments[i] == "..") {
+                        if (stack.length == 0) {
+                            // if the stack is empty we are going out of our scope
+                            // so we need to accumulate segments.  But only if the original
+                            // path is relative.  If it is absolute then we can't go any higher than
+                            // root so simply toss the .. references.
+                            if (!this.hasLeading) {
+                                stack.push(segments[i]); //stack push
+                            }
+                        } else {
+                            // if the top is '..' then we are accumulating segments so don't pop
+                            if (".." == stack[stack.length - 1]) {
+                                stack.push("..");
+                            } else {
+                                stack.pop();
+                            }
+                        }
+                        //collapse current references
+                    } else if (segments[i] != "." || this.segments.length == 1) {
+                        stack.push(segments[i]); //stack push
+                    }
+                }
+                //if the number of segments hasn't changed, then no modification needed
+                if (stack.length == segments.length) {
+                    return;
+                }
+                this.segments = stack;
+            }
+        }
+
+    });
+    Path.EMPTY = new Path("");
+    return Path;
 });
 define('dstore/QueryMethod',[], function () {
 	/*=====
@@ -20715,6 +13373,1290 @@ define('dstore/Trackable',[
 	return Trackable;
 });
 
+define('xide/utils/ObjectUtils',[
+    'xide/utils',
+    'require',
+    "dojo/Deferred",
+    'xide/lodash'
+], function (utils, require, Deferred, lodash) {
+    var _debug = false;
+    "use strict";
+
+    utils.delegate = (function () {
+        // boodman/crockford delegation w/ cornford optimization
+        function TMP() {
+        }
+
+        return function (obj, props) {
+            TMP.prototype = obj;
+            var tmp = new TMP();
+            TMP.prototype = null;
+            if (props) {
+                lang._mixin(tmp, props);
+            }
+            return tmp; // Object
+        };
+    })();
+
+    /////////////////////////////////////////////////////////////////////////////////////////////
+    //
+    //  Loader utils
+    //
+    //////////////////////////////////////////////////////////////////////////////////////////////
+    utils.debounce = function (who, methodName, _function, delay, options, now, args) {
+        var _place = who[methodName + '_debounced'];
+        if (!_place) {
+            _place = who[methodName + '_debounced'] = lodash.debounce(_function, delay, options);
+        }
+        if (now === true) {
+            if (!who[methodName + '_debouncedFirst']) {
+                who[methodName + '_debouncedFirst'] = true;
+                _function.apply(who, args);
+            }
+        }
+        return _place();
+    };
+
+
+    utils.pluck = function (items, prop) {
+        return lodash.map(items, prop);
+    };
+
+    /**
+     * Trigger downloadable file
+     * @param filename
+     * @param text
+     */
+    utils.download = function (filename, text) {
+        var element = document.createElement('a');
+        text = lodash.isString(text) ? text : JSON.stringify(text, null, 2);
+        element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
+        element.setAttribute('download', filename);
+        element.style.display = 'none';
+        document.body.appendChild(element);
+        element.click();
+        document.body.removeChild(element);
+    };
+
+    /**
+     * Ask require registry at this path
+     * @param mixed
+     * @returns {*}
+     */
+    utils.hasObject = function (mixed) {
+        var result = null;
+        var _re = require;
+        try {
+            result = _re(mixed);
+        } catch (e) {
+            console.error('error in utils.hasObject ', e);
+        }
+        return result;
+    };
+    /**
+     * Safe require.toUrl
+     * @param mid {string}
+     */
+    utils.toUrl = function (mid) {
+        var _require = require;
+        //make sure cache bust is off otherwise it appends ?time
+        _require({
+            cacheBust: null,
+            waitSeconds: 5
+        });
+        return _require.toUrl(mid);
+    }
+    /**
+     * Returns a module by module path
+     * @param mixed {String|Object}
+     * @param _default {Object} default object
+     * @returns {Object|Promise}
+     */
+    utils.getObject = function (mixed, _default) {
+        var result = null;
+        if (utils.isString(mixed)) {
+            var _re = require;
+            try {
+                result = _re(mixed);
+            } catch (e) {
+                _debug && console.warn('utils.getObject::require failed for ' + mixed);
+            }
+            //not a loaded module yet
+            try {
+                if (!result) {
+                    var deferred = new Deferred();
+                    //try loader
+                    result = _re([
+                        mixed
+                    ], function (module) {
+                        deferred.resolve(module);
+                    });
+                    return deferred.promise;
+                }
+            } catch (e) {
+                _debug && console.error('error in requiring ' + mixed, e);
+            }
+            return result;
+
+        } else if (utils.isObject(mixed)) {
+            return mixed;//reflect
+        }
+        return result !== null ? result : _default;
+    };
+
+
+    /////////////////////////////////////////////////////////////////////////////////////////////
+    //
+    //  True object utils
+    //
+    //////////////////////////////////////////////////////////////////////////////////////////////
+    utils.toArray = function (obj) {
+        var result = [];
+        for (var c in obj) {
+            result.push({
+                name: c,
+                value: obj[c]
+            });
+        }
+        return result;
+    };
+    /**
+     * Array to object conversion
+     * @param arr
+     * @returns {Object}
+     */
+    utils.toObject = function (arr, lodash) {
+        if (!arr) {
+            return {};
+        }
+        if (lodash !== false) {
+            return lodash.object(lodash.map(arr, lodash.values));
+        } else {
+            //CI related back compat hack
+            if (utils.isObject(arr) && arr[0]) {
+                return arr[0];
+            }
+
+            var rv = {};
+            for (var i = 0; i < arr.length; ++i) {
+                rv[i] = arr[i];
+            }
+            return rv;
+        }
+    };
+
+    /**
+     * Gets an object property by string, eg: utils.byString(someObj, 'part3[0].name');
+     * @deprecated, see objectAtPath below
+     * @param o {Object}    : the object
+     * @param s {String}    : the path within the object
+     * @param defaultValue {Object|String|Number} : an optional default value
+     * @returns {*}
+     */
+    utils.byString = function (o, s, defaultValue) {
+        s = s.replace(/\[(\w+)\]/g, '.$1'); // convert indexes to properties
+        s = s.replace(/^\./, '');           // strip a leading dot
+        var a = s.split('.');
+        while (a.length) {
+            var n = a.shift();
+            if (n in o) {
+                o = o[n];
+            } else {
+                return;
+            }
+        }
+        return o;
+    };
+
+    /////////////////////////////////////////////////////////////////////////////////////////////
+    //
+    //  Object path
+    //
+    //////////////////////////////////////////////////////////////////////////////////////////////
+    /**
+     * Internals
+     */
+
+        //cache
+    var toStr = Object.prototype.toString,
+        _hasOwnProperty = Object.prototype.hasOwnProperty;
+
+    /**
+     * @private
+     * @param type
+     * @returns {*}
+     */
+    function toString(type) {
+        return toStr.call(type);
+    }
+
+    /**
+     * @private
+     * @param key
+     * @returns {*}
+     */
+    function getKey(key) {
+        var intKey = parseInt(key, 10);
+        if (intKey.toString() === key) {
+            return intKey;
+        }
+        return key;
+    }
+
+    /**
+     * internal set value at path in object
+     * @private
+     * @param obj
+     * @param path
+     * @param value
+     * @param doNotReplace
+     * @returns {*}
+     */
+    function set(obj, path, value, doNotReplace) {
+        if (lodash.isNumber(path)) {
+            path = [path];
+        }
+        if (lodash.isEmpty(path)) {
+            return obj;
+        }
+        if (lodash.isString(path)) {
+            return set(obj, path.split('.').map(getKey), value, doNotReplace);
+        }
+        var currentPath = path[0];
+
+        if (path.length === 1) {
+            var oldVal = obj[currentPath];
+            if (oldVal === void 0 || !doNotReplace) {
+                obj[currentPath] = value;
+            }
+            return oldVal;
+        }
+
+        if (obj[currentPath] === void 0) {
+            //check if we assume an array
+            if (lodash.isNumber(path[1])) {
+                obj[currentPath] = [];
+            } else {
+                obj[currentPath] = {};
+            }
+        }
+        return set(obj[currentPath], path.slice(1), value, doNotReplace);
+    }
+
+    /**
+     * deletes an property by a path
+     * @param obj
+     * @param path
+     * @returns {*}
+     */
+    function del(obj, path) {
+        if (lodash.isNumber(path)) {
+            path = [path];
+        }
+        if (lodash.isEmpty(obj)) {
+            return void 0;
+        }
+
+        if (lodash.isEmpty(path)) {
+            return obj;
+        }
+        if (lodash.isString(path)) {
+            return del(obj, path.split('.'));
+        }
+
+        var currentPath = getKey(path[0]);
+        var oldVal = obj[currentPath];
+
+        if (path.length === 1) {
+            if (oldVal !== void 0) {
+                if (lodash.isArray(obj)) {
+                    obj.splice(currentPath, 1);
+                } else {
+                    delete obj[currentPath];
+                }
+            }
+        } else {
+            if (obj[currentPath] !== void 0) {
+                return del(obj[currentPath], path.slice(1));
+            }
+        }
+        return obj;
+    }
+
+    /**
+     * Private helper class
+     * @private
+     * @type {{}}
+     */
+    var objectPath = {};
+
+    objectPath.has = function (obj, path) {
+        if (lodash.isEmpty(obj)) {
+            return false;
+        }
+        if (lodash.isNumber(path)) {
+            path = [path];
+        } else if (lodash.isString(path)) {
+            path = path.split('.');
+        }
+
+        if (lodash.isEmpty(path) || path.length === 0) {
+            return false;
+        }
+
+        for (var i = 0; i < path.length; i++) {
+            var j = path[i];
+            if ((lodash.isObject(obj) || lodash.isArray(obj)) && _hasOwnProperty.call(obj, j)) {
+                obj = obj[j];
+            } else {
+                return false;
+            }
+        }
+
+        return true;
+    };
+
+    /**
+     * Define private public 'ensure exists'
+     * @param obj
+     * @param path
+     * @param value
+     * @returns {*}
+     */
+    objectPath.ensureExists = function (obj, path, value) {
+        return set(obj, path, value, true);
+    };
+
+    /**
+     * Define private public 'set'
+     * @param obj
+     * @param path
+     * @param value
+     * @param doNotReplace
+     * @returns {*}
+     */
+    objectPath.set = function (obj, path, value, doNotReplace) {
+        return set(obj, path, value, doNotReplace);
+    };
+
+    /**
+     Define private public 'insert'
+     * @param obj
+     * @param path
+     * @param value
+     * @param at
+     */
+    objectPath.insert = function (obj, path, value, at) {
+        var arr = objectPath.get(obj, path);
+        at = ~~at;
+        if (!lodash.isArray(arr)) {
+            arr = [];
+            objectPath.set(obj, path, arr);
+        }
+        arr.splice(at, 0, value);
+    };
+
+    /**
+     * Define private public 'empty'
+     * @param obj
+     * @param path
+     * @returns {*}
+     */
+    objectPath.empty = function (obj, path) {
+        if (lodash.isEmpty(path)) {
+            return obj;
+        }
+        if (lodash.isEmpty(obj)) {
+            return void 0;
+        }
+
+        var value, i;
+        if (!(value = objectPath.get(obj, path))) {
+            return obj;
+        }
+
+        if (lodash.isString(value)) {
+            return objectPath.set(obj, path, '');
+        } else if (lodash.isBoolean(value)) {
+            return objectPath.set(obj, path, false);
+        } else if (lodash.isNumber(value)) {
+            return objectPath.set(obj, path, 0);
+        } else if (lodash.isArray(value)) {
+            value.length = 0;
+        } else if (lodash.isObject(value)) {
+            for (i in value) {
+                if (_hasOwnProperty.call(value, i)) {
+                    delete value[i];
+                }
+            }
+        } else {
+            return objectPath.set(obj, path, null);
+        }
+    };
+
+    /**
+     * Define private public 'push'
+     * @param obj
+     * @param path
+     */
+    objectPath.push = function (obj, path /*, values */) {
+        var arr = objectPath.get(obj, path);
+        if (!lodash.isArray(arr)) {
+            arr = [];
+            objectPath.set(obj, path, arr);
+        }
+        arr.push.apply(arr, Array.prototype.slice.call(arguments, 2));
+    };
+
+    /**
+     * Define private public 'coalesce'
+     * @param obj
+     * @param paths
+     * @param defaultValue
+     * @returns {*}
+     */
+    objectPath.coalesce = function (obj, paths, defaultValue) {
+        var value;
+        for (var i = 0, len = paths.length; i < len; i++) {
+            if ((value = objectPath.get(obj, paths[i])) !== void 0) {
+                return value;
+            }
+        }
+        return defaultValue;
+    };
+
+    /**
+     * Define private public 'get'
+     * @param obj
+     * @param path
+     * @param defaultValue
+     * @returns {*}
+     */
+    objectPath.get = function (obj, path, defaultValue) {
+        if (lodash.isNumber(path)) {
+            path = [path];
+        }
+        if (lodash.isEmpty(path)) {
+            return obj;
+        }
+        if (lodash.isEmpty(obj)) {
+            //lodash doesnt seem to work with html nodes
+            if (obj && obj.innerHTML === null) {
+                return defaultValue;
+            }
+        }
+        if (lodash.isString(path)) {
+            return objectPath.get(obj, path.split('.'), defaultValue);
+        }
+        var currentPath = getKey(path[0]);
+        if (path.length === 1) {
+            if (obj && obj[currentPath] === void 0) {
+                return defaultValue;
+            }
+            if (obj) {
+                return obj[currentPath];
+            }
+        }
+        if (!obj) {
+            return defaultValue;
+        }
+        return objectPath.get(obj[currentPath], path.slice(1), defaultValue);
+    };
+
+    /**
+     * Define private public 'del'
+     * @param obj
+     * @param path
+     * @returns {*}
+     */
+    objectPath.del = function (obj, path) {
+        return del(obj, path);
+    };
+    /////////////////////////////////////////////////////////////////////////////////////////////
+    //
+    //  Object path public xide/utils mixin
+    //
+    //////////////////////////////////////////////////////////////////////////////////////////////
+    /**
+     *  Returns a value by a give object path
+     *
+     *  //works also with arrays
+     *    objectPath.get(obj, "a.c.1");  //returns "f"
+     *    objectPath.get(obj, ["a","c","1"]);  //returns "f"
+     *
+     * @param obj {object}
+     * @param path {string}
+     * @param _default {object|null}
+     * @returns {*}
+     */
+    utils.getAt = function (obj, path, _default) {
+        return objectPath.get(obj, path, _default);
+    };
+
+    /**
+     * Sets a value in an object/array at a given path.
+     * @example
+     *
+     * utils.setAt(obj, "a.h", "m"); // or utils.setAt(obj, ["a","h"], "m");
+     *
+     * //set will create intermediate object/arrays
+     * objectPath.set(obj, "a.j.0.f", "m");
+     *
+     * @param obj{Object|Array}
+     * @param path {string}
+     * @param value {mixed}
+     * @returns {Object|Array}
+     */
+    utils.setAt = function (obj, path, value) {
+        return objectPath.set(obj, path, value);
+    };
+
+    /**
+     * Returns there is anything at given path within an object/array.
+     * @param obj
+     * @param path
+     */
+    utils.hasAt = function (obj, path) {
+        return objectPath.has(obj, path);
+    };
+
+    /**
+     * Ensures at given path, otherwise _default will be placed
+     * @param obj
+     * @param path
+     * @returns {*}
+     */
+    utils.ensureAt = function (obj, path, _default) {
+        return objectPath.ensureExists(obj, path, _default);
+    };
+    /**
+     * Deletes at given path
+     * @param obj
+     * @param path
+     * @returns {*}
+     */
+    utils.deleteAt = function (obj, path) {
+        return objectPath.del(obj, path);
+    };
+
+    /**
+     *
+     * @param to
+     * @param from
+     * @returns {*}
+     */
+    utils.merge = function (to, from) {
+        for (var n in from) {
+            if (typeof to[n] != 'object') {
+                to[n] = from[n];
+            } else if (typeof from[n] == 'object') {
+                to[n] = utils.merge(to[n], from[n]);
+            }
+        }
+
+        return to;
+    };
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //
+    //  Dojo's most wanted
+    //
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    /**
+     * Clones objects (including DOM nodes) and all children.
+     * Warning: do not clone cyclic structures.
+     * @param src {*} The object to clone.
+     * @returns {*}
+     */
+    utils.clone = function (src) {
+        if (!src || typeof src != "object" || utils.isFunction(src)) {
+            // null, undefined, any non-object, or function
+            return src; // anything
+        }
+        if (src.nodeType && "cloneNode" in src) {
+            // DOM Node
+            return src.cloneNode(true); // Node
+        }
+        if (src instanceof Date) {
+            // Date
+            return new Date(src.getTime()); // Date
+        }
+        if (src instanceof RegExp) {
+            // RegExp
+            return new RegExp(src); // RegExp
+        }
+        var r, i, l;
+        if (utils.isArray(src)) {
+            // array
+            r = [];
+            for (i = 0, l = src.length; i < l; ++i) {
+                if (i in src) {
+                    r.push(utils.clone(src[i]));
+                }
+            }
+            // we don't clone functions for performance reasons
+            // }else if(d.isFunction(src)){
+            // // function
+            // r = function(){ return src.apply(this, arguments); };
+        } else {
+            // generic objects
+            r = src.constructor ? new src.constructor() : {};
+        }
+        return utils._mixin(r, src, utils.clone);
+    };
+
+    /**
+     * Copies/adds all properties of source to dest; returns dest.
+     * @description All properties, including functions (sometimes termed "methods"), excluding any non-standard extensions
+     * found in Object.prototype, are copied/added to dest. Copying/adding each particular property is
+     * delegated to copyFunc (if any); copyFunc defaults to the Javascript assignment operator if not provided.
+     * Notice that by default, _mixin executes a so-called "shallow copy" and aggregate types are copied/added by reference.
+     * @param dest {object} The object to which to copy/add all properties contained in source.
+     * @param source {object} The object from which to draw all properties to copy into dest.
+     * @param copyFunc {function} The process used to copy/add a property in source; defaults to the Javascript assignment operator.
+     * @returns {object} dest, as modified
+     * @private
+     */
+    utils._mixin = function (dest, source, copyFunc) {
+        var name, s, i, empty = {};
+        for (name in source) {
+            // the (!(name in empty) || empty[name] !== s) condition avoids copying properties in "source"
+            // inherited from Object.prototype.	 For example, if dest has a custom toString() method,
+            // don't overwrite it with the toString() method that source inherited from Object.prototype
+            s = source[name];
+            if (!(name in dest) || (dest[name] !== s && (!(name in empty) || empty[name] !== s))) {
+                dest[name] = copyFunc ? copyFunc(s) : s;
+            }
+        }
+
+        return dest; // Object
+    };
+    /**
+     * Copies/adds all properties of one or more sources to dest; returns dest.
+     * @param dest {object} The object to which to copy/add all properties contained in source. If dest is falsy, then
+     * a new object is manufactured before copying/adding properties begins.
+     *
+     * @param sources One of more objects from which to draw all properties to copy into dest. sources are processed
+     * left-to-right and if more than one of these objects contain the same property name, the right-most
+     * value "wins".
+     *
+     * @returns {object} dest, as modified
+     *
+     * @example
+     * make a shallow copy of an object
+     * var copy = utils.mixin({}, source);
+     *
+     * @example
+     *
+     * many class constructors often take an object which specifies
+     *        values to be configured on the object. In this case, it is
+     *        often simplest to call `lang.mixin` on the `this` object:
+     *        declare("acme.Base", null, {
+    *			constructor: function(properties){
+    *				//property configuration:
+    *				lang.mixin(this, properties);
+    *				console.log(this.quip);
+    *			},
+    *			quip: "I wasn't born yesterday, you know - I've seen movies.",
+    *			* ...
+    *		});
+     *
+     *        //create an instance of the class and configure it
+     *        var b = new acme.Base({quip: "That's what it does!" });
+     *
+     */
+    utils.mixin = function (dest, sources) {
+        if (sources) {
+            if (!dest) {
+                dest = {};
+            }
+            var l = arguments.length;
+            for (var i = 1; i < l; i++) {
+                utils._mixin(dest, arguments[i]);
+            }
+            return dest; // Object
+        }
+        return dest;
+    };
+
+    /**
+     * Clone object keys
+     * @param defaults
+     * @returns {{}}
+     */
+    utils.cloneKeys = function (defaults, skipEmpty) {
+        var result = {};
+        for (var _class in defaults) {
+            if (skipEmpty === true && !(_class in defaults)) {
+                continue;
+            }
+            result[_class] = defaults[_class];
+        }
+        return result;
+    };
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //
+    //  STD
+    /**
+     *
+     * @param what
+     * @returns {*}
+     */
+    utils.isArray = function (what) {
+        return lodash.isArray(what);
+    };
+    /**
+     *
+     * @param what
+     * @returns {*}
+     */
+    utils.isObject = function (what) {
+        return lodash.isObject(what);
+    };
+    /**
+     *
+     * @param what
+     * @returns {*}
+     */
+    utils.isString = function (what) {
+        return lodash.isString(what);
+    };
+    /**
+     *
+     * @param what
+     * @returns {*}
+     */
+    utils.isNumber = function (what) {
+        return lodash.isNumber(what);
+    };
+    /**
+     * Return true if it is a Function
+     * @param it
+     * @returns {*}
+     */
+    utils.isFunction = function (it) {
+        return lodash.isFunction(it);
+    };
+    return utils;
+});
+define('xide/cache/Circular',[], function () {
+
+    function CircularBuffer(capacity){
+        if(!(this instanceof CircularBuffer))return new CircularBuffer(capacity);
+        if(typeof capacity=="object"&&
+            Array.isArray(capacity["_buffer"])&&
+            typeof capacity._capacity=="number"&&
+            typeof capacity._first=="number"&&
+            typeof capacity._size=="number"){
+            for(var prop in capacity){
+                if(capacity.hasOwnProperty(prop))this[prop]=capacity[prop];
+            }
+        } else {
+            if(typeof capacity!="number"||capacity%1!=0||capacity<1)
+                throw new TypeError("Invalid capacity");
+            this._buffer=new Array(capacity);
+            this._capacity=capacity;
+            this._first=0;
+            this._size=0;
+        }
+    }
+    CircularBuffer.prototype = {
+        size: function () {
+            return this._size;
+        },
+        capacity: function () {
+            return this._capacity;
+        },
+        enq: function (value) {
+            if (this._first > 0)this._first--; else this._first = this._capacity - 1;
+            this._buffer[this._first] = value;
+            if (this._size < this._capacity)this._size++;
+        },
+        push: function (value) {
+            if (this._size == this._capacity) {
+                this._buffer[this._first] = value;
+                this._first = (this._first + 1) % this._capacity;
+            } else {
+                this._buffer[(this._first + this._size) % this._capacity] = value;
+                this._size++;
+            }
+        },
+        deq: function () {
+            if (this._size == 0)throw new RangeError("dequeue on empty buffer");
+            var value = this._buffer[(this._first + this._size - 1) % this._capacity];
+            this._size--;
+            return value;
+        },
+        pop: function () {
+            return this.deq();
+        },
+        shift: function () {
+            if (this._size == 0)throw new RangeError("shift on empty buffer");
+            var value = this._buffer[this._first];
+            if (this._first == this._capacity - 1)this._first = 0; else this._first++;
+            this._size--;
+            return value;
+        },
+        get: function (start, end) {
+            if (this._size == 0 && start == 0 && (end == undefined || end == 0))return [];
+            if (typeof start != "number" || start % 1 != 0 || start < 0)throw new TypeError("Invalid start");
+            if (start >= this._size)throw new RangeError("Index past end of buffer: " + start);
+
+            if (end == undefined)return this._buffer[(this._first + start) % this._capacity];
+
+            if (typeof end != "number" || end % 1 != 0 || end < 0)throw new TypeError("Invalid end");
+            if (end >= this._size)throw new RangeError("Index past end of buffer: " + end);
+
+            if (this._first + start >= this._capacity) {
+                //make sure first+start and first+end are in a normal range
+                start -= this._capacity; //becomes a negative number
+                end -= this._capacity;
+            }
+            if (this._first + end < this._capacity)
+                return this._buffer.slice(this._first + start, this._first + end + 1);
+            else
+                return this._buffer.slice(this._first + start, this._capacity).concat(this._buffer.slice(0, this._first + end + 1 - this._capacity));
+        },
+        toarray: function () {
+            if (this._size == 0)return [];
+            return this.get(0, this._size - 1);
+        }
+    };
+
+    return CircularBuffer;
+});
+/** @module xaction/Action **/
+define('xaction/Action',[
+    'dcl/dcl',
+    'xide/model/Base',
+    'xide/types',
+    'xide/utils/ObjectUtils',
+    'xide/utils',
+    'xide/mixins/EventedMixin',
+    'xide/cache/Circular'
+], function (dcl, Base, types, ObjectUtils, utils, EventedMixin, Circular) {
+
+    var Cache = null;//new Circular(100);
+    /***
+     * Extend the core types for action visibility(main menu,...) options/enums:
+     * 1. 'Main menu',
+     * 2. 'Context menu'
+     * 3. 'Action toolbar'
+     * 4. 'Property view'
+     */
+    utils.mixin(types, {
+        /**
+         * ActionVisibility
+         * @enum module:xide/types/ACTION_VISIBILITY
+         * @memberOf module:xide/types
+         */
+        ACTION_VISIBILITY: {
+            /**
+             * Enable visibility in main menu, which does
+             * render actions in a menu bar whereby 'sub' levels
+             * are rendered as sub level menus.
+             *
+             * @default null, means not visible. Actually in xjs its 1/0/{}
+             * @type {int|Object|xaction/Action}
+             * @constant
+             */
+            MAIN_MENU: 'MAIN_MENU',
+
+            /**
+             * Enable visivibilty in context menu.
+             *
+             * Different to the main menu, all actions
+             * are 'flatted'. The action's group field
+             * will auto-create separators among these
+             * groups.
+             *
+             * @default null, means not visible. Actually in xjs its 1/0/{}
+             * @type {int|Object|xaction/Action}
+             * @constant
+             */
+            CONTEXT_MENU: 'CONTEXT_MENU',
+
+            QUICK_LAUNCH: 'QUICK_LAUNCH',
+
+            /**
+             * Enable visivibilty in primary action toolbar.
+             *
+             * Same as in the "Context Menu", actions will
+             * rendered out flat, just the label is being removed.
+             *
+             * @default null, means not visible. Actually in xjs its 1/0/{}
+             * @type {int|Object|xaction/Action}
+             * @constant
+             */
+            ACTION_TOOLBAR: 'ACTION_TOOLBAR',
+
+            /**
+             * Enable visibility in an item's property view (if such exists).
+             *
+             * Same as in the "Context Menu", actions will
+             * rendered out flat, just the label is being removed.
+             *
+             * @default null, means not visible. Actually in xjs its 1/0/{}
+             * @type {int|Object|xaction/Action}
+             * @constant
+             */
+            PROPERTY_VIEW: 'PROPERTY_VIEW',
+
+            /**
+             * Enable visibility the ribbon toolbar (if such exists).
+             *
+             * Same as in the "Context Menu", actions will
+             * rendered out flat, just the label is being removed.
+             *
+             * @default null, means not visible. Actually in xjs its 1/0/{}
+             * @type {int|Object|xaction/Action}
+             * @constant
+             */
+            RIBBON: 'RIBBON',
+
+            /**
+             * A mixin to be used whilst creating the widget
+             * @type {object}
+             */
+            widgetArgs: null,
+
+            /**
+             * Util for the constructor yo create a visibilty. A visibility is a key/value store where the
+             * key is ACTION_VISIBILITY
+             * and its value is stored in this.ACTION_VISIBILITY_val ! Thus you'r accessing this store in a doc-friendly
+             * and enum like function
+             * @example
+             *  this.getVisibility(types.ACTION_VISIBILITY.MAIN_MENU)'     *
+             *
+             * the returning value is of type {object}, or {integer(1|0)}
+             * @type {function}
+             * @returns {module:xide/types/ACTION_VISIBILITY}
+             */
+            factory: function () {
+
+                var _in = arguments[1] || utils.clone(types.ACTION_VISIBILITY),
+                    _args = arguments;
+
+                //
+                // A mode when we have the arguments like (1,1,1,2).
+                //  This clones types.ACTION_VISIBILITY and blends in an integer mask
+
+                if (_args[0].length > 0 && _.isNumber(_args[0][0])) {
+
+                    var _FlagArgs = _args[0],
+                        _val = null,
+                        _index = 0;
+
+                    //integer case, sets this[propIndex] to something
+                    _.each(_in, function (index, prop) {
+                        if (typeof _in[prop] !== 'function') {
+                            if (_index < _FlagArgs.length) {
+                                //set the value per key but preserve the actualy key by storing
+                                //the value in a new key_val field
+                                _in[prop + '_val'] = _FlagArgs[_index];
+                            }
+                        }
+                        _index++;
+                    });
+                }
+
+                // A modus when we have the arguments like (MAIN_MENU,something). set value in this.ENUM_val
+                if (_.isString(_args[0][0])) {
+                    if (_args[0][2] === true) {
+                        utils.mixin(_in[_args[0][0] + '_val'], _args[0][2]);
+                    } else {
+                        _in[_args[0][0] + '_val'] = _args[0][1];
+                        return _in;
+                    }
+                    return _args[1];
+                }
+                return _in;
+            }
+        }
+    });
+    types.ACTION_VISIBILITY_ALL = 'ACTION_VISIBILITY_ALL';
+    /**
+     * Basic model to represent an 'action'. Its just a structure
+     * object with some factory methods and built-in store to have
+     * versions of it self per 'ACTION_VISIBILITY' which may alter
+     * rendering for such visibility.
+     *
+     * Please read {@link module:xide/types}
+     *
+     * @class module:xaction/Action
+     * @augments xide/model/Base
+     */
+    var Module = dcl([Base.dcl, EventedMixin.dcl], {
+        declaredClass: "xaction/Action",
+        disabled: false,
+        destroy: function () {
+            if (Cache && Cache.size() < 100) {
+                delete this._properties;
+                delete this._visibility;
+                delete this.keyboardMappings;
+                delete this.group;
+                delete this.tab;
+                delete this.owner;
+                delete this.item;
+                delete this.icon;
+                delete this.actionType;
+                delete this.label;
+                delete this.title;
+                delete this.type;
+                delete this.onCreate;
+                delete this.onChange;
+                delete this.addPermission;
+                delete this._store;
+                delete this.parameters;
+                delete this.handler;
+                Cache.push(this);
+            }
+        },
+        /**
+         * Turn on/off this action
+         * @type {boolean}
+         * @default true
+         */
+        enabled: true,
+        /**
+         * The object or bean we're up to. This is mostly the user's selection.
+         * @type {Object|Object[]|Array}
+         */
+        object: null,
+        /**
+         * Show/hide this action in ui
+         * @member show {boolean}
+         */
+        show: true,
+        /**
+         * A group for this action. This is being used in interface only.
+         * @type {string|Object=}
+         */
+        group: '',
+        /**
+         * A comma separated list of bean types. This specifies on which bean types
+         * this action can be applied
+         * @type {string|Object=}
+         */
+        types: '',
+        /**
+         * A identifier of a command within a "bean action context". This should be human readable.
+         * Remember, this is being used for populating menu items in toolbars.
+         * @example "Edit/Copy", "Views/Log" and so forth
+         * @type {string|integer}
+         */
+        command: null,
+        /**
+         * Icon class. You can use font-awesome, dijit icon classes or Elusive icons
+         * @type {string}
+         * @default fa-play
+         */
+        icon: 'fa-play',
+        /**
+         * An event key when the action is performed. This will be published automatically when this action
+         * is performed.
+         * @type {string|null}
+         * @default null
+         */
+        event: null,
+        /**
+         * The function to be invoked
+         * @type {function|null}
+         */
+        handler: null,
+        /**
+         * The tab (visual)
+         * @type {string|null}
+         * @default null
+         */
+        tab: null,
+
+        /**
+         * A store to override per visibility an action attributes like label, icon, renderer, handler
+         * or whatever this action needs. This acts as store per VISIBILITY "Zone" as descried in the enumerations. Its
+         * one simple object or single integer store.
+         *
+         * This storage must be fast as its used in mouse-over, don't use any dojo/dstore or whatever fancy stuff; the
+         * operations in the consumer side are already heavy enough (loadash 'group' and 'sort' come up to 5000 calls for
+         * just 10 actions)
+         *
+         * @see {module:xide/types/ACTION_VISIBILITY}
+         * @type {xide/types/ACTION_VISIBILITY}
+         * @augments {xide/types/ACTION_VISIBILITY}
+         * @default null
+         * @property
+         * @member
+         *
+         * @example
+         * {
+         *      MAIN_MENU:"MAIN_MENU",
+         *      MAIN_MENU_val:0
+         *      //or MAIN_MENU_val:1
+         *      ACTION_TOOLBAR:"ACTION_TOOLBAR",
+         *      ACTION_TOOLBAR_val:{
+         *          icon:"fa or el or dijit", //supports font-awesome, elusive or dojo/dijit
+         *          label:"" // in some cases like an action bar you may override this per visibility to hide a label 
+         *      }
+         * }
+         *
+         */
+        visibility_: null,
+        /**
+         * An action might contain a value. For instance the action might toggle
+         * a checkbox...
+         *
+         * @type {object|*|null}
+         */
+        value: null,
+        /**
+         * Sets visibility options per visibility type.
+         *
+         * @param {mixed} arguments will blend a number of integers into a copy of
+         * xide/types/ACTION_VISIBILITY. Be aware of the exact order!
+         * @example
+         *
+         *
+         //Example 1. : set the visibility per type
+         setVisibility(1,1,0);// will result in:
+         {
+                 MAIN_MENU:1,
+                 CONTEXT_MENU:1,
+                 ACTION_TOOLBAR:0
+         }
+
+         //Example 2. : set the visibility per type. @TODO:specify merge filter bits
+         setVisibility(types.ACTION_VISIBILITY.MAIN_MENU,{
+                label:null  //don't show a label
+            });
+
+         */
+        setVisibility: function () {
+            if (arguments.length == 2 && _.isString(arguments[0]) && arguments[0] == types.ACTION_VISIBILITY_ALL) {
+                var _obj = arguments[1],
+                    _vis = types.ACTION_VISIBILITY,
+                    thiz = this;
+
+                //track vis key in all
+                [_vis.MAIN_MENU, _vis.ACTION_TOOLBAR, _vis.CONTEXT_MENU, _vis.RIBBON].forEach(function (vis) {
+                    thiz.setVisibility(vis, utils.cloneKeys(_obj, false));
+                });
+                return this;
+
+            }
+            var _args = _.isArray(arguments[0]) ? arguments[0] : arguments;
+            this.visibility_ = types.ACTION_VISIBILITY.factory(_args, this.visibility_);
+            return this;
+        },
+        /**
+         * Visibility getter
+         * @param key
+         * @returns {module:xide/types/ACTION_VISIBILITY}
+         */
+        getVisibility: function (key) {
+            if (!this.visibility_) {
+                this.setVisibility(types.ACTION_VISIBILITY_ALL, {});
+            }
+            if (this.visibility_) {
+                if (this.visibility_[key + '_val'] == null) {
+                    this.visibility_[key + '_val'] = {
+                        vis: key
+                    };
+                }
+                return this.visibility_[key + '_val'];
+            }
+            return {};
+        },
+        /**
+         *
+         * @param _visibility
+         * @param who
+         * @param newItem
+         * @returns {boolean}
+         */
+        shouldDestroyWidget: function (_visibility, who, newItem) {
+            var visibility = this.getVisibility != null ? this.getVisibility(_visibility) : null;
+            var destroy = true;
+            if (visibility && visibility.permanent) {
+                destroy = !(_.isFunction(visibility.permanent) ? visibility.permanent(this, who, newItem) : visibility.permanent);
+            }
+            return destroy;
+        }
+
+    });
+    /**
+     * Static factory
+     * @param label {string}
+     * @param icon
+     * @param command
+     * @param permanent
+     * @param operation
+     * @param btypes
+     * @param group
+     * @param visibility
+     * @param register
+     * @param handler
+     * @param mixin
+     * @static
+     * @memberOf xaction/Action
+     *
+     * @example for queuing a clip board action:
+     *
+     *  var _copyAction  = Action.create('Copy', 'fa-copy', 'Edit/Copy', true, types.OPERATION_INT.CLIPBOARD_COPY, types.ITEM_TYPE.FILE, 'clipboard', null, true, _clipboardManager);
+     *  _copy.accelKey = 'CTRL+C';
+     *
+     * @returns {module:xaction/Action}
+     */
+    Module.create = function (label, icon, command, permanent, operation, btypes, group, visibility, register, handler, mixin) {
+        var _action = null;
+
+        var _args = {
+            permanent: permanent,
+            command: command,
+            icon: icon,
+            label: label,
+            owner: this,
+            types: btypes,
+            operation: operation,
+            group: group,
+            handler: handler,
+            title: label
+        };
+        if (Cache && Cache.size()) {
+            _action = Cache.deq(0);
+            //console.log('re-use');
+            utils.mixin(_action, _args);
+        } else {
+            //console.log('-create!');
+            _action = new Module(_args);
+        }
+        /*
+         var VISIBILITY = types.ACTION_VISIBILITY,
+         VISIBILITIES = [
+         VISIBILITY.ACTION_TOOLBAR,
+         VISIBILITY.RIBBON,
+         VISIBILITY.MAIN_MENU,
+         VISIBILITY.CONTEXT_MENU
+         ];
+         */
+        utils.mixin(_action, mixin);
+        return _action;
+    };
+    /**
+     * Simple wrapper for action.create
+     * @param label {string}
+     * @param icon
+     * @param command
+     * @param group
+     * @param handler
+     * @param mixin
+     * @returns {module:xaction/Action}
+     */
+    Module.createDefault = function (label, icon, command, group, handler, mixin) {
+        return Module.create(label, icon, command, false, null, null, group || 'nogroup', null, false, handler, mixin);
+    };
+    return Module;
+});
+
 define('xide/data/Model',[
     'dcl/dcl',
     'dojo/Deferred',
@@ -22353,6 +16295,442 @@ define('xide/Keyboard',[
     _Keyboard.listeners = listeners;
     return _Keyboard;
 });
+/** @module xaction/DefaultActions **/
+define('xaction/DefaultActions',[
+    "dcl/dcl",
+    'dcl/inherited',
+    "xdojo/declare",
+    'xide/types',
+    'xide/utils',
+    'xlang/i18'
+], function (dcl,inherited,declare,types,utils,i18) {
+    /**
+     * @mixin module:xide/action/DefaultActions
+     */
+    var Module = declare("xaction/DefaultActions", null , {});
+    /**
+     *
+     * @param title
+     * @param command
+     * @param group
+     * @param icon
+     * @param handler
+     * @param accelKey
+     * @param keyCombo
+     * @param keyProfile
+     * @param keyTarget
+     * @param keyScope
+     * @param mixin
+     * @returns {{title: *, command: *, group: *, icon: *, handler: *, accelKey: *, keyCombo: *, keyProfile: *, keyTarget: *, keyScope: *}}
+     */
+    Module.createActionParameters=function(title, command, group, icon, handler, accelKey, keyCombo, keyProfile, keyTarget, keyScope,mixin){
+        return {
+            title:title,
+            command: command,
+            group: group,
+            icon: icon,
+            handler: handler,
+            accelKey: accelKey,
+            keyCombo: keyCombo,
+            keyProfile: keyProfile,
+            keyTarget: keyTarget,
+            keyScope: keyScope,
+            mixin:mixin
+        };
+    };
+    /**
+     *
+     * @param label
+     * @param command
+     * @param icon
+     * @param keycombo
+     * @param tab
+     * @param group
+     * @param filterGroup
+     * @param onCreate
+     * @param handler
+     * @param mixin
+     * @param shouldShow
+     * @param shouldDisable
+     * @param container
+     * @returns {*}
+     */
+    var createAction = function(label,command,icon,keycombo,tab,group,filterGroup,onCreate,handler,mixin,shouldShow,shouldDisable,container){
+        if(keycombo) {
+            if (_.isString(keycombo)) {
+                keycombo = [keycombo];
+            }
+        }
+
+        mixin = utils.mixin({
+            filterGroup:filterGroup || "item|view",
+            tab:tab||'File',
+            onCreate: onCreate || function (action){},
+            shouldShow:shouldShow||function(){return true;},
+            shouldDisable:shouldDisable||function(){return false;}
+        },mixin);
+
+        var _action = Module.createActionParameters(
+            label,
+            command,
+            group || 'File',//Group
+            icon, handler || null, "", keycombo, null, container, null, mixin);
+
+        utils.mixin(_action,mixin);
+
+        return _action;
+    };
+
+    /**
+     * Find action in permission
+     * @param what
+     * @returns {boolean}
+     */
+    function hasAction(permissions,what){
+        return _.contains(permissions,what);
+    }
+
+    /**
+     * After action default handler, trys:
+     * - this::onAfterAction
+     * - emit onAfterAction
+     *
+     * @param dfdResult
+     * @param event
+     * @param action
+     * @private
+     */
+    function _afterAction(dfdResult,event,action) {
+        var who = this;
+        // call onAfterAction with this results
+        var onAfterActionDfd = null;
+        who.onAfterAction && (onAfterActionDfd = who.onAfterAction(action, dfdResult, event));
+
+        who._emit && who._emit('onAfterAction', {
+            action: action,
+            result: dfdResult,
+            source: who,
+            afterAction: onAfterActionDfd
+        });
+    }
+    /**
+     * Default handler, does
+     * - try this::runAction || action#handler
+     * - call afterAction
+     *
+     * As last cal
+     * @param action {module:xaction/ActionModel}
+     * @param event
+     */
+    function defaultHandler(action,event){
+        var actionDfd,
+            who = this;
+
+        who && who.onBeforeAction && who.onBeforeAction(action);
+        if(who.runAction){
+            actionDfd = who.runAction.apply(who,[action,null,event]);
+        }else if(action.handler){
+            actionDfd = action.handler.apply(who,[action,null,event]);
+        }
+        if(actionDfd && actionDfd.then){
+            actionDfd.then(function(actionResult){
+                _afterAction.apply(who,[actionResult,event,action]);
+            });
+
+        }else{
+            _afterAction.apply(who,[actionDfd,event,action]);
+        }
+        return actionDfd;
+    }
+
+    /**
+     *
+     * @param permissions
+     * @param grid
+     * @param owner
+     * @returns {Array}
+     */
+    function getDefaultActions(permissions,grid,owner){
+        /**
+         *
+         * @param selection
+         * @param reference
+         * @param visibility
+         * @returns {boolean}
+         */
+        function shouldDisableDefaultEmptySelection(selection,reference,visibility){
+            selection = selection || grid ? grid.getSelection() : [];
+
+            if(!selection || !selection.length){
+                return true;
+            }
+            return false;
+        }
+        /**
+         *
+         * @param selection
+         * @param reference
+         * @param visibility
+         * @returns {boolean}
+         */
+        function shouldDisableDefaultFileOnly(selection,reference,visibility){
+
+            if(shouldDisableDefaultEmptySelection.apply(this,arguments)){
+                return true;
+            }
+            selection = selection || grid ? grid.getSelection() : [];
+
+            if(selection && selection[0].isDir === true){
+                return true;
+            }
+            return false;
+        }
+
+        var root = 'File/',
+            thiz = this,
+            renderActions = [],
+            VISIBILITY = types.ACTION_VISIBILITY,
+            result = [],
+            ACTION = types.ACTION,
+            ACTION_ICON = types.ACTION_ICON,
+            creator = owner || grid;
+
+        /**
+         *
+         * @param label
+         * @param command
+         * @param icon
+         * @param keycombo
+         * @param tab
+         * @param group
+         * @param filterGroup
+         * @param onCreate
+         * @param handler
+         * @param mixin
+         * @param shouldShow
+         * @param shouldDisable
+         */
+        function addAction(label,command,icon,keycombo,tab,group,filterGroup,onCreate,handler,mixin,shouldShow,shouldDisable){
+            var action = null;
+            mixin = mixin || {};
+            utils.mixin(mixin,{owner:owner || grid});
+
+            if(mixin.addPermission || hasAction(permissions,command)){
+
+                handler = handler || defaultHandler;
+
+                action = createAction(label,command,icon,keycombo,tab,group,filterGroup,onCreate,handler,mixin,shouldShow,shouldDisable,grid.domNode);
+
+                if(action) {
+                    if (owner && owner.addAction) {
+                        owner.addAction(null, action);
+                    }
+                    result.push(action);
+                }
+            }
+        }
+        if(hasAction(permissions, ACTION.CLIPBOARD) && grid.getClipboardActions){
+            result.push(creator.createAction({
+                label: 'Clipboard',
+                command: 'Edit/Clipboard',
+                icon: 'fa-clipboard',
+                tab: 'Edit',
+                group: 'Clipboard',
+                mixin:{
+                    addPermission:true,
+                    dynamic:true,
+                    quick:true
+                },
+                onCreate:function(action){
+                    action.setVisibility(VISIBILITY.RIBBON,{
+                        expand:true,
+                        tab:"File"
+                    });
+                }
+            }));
+
+            result = result.concat(grid.getClipboardActions(addAction));
+        }
+
+        result.push(creator.createAction({
+            label: 'Show',
+            command: 'View/Show',
+            icon: 'fa-eye',
+            tab: 'View',
+            group: 'Show',
+            mixin:{
+                addPermission:true,
+                dynamic:true
+            },
+            onCreate:function(action){
+                action.setVisibility(VISIBILITY.RIBBON,{
+                    expand:true
+                });
+            }
+        }));
+
+
+        if(hasAction(permissions,ACTION.LAYOUT) && grid.getRendererActions){
+            result = result.concat(grid.getRendererActions());
+        }
+
+        if(hasAction(permissions,ACTION.COLUMNS) && grid.getColumnHiderActions){
+            result = result.concat(grid.getColumnHiderActions(permissions));
+        }
+        ///////////////////////////////////////
+        //
+        //  Open/Edit
+        //
+        //
+        result.push(creator.createAction({
+            label: 'Edit',
+            command: 'File/Edit',
+            icon: ACTION_ICON.EDIT,
+            tab: 'Home',
+            group: 'Open',
+            keycombo: ['f4', 'enter','dblclick'],
+            mixin:{
+                quick:true
+            },
+            shouldDisable:shouldDisableDefaultFileOnly
+        }));
+
+
+        ///////////////////////////////////////
+        //
+        //  Organize
+        //
+        result.push(creator.createAction({
+            label: 'Delete',
+            command: 'File/Delete',
+            icon: ACTION_ICON.DELETE,
+            tab: 'Home',
+            group: 'Organize',
+            keycombo: ['f8','delete'],
+            mixin:{
+                quick:true
+            },
+            shouldDisable:shouldDisableDefaultEmptySelection
+        }));
+
+        addAction('Rename','File/Rename','fa-edit',['f2'],'Home','Organize','item',null,null,null,null,shouldDisableDefaultEmptySelection);
+
+        result.push(creator.createAction({
+            label: 'Reload',
+            command: 'File/Reload',
+            icon: ACTION_ICON.RELOAD,
+            tab: 'Home',
+            group: 'File',
+            keycombo: ['ctrl l'],
+            mixin:{
+                quick:true
+            }
+        }));
+        addAction('Create archive','File/Compress',ACTION_ICON.COMPRESS,['ctrl z'],'Home','Organize','item|view',null,null,null,null,shouldDisableDefaultEmptySelection);
+
+        ///////////////////////////////////////
+        //
+        //  File
+        //
+        addAction('Extract','File/Extract',ACTION_ICON.EXTRACT,['ctrl e'],'Home','File','item|view',null,null,null,null,function(){
+            return true;
+            //return shouldDisableDefaultFileOnly.apply(this,arguments);
+        });
+
+        result.push(creator.createAction({
+            label: 'Download',
+            command: 'File/Download',
+            icon: ACTION_ICON.DOWNLOAD,
+            tab: 'Home',
+            group: 'File',
+            keycombo: ['ctrl down'],
+            mixin:{
+                quick:true
+            }
+        }));
+
+        //////////////////////////////////////////
+        //
+        //  New
+        //
+        if(hasAction(permissions,ACTION.NEW_DIRECTORY)|| hasAction(permissions,ACTION.NEW_FILE)) {
+
+            addAction('New','File/New','fa-magic',null,'Home','New','item|view',null,null,{},null,null);
+/*
+            result.push(creator.createAction({
+                label: 'New',
+                command: 'File/New',
+                icon: 'fa-magic',
+                tab: 'Home',
+                group: 'File',
+                keycombo: ['ctrl down'],
+                mixin:{
+                    quick:true
+                }
+            }));*/
+
+        }
+        addAction('New Folder',ACTION.NEW_DIRECTORY,'fa-folder',['f7'],'Home','New','item|view',null,null,{quick:true},null,null);
+        addAction('New File',ACTION.NEW_FILE,'el-icon-file',['ctrl f4'],'Home','New','item|view',null,null,{quick:true},null,null);
+
+
+        //////////////////////////////////////////
+        //
+        //  Preview
+        //
+        if(hasAction(permissions,ACTION.PREVIEW)) {
+            result.push(creator.createAction({
+                label: 'Preview',
+                command: 'File/Preview',
+                icon: 'fa-eye',
+                tab: 'Home',
+                group: 'Open',
+                keycombo: ['f3'],
+                mixin:{
+                    quick:true
+                },
+                shouldDisable:shouldDisableDefaultFileOnly
+            }));
+        }
+
+        ///////////////////////////////////////
+        //
+        //  Selection
+        //
+        if(hasAction(permissions,ACTION.SELECTION)) {
+            result.push(createAction('Select', 'File/Select', 'fa-hand-o-up', null, 'Home', 'Select', 'item|view', function(action){
+                action.setVisibility(VISIBILITY.RIBBON,{
+                    expand:true
+                });
+            }, null, null, null, null,grid.domNode));
+
+            var _mixin = {
+                    owner:owner || grid
+                },
+                container = grid.domNode;
+
+            result.push(createAction('Select all', 'File/Select/All', 'fa-th', ['ctrl a'], 'Home', 'Select', 'item|view', null, function(){
+                grid.selectAll();
+            }, _mixin, null, null,container));
+
+            result.push(createAction('Select none', 'File/Select/None', 'fa-square-o', 'ctrl d', 'Home', 'Select', 'item|view', null, function(){
+                grid.deselectAll();
+            }, _mixin, null, null,container));
+
+            result.push(createAction('Invert selection', 'File/Select/Invert', 'fa-square', ['ctrl i'], 'Home', 'Select', 'item|view', null, function(){
+                grid.invertSelection();
+            }, _mixin, null, null,container));
+        }
+        return result;
+    }
+
+    Module.createAction = createAction;
+    Module.hasAction = hasAction;
+    Module.getDefaultActions = getDefaultActions;
+    Module.defaultHandler = defaultHandler;
+
+    return Module;
+});
 define('xaction/ActionProvider',[
     "xdojo/declare",
     'dcl/dcl',
@@ -22968,17 +17346,12 @@ define('xgrid/Actions',[
     return _class;
 });
 /** @module xgrid/types **/
-define('xgrid/types',[
+define('xgrid/typesLite',[
     "xdojo/declare",
     'xide/types',
-    'xgrid/ColumnHider',
-    'dgrid/extensions/ColumnReorder', //@todo : fork!
-    'dgrid/extensions/ColumnResizer', //@todo : fork!
-    'dgrid/extensions/Pagination',    //@todo : fork!
     'xgrid/Selection',
-    'xgrid/Toolbar',
-    'xgrid/ContextMenu',
     'xgrid/Keyboard',
+    'xgrid/ColumnHider',
     'xide/mixins/EventedMixin',
     'dgrid/OnDemandGrid',
     'xgrid/Defaults',
@@ -22989,9 +17362,7 @@ define('xgrid/types',[
     'xgrid/Actions',
     'xlang/i18'
 ], function (declare,types,
-             ColumnHider, ColumnReorder, ColumnResizer,
-             Pagination,
-             Selection,Toolbar,ContextMenu,_GridKeyboardSelection,
+             Selection,_GridKeyboardSelection,ColumnHider,
              EventedMixin, OnDemandGrid,Defaults,Layout,Focus,
              ListRenderer,
              Clipboard,Actions,i18)
@@ -23023,7 +17394,7 @@ define('xgrid/types',[
          * @type {bool}
          * @constant
          */
-        USE_JQUERY_CSS: true,
+        USE_JQUERY_CSS: false,
         /**
          * Behaviour flag to deselect an item when its already selected
          * @default true
@@ -23122,17 +17493,8 @@ define('xgrid/types',[
             CLASS: ColumnHider,
             IMPLEMENTATION: {},
             CLASSES: null
-        },
-        COLUMN_REORDER: {
-            CLASS: ColumnReorder,
-            IMPLEMENTATION: {},
-            CLASSES: null
-        },
-        COLUMN_RESIZER: {
-            CLASS: ColumnResizer,
-            IMPLEMENTATION: {},
-            CLASSES: null
         }
+
     };
     /**
      * All Grid Features for easy access
@@ -23150,36 +17512,6 @@ define('xgrid/types',[
             IMPLEMENTATION: {},
             CLASSES: null
         },
-        COLUMN_HIDER: {
-            CLASS: ColumnHider,
-            IMPLEMENTATION: {},
-            CLASSES: null
-        },
-        COLUMN_REORDER: {
-            CLASS: ColumnReorder,
-            IMPLEMENTATION: {},
-            CLASSES: null
-        },
-        COLUMN_RESIZER: {
-            CLASS: ColumnResizer,
-            IMPLEMENTATION: {},
-            CLASSES: null
-        },
-        PAGINATION: {
-            CLASS: Pagination,
-            IMPLEMENTATION: {},
-            CLASSES: null
-        },
-        TOOLBAR: {
-            CLASS: Toolbar,
-            IMPLEMENTATION: {},
-            CLASSES: null
-        },
-        CONTEXT_MENU: {
-            CLASS: ContextMenu,
-            IMPLEMENTATION: {},
-            CLASSES: null
-        },
         ACTIONS: {
             CLASS: Actions,
             IMPLEMENTATION: {},
@@ -23189,15 +17521,20 @@ define('xgrid/types',[
             CLASS:Clipboard,
             IMPLEMENTATION:{},
             CLASSES:null
+        },
+        COLUMN_HIDER: {
+            CLASS: ColumnHider,
+            IMPLEMENTATION: {},
+            CLASSES: null
         }
     };
     return declare(null,[],{});
 });
 /** @module xgrid/Base **/
-define('xgrid/Base',[
+define('xgrid/BaseLite',[
     "xdojo/declare",
     'xide/types',
-    'xgrid/types',
+    'xgrid/typesLite',
     'xide/utils/ObjectUtils',   //possibly not loaded yet
     'xide/utils',
     'dgrid/OnDemandGrid',
@@ -23208,7 +17545,6 @@ define('xgrid/Base',[
     'xgrid/ThumbRenderer',
     'xgrid/TreeRenderer',
     'dgrid/util/misc'
-
 ], function (declare,types,
              xTypes,ObjectUtils,utils,
              OnDemandGrid,Defaults,Layout,Focus,
@@ -23608,7 +17944,7 @@ define('xgrid/Base',[
 define('xgrid/GridLite',[
     'dojo/_base/declare',
     'xide/types',
-    './Base'
+    './BaseLite'
 ],function (declare,types,Base) {
     /**
      *
@@ -24176,6 +18512,32 @@ define('xide/editor/Default',[
     _class.Implementation = Implementation;
     return _class;
 
+});
+define('xide/_Popup',[
+    'dcl/dcl'
+],function (dcl){
+
+    var zIndexStart = 200;
+
+    var Module = dcl(null,{});
+
+    Module.nextZ = function(incr){
+        zIndexStart++;
+        if(incr){
+            zIndexStart+=incr;
+        }
+        return zIndexStart;
+    }
+
+    if(typeof window !=='undefined'){
+        window['__nextZ'] = Module.nextZ;
+    }
+
+    Module.setStartIndex=function(index){
+        zIndexStart = index;
+    }
+
+    return Module;
 });
 /** @module xgrid/Base **/
 define('xide/views/_Dialog',[
@@ -35019,6 +29381,3595 @@ define('xdocker/Splitter2',[
         }
     });
 });
+define('xide/mixins/ActionMixin',[
+    "dcl/dcl",
+    "xdojo/declare",
+    "xide/utils"
+], function (dcl,declare,utils) {
+    var Implementation = {
+        store:null,
+        getActionStore:function(){
+            return this.store;
+        },
+        setActionStore:function(store){
+            return this.store = store;
+        },
+        /**
+         * Sort
+         * @param groups
+         * @param groupMap
+         * @returns {*}
+         */
+        sortGroups: function (groups, groupMap) {
+            groups = groups.sort(function (a, b) {
+                if (a.label && b.label && groupMap[a.label] != null && groupMap[b.label] != null) {
+                    var orderA = groupMap[a.label];
+                    var orderB = groupMap[b.label];
+                    return orderB - orderA;
+                }
+                return 100;
+            });
+            return groups;
+        },
+        /**
+         * The visibility filter. There are the events "REGISTER_ACTION" and "SET_ITEM_ACTIONS" a sub-class might listening too.
+         * When receiving a new set of actions, in most cases any income action needs to be filtered agains this value.         *
+         * Please @see {model:xide/action/Action for more}.
+         *
+         * @member visibility {module:xide/types/ACTION_VISIBILITY}
+         * @type {string|null}
+         */
+        visibility: null,
+        /**
+         * All actions, there is also _incomingActions for the last set
+         * type {xide/action/Action[]}
+         */
+        _actions: [],
+        /**
+         *
+         * @param visibility {string|null}
+         */
+        clearActions: function (visibility,_store) {
+            visibility = visibility || this.visibility;
+            var store = _store || this.getActionStore(),
+                actions = store.data;
+
+            if(!store){
+                return;
+            }
+            actions && _.each(actions,function(action){
+                var actionVisibility = action.getVisibility!= null ? action.getVisibility(visibility) : null;
+                if(actionVisibility){
+                    var widget = actionVisibility.widget;
+                    if(widget){
+                        //remove action reference widget
+                        action.removeReference && action.removeReference(widget);
+                        widget.destroy();
+                        this.setVisibilityField(action, 'widget', null);
+                    }
+                }
+            },this);
+        },
+        /**
+         * computeList modifies a set of actions in that way:
+         *
+         * 1. prepare the incoming list of 'actions' by grouping them using the actions.command first path element.
+         * 2. order the inner branches created above, using the action's 'order', 'group' and 'command' field
+         * 3. composite the the entire tree by overriding each top level's 'item' attribute
+         *
+         * @param items {xide/action/Action[]}
+         * @returns {xide/action/Action[]} the modified version of the input
+         * @private
+         */
+        _computeList: function (items, add) {
+            return this._actions;
+        },
+        /**
+         * Return a field from the object's given visibility store
+         * @param action
+         * @param field
+         * @param _default
+         * @returns {*}
+         */
+        getVisibilityField:function(action,field,_default){
+            var actionVisibility = action.getVisibility !=null ? action.getVisibility(this.visibility) : {};
+            return actionVisibility[field] !=null ? actionVisibility[field] : action[field] || _default;
+        },
+        /**
+         * Sets a field in the object's given visibility store
+         * @param action
+         * @param field
+         * @param value
+         * @returns {*}
+         */
+        setVisibilityField:function(action,field,value){
+            var _default = {};
+            if(action.getVisibility) {
+                var actionVisibility = action.getVisibility(this.visibility) || _default;
+                actionVisibility[field] = value;
+            }
+            return actionVisibility;
+        },
+        shouldShowAction:function(action){
+            if(this.getVisibilityField(action,'show')==false){
+                return false;
+            }else if(action.getVisibility && action.getVisibility(this.visibility)==null){
+                return false;
+            }
+            return true;
+        }
+    }
+
+    /**
+     * Provides tools to deal with 'actions' (xide/action/Action). This is the model part for actions which is being used
+     * always together with the render part(xide/widgets/_MenuMixin) in a subclass.
+     *
+     * @mixin module:xide/mixins/ActionMixin
+     */
+    var Module = declare("xide/mixins/ActionMixin", null, Implementation);
+    Module.dcl = dcl(null,Implementation);
+    return Module;
+});
+
+/**
+ * @module xide/views/History
+ */
+define('xide/views/History',[
+    'dcl/dcl',
+    'xide/utils'
+], function (dcl,utils) {
+    /**
+     * @class module:xide/views/History
+     */
+    return dcl(null, {
+        declaredClass: "xide.views.History",
+        duplicates:false,
+        _history: null,
+        _index: 0,
+        constructor: function (options) {
+            this._history = [];
+            utils.mixin(this,options);
+        },
+
+        destroy:function(){
+            delete this._history;
+        },
+        set: function (data) {
+            this._history = data;
+            this._index = this.length();
+        },
+        pop: function () {
+            this._history.pop();
+            this._index = this.length();
+        },
+        push: function (cmd) {
+            if (this._history.indexOf(cmd) == -1 || this.duplicates===true) {
+                this._history.push(cmd);
+                this._index = this.length();
+            }
+        },
+        length: function () {
+            if(this._history) {
+                return this._history.length;
+            }
+        },
+        getNext: function () {
+            this._index += 1;
+            var cmd = this._history[this._index] || "";
+            this._index = Math.min(this.length(), this._index);
+            return cmd;
+        },
+        getPrev: function () {
+            this._index = Math.max(0, this._index - 1);
+            return this._history[this._index];
+        },
+        remove:function(what){
+            this._history && this._history.remove(what);
+            this._index = Math.min(this.length(), this._index);
+        },
+        getNow: function () {
+            var index = Math.max(0, this._index - 1);
+            if(this._history) {
+                return this._history[index];
+            }
+        },
+        setNow: function (what) {
+            if(this._history) {
+                this._history.remove(what);
+                this._history.push(what);
+            }
+        },
+        indexOf:function(what){
+            if(this._history) {
+                return this._history.indexOf(what);
+            }
+            return -1;
+        }
+    });
+});
+define('xaction/ActionContext',[
+    "dcl/dcl",
+    "xdojo/declare",
+    'xide/types',
+    'dojo/aspect',
+    'xide/views/History'
+], function (dcl, declare, types, aspect, History) {
+    var _debug = false;
+    /**
+     * Mixin to handle different action contexts.
+     *
+     * @mixin module:xaction/ActionContext
+     */
+    var Implementation = {
+        currentActionEmitter: null,
+        _history: null,
+        isEmpty: function () {
+            var _emitter = this.getCurrentEmitter();
+            if (_emitter) {
+                return _emitter.getActionStore().getAll().length == 0;
+            }
+            return true;
+        },
+        getCurrentEmitter: function () {
+            return this.currentActionEmitter;
+        },
+        _onRemoveEmitter: function (emitter) {
+            this._history.remove(emitter);
+            var _next = this._history.getNow();
+            var cEmitter = this.currentActionEmitter;
+            if (cEmitter == emitter) {
+                this.currentActionEmitter = null;
+            }
+            var _last = _next;
+            if (_last) {
+                this.setActionEmitter(_last);
+            }
+        },
+        refreshActions: function (actions) {
+            var _self = this;
+            _.each(actions, function (action) {
+                if (_self.renderAction) {
+                    _self.renderAction(action, null, null, null, null);
+                } else {
+                    console.error('renderAction not implemented for refresh actions ' + _self.declaredClass);
+                }
+            });
+        },
+        setActionEmitter: function (emitter, what, event) {
+            if (emitter && emitter.getActionStore && !emitter.getActionStore()) {
+                _debug && console.warn('setActionEmitter: emitter returns null action store! abort ' + emitter.declaredClass, emitter);
+                return;
+            }
+            if (this.currentActionEmitter == emitter) {
+                if (!emitter) {
+                    this.setActionStore(null);
+                }
+                return;
+            }
+            _debug && console.log('setActionEmitter ' + this.id + ' ' + this.declaredClass + ' for : ' + what + ' emitter : ' + emitter.id);
+            try {
+                var cEmitter = this.currentActionEmitter;
+                if (cEmitter) {
+                    if (cEmitter.getActionStore) {
+                        var store = cEmitter.getActionStore();
+                        if (store) {
+                            store._all = null;
+                        } else {
+                            _debug && console.warn('setActionEmitter no store');
+                        }
+                        this.clearActions();
+                    } else {
+                        _debug && console.warn('setActionEmitter current emitter has no getActionStore', cEmitter);
+                    }
+                    cEmitter && cEmitter.onDeactivateActionContext && cEmitter.onDeactivateActionContext(this, event);
+                }
+            } catch (e) {
+                logError(e, 'setActionEmitter crash');
+            }
+            if (emitter && !emitter.getActionStore) {
+                _debug && console.error('not an action emitter ' + emitter.declaredClass);
+                return;
+            }
+            this.currentActionEmitter = emitter;
+            if (!emitter) {
+                this.setActionStore(null);
+                return;
+            }
+            var newEmitterStore = emitter.getActionStore();
+            if (!newEmitterStore) {
+                _debug && console.error('new emitter has no action store ! ' + emitter.declaredClass);
+                return;
+            }
+
+            newEmitterStore.__all = null;
+            emitter && emitter.onUseActionStore && emitter.onUseActionStore(newEmitterStore, emitter);
+            this.setActionStore(newEmitterStore, emitter);
+            newEmitterStore.addRenderer(this);
+            emitter && emitter.onActivateActionContext && emitter.onActivateActionContext(this, event);
+            this._emit('setActionEmitter', {
+                emitter: emitter
+            });
+            !this._history && (this._history = new History());
+            this._history.setNow(emitter);
+        },
+        _registerActionEmitter: function (emitter) {
+
+            if(this[this.id +'_emitter_'+emitter.id]){
+                return;
+            }
+
+            this[this.id +'_emitter_'+emitter.id]=true;
+
+            if (emitter && !emitter.getActionStore) {
+                _debug && console.error('_registerActionEmitter: is not an action provider');
+                return;
+            }
+            if (!emitter || !emitter.on) {
+                _debug && console.warn('register action emitter : emitter = null');
+                return false;
+            }
+            var thiz = this,
+                handler = function (what, e) {
+                    thiz.setActionEmitter(emitter, what, e);
+                },
+                _handle = emitter._on('selectionChanged', function (e) {
+                    e[thiz.id + '_aceDid'] = true;
+                    var type = e.why == 'clear' ? 'selectionCleared' : 'selectionChanged';
+                    handler(type, e);
+                });
+
+
+
+            emitter.on('click', function (e) {
+                if(e.__did){
+                    return;
+                }
+                e.__did = true;
+                var doHandler = true;
+                if (emitter.handleActionClick) {
+                    doHandler = emitter.handleActionClick(e);
+                }
+                doHandler && handler('click', e);
+            });
+            !this._history && (this._history = new History());
+            emitter._on(types.EVENTS.ON_VIEW_SHOW, function (view) {
+                if (thiz._history.indexOf(view)) {
+                    view.view && (view = view.view);
+                    thiz.setActionEmitter(view, types.EVENTS.ON_VIEW_SHOW, view);
+                }
+            });
+        },
+        destroy: function () {
+            this.inherited && this.inherited(arguments);
+            this._history && this._history.destroy() && delete this._history;
+        },
+        addActionEmitter: function (emitter) {
+            if (!emitter) {
+                _debug && console.warn('addActionEmitter::emitter is null');
+                return;
+            }
+            var thiz = this;
+            !this._history && (this._history = new History());
+            if (!emitter.getActionStore) {
+                _debug && console.error('invalid emitter ', emitter);
+                return;
+            }
+
+            this._history.push(emitter);
+            thiz._registerActionEmitter(emitter);
+            function remove(emitter) {
+                thiz._onRemoveEmitter(emitter);
+            }
+
+            aspect.after(emitter, 'destroy', function () {
+                remove(emitter);
+            }, true);
+
+            emitter._on('destroy', function () {
+                try {
+                    remove(emitter);
+                } catch (e) {
+                    logError(e, 'addActionEmitter');
+                }
+            }, true);
+        }
+    };
+    //package via declare
+    var Module = declare('xaction/ActionContext', null, Implementation);
+    //package via dcl
+    Module.dcl = dcl(null, Implementation);
+    return Module;
+});
+define('dijit/Viewport',[
+	"dojo/Evented",
+    "dojo/window" // getBox()
+], function(Evented, winUtils){
+
+	// module:
+	//		dijit/Viewport
+
+	/*=====
+	return {
+		// summary:
+		//		Utility singleton to watch for viewport resizes, avoiding duplicate notifications
+		//		which can lead to infinite loops.
+		// description:
+		//		Usage: Viewport.on("resize", myCallback).
+		//
+		//		myCallback() is called without arguments in case it's _WidgetBase.resize(),
+		//		which would interpret the argument as the size to make the widget.
+	};
+	=====*/
+
+	var Viewport = new Evented();
+
+	var focusedNode;
+
+
+	Viewport.getEffectiveBox = function(/*Document*/ doc){
+		// summary:
+		//		Get the size of the viewport, or on mobile devices, the part of the viewport not obscured by the
+		//		virtual keyboard.
+
+		var box = winUtils.getBox(doc);
+
+		// Account for iOS virtual keyboard, if it's being shown.  Unfortunately no direct way to check or measure.
+		var tag = focusedNode && focusedNode.tagName && focusedNode.tagName.toLowerCase();
+		return box;
+	};
+
+	return Viewport;
+});
+
+define('dijit/main',[
+	"dojo/_base/kernel"
+], function(dojo){
+	// module:
+	//		dijit/main
+
+/*=====
+return {
+	// summary:
+	//		The dijit package main module.
+	//		Deprecated.   Users should access individual modules (ex: dijit/registry) directly.
+};
+=====*/
+
+	return dojo.dijit;
+});
+
+define('dijit/place',[
+	"dojo/_base/array", // array.forEach array.map array.some
+	"dojo/dom-geometry", // domGeometry.position
+	"dojo/dom-style", // domStyle.getComputedStyle
+	"dojo/_base/kernel", // kernel.deprecated
+	"dojo/_base/window", // win.body
+	"./Viewport", // getEffectiveBox
+	"./main"	// dijit (defining dijit.place to match API doc)
+], function(array, domGeometry, domStyle, kernel, win, Viewport, dijit){
+
+	// module:
+	//		dijit/place
+
+
+	function _place(/*DomNode*/ node, choices, layoutNode, aroundNodeCoords){
+		// summary:
+		//		Given a list of spots to put node, put it at the first spot where it fits,
+		//		of if it doesn't fit anywhere then the place with the least overflow
+		// choices: Array
+		//		Array of elements like: {corner: 'TL', pos: {x: 10, y: 20} }
+		//		Above example says to put the top-left corner of the node at (10,20)
+		// layoutNode: Function(node, aroundNodeCorner, nodeCorner, size)
+		//		for things like tooltip, they are displayed differently (and have different dimensions)
+		//		based on their orientation relative to the parent.	 This adjusts the popup based on orientation.
+		//		It also passes in the available size for the popup, which is useful for tooltips to
+		//		tell them that their width is limited to a certain amount.	 layoutNode() may return a value expressing
+		//		how much the popup had to be modified to fit into the available space.	 This is used to determine
+		//		what the best placement is.
+		// aroundNodeCoords: Object
+		//		Size of aroundNode, ex: {w: 200, h: 50}
+
+		// get {x: 10, y: 10, w: 100, h:100} type obj representing position of
+		// viewport over document
+		var view = Viewport.getEffectiveBox(node.ownerDocument);
+
+		// This won't work if the node is inside a <div style="position: relative">,
+		// so reattach it to <body>.	 (Otherwise, the positioning will be wrong
+		// and also it might get cutoff.)
+		if(!node.parentNode || String(node.parentNode.tagName).toLowerCase() != "body"){
+			win.body(node.ownerDocument).appendChild(node);
+		}
+
+		var best = null;
+		array.some(choices, function(choice){
+			var corner = choice.corner;
+			var pos = choice.pos;
+			var overflow = 0;
+
+			// calculate amount of space available given specified position of node
+			var spaceAvailable = {
+				w: {
+					'L': view.l + view.w - pos.x,
+					'R': pos.x - view.l,
+					'M': view.w
+				}[corner.charAt(1)],
+				h: {
+					'T': view.t + view.h - pos.y,
+					'B': pos.y - view.t,
+					'M': view.h
+				}[corner.charAt(0)]
+			};
+
+			// Clear left/right position settings set earlier so they don't interfere with calculations,
+			// specifically when layoutNode() (a.k.a. Tooltip.orient()) measures natural width of Tooltip
+			var s = node.style;
+			s.left = s.right = "auto";
+
+			// configure node to be displayed in given position relative to button
+			// (need to do this in order to get an accurate size for the node, because
+			// a tooltip's size changes based on position, due to triangle)
+			if(layoutNode){
+				var res = layoutNode(node, choice.aroundCorner, corner, spaceAvailable, aroundNodeCoords);
+				overflow = typeof res == "undefined" ? 0 : res;
+			}
+
+			// get node's size
+			var style = node.style;
+			var oldDisplay = style.display;
+			var oldVis = style.visibility;
+			if(style.display == "none"){
+				style.visibility = "hidden";
+				style.display = "";
+			}
+			var bb = domGeometry.position(node);
+			style.display = oldDisplay;
+			style.visibility = oldVis;
+
+			// coordinates and size of node with specified corner placed at pos,
+			// and clipped by viewport
+			var
+				startXpos = {
+					'L': pos.x,
+					'R': pos.x - bb.w,
+					'M': Math.max(view.l, Math.min(view.l + view.w, pos.x + (bb.w >> 1)) - bb.w) // M orientation is more flexible
+				}[corner.charAt(1)],
+				startYpos = {
+					'T': pos.y,
+					'B': pos.y - bb.h,
+					'M': Math.max(view.t, Math.min(view.t + view.h, pos.y + (bb.h >> 1)) - bb.h)
+				}[corner.charAt(0)],
+				startX = Math.max(view.l, startXpos),
+				startY = Math.max(view.t, startYpos),
+				endX = Math.min(view.l + view.w, startXpos + bb.w),
+				endY = Math.min(view.t + view.h, startYpos + bb.h),
+				width = endX - startX,
+				height = endY - startY;
+
+			overflow += (bb.w - width) + (bb.h - height);
+
+			if(best == null || overflow < best.overflow){
+				best = {
+					corner: corner,
+					aroundCorner: choice.aroundCorner,
+					x: startX,
+					y: startY,
+					w: width,
+					h: height,
+					overflow: overflow,
+					spaceAvailable: spaceAvailable
+				};
+			}
+
+			return !overflow;
+		});
+
+		// In case the best position is not the last one we checked, need to call
+		// layoutNode() again.
+		if(best.overflow && layoutNode){
+			layoutNode(node, best.aroundCorner, best.corner, best.spaceAvailable, aroundNodeCoords);
+		}
+
+		// And then position the node.  Do this last, after the layoutNode() above
+		// has sized the node, due to browser quirks when the viewport is scrolled
+		// (specifically that a Tooltip will shrink to fit as though the window was
+		// scrolled to the left).
+
+		var top = best.y,
+			side = best.x,
+			body = win.body(node.ownerDocument);
+
+		if(/relative|absolute/.test(domStyle.get(body, "position"))){
+			// compensate for margin on <body>, see #16148
+			top -= domStyle.get(body, "marginTop");
+			side -= domStyle.get(body, "marginLeft");
+		}
+
+		var s = node.style;
+		s.top = top + "px";
+		s.left = side + "px";
+		s.right = "auto";	// needed for FF or else tooltip goes to far left
+
+		return best;
+	}
+
+	var reverse = {
+		// Map from corner to kitty-corner
+		"TL": "BR",
+		"TR": "BL",
+		"BL": "TR",
+		"BR": "TL"
+	};
+
+	var place = {
+		// summary:
+		//		Code to place a DOMNode relative to another DOMNode.
+		//		Load using require(["dijit/place"], function(place){ ... }).
+
+		at: function(node, pos, corners, padding, layoutNode){
+			// summary:
+			//		Positions node kitty-corner to the rectangle centered at (pos.x, pos.y) with width and height of
+			//		padding.x * 2 and padding.y * 2, or zero if padding not specified.  Picks first corner in corners[]
+			//		where node is fully visible, or the corner where it's most visible.
+			//
+			//		Node is assumed to be absolutely or relatively positioned.
+			// node: DOMNode
+			//		The node to position
+			// pos: dijit/place.__Position
+			//		Object like {x: 10, y: 20}
+			// corners: String[]
+			//		Array of Strings representing order to try corners of the node in, like ["TR", "BL"].
+			//		Possible values are:
+			//
+			//		- "BL" - bottom left
+			//		- "BR" - bottom right
+			//		- "TL" - top left
+			//		- "TR" - top right
+			// padding: dijit/place.__Position?
+			//		Optional param to set padding, to put some buffer around the element you want to position.
+			//		Defaults to zero.
+			// layoutNode: Function(node, aroundNodeCorner, nodeCorner)
+			//		For things like tooltip, they are displayed differently (and have different dimensions)
+			//		based on their orientation relative to the parent.  This adjusts the popup based on orientation.
+			// example:
+			//		Try to place node's top right corner at (10,20).
+			//		If that makes node go (partially) off screen, then try placing
+			//		bottom left corner at (10,20).
+			//	|	place(node, {x: 10, y: 20}, ["TR", "BL"])
+			var choices = array.map(corners, function(corner){
+				var c = {
+					corner: corner,
+					aroundCorner: reverse[corner],	// so TooltipDialog.orient() gets aroundCorner argument set
+					pos: {x: pos.x,y: pos.y}
+				};
+				if(padding){
+					c.pos.x += corner.charAt(1) == 'L' ? padding.x : -padding.x;
+					c.pos.y += corner.charAt(0) == 'T' ? padding.y : -padding.y;
+				}
+				return c;
+			});
+
+			return _place(node, choices, layoutNode);
+		},
+
+		around: function(
+			/*DomNode*/		node,
+			/*DomNode|dijit/place.__Rectangle*/ anchor,
+			/*String[]*/	positions,
+			/*Boolean*/		leftToRight,
+			/*Function?*/	layoutNode){
+
+			// summary:
+			//		Position node adjacent or kitty-corner to anchor
+			//		such that it's fully visible in viewport.
+			// description:
+			//		Place node such that corner of node touches a corner of
+			//		aroundNode, and that node is fully visible.
+			// anchor:
+			//		Either a DOMNode or a rectangle (object with x, y, width, height).
+			// positions:
+			//		Ordered list of positions to try matching up.
+			//
+			//		- before: places drop down to the left of the anchor node/widget, or to the right in the case
+			//			of RTL scripts like Hebrew and Arabic; aligns either the top of the drop down
+			//			with the top of the anchor, or the bottom of the drop down with bottom of the anchor.
+			//		- after: places drop down to the right of the anchor node/widget, or to the left in the case
+			//			of RTL scripts like Hebrew and Arabic; aligns either the top of the drop down
+			//			with the top of the anchor, or the bottom of the drop down with bottom of the anchor.
+			//		- before-centered: centers drop down to the left of the anchor node/widget, or to the right
+			//			in the case of RTL scripts like Hebrew and Arabic
+			//		- after-centered: centers drop down to the right of the anchor node/widget, or to the left
+			//			in the case of RTL scripts like Hebrew and Arabic
+			//		- above-centered: drop down is centered above anchor node
+			//		- above: drop down goes above anchor node, left sides aligned
+			//		- above-alt: drop down goes above anchor node, right sides aligned
+			//		- below-centered: drop down is centered above anchor node
+			//		- below: drop down goes below anchor node
+			//		- below-alt: drop down goes below anchor node, right sides aligned
+			// layoutNode: Function(node, aroundNodeCorner, nodeCorner)
+			//		For things like tooltip, they are displayed differently (and have different dimensions)
+			//		based on their orientation relative to the parent.	 This adjusts the popup based on orientation.
+			// leftToRight:
+			//		True if widget is LTR, false if widget is RTL.   Affects the behavior of "above" and "below"
+			//		positions slightly.
+			// example:
+			//	|	placeAroundNode(node, aroundNode, {'BL':'TL', 'TR':'BR'});
+			//		This will try to position node such that node's top-left corner is at the same position
+			//		as the bottom left corner of the aroundNode (ie, put node below
+			//		aroundNode, with left edges aligned).	If that fails it will try to put
+			//		the bottom-right corner of node where the top right corner of aroundNode is
+			//		(ie, put node above aroundNode, with right edges aligned)
+			//
+
+			// If around is a DOMNode (or DOMNode id), convert to coordinates.
+			var aroundNodePos;
+			if(typeof anchor == "string" || "offsetWidth" in anchor || "ownerSVGElement" in anchor){
+				aroundNodePos = domGeometry.position(anchor, true);
+
+				// For above and below dropdowns, subtract width of border so that popup and aroundNode borders
+				// overlap, preventing a double-border effect.  Unfortunately, difficult to measure the border
+				// width of either anchor or popup because in both cases the border may be on an inner node.
+				if(/^(above|below)/.test(positions[0])){
+					var anchorBorder = domGeometry.getBorderExtents(anchor),
+						anchorChildBorder = anchor.firstChild ? domGeometry.getBorderExtents(anchor.firstChild) : {t:0,l:0,b:0,r:0},
+						nodeBorder =  domGeometry.getBorderExtents(node),
+						nodeChildBorder = node.firstChild ? domGeometry.getBorderExtents(node.firstChild) : {t:0,l:0,b:0,r:0};
+					aroundNodePos.y += Math.min(anchorBorder.t + anchorChildBorder.t, nodeBorder.t + nodeChildBorder.t);
+					aroundNodePos.h -=  Math.min(anchorBorder.t + anchorChildBorder.t, nodeBorder.t+ nodeChildBorder.t) +
+						Math.min(anchorBorder.b + anchorChildBorder.b, nodeBorder.b + nodeChildBorder.b);
+				}
+			}else{
+				aroundNodePos = anchor;
+			}
+
+			// Compute position and size of visible part of anchor (it may be partially hidden by ancestor nodes w/scrollbars)
+			if(anchor.parentNode){
+				// ignore nodes between position:relative and position:absolute
+				var sawPosAbsolute = domStyle.getComputedStyle(anchor).position == "absolute";
+				var parent = anchor.parentNode;
+				while(parent && parent.nodeType == 1 && parent.nodeName != "BODY"){  //ignoring the body will help performance
+					var parentPos = domGeometry.position(parent, true),
+						pcs = domStyle.getComputedStyle(parent);
+					if(/relative|absolute/.test(pcs.position)){
+						sawPosAbsolute = false;
+					}
+					if(!sawPosAbsolute && /hidden|auto|scroll/.test(pcs.overflow)){
+						var bottomYCoord = Math.min(aroundNodePos.y + aroundNodePos.h, parentPos.y + parentPos.h);
+						var rightXCoord = Math.min(aroundNodePos.x + aroundNodePos.w, parentPos.x + parentPos.w);
+						aroundNodePos.x = Math.max(aroundNodePos.x, parentPos.x);
+						aroundNodePos.y = Math.max(aroundNodePos.y, parentPos.y);
+						aroundNodePos.h = bottomYCoord - aroundNodePos.y;
+						aroundNodePos.w = rightXCoord - aroundNodePos.x;
+					}
+					if(pcs.position == "absolute"){
+						sawPosAbsolute = true;
+					}
+					parent = parent.parentNode;
+				}
+			}			
+
+			var x = aroundNodePos.x,
+				y = aroundNodePos.y,
+				width = "w" in aroundNodePos ? aroundNodePos.w : (aroundNodePos.w = aroundNodePos.width),
+				height = "h" in aroundNodePos ? aroundNodePos.h : (kernel.deprecated("place.around: dijit/place.__Rectangle: { x:"+x+", y:"+y+", height:"+aroundNodePos.height+", width:"+width+" } has been deprecated.  Please use { x:"+x+", y:"+y+", h:"+aroundNodePos.height+", w:"+width+" }", "", "2.0"), aroundNodePos.h = aroundNodePos.height);
+
+			// Convert positions arguments into choices argument for _place()
+			var choices = [];
+			function push(aroundCorner, corner){
+				choices.push({
+					aroundCorner: aroundCorner,
+					corner: corner,
+					pos: {
+						x: {
+							'L': x,
+							'R': x + width,
+							'M': x + (width >> 1)
+						}[aroundCorner.charAt(1)],
+						y: {
+							'T': y,
+							'B': y + height,
+							'M': y + (height >> 1)
+						}[aroundCorner.charAt(0)]
+					}
+				})
+			}
+			array.forEach(positions, function(pos){
+				var ltr =  leftToRight;
+				switch(pos){
+					case "above-centered":
+						push("TM", "BM");
+						break;
+					case "below-centered":
+						push("BM", "TM");
+						break;
+					case "after-centered":
+						ltr = !ltr;
+						// fall through
+					case "before-centered":
+						push(ltr ? "ML" : "MR", ltr ? "MR" : "ML");
+						break;
+					case "after":
+						ltr = !ltr;
+						// fall through
+					case "before":
+						push(ltr ? "TL" : "TR", ltr ? "TR" : "TL");
+						push(ltr ? "BL" : "BR", ltr ? "BR" : "BL");
+						break;
+					case "below-alt":
+						ltr = !ltr;
+						// fall through
+					case "below":
+						// first try to align left borders, next try to align right borders (or reverse for RTL mode)
+						push(ltr ? "BL" : "BR", ltr ? "TL" : "TR");
+						push(ltr ? "BR" : "BL", ltr ? "TR" : "TL");
+						break;
+					case "above-alt":
+						ltr = !ltr;
+						// fall through
+					case "above":
+						// first try to align left borders, next try to align right borders (or reverse for RTL mode)
+						push(ltr ? "TL" : "TR", ltr ? "BL" : "BR");
+						push(ltr ? "TR" : "TL", ltr ? "BR" : "BL");
+						break;
+					default:
+						// To assist dijit/_base/place, accept arguments of type {aroundCorner: "BL", corner: "TL"}.
+						// Not meant to be used directly.  Remove for 2.0.
+						push(pos.aroundCorner, pos.corner);
+				}
+			});
+
+			var position = _place(node, choices, layoutNode, {w: width, h: height});
+			position.aroundNodePos = aroundNodePos;
+
+			return position;
+		}
+	};
+
+	/*=====
+	place.__Position = {
+		// x: Integer
+		//		horizontal coordinate in pixels, relative to document body
+		// y: Integer
+		//		vertical coordinate in pixels, relative to document body
+	};
+	place.__Rectangle = {
+		// x: Integer
+		//		horizontal offset in pixels, relative to document body
+		// y: Integer
+		//		vertical offset in pixels, relative to document body
+		// w: Integer
+		//		width in pixels.   Can also be specified as "width" for backwards-compatibility.
+		// h: Integer
+		//		height in pixels.   Can also be specified as "height" for backwards-compatibility.
+	};
+	=====*/
+
+	return dijit.place = place;	// setting dijit.place for back-compat, remove for 2.0
+});
+
+/** @module xide/popup **/
+define('xide/popup',[
+    "dojo/dom-geometry", // domGeometry.isBodyLtr
+    "dojo/dom-style", // domStyle.set
+    "dojo/_base/lang", // lang.hitch
+    "dijit/place",
+    "xide/$",
+    "dcl/dcl"
+], function (domGeometry, domStyle,lang,place,$,dcl) {
+    /**
+     * jQuery port of dijit/popup and deals with native HTML elements only.
+     * @class module:xide/popup
+     */
+    var instance = null;
+    var Module = dcl(null, {
+        // _stack: dijit/_WidgetBase[]
+        //		Stack of currently popped up widgets.
+        //		(someone opened _stack[0], and then it opened _stack[1], etc.)
+        _stack: [],
+        // _beginZIndex: Number
+        //		Z-index of the first popup.   (If first popup opens other
+        //		popups they get a higher z-index.)
+        _beginZIndex: 1000,
+        _idGen: 1,
+        _repositionAll: function(){
+            // summary:
+            //		If screen has been scrolled, reposition all the popups in the stack.
+            //		Then set timer to check again later.
+
+            if(this._firstAroundNode){	// guard for when clearTimeout() on IE doesn't work
+                var oldPos = this._firstAroundPosition,
+                    newPos = domGeometry.position(this._firstAroundNode, true),
+                    dx = newPos.x - oldPos.x,
+                    dy = newPos.y - oldPos.y;
+
+                if(dx || dy){
+                    this._firstAroundPosition = newPos;
+                    for(var i = 0; i < this._stack.length; i++){
+                        var style = this._stack[i].wrapper.style;
+                        style.top = (parseFloat(style.top) + dy) + "px";
+                        if(style.right == "auto"){
+                            style.left = (parseFloat(style.left) + dx) + "px";
+                        }else{
+                            style.right = (parseFloat(style.right) - dx) + "px";
+                        }
+                    }
+                }
+
+                this._aroundMoveListener = setTimeout(lang.hitch(this, "_repositionAll"), dx || dy ? 10 : 50);
+            }
+        },
+        /**
+         * Initialization for widgets that will be used as popups.
+         * Puts widget inside a wrapper DIV (if not already in one),and returns pointer to that wrapper DIV.
+         * @param node
+         * @returns {HTMLElement}
+         * @private
+         */
+        _createWrapper: function(node,args){
+            var wrapper = $(node).data('_popupWrapper');
+            var owner = $(node).data('owner') || (_.isObject(args) && args.owner ? args.owner : null);
+            if(!wrapper){
+                var $wrapper = $("<div class='xPopup' style='display:none' role='region'></div>" );
+                $('body').append(wrapper);
+                $wrapper.append($(node));
+                wrapper = $wrapper[0];
+                var s = node.style;
+                s.display = "";
+                s.visibility = "";
+                s.position = "";
+                s.top = "0px";
+                if(owner){
+                    if(owner._on){
+                        owner._on('destroy',function(e){
+                            $wrapper.remove();
+                        });
+                    }
+                }
+                $(node).data('_popupWrapper',wrapper);
+            }
+            return wrapper;
+        },
+        /**
+         * Moves the popup widget off-screen.
+         * Do not use this method to hide popups when not in use, because
+         * that will create an accessibility issue: the offscreen popup is
+         * still in the tabbing order.
+         * @param node {HTMLElement}
+         * @returns {*}
+         */
+        moveOffScreen: function(node,args){
+            // Create wrapper if not already there
+            var wrapper = this._createWrapper(node,args);
+            // Besides setting visibility:hidden, move it out of the viewport, see #5776, #10111, #13604
+            var ltr = true,
+                style = {
+                    visibility: "hidden",
+                    top: "-9999px",
+                    display: ""
+                };
+            style[ltr ? "left" : "right"] = "-9999px";
+            style[ltr ? "right" : "left"] = "auto";
+            $(wrapper).css(style);
+            return wrapper;
+        },
+        /**
+         * Hide this popup widget (until it is ready to be shown).
+         * Initialization for widgets that will be used as popups.
+         * Also puts widget inside a wrapper DIV (if not already in one)
+         * If popup widget needs to layout it should
+         * do so when it is made visible, and popup._onShow() is called.
+         * @param widget {HTMLElement}
+         */
+        hide: function(widget,args){
+            // Create wrapper if not already there
+            var wrapper = this._createWrapper(widget,args);
+            $(wrapper).css({
+                display: "none",
+                height: "auto",			// Open() may have limited the height to fit in the viewport,
+                overflowY: "visible",	// and set overflowY to "auto".
+                border: ""			// Open() may have moved border from popup to wrapper.
+            });
+            // Open() may have moved border from popup to wrapper.  Move it back.
+            var node = widget;
+            if("_originalStyle" in node){
+                node.style.cssText = node._originalStyle;
+            }
+        },
+        getTopPopup: function(){
+            // summary:
+            //		Compute the closest ancestor popup that's *not* a child of another popup.
+            //		Ex: For a TooltipDialog with a button that spawns a tree of menus, find the popup of the button.
+            var stack = this._stack;
+            for(var pi = stack.length - 1; pi > 0 && stack[pi].parent === stack[pi - 1].widget; pi--){
+                /* do nothing, just trying to get right value for pi */
+            }
+            return stack[pi];
+        },
+        /**
+         * Popup the widget at the specified position
+         * example:
+         *   opening at the mouse position
+         *      popup.open({popup: menuWidget, x: evt.pageX, y: evt.pageY});
+         *
+         * example:
+         *  opening the widget as a dropdown
+         *      popup.open({parent: this, popup: menuWidget, around: this.domNode, onClose: function(){...}});
+         *
+         *  Note that whatever widget called dijit/popup.open() should also listen to its own _onBlur callback
+         *  (fired from _base/focus.js) to know that focus has moved somewhere else and thus the popup should be closed.
+         * @param args
+         * @returns {*}
+         */
+        open: function(args){
+            // summary:
+            //		Popup the widget at the specified position
+            //
+
+            var last = null;
+
+
+
+            var isLTR = true;
+            var self = this,
+                stack = this._stack,
+                widget = args.popup,
+                node = args.popup,
+                orient = args.orient || ["below", "below-alt", "above", "above-alt"],
+                ltr = args.parent ? args.parent.isLeftToRight() : isLTR,
+                around = args.around,
+                owner = $(node).data('owner'),
+                extraClass = args.extraClass || "",
+                id = (args.around && args.around.id) ? (args.around.id + "_dropdown") : ("popup_" + this._idGen++);
+
+            // If we are opening a new popup that isn't a child of a currently opened popup, then
+            // close currently opened popup(s).   This should happen automatically when the old popups
+            // gets the _onBlur() event, except that the _onBlur() event isn't reliable on IE, see [22198].
+            while(stack.length && (!args.parent || $.contains(args.parent.domNode,stack[stack.length - 1].widget.domNode))){
+                this.close(stack[stack.length - 1].widget);
+            }
+
+            // Get pointer to popup wrapper, and create wrapper if it doesn't exist.  Remove display:none (but keep
+            // off screen) so we can do sizing calculations.
+            var wrapper = this.moveOffScreen(widget,args);
+            var $wrapper = $(wrapper);
+            // Limit height to space available in viewport either above or below aroundNode (whichever side has more
+            // room), adding scrollbar if necessary. Can't add scrollbar to widget because it may be a <table> (ex:
+            // dijit/Menu), so add to wrapper, and then move popup's border to wrapper so scroll bar inside border.
+            var maxHeight, popupSize = domGeometry.position(node);
+            if("maxHeight" in args && args.maxHeight != -1){
+                maxHeight = args.maxHeight || Infinity;	// map 0 --> infinity for back-compat of _HasDropDown.maxHeight
+            }else{
+                var viewport = {
+                    t:0,
+                    l:0,
+                    h:$(window).height(),
+                    w:$(window).width()
+                };
+                var aroundPos = around ? domGeometry.position(around, false) : {y: args.y - (args.padding||0), h: (args.padding||0) * 2};
+                maxHeight = Math.floor(Math.max(aroundPos.y, viewport.h - (aroundPos.y + aroundPos.h)));
+            }
+            //maxHeight = 300;
+            if(popupSize.h > maxHeight){
+                // Get style of popup's border.  Unfortunately domStyle.get(node, "border") doesn't work on FF or IE,
+                // and domStyle.get(node, "borderColor") etc. doesn't work on FF, so need to use fully qualified names.
+                var cs = domStyle.getComputedStyle(node),
+                    borderStyle = cs.borderLeftWidth + " " + cs.borderLeftStyle + " " + cs.borderLeftColor;
+
+                $wrapper.css({
+                    'overflow-y': "scroll",
+                    height: maxHeight + "px",
+                    border: borderStyle	// so scrollbar is inside border
+                });
+                node._originalStyle = node.style.cssText;
+                node.style.border = "none";
+            }
+            $wrapper.attr({
+                id: id,
+                "class": "xPopup " + (widget.baseClass || widget["class"] || "").split(" ")[0] + "Popup" + ' ' + (args.css ? args.css : ""),
+                dijitPopupParent: args.parent ? args.parent.id : ""
+            });
+            $wrapper.css('z-index',this._beginZIndex + stack.length);
+            if(stack.length === 0 && around){
+                // First element on stack. Save position of aroundNode and setup listener for changes to that position.
+                this._firstAroundNode = around;
+                //this._firstAroundPosition = domGeometry.position(around, true);
+                var offset = $(around).offset();
+                this._firstAroundPosition = {
+                    w:$(around).width(),
+                    h:$(around).height(),
+                    x:offset.left,
+                    y:offset.top
+                };
+                //this._aroundMoveListener = setTimeout(lang.hitch(this, "_repositionAll"), 50);
+                this._aroundMoveListener = setTimeout(function(){
+                    self._repositionAll();
+                }, 50);
+            }
+
+            // position the wrapper node and make it visible
+            var layoutFunc = null ; //widget.orient ? lang.hitch(widget, "orient") : null;
+            var best = around ?
+                place.around(wrapper, around, orient, ltr, layoutFunc) :
+                place.at(wrapper, args, orient == 'R' ? ['TR', 'BR', 'TL', 'BL'] : ['TL', 'BL', 'TR', 'BR'], args.padding,
+                    layoutFunc);
+
+            wrapper.style.visibility = "visible";
+            node.style.visibility = "visible";	// counteract effects from _HasDropDown
+
+
+            var handlers = [];
+            $(wrapper).on('keydown',function(evt){
+                if(evt.keyCode == 27 && args.onCancel){//esape
+                    evt.stopPropagation();
+                    evt.preventDefault();
+                    args.onCancel();
+                }else if(evt.keyCode == 9){//tab
+                    evt.stopPropagation();
+                    evt.preventDefault();
+                    var topPopup = self.getTopPopup();
+                    if(topPopup && topPopup.onCancel){
+                        topPopup.onCancel();
+                    }
+                }
+            });
+            // watch for cancel/execute events on the popup and notify the caller
+            // (for a menu, "execute" means clicking an item)
+            if(widget.onCancel && args.onCancel){
+                handlers.push(widget.on("cancel", args.onCancel));
+            }
+
+            $(node).css('display','block');
+            /*
+             handlers.push(widget.on(widget.onExecute ? "execute" : "change", lang.hitch(this, function(){
+             var topPopup = this.getTopPopup();
+             if(topPopup && topPopup.onExecute){
+             topPopup.onExecute();
+             }
+             })));
+             */
+            stack.push({
+                widget: widget,
+                wrapper: wrapper,
+                parent: args.parent,
+                onExecute: args.onExecute,
+                onCancel: args.onCancel,
+                onClose: args.onClose,
+                handlers: handlers
+            });
+            if(widget.onOpen){
+                // TODO: in 2.0 standardize onShow() (used by StackContainer) and onOpen() (used here)
+                widget.onOpen(best);
+            }
+            $(wrapper).addClass(extraClass);
+            return best;
+        },
+        close: function(/*Widget?*/ popup){
+            // summary:
+            //		Close specified popup and any popups that it parented.
+            //		If no popup is specified, closes all popups.
+            var stack = this._stack;
+            // Basically work backwards from the top of the stack closing popups
+            // until we hit the specified popup, but IIRC there was some issue where closing
+            // a popup would cause others to close too.  Thus if we are trying to close B in [A,B,C]
+            // closing C might close B indirectly and then the while() condition will run where stack==[A]...
+            // so the while condition is constructed defensively.
+            while((popup && _.some(stack, function(elem){
+                return elem.widget == popup;
+            })) ||
+
+            (!popup && stack.length)){
+                var top = stack.pop(),
+                    widget = top.widget,
+                    onClose = top.onClose;
+
+                if(widget.onClose){
+                    widget.onClose();
+                }
+
+                var h;
+
+                while(h = top.handlers.pop()){
+                    h.remove();
+                }
+
+                // Hide the widget and it's wrapper unless it has already been destroyed in above onClose() etc.
+                if(widget && widget){
+                    this.hide(widget);
+                }
+                if(onClose){
+                    onClose();
+                }
+            }
+
+            $(popup).css('display','none');
+
+            if(stack.length === 0 && this._aroundMoveListener){
+                clearTimeout(this._aroundMoveListener);
+                this._firstAroundNode = this._firstAroundPosition = this._aroundMoveListener = null;
+            }
+        }
+    });
+    instance  = new Module();
+    return instance;
+});
+/** @module xide/widgets/_MenuMixin **/
+define('xide/widgets/_MenuMixin4',[
+    'dcl/dcl',
+    'xide/types',
+    'xide/utils',
+    'xide/registry',
+    'xaction/Action',
+    'xaction/DefaultActions',
+    "xide/popup"
+], function (dcl, types, utils, registry, Action, DefaultActions,popup) {
+
+    var createCallback = function (func, menu, item) {
+        return function (event) {
+            /*
+            if(item) {
+
+                var _parent = item.parent();
+                _parent.data('open', false);
+                _parent[0] && popup.close(_parent[0]);
+
+            }
+            */
+            return func(event, menu, item);
+        };
+    };
+
+    var ACTION = types.ACTION;
+    var _debug = false;
+    var _debugWidgets = false;
+    /**
+     * Mixin which provides utils for menu & action related render tasks.
+     * @mixin module:xide/widgets/_MenuMixin
+     */
+    var _Module = dcl(null, {
+        actionStores: null,
+        correctSubMenu: false,
+        _didInit: null,
+        actionFilter: null,
+        hideSubsFirst: false,
+        collapseSmallGroups: 0,
+        containerClass: '',
+        lastTree:null,
+        onActionAdded: function (actions) {
+            this.setActionStore(this.getActionStore(), actions.owner || this, false, true, actions);
+        },
+        onActionRemoved: function (evt) {
+            this.clearAction(evt.target);
+        },
+        clearAction: function (action) {
+            var self = this;
+            if (action) {
+                var actionVisibility = action.getVisibility !== null ? action.getVisibility(self.visibility) : {};
+                if (actionVisibility) {
+                    var widget = actionVisibility.widget;
+                    widget && action.removeReference && action.removeReference(widget);
+                    if (widget && widget.destroy) {
+                        widget.destroy();
+                    }
+                    delete actionVisibility.widget;
+                    actionVisibility.widget = null;
+                }
+            }
+        },
+        removeCustomActions: function () {
+            var oldStore = this.store;
+            var oldActions = oldStore._find({
+                    custom: true
+                });
+
+            var menuData = this.menuData;
+            _.each(oldActions, function (action) {
+                oldStore.removeSync(action.command);
+                var oldMenuItem = _.find(menuData, {
+                    command: action.command
+                });
+                oldMenuItem && menuData.remove(oldMenuItem);
+            });
+        },
+        /**
+         * Return a field from the object's given visibility store
+         * @param action
+         * @param field
+         * @param _default
+         * @returns {*}
+         */
+        getVisibilityField: function (action, field, _default) {
+            var actionVisibility = action.getVisibility !== null ? action.getVisibility(this.visibility) : {};
+            return actionVisibility[field] !== null ? actionVisibility[field] : action[field] || _default;
+        },
+        /**
+         * Sets a field in the object's given visibility store
+         * @param action
+         * @param field
+         * @param value
+         * @returns {*}
+         */
+        setVisibilityField: function (action, field, value) {
+            var _default = {};
+            if (action.getVisibility) {
+                var actionVisibility = action.getVisibility(this.visibility) || _default;
+                actionVisibility[field] = value;
+            }
+            return actionVisibility;
+        },
+        shouldShowAction: function (action) {
+            if (this.getVisibilityField(action, 'show') === false) {
+                return false;
+            } else if (action.getVisibility && action.getVisibility(this.visibility) == null) {
+                return false;
+            }
+            return true;
+        },
+        addActionStore: function (store) {
+            if (!this.actionStores) {
+                this.actionStores = [];
+            }
+            if (this.actionStores.indexOf(store) == -1) {
+                this.actionStores.push(store);
+            }
+        },
+        /**
+
+         tree structure :
+
+         {
+            root: {
+                Block:{
+                    grouped:{
+                        Step:[action,action]
+                    }
+                }
+            },
+            rootActions: string['File','Edit',...],
+
+            allActionPaths: string[command],
+
+            allActions:[action]
+         }
+
+         * @param store
+         * @param owner
+         * @returns {{root: {}, rootActions: Array, allActionPaths: *, allActions: *}}
+         */
+        constructor: function (options, node) {
+            this.target = node;
+            utils.mixin(this, options);
+        },
+        onClose: function (e) {
+            this._rootMenu && this._rootMenu.parent().removeClass('open');
+        },
+        onOpen: function () {
+            this._rootMenu && this._rootMenu.parent().addClass('open');
+        },
+        isLeftToRight: function () {
+            return false;
+        },
+        init: function (opts) {
+            if (this._didInit) {
+                return;
+            }
+            this._didInit = true;
+            var options = this.getDefaultOptions();
+            options = $.extend({}, options, opts);
+            var self = this;
+            var root = $(document);
+            this.__on(root, 'click', null, function (e) {
+                if (!self.isOpen) {
+                    return;
+                }
+                self.isOpen = false;
+                self.onClose(e);
+                $('.dropdown-context').css({
+                    display: ''
+                }).find('.drop-left').removeClass('drop-left');
+            });
+            if (options.preventDoubleContext) {
+                this.__on(root, 'contextmenu', '.dropdown-context', function (e) {
+                    e.preventDefault();
+                });
+            }
+            this.__on(root, 'mouseenter', '.dropdown-submenu', function (e) {
+                try {
+                    var _root = $(e.currentTarget);
+                    var $sub = _root.find('.dropdown-context-sub:first');
+                    var didPopup = false;
+                    if ($sub.length === 0) {
+                        $sub = _root.data('sub');
+                        if ($sub) {
+                            didPopup = true;
+                        } else {
+                            return;
+                        }
+                    }
+                    var data = $sub.data('data');
+                    var level = data ? data[0].level : 0;
+                    var isFirst = level === 1;
+                    if (self.menu) {
+                        if (!$.contains(self.menu[0], _root[0])) {
+                            return;
+                        }
+                    }
+
+                    var _disabled = _root.hasClass('disabled');
+                    if (_disabled) {
+                        $sub.css('display', 'none');
+                        return;
+                    } else {
+                        $sub.css('display', 'block');
+                    }
+
+                    if (isFirst) {
+                        $sub.css('display', 'initial');
+                        $sub.css('position', 'initial');
+                        function close() {
+                            var _wrapper = $sub.data('_popupWrapper');
+                            popup.close({
+                                domNode: $sub[0],
+                                _popupWrapper: _wrapper
+                            });
+                        }
+
+                        if (!didPopup) {
+                            _root.data('sub', $sub);
+                            $sub.data('owner', self);
+                            $sub.on('mouseleave', function () {
+                                close();
+                            });
+                            _root.on('mouseleave', function () {
+                            });
+                        }
+
+                        popup.open({
+                            //parent: self,
+                            popup: $sub[0],
+                            around: _root[0],
+                            orient: ['below', 'above'],
+                            maxHeight: -1,
+                            owner: self,
+                            onExecute: function () {
+                                self.closeDropDown(true);
+                            },
+                            onCancel: function () {
+                                close();
+                            },
+                            onClose: function () {
+                                //console.log('close');
+                                //domAttr.set(self._popupStateNode, "popupActive", false);
+                                //domClass.remove(self._popupStateNode, "dijitHasDropDownOpen");
+                                //self._set("_opened", false);	// use set() because _CssStateMixin is watching
+                            }
+                        });
+                        return;
+                    } else {
+                        if (!$sub.data('didSetup')) {
+                            $sub.data('didSetup', true);
+                            _root.on('mouseleave', function () {
+                                $sub.css('display', '');
+                            });
+                        }
+                    }
+
+                    //reset top
+                    $sub.css({
+                        top: 0
+                    });
+
+                    var autoH = $sub.height() + 0;
+                    var totalH = $('html').height();
+                    var pos = $sub.offset();
+                    var overlapYDown = totalH - (pos.top + autoH);
+                    if ((pos.top + autoH) > totalH) {
+                        $sub.css({
+                            top: overlapYDown - 30
+                        }).fadeIn(options.fadeSpeed);
+                    }
+                    ////////////////////////////////////////////////////////////
+                    var subWidth = $sub.width(),
+                        subLeft = $sub.offset().left,
+                        collision = (subWidth + subLeft) > window.innerWidth;
+
+                    if (collision) {
+                        $sub.addClass('drop-left');
+                    }
+                } catch (e) {
+                    logError(e);
+                }
+            });
+        },
+        getDefaultOptions: function () {
+            return {
+                fadeSpeed: 0,
+                above: 'auto',
+                left: 'auto',
+                preventDoubleContext: false,
+                compress: true
+            };
+        },
+        buildMenuItems: function ($menu, data, id, subMenu, addDynamicTag) {
+            //this._debugMenu && console.log('build - menu items ', arguments);
+            var linkTarget = '',
+                self = this,
+                visibility = this.visibility;
+
+            for (var i = 0; i < data.length; i++) {
+                var item = data[i],
+                    $sub,
+                    widget = item.widget;
+
+                if (typeof item.divider !== 'undefined' && !item.widget) {
+                    var divider = '<li class="divider';
+                    divider += (addDynamicTag) ? ' dynamic-menu-item' : '';
+                    divider += '"></li>';
+                    item.widget = divider;
+                    $menu.append(divider);
+                    divider.data('item',item);
+
+                } else if (typeof item.header !== 'undefined' && !item.widget) {
+                    var header = item.vertical ? '<li class="divider-vertical' : '<li class="nav-header testClass';
+                    header += (addDynamicTag) ? ' dynamic-menu-item' : '';
+                    header += '">' + item.header + '</li>';
+                    header = $(header);
+                    item.widget = header;
+                    $menu.append(header);
+                    header.data('item',item);
+
+                } else if (typeof item.menu_item_src !== 'undefined') {
+
+                } else {
+
+                    if (!widget && typeof item.target !== 'undefined') {
+                        linkTarget = ' target="' + item.target + '"';
+                    }
+                    if (typeof item.subMenu !== 'undefined' && !widget) {
+                        var sub_menu = '<li tabindex="-1" class="dropdown-submenu ' + this.containerClass;
+                        sub_menu += (addDynamicTag) ? ' dynamic-menu-item' : '';
+                        sub_menu += '"><a>';
+
+                        if (typeof item.icon !== 'undefined') {
+                            sub_menu += '<span class="icon ' + item.icon + '"></span> ';
+                        }
+                        sub_menu += item.text + '';
+                        sub_menu += '</a></li>';
+                        $sub = $(sub_menu);
+
+                    } else {
+                        if (!widget) {
+                            if (item.render) {
+                                $sub = item.render(item, $menu);
+                            } else {
+                                var element = '<li tabindex="-1" class="" ';
+                                element += (addDynamicTag) ? ' class="dynamic-menu-item"' : '';
+                                element += '><a >';
+                                if (typeof data[i].icon !== 'undefined') {
+                                    element += '<span class="' + item.icon + '"></span> ';
+                                }
+                                element += item.text + '</a></li>';
+                                $sub = $(element);
+                                if (item.postRender) {
+                                    item.postRender($sub);
+                                }
+                            }
+                        }
+                    }
+
+                    if (typeof item.action !== 'undefined' && !item.widget) {
+                        if (item.addClickHandler && item.addClickHandler() === false) {
+                        } else {
+                            var $action = item.action;
+                            if ($sub && $sub.find) {
+                                var trigger = $sub.find('a');
+                                trigger.addClass('context-event');
+                                var handler = createCallback($action, item, $sub);
+                                trigger.data('handler',handler).on('click',handler);
+                            }
+                        }
+                    }
+
+                    if ($sub && !widget) {
+
+                        item.widget = $sub;
+                        $sub.menu = $menu;
+                        $sub.data('item', item);
+
+                        item.$menu = $menu;
+                        item.$sub = $sub;
+
+                        item._render = function () {
+                            if (item.index === 0) {
+                                this.$menu.prepend(this.$sub);
+                            } else {
+                                this.$menu.append(this.$sub);
+                            }
+                        };
+                        if (!item.lazy) {
+                            item._render();
+                        }
+                    }
+
+                    if ($sub) {
+                        $sub.attr('level', item.level);
+                    }
+
+                    if (typeof item.subMenu != 'undefined' && !item.subMenuData) {
+                        var subMenuData = self.buildMenu(item.subMenu, id, true);
+                        $menu.subMenuData = subMenuData;
+                        item.subMenuData = subMenuData;
+                        $menu.find('li:last').append(subMenuData);
+                        subMenuData.attr('level', item.subMenu.level);
+                        if (self.hideSubsFirst) {
+                            subMenuData.css('display', 'none');
+                        }
+                        $menu.data('item', item);
+                    } else {
+                        if (item.subMenu && item.subMenuData) {
+                            this.buildMenuItems(item.subMenuData, item.subMenu, id, true);
+                        }
+                    }
+                }
+
+                if (!$menu._didOnClick) {
+                    $menu.on('click', '.dropdown-menu > li > input[type="checkbox"] ~ label, .dropdown-menu > li > input[type="checkbox"], .dropdown-menu.noclose > li', function (e) {
+                        e.stopPropagation();
+                    });
+                    $menu._didOnClick = true;
+                }
+
+            }
+            return $menu;
+        },
+        buildMenu: function (data, id, subMenu) {
+            var subClass = (subMenu) ? (' dropdown-context-sub ' + this.containerClass ) : ' scrollable-menu ';
+            var $menu = $('<ul tabindex="-1" aria-expanded="true" role="menu" class="dropdown-menu dropdown-context' + subClass + '" id="dropdown-' + id + '"></ul>');
+            if (!subMenu) {
+                this._rootMenu = $menu;
+            }
+            var result = this.buildMenuItems($menu, data, id, subMenu);
+            $menu.data('data', data);
+            return result;
+        },
+        createNewAction: function (command) {
+            var segments = command.split('/');
+            var lastSegment = segments[segments.length - 1];
+            var action = new Action({
+                command: command,
+                label: lastSegment,
+                group: lastSegment,
+                dynamic: true
+            });
+            return action;
+        },
+        findAction: function (command) {
+            var stores = this.actionStores,
+                action = null;
+            _.each(stores, function (store) {
+                var _action = store ? store.getSync(command) : null;
+                if (_action) {
+                    action = _action;
+                }
+            });
+
+            return action;
+        },
+        getAction: function (command, store) {
+            store = store || this.store;
+            var action = null;
+            if (store) {
+                action = this.findAction(command);
+                if (!action) {
+                    action = this.createNewAction(command);
+                }
+            }
+            return action;
+        },
+        getActions: function (query) {
+            var result = [];
+            var stores = this.actionStores,
+                visibility = this.visibility;
+
+            query = query || this.actionFilter;
+            _.each(stores, function (store) {
+                store && (result = result.concat(store._find(query)));
+                //store && (result2= result2.concat(store._find(query)));
+            });
+            result = result.filter(function (action) {
+                var actionVisibility = action.getVisibility != null ? action.getVisibility(visibility) : {};
+                return !(action.show === false || actionVisibility === false || actionVisibility.show === false);
+            });
+            /*
+            console.log('action: ',[result,result2]);
+            */
+            return result;
+        },
+        toActions: function (commands, store) {
+            var result = [],
+                self = this;
+            _.each(commands, function (path) {
+                var _action = self.getAction(path, store);
+                _action && result.push(_action);
+            });
+            return result;
+        },
+        onRunAction: function (action, owner, e) {
+            var command = action.command;
+            action = this.findAction(command);
+            return DefaultActions.defaultHandler.apply(action.owner || owner, [action, e]);
+        },
+        getActionProperty: function (action, visibility, prop) {
+            var value = prop in action ? action[prop] : null;
+            if (visibility && prop in visibility) {
+                value = visibility[prop];
+            }
+            return value;
+        },
+        toMenuItem: function (action, owner, label, icon, visibility, showKeyCombo, lazy) {
+            var self = this,
+                labelLocalized = self.localize(label),
+                actionType = visibility.actionType || action.actionType;
+
+            var item = {
+                text: labelLocalized,
+                icon: icon,
+                data: action,
+                owner: owner,
+                command: action.command,
+                lazy: lazy,
+                addClickHandler: function () {
+                    return actionType !== types.ACTION_TYPE.MULTI_TOGGLE;
+
+                },
+                render: function (data, $menu) {
+                    if (self.renderItem) {
+                        return self.renderItem(this, data, $menu, this.data, owner, label, icon, visibility, showKeyCombo, lazy);
+                    }
+                    var action = this.data;
+                    var parentAction = action.getParent ? action.getParent() : null;
+                    var closeOnClick = self.getActionProperty(action, visibility, 'closeOnClick');
+                    var keyComboString = ' \n';
+                    var element = null;
+                    if (action.keyboardMappings && showKeyCombo !== false) {
+                        var mappings = action.keyboardMappings;
+                        var keyCombos = mappings[0].keys;
+                        if (keyCombos && keyCombos.length) {
+                            keyComboString += '' + keyCombos.join(' | ').toUpperCase() + '';
+                        }
+                    }
+
+                    if (actionType === types.ACTION_TYPE.MULTI_TOGGLE) {
+                        element = '<li tabindex="-1" class="" >';
+                        var id = action._store.id + '_' + action.command + '_' + self.id;
+                        var checked = action.get('value');
+                        //checkbox-circle
+                        element += '<div class="action-checkbox checkbox checkbox-success ">';
+                        element += '<input id="' + id + '" type="checkbox" ' + (checked === true ? 'checked' : '') + '>';
+                        element += '<label for="' + id + '">';
+                        element += self.localize(data.text);
+                        element += '</label>';
+                        element += '<span style="max-width:100px;margin-right:20px" class="text-muted pull-right ellipsis keyboardShortCut">' + keyComboString + '</span>';
+                        element += '</li>';
+
+                        $menu.addClass('noclose');
+                        var result = $(element);
+                        var checkBox = result.find('INPUT');
+                        checkBox.on('change', function (e) {
+                            action._originReference = data;
+                            action._originEvent = e;
+                            action.set('value', checkBox[0].checked);
+                            action._originReference = null;
+                        });
+                        self.setVisibilityField(action, 'widget', data);
+                        return result;
+                    }
+                    closeOnClick === false && $menu.addClass('noclose');
+                    if (actionType === types.ACTION_TYPE.SINGLE_TOGGLE && parentAction) {
+                        var value = action.value || action.get('value');
+                        var parentValue = parentAction.get('value');
+                        if (value == parentValue) {
+                            icon = 'fa fa-check';
+                        }
+                    }
+
+                    var title = data.text || labelLocalized || self.localize(action.title);
+
+
+                    //default:
+                    element = '<li tabindex="-1"><a title="' + title + ' ' + keyComboString + '">';
+                    var _icon = data.icon || icon;
+
+                    //icon
+                    if (typeof _icon !== 'undefined') {
+                        //already html string
+                        if (/<[a-z][\s\S]*>/i.test(_icon)) {
+                            element += _icon;
+                        } else {
+                            element += '<span class="icon ' + _icon + '"/> ';
+                        }
+                    }
+                    element += data.text;
+                    element += '<span style="max-width:100px" class="text-muted pull-right ellipsis keyboardShortCut">' + (showKeyCombo ? keyComboString : "") + '</span></a></li>';
+                    self.setVisibilityField(action, 'widget', data);
+                    return $(element);
+                },
+                get: function (key) {
+                },
+                set: function (key, value) {
+                    //_debugWidgets && _.isString(value) && console.log('set ' + key + ' ' + value);
+                    var widget = this.widget;
+
+                    function updateCheckbox(widget, checked) {
+                        var what = widget.find("input[type=checkbox]");
+                        if (what) {
+                            if (checked) {
+                                what.prop("checked", true);
+                            } else {
+                                what.removeAttr('checked');
+                            }
+                        }
+                    }
+
+                    if (widget) {
+                        if (key === 'disabled') {
+                            if (widget.toggleClass) {
+                                widget.toggleClass('disabled', value);
+                            }
+                        }
+                        if (key === 'icon') {
+                            var _iconNode = widget.find('.icon');
+                            if (_iconNode) {
+                                _iconNode.attr('class', 'icon');
+                                this._lastIcon = this.icon;
+                                this.icon = value;
+                                _iconNode.addClass(value);
+                            }
+                        }
+                        if (key === 'value') {
+                            if (actionType === types.ACTION_TYPE.MULTI_TOGGLE ||
+                                actionType === types.ACTION_TYPE.SINGLE_TOGGLE) {
+                                updateCheckbox(widget, value);
+                            }
+                        }
+                    }
+                },
+                action: function (e, data, menu) {
+                    _debug && console.log('menu action', data);
+                    return self.onRunAction(data.data, owner, e);
+                },
+                destroy: function () {
+                    if (this.widget) {
+                        this.widget.remove();
+                    }
+                }
+            };
+            return item;
+        },
+        attach: function (selector, data) {
+            this.target = selector;
+            this.menu = this.addContext(selector, data);
+            this.domNode = this.menu[0];
+            this.id = this.domNode.id;
+            registry.add(this);
+            return this.menu;
+        },
+        addReference: function (action, item) {
+            if (action.addReference) {
+                action.addReference(item, {
+                    properties: {
+                        "value": true,
+                        "disabled": true,
+                        "enabled": true
+                    }
+                }, true);
+            }
+        },
+        onDidRenderActions: function (store, owner) {
+            if (owner && owner.refreshActions) {
+                owner.refreshActions();
+            }
+        },
+        getActionData: function (action) {
+            var actionVisibility = action.getVisibility != null ? action.getVisibility(this.visibility) : {};
+            return {
+                label: actionVisibility.label != null ? actionVisibility.label : action.label,
+                icon: actionVisibility.icon != null ? actionVisibility.icon : action.icon,
+                command: actionVisibility.command != null ? actionVisibility.command : action.command,
+                visibility: actionVisibility,
+                group: actionVisibility.group != null ? actionVisibility.group : action.group,
+                tab: actionVisibility.tab != null ? actionVisibility.tab : action.tab,
+                expand: actionVisibility.expand != null ? actionVisibility.expand : false,
+                widget: actionVisibility.widget
+            };
+        },
+        _clearAction: function (action) {
+
+        },
+        _findParentData: function (oldMenuData, parentCommand) {
+            var parent = _.find(oldMenuData, {
+                command: parentCommand
+            });
+            if (parent) {
+                return parent;
+            }
+            for (var i = 0; i < oldMenuData.length; i++) {
+                var data = oldMenuData[i];
+                if (data.subMenu) {
+                    var found = this._findParentData(data.subMenu, parentCommand);
+                    if (found) {
+                        return found;
+                    }
+                }
+            }
+            return null;
+        },
+        _clear: function () {
+            var actions = this.getActions();
+            var store = this.store;
+            if (store) {
+                this.actionStores.remove(store);
+            }
+            var self = this;
+            actions = actions.concat(this._tmpActions);
+            _.each(actions, function (action) {
+                if (action) {
+                    var actionVisibility = action.getVisibility != null ? action.getVisibility(self.visibility) : {};
+                    if (actionVisibility) {
+                        var widget = actionVisibility.widget;
+                        action.removeReference && action.removeReference(widget);
+                        if (widget && widget.destroy) {
+                            widget.destroy();
+                        }
+                        delete actionVisibility.widget;
+                        actionVisibility.widget = null;
+                    }
+                }
+            });
+            this.$navBar && this.$navBar.empty();
+        },
+        buildActionTree: function (store, owner) {
+            var self = this,
+                allActions = self.getActions(),
+                visibility = self.visibility;
+
+            self.wireStore(store, function (evt) {
+                if (evt.type === 'update') {
+                    var action = evt.target;
+                    if (action.refreshReferences) {
+                        action.refreshReferences(evt.property, evt.value);
+                    }
+                }
+            });
+
+            //return all actions with non-empty tab field
+            var tabbedActions = allActions.filter(function (action) {
+                    var _vis = (action.visibility_ || {})[visibility + '_val'] || {};
+                    if (action) {
+                        return _vis.tab || action.tab;
+                    }
+                }),
+
+                //group all tabbed actions : { Home[actions], View[actions] }
+                groupedTabs = _.groupBy(tabbedActions, function (action) {
+                    var _vis = (action.visibility_ || {})[visibility + '_val'] || {};
+                    if (action) {
+                        return _vis.tab || action.tab;
+                    }
+                }),
+                //now flatten them
+                _actionsFlattened = [];
+
+
+            _.each(groupedTabs, function (items) {
+                _actionsFlattened = _actionsFlattened.concat(items);
+            });
+
+            var rootActions = [];
+            _.each(tabbedActions, function (action) {
+                var rootCommand = action.getRoot();
+                rootActions.indexOf(rootCommand) == -1 && rootActions.push(rootCommand);
+            });
+
+            //owner sort of top level
+            store.menuOrder && (rootActions = owner.sortGroups(rootActions, store.menuOrder));
+
+            var tree = {};
+            //stats to count groups per tab
+            var biggestTab = rootActions[0];
+            var nbGroupsBiggest = 0;
+
+            _.each(rootActions, function (level) {
+                // collect all actions at level (File/View/...)
+                var menuActions = owner.getItemsAtBranch(allActions, level);
+                // convert action command strings to Action references
+                var grouped = self.toActions(menuActions, store);
+
+                // expand filter -------------------
+                var addedExpanded = [];
+                var toRemove = [];
+                _.each(grouped, function (action) {
+                    var actionData = self.getActionData(action);
+                    if (actionData.expand) {
+                        var children = action.getChildren();
+                        children && children.length && (addedExpanded = addedExpanded.concat(children));
+                        toRemove.push(action);
+                    }
+                });
+                grouped = grouped.concat(addedExpanded);
+                grouped = grouped.filter(function (action) {
+                    return toRemove.indexOf(action) == -1;
+                });
+                // expand filter ---------------    end
+
+                // group all actions by group
+                var groupedActions = _.groupBy(grouped, function (action) {
+                    var _vis = (action.visibility_ || {})[visibility + '_val'] || {};
+                    if (action) {
+                        return _vis.group || action.group;
+                    }
+                });
+
+                var _actions = [];
+                _.each(groupedActions, function (items, level) {
+                    if (level !== 'undefined') {
+                        _actions = _actions.concat(items);
+                    }
+                });
+
+                //flatten out again
+                menuActions = _.pluck(_actions, 'command');
+                menuActions.grouped = groupedActions;
+                tree[level] = menuActions;
+
+                //update stats
+                if (self.collapseSmallGroups) {
+                    var nbGroups = _.keys(menuActions.grouped).length;
+                    if (nbGroups > nbGroupsBiggest) {
+                        nbGroupsBiggest = nbGroups;
+                        biggestTab = level;
+                    }
+                }
+            });
+
+            //now move over any tab with less than 2 groups to the next bigger tab
+            this.collapseSmallGroups && _.each(tree, function (actions, level) {
+                if (_.keys(actions.grouped).length < self.collapseSmallGroups) {
+                    //append tab groups of the biggest tab
+                    tree[biggestTab] && _.each(actions.grouped, function (group, name) {
+                        tree[biggestTab].grouped[name] = group;
+                    });
+                    //copy manually commands to that tab
+                    tree[biggestTab] && _.each(actions, function (action) {
+                        tree[biggestTab].push(action);
+                    });
+                    tree[biggestTab] && delete tree[level];
+                }
+            });
+            var result = {
+                root: tree,
+                rootActions: rootActions,
+                allActionPaths: _.pluck(allActions, 'command'),
+                allActions: allActions
+            };
+
+            this.lastTree = result;
+            return result;
+        }
+    });
+    var Module = dcl(null, {
+        actionStores: null,
+        correctSubMenu: false,
+        _didInit: null,
+        actionFilter: null,
+        hideSubsFirst: false,
+        collapseSmallGroups: 0,
+        containerClass: '',
+        lastTree:null,
+        ITEM_TAG : "li",
+        CONTAINER_TAG : "ul",
+        ITEM_CLASS : "actionItem",
+        onActionAdded: function (actions) {
+            this.setActionStore(this.getActionStore(), actions.owner || this, false, true, actions);
+        },
+        onActionRemoved: function (evt) {
+            this.clearAction(evt.target);
+        },
+        clearAction: function (action) {
+            var self = this;
+            if (action) {
+                var actionVisibility = action.getVisibility !== null ? action.getVisibility(self.visibility) : {};
+                if (actionVisibility) {
+                    var widget = actionVisibility.widget;
+                    widget && action.removeReference && action.removeReference(widget);
+                    if (widget && widget.destroy) {
+                        widget.destroy();
+                    }
+                    delete actionVisibility.widget;
+                    actionVisibility.widget = null;
+                }
+            }
+        },
+        removeCustomActions: function () {
+            var oldStore = this.store;
+            var oldActions = oldStore._find({
+                custom: true
+            });
+
+            var menuData = this.menuData;
+            _.each(oldActions, function (action) {
+                oldStore.removeSync(action.command);
+                var oldMenuItem = _.find(menuData, {
+                    command: action.command
+                });
+                oldMenuItem && menuData.remove(oldMenuItem);
+            });
+        },
+        /**
+         * Return a field from the object's given visibility store
+         * @param action
+         * @param field
+         * @param _default
+         * @returns {*}
+         */
+        getVisibilityField: function (action, field, _default) {
+            var actionVisibility = action.getVisibility !== null ? action.getVisibility(this.visibility) : {};
+            return actionVisibility[field] !== null ? actionVisibility[field] : action[field] || _default;
+        },
+        /**
+         * Sets a field in the object's given visibility store
+         * @param action
+         * @param field
+         * @param value
+         * @returns {*}
+         */
+        setVisibilityField: function (action, field, value) {
+            var _default = {};
+            if (action.getVisibility) {
+                var actionVisibility = action.getVisibility(this.visibility) || _default;
+                actionVisibility[field] = value;
+            }
+            return actionVisibility;
+        },
+        shouldShowAction: function (action) {
+            if (this.getVisibilityField(action, 'show') === false) {
+                return false;
+            } else if (action.getVisibility && action.getVisibility(this.visibility) == null) {
+                return false;
+            }
+            return true;
+        },
+        addActionStore: function (store) {
+            if (!this.actionStores) {
+                this.actionStores = [];
+            }
+            if (this.actionStores.indexOf(store) == -1) {
+                this.actionStores.push(store);
+            }
+        },
+        /**
+
+         tree structure :
+
+         {
+            root: {
+                Block:{
+                    grouped:{
+                        Step:[action,action]
+                    }
+                }
+            },
+            rootActions: string['File','Edit',...],
+
+            allActionPaths: string[command],
+
+            allActions:[action]
+         }
+
+         * @param store
+         * @param owner
+         * @returns {{root: {}, rootActions: Array, allActionPaths: *, allActions: *}}
+         */
+        constructor: function (options, node) {
+            this.target = node;
+            utils.mixin(this, options);
+        },
+        onClose: function (e) {
+            this._rootMenu && this._rootMenu.parent().removeClass('open');
+        },
+        onOpen: function () {
+            this._rootMenu && this._rootMenu.parent().addClass('open');
+        },
+        isLeftToRight: function () {
+            return false;
+        },
+        init: function (opts) {
+            if (this._didInit) {
+                return;
+            }
+            this._didInit = true;
+            var options = this.getDefaultOptions();
+            options = $.extend({}, options, opts);
+            var self = this;
+            var root = $(document);
+            this.__on(root, 'click', null, function (e) {
+                if (!self.isOpen) {
+                    return;
+                }
+                self.isOpen = false;
+                self.onClose(e);
+                $('.dropdown-context').css({
+                    display: ''
+                }).find('.drop-left').removeClass('drop-left');
+            });
+            if (options.preventDoubleContext) {
+                this.__on(root, 'contextmenu', '.dropdown-context', function (e) {
+                    e.preventDefault();
+                });
+            }
+            this.__on(root, 'mouseenter', '.dropdown-submenu', function (e) {
+                try {
+                    var _root = $(e.currentTarget);
+                    var $sub = _root.find('.dropdown-context-sub:first');
+                    var didPopup = false;
+                    if ($sub.length === 0) {
+                        $sub = _root.data('sub');
+                        if ($sub) {
+                            didPopup = true;
+                        } else {
+                            return;
+                        }
+                    }
+                    var data = $sub.data('data');
+                    var level = data ? data[0].level : 0;
+                    var isFirst = level === 1;
+                    if (self.menu) {
+                        if (!$.contains(self.menu[0], _root[0])) {
+                            return;
+                        }
+                    }
+
+                    var _disabled = _root.hasClass('disabled');
+                    if (_disabled) {
+                        $sub.css('display', 'none');
+                        return;
+                    } else {
+                        $sub.css('display', 'block');
+                    }
+
+                    if (isFirst) {
+                        $sub.css('display', 'initial');
+                        $sub.css('position', 'initial');
+                        function close() {
+                            var _wrapper = $sub.data('_popupWrapper');
+                            popup.close({
+                                domNode: $sub[0],
+                                _popupWrapper: _wrapper
+                            });
+                        }
+
+                        if (!didPopup) {
+                            _root.data('sub', $sub);
+                            $sub.data('owner', self);
+                            $sub.on('mouseleave', function () {
+                                close();
+                            });
+                            _root.on('mouseleave', function () {
+                            });
+                        }
+
+                        popup.open({
+                            //parent: self,
+                            popup: $sub[0],
+                            around: _root[0],
+                            orient: ['below', 'above'],
+                            maxHeight: -1,
+                            owner: self,
+                            onExecute: function () {
+                                self.closeDropDown(true);
+                            },
+                            onCancel: function () {
+                                close();
+                            },
+                            onClose: function () {
+                                //console.log('close');
+                                //domAttr.set(self._popupStateNode, "popupActive", false);
+                                //domClass.remove(self._popupStateNode, "dijitHasDropDownOpen");
+                                //self._set("_opened", false);	// use set() because _CssStateMixin is watching
+                            }
+                        });
+                        return;
+                    } else {
+                        if (!$sub.data('didSetup')) {
+                            $sub.data('didSetup', true);
+                            _root.on('mouseleave', function () {
+                                $sub.css('display', '');
+                            });
+                        }
+                    }
+
+                    //reset top
+                    $sub.css({
+                        top: 0
+                    });
+
+                    var autoH = $sub.height() + 0;
+                    var totalH = $('html').height();
+                    var pos = $sub.offset();
+                    var overlapYDown = totalH - (pos.top + autoH);
+                    if ((pos.top + autoH) > totalH) {
+                        $sub.css({
+                            top: overlapYDown - 30
+                        }).fadeIn(options.fadeSpeed);
+                    }
+                    ////////////////////////////////////////////////////////////
+                    var subWidth = $sub.width(),
+                        subLeft = $sub.offset().left,
+                        collision = (subWidth + subLeft) > window.innerWidth;
+
+                    if (collision) {
+                        $sub.addClass('drop-left');
+                    }
+                } catch (e) {
+                    logError(e);
+                }
+            });
+        },
+        getDefaultOptions: function () {
+            return {
+                fadeSpeed: 0,
+                above: 'auto',
+                left: 'auto',
+                preventDoubleContext: false,
+                compress: true
+            };
+        },
+        buildMenuItems: function ($menu, data, id, subMenu, addDynamicTag) {
+            //this._debugMenu && console.log('build - menu items ', arguments);
+            var linkTarget = '',
+                self = this,
+                visibility = this.visibility;
+
+            var ITEM_TAG_START = '<' + this.ITEM_TAG + ' ';
+            var ITEM_TAG_END = '</' + this.ITEM_TAG + '>';
+            var ITEM_CLASS = this.ITEM_CLASS;
+            for (var i = 0; i < data.length; i++) {
+                var item = data[i],
+                    $sub,
+                    widget = item.widget;
+
+                if (typeof item.divider !== 'undefined' && !item.widget) {
+                    var divider = ITEM_TAG_START + 'class="divider';
+                    divider += (addDynamicTag) ? ' dynamic-menu-item' : '';
+                    divider += '">' + ITEM_TAG_END;
+                    item.widget = divider;
+                    $menu.append(divider);
+                    divider.data('item',item);
+
+                } else if (typeof item.header !== 'undefined' && !item.widget) {
+                    var header = item.vertical ? '<li class="divider-vertical' : '<li class="nav-header testClass';
+                    header += (addDynamicTag) ? ' dynamic-menu-item' : '';
+                    header += '">' + item.header + '</li>';
+                    header = $(header);
+                    item.widget = header;
+                    $menu.append(header);
+                    header.data('item',item);
+
+                } else if (typeof item.menu_item_src !== 'undefined') {
+
+
+
+                } else {
+
+                    if (!widget && typeof item.target !== 'undefined') {
+                        linkTarget = ' target="' + item.target + '"';
+                    }
+
+                    if (typeof item.subMenu !== 'undefined' && !widget) {
+                        var sub_menu = ITEM_TAG_START + 'tabindex="-1" class="dropdown-submenu ' + ITEM_CLASS + this.containerClass;
+                        sub_menu += (addDynamicTag) ? ' dynamic-menu-item' : '';
+                        sub_menu += '"><a>';
+
+                        if (typeof item.icon !== 'undefined') {
+                            sub_menu += '<span class="icon ' + item.icon + '"></span> ';
+                        }
+                        sub_menu += item.text + '';
+                        sub_menu += '</a>'+ITEM_TAG_END;
+                        $sub = $(sub_menu);
+
+                    } else {
+                        if (!widget) {
+                            if (item.render) {
+                                $sub = item.render(item, $menu);
+                            } else {
+                                var element = ITEM_TAG_START + ' tabindex="-1" ';
+                                element += (addDynamicTag) ? ' class="dynamic-menu-item"' : '';
+                                element += '><a >';
+                                if (typeof data[i].icon !== 'undefined') {
+                                    element += '<span class="' + item.icon + '"></span> ';
+                                }
+                                element += item.text + '</a>' + ITEM_TAG_END;
+                                $sub = $(element);
+                                if (item.postRender) {
+                                    item.postRender($sub);
+                                }
+                            }
+                        }
+                    }
+
+                    if (typeof item.action !== 'undefined' && !item.widget) {
+                        if (item.addClickHandler && item.addClickHandler() === false) {
+                        } else {
+                            var $action = item.action;
+                            if ($sub && $sub.find) {
+                                var trigger = $sub.find('a');
+                                trigger.addClass('context-event');
+                                var handler = createCallback($action, item, $sub);
+                                trigger.data('handler',handler).on('click',handler);
+                                //trigger.data('handler',handler).on('click',function(e){
+                                    //return func(event, menu, item);
+                                //});
+
+                                /*
+                                trigger.data('handler',handler).on('click',function(e){
+                                    handler();
+                                    var _parent = $sub.parent();
+                                    _parent.data('open',false);
+                                    _parent[0] && popup.close(_parent[0]);
+                                });
+                                */
+                            }
+                        }
+                    }
+
+                    if ($sub && !widget) {
+                        item.widget = $sub;
+                        $sub.menu = $menu;
+                        $sub.data('item', item);
+                        item.$menu = $menu;
+                        item.$sub = $sub;
+                        item._render = function () {
+                            if (item.index === 0) {
+                                this.$menu.prepend(this.$sub);
+                            } else {
+                                this.$menu.append(this.$sub);
+                            }
+                        };
+                        if (!item.lazy) {
+                            item._render();
+                        }
+                    }
+                    if ($sub) {
+                        $sub.attr('level', item.level);
+                    }
+                    if (typeof item.subMenu != 'undefined' && !item.subMenuData) {
+                        var subMenuData = self.buildMenu(item.subMenu, id, true);
+                        $menu.subMenuData = subMenuData;
+                        item.subMenuData = subMenuData;
+                        $menu.find(this.ITEM_TAG +':last').append(subMenuData);
+                        subMenuData.attr('level', item.subMenu.level);
+                        if (self.hideSubsFirst) {
+                            subMenuData.css('display', 'none');
+                        }
+                        $menu.data('item', item);
+                    } else {
+                        if (item.subMenu && item.subMenuData) {
+                            this.buildMenuItems(item.subMenuData, item.subMenu, id, true);
+                        }
+                    }
+                }
+
+                if (!$menu._didOnClick) {
+                    $menu.on('click', '.dropdown-menu > li > input[type="checkbox"] ~ label, .dropdown-menu > li > input[type="checkbox"], .dropdown-menu.noclose > li', function (e) {
+                        e.stopPropagation();
+                    });
+                    $menu._didOnClick = true;
+                }
+
+            }
+            return $menu;
+        },
+        buildMenu: function (data, id, subMenu) {
+            var subClass = (subMenu) ? (' dropdown-context-sub ' + this.containerClass ) : ' scrollable-menu ';
+            var $menu = $('<ul tabindex="-1" aria-expanded="true" role="menu" class="dropdown-menu dropdown-context' + subClass + '" id="dropdown-' + id + '"></ul>');
+            if (!subMenu) {
+                this._rootMenu = $menu;
+            }
+            var result = this.buildMenuItems($menu, data, id, subMenu);
+            $menu.data('data', data);
+            return result;
+        },
+        createNewAction: function (command) {
+            var segments = command.split('/');
+            var lastSegment = segments[segments.length - 1];
+            var action = new Action({
+                command: command,
+                label: lastSegment,
+                group: lastSegment,
+                dynamic: true
+            });
+            return action;
+        },
+        findAction: function (command) {
+            var stores = this.actionStores,
+                action = null;
+            _.each(stores, function (store) {
+                var _action = store ? store.getSync(command) : null;
+                if (_action) {
+                    action = _action;
+                }
+            });
+
+            return action;
+        },
+        getAction: function (command, store) {
+            store = store || this.store;
+            var action = null;
+            if (store) {
+                action = this.findAction(command);
+                if (!action) {
+                    action = this.createNewAction(command);
+                }
+            }
+            return action;
+        },
+        getActions: function (query) {
+            var result = [];
+            var stores = this.actionStores,
+                visibility = this.visibility;
+
+            query = query || this.actionFilter;
+            _.each(stores, function (store) {
+                store && (result = result.concat(store._find(query)));
+                //store && (result2= result2.concat(store._find(query)));
+            });
+            result = result.filter(function (action) {
+                var actionVisibility = action.getVisibility != null ? action.getVisibility(visibility) : {};
+                return !(action.show === false || actionVisibility === false || actionVisibility.show === false);
+
+            });
+
+            return result;
+        },
+        toActions: function (commands, store) {
+            var result = [],
+                self = this;
+            _.each(commands, function (path) {
+                var _action = self.getAction(path, store);
+                _action && result.push(_action);
+            });
+            return result;
+        },
+        onRunAction: function (action, owner, e) {
+            var command = action.command;
+            action = this.findAction(command);
+            return DefaultActions.defaultHandler.apply(action.owner || owner, [action, e]);
+        },
+        getActionProperty: function (action, visibility, prop) {
+            var value = prop in action ? action[prop] : null;
+            if (visibility && prop in visibility) {
+                value = visibility[prop];
+            }
+            return value;
+        },
+        toMenuItem: function (action, owner, label, icon, visibility, showKeyCombo, lazy) {
+            var self = this,
+                labelLocalized = self.localize(label),
+                actionType = visibility.actionType || action.actionType;
+
+            var ITEM_CLASS = this.ITEM_CLASS;
+            var ITEM_TAG_START = '<' + this.ITEM_TAG + ' class="'+ ITEM_CLASS + '" ';
+            var ITEM_TAG_END = '</' + this.ITEM_TAG + '>';
+
+            var item = {
+                text: labelLocalized,
+                icon: icon,
+                data: action,
+                owner: owner,
+                command: action.command,
+                lazy: lazy,
+                addClickHandler: function () {
+                    return actionType !== types.ACTION_TYPE.MULTI_TOGGLE;
+
+                },
+                render: function (data, $menu) {
+                    if (self.renderItem) {
+                        return self.renderItem(this, data, $menu, this.data, owner, label, icon, visibility, showKeyCombo, lazy);
+                    }
+                    var action = this.data;
+                    var parentAction = action.getParent ? action.getParent() : null;
+                    var closeOnClick = self.getActionProperty(action, visibility, 'closeOnClick');
+                    var keyComboString = ' \n';
+                    var element = null;
+                    if (action.keyboardMappings && showKeyCombo !== false) {
+                        var mappings = action.keyboardMappings;
+                        var keyCombos = mappings[0].keys;
+                        if (keyCombos && keyCombos.length) {
+                            keyComboString += '' + keyCombos.join(' | ').toUpperCase() + '';
+                        }
+                    }
+
+                    if (actionType === types.ACTION_TYPE.MULTI_TOGGLE) {
+                        element = ITEM_TAG_START + 'tabindex="-1" class="" >';
+                        var id = action._store.id + '_' + action.command + '_' + self.id;
+                        var checked = action.get('value');
+                        //checkbox-circle
+                        element += '<div class="action-checkbox checkbox checkbox-success ">';
+                        element += '<input id="' + id + '" type="checkbox" ' + (checked === true ? 'checked' : '') + '>';
+                        element += '<label for="' + id + '">';
+                        element += self.localize(data.text);
+                        element += '</label>';
+                        element += '<span style="max-width:100px;margin-right:20px" class="text-muted pull-right ellipsis keyboardShortCut">' + keyComboString + '</span>';
+                        element += ITEM_TAG_END;
+
+                        $menu.addClass('noclose');
+                        var result = $(element);
+                        var checkBox = result.find('INPUT');
+                        checkBox.on('change', function (e) {
+                            action._originReference = data;
+                            action._originEvent = e;
+                            action.set('value', checkBox[0].checked);
+                            action._originReference = null;
+                        });
+                        self.setVisibilityField(action, 'widget', data);
+                        return result;
+                    }
+                    closeOnClick === false && $menu.addClass('noclose');
+                    if (actionType === types.ACTION_TYPE.SINGLE_TOGGLE && parentAction) {
+                        var value = action.value || action.get('value');
+                        var parentValue = parentAction.get('value');
+                        if (value == parentValue) {
+                            icon = 'fa fa-check';
+                        }
+                    }
+
+                    var title = data.text || labelLocalized || self.localize(action.title);
+
+                    //default:
+                    element = ITEM_TAG_START +  'class="'+ITEM_CLASS + '" ' +  'tabindex="-1"><a title="' + title + ' ' + keyComboString + '">';
+                    var _icon = data.icon || icon;
+
+                    //icon
+                    if (typeof _icon !== 'undefined') {
+                        //already html string
+                        if (/<[a-z][\s\S]*>/i.test(_icon)) {
+                            element += _icon;
+                        } else {
+                            element += '<span class="icon ' + _icon + '"/> ';
+                        }
+                    }
+                    element += data.text;
+                    element += '<span style="max-width:100px" class="text-muted pull-right ellipsis keyboardShortCut">' + (showKeyCombo ? keyComboString : "") + '</span></a>'+ITEM_TAG_END;
+                    self.setVisibilityField(action, 'widget', data);
+                    return $(element);
+                },
+                get: function (key) {
+                },
+                set: function (key, value) {
+                    //_debugWidgets && _.isString(value) && console.log('set ' + key + ' ' + value);
+                    var widget = this.widget;
+
+                    function updateCheckbox(widget, checked) {
+                        var what = widget.find("input[type=checkbox]");
+                        if (what) {
+                            if (checked) {
+                                what.prop("checked", true);
+                            } else {
+                                what.removeAttr('checked');
+                            }
+                        }
+                    }
+
+                    if (widget) {
+                        if (key === 'disabled') {
+                            if (widget.toggleClass) {
+                                widget.toggleClass('disabled', value);
+                            }
+                        }
+                        if (key === 'icon') {
+                            var _iconNode = widget.find('.icon');
+                            if (_iconNode) {
+                                _iconNode.attr('class', 'icon');
+                                this._lastIcon = this.icon;
+                                this.icon = value;
+                                _iconNode.addClass(value);
+                            }
+                        }
+                        if (key === 'value') {
+                            if (actionType === types.ACTION_TYPE.MULTI_TOGGLE ||
+                                actionType === types.ACTION_TYPE.SINGLE_TOGGLE) {
+                                updateCheckbox(widget, value);
+                            }
+                        }
+                    }
+                },
+                action: function (e, data, menu) {
+                    return self.onRunAction(data.data, owner, e);
+                },
+                destroy: function () {
+                    if (this.widget) {
+                        this.widget.remove();
+                    }
+                }
+            };
+            return item;
+        },
+        attach: function (selector, data) {
+            this.target = selector;
+            this.menu = this.addContext(selector, data);
+            this.domNode = this.menu[0];
+            this.id = this.domNode.id;
+            registry.add(this);
+            return this.menu;
+        },
+        addReference: function (action, item) {
+            if (action.addReference) {
+                action.addReference(item, {
+                    properties: {
+                        "value": true,
+                        "disabled": true,
+                        "enabled": true
+                    }
+                }, true);
+            }
+        },
+        onDidRenderActions: function (store, owner) {
+            if (owner && owner.refreshActions) {
+                owner.refreshActions();
+            }
+        },
+        getActionData: function (action) {
+            var actionVisibility = action.getVisibility != null ? action.getVisibility(this.visibility) : {};
+            return {
+                label: actionVisibility.label != null ? actionVisibility.label : action.label,
+                icon: actionVisibility.icon != null ? actionVisibility.icon : action.icon,
+                command: actionVisibility.command != null ? actionVisibility.command : action.command,
+                visibility: actionVisibility,
+                group: actionVisibility.group != null ? actionVisibility.group : action.group,
+                tab: actionVisibility.tab != null ? actionVisibility.tab : action.tab,
+                expand: actionVisibility.expand != null ? actionVisibility.expand : false,
+                widget: actionVisibility.widget
+            };
+        },
+        _clearAction: function (action) {
+
+        },
+        _findParentData: function (oldMenuData, parentCommand) {
+            var parent = _.find(oldMenuData, {
+                command: parentCommand
+            });
+            if (parent) {
+                return parent;
+            }
+            for (var i = 0; i < oldMenuData.length; i++) {
+                var data = oldMenuData[i];
+                if (data.subMenu) {
+                    var found = this._findParentData(data.subMenu, parentCommand);
+                    if (found) {
+                        return found;
+                    }
+                }
+            }
+            return null;
+        },
+        _clear: function () {
+            var actions = this.getActions();
+            var store = this.store;
+            if (store) {
+                this.actionStores.remove(store);
+            }
+            var self = this;
+            actions = actions.concat(this._tmpActions);
+            _.each(actions, function (action) {
+                if (action) {
+                    var actionVisibility = action.getVisibility != null ? action.getVisibility(self.visibility) : {};
+                    if (actionVisibility) {
+                        var widget = actionVisibility.widget;
+                        action.removeReference && action.removeReference(widget);
+                        if (widget && widget.destroy) {
+                            widget.destroy();
+                        }
+                        delete actionVisibility.widget;
+                        actionVisibility.widget = null;
+                    }
+                }
+            });
+            this.$navBar && this.$navBar.empty();
+        },
+        buildActionTree: function (store, owner) {
+            var self = this,
+                allActions = self.getActions(),
+                visibility = self.visibility;
+
+            self.wireStore(store, function (evt) {
+                if (evt.type === 'update') {
+                    var action = evt.target;
+                    if (action.refreshReferences) {
+                        action.refreshReferences(evt.property, evt.value);
+                    }
+                }
+            });
+
+            //return all actions with non-empty tab field
+            var tabbedActions = allActions.filter(function (action) {
+                    var _vis = (action.visibility_ || {})[visibility + '_val'] || {};
+                    if (action) {
+                        return _vis.tab || action.tab;
+                    }
+                }),
+
+                //group all tabbed actions : { Home[actions], View[actions] }
+                groupedTabs = _.groupBy(tabbedActions, function (action) {
+                    var _vis = (action.visibility_ || {})[visibility + '_val'] || {};
+                    if (action) {
+                        return _vis.tab || action.tab;
+                    }
+                }),
+                //now flatten them
+                _actionsFlattened = [];
+
+
+            _.each(groupedTabs, function (items) {
+                _actionsFlattened = _actionsFlattened.concat(items);
+            });
+
+            var rootActions = [];
+            _.each(tabbedActions, function (action) {
+                var rootCommand = action.getRoot();
+                rootActions.indexOf(rootCommand) == -1 && rootActions.push(rootCommand);
+            });
+
+            //owner sort of top level
+            store.menuOrder && (rootActions = owner.sortGroups(rootActions, store.menuOrder));
+
+            var tree = {};
+            //stats to count groups per tab
+            var biggestTab = rootActions[0];
+            var nbGroupsBiggest = 0;
+
+            _.each(rootActions, function (level) {
+                // collect all actions at level (File/View/...)
+                var menuActions = owner.getItemsAtBranch(allActions, level);
+                // convert action command strings to Action references
+                var grouped = self.toActions(menuActions, store);
+
+                // expand filter -------------------
+                var addedExpanded = [];
+                var toRemove = [];
+                _.each(grouped, function (action) {
+                    var actionData = self.getActionData(action);
+                    if (actionData.expand) {
+                        var children = action.getChildren();
+                        children && children.length && (addedExpanded = addedExpanded.concat(children));
+                        toRemove.push(action);
+                    }
+                });
+                grouped = grouped.concat(addedExpanded);
+                grouped = grouped.filter(function (action) {
+                    return toRemove.indexOf(action) == -1;
+                });
+                // expand filter ---------------    end
+
+                // group all actions by group
+                var groupedActions = _.groupBy(grouped, function (action) {
+                    var _vis = (action.visibility_ || {})[visibility + '_val'] || {};
+                    if (action) {
+                        return _vis.group || action.group;
+                    }
+                });
+
+                var _actions = [];
+                _.each(groupedActions, function (items, level) {
+                    if (level !== 'undefined') {
+                        _actions = _actions.concat(items);
+                    }
+                });
+
+                //flatten out again
+                menuActions = _.pluck(_actions, 'command');
+                menuActions.grouped = groupedActions;
+                tree[level] = menuActions;
+
+                //update stats
+                if (self.collapseSmallGroups) {
+                    var nbGroups = _.keys(menuActions.grouped).length;
+                    if (nbGroups > nbGroupsBiggest) {
+                        nbGroupsBiggest = nbGroups;
+                        biggestTab = level;
+                    }
+                }
+            });
+
+            //now move over any tab with less than 2 groups to the next bigger tab
+            this.collapseSmallGroups && _.each(tree, function (actions, level) {
+                if (_.keys(actions.grouped).length < self.collapseSmallGroups) {
+                    //append tab groups of the biggest tab
+                    tree[biggestTab] && _.each(actions.grouped, function (group, name) {
+                        tree[biggestTab].grouped[name] = group;
+                    });
+                    //copy manually commands to that tab
+                    tree[biggestTab] && _.each(actions, function (action) {
+                        tree[biggestTab].push(action);
+                    });
+                    tree[biggestTab] && delete tree[level];
+                }
+            });
+            var result = {
+                root: tree,
+                rootActions: rootActions,
+                allActionPaths: _.pluck(allActions, 'command'),
+                allActions: allActions
+            };
+
+            this.lastTree = result;
+            return result;
+        }
+    });
+    dcl.chainAfter(Module, 'destroy');
+    return Module;
+});
+
+
+
+define('xide/widgets/_MenuKeyboard',[
+    "dcl/dcl",
+    "xide/$",
+    "xide/lodash",
+    "xide/mixins/EventedMixin"
+], function (dcl, $, _, EventedMixin) {
+
+    var skip = [
+        '.divider',
+        '.nav-header',
+        '.disabled'
+    ];
+
+    var Module = dcl(EventedMixin.dcl, {
+        owner: null,
+        /**
+         *
+         * @param owner
+         */
+        setup: function (owner) {
+            this.owner = owner;
+        },
+        /**
+         * Return parent action container for an element
+         * @param $el {jQuery}
+         * @param $max {jQuery}
+         * @param dataIdentifier {string} The data identifier to find some object in $el
+         * @returns {jQuery|null}
+         */
+        findNavigationContainerElement: function ($el, $max, dataIdentifier) {
+            if (!$el || !$el[0]) {
+                return null;
+            }
+            if ($el && $max && $el[0] == $max[0]) {
+                return $el;
+            }
+
+            var data = $el.data(dataIdentifier || 'data');
+            if (data && data != null) {
+                return $el;
+            }
+            return this.findNavigationContainerElement($el.parent(), $max, dataIdentifier);
+        },
+        /**
+         *
+         * @param $el
+         * @param $max
+         * @param dataIdentifier
+         * @returns {jQuery|null}
+         */
+        findNavigationElement: function ($el, $max, dataIdentifier) {
+            if (!$el || !$el[0]) {
+                return null;
+            }
+            if ($el && $max && $el[0] == $max[0]) {
+                return $el;
+            }
+            var data = $el.data(dataIdentifier || 'item') || $el.data(dataIdentifier || 'data');
+            if (data && !_.isEmpty(data)) {
+                return $el;
+            }
+            return this.findNavigationElement($el.parent());
+        },
+        /**
+         *
+         * @param $el {jQuery}
+         * @param $max {jQuery}
+         * @param dataIdentifier {string} The data identifier to find some object in $el
+         * @param findParent
+         * @returns {{element: Object, data: (*|{}), parent: *}}
+         */
+        toNavigationData: function ($el, $max, dataIdentifier, findParent) {
+            var element = this.findNavigationElement($el, $max, dataIdentifier);
+            if (element) {
+                var data = element.data(dataIdentifier || 'item') || element.data(dataIdentifier || 'data');
+                if (data) {
+                    return {
+                        element: element,
+                        data: data,
+                        parent: findParent !== false ? this.findNavigationContainerElement($el, $max, dataIdentifier) : null
+                    };
+                }
+            }
+        },
+        /**
+         *
+         * @param $parent
+         * @param $origin
+         * @param direction
+         * @returns {*}
+         */
+        next: function ($parent, $origin, direction) {
+            if ($origin) {
+                var result = $origin[direction == 1 ? 'next' : 'prev']();
+                if (!this.canSelect(result)) {
+                    return this.next($parent, result, direction);
+                } else {
+                    return result;
+                }
+            }
+        },
+        /**
+         * Return valid children
+         * @param $el{jQuery}
+         * @returns {*}
+         */
+        canSelect: function ($el) {
+            return $($el).is(skip.join(',')) == false;
+        },
+        /**
+         *
+         * @param $parent{jQuery}
+         * @param all {boolean}
+         * @returns {HTMLElement[]}
+         */
+        children: function ($parent, all) {
+            var self = this;
+            return $parent.children('LI').filter(function (i, child) {
+                if (all !== true) {
+                    return self.canSelect(child);
+                } else {
+                    return child;
+                }
+            });
+        },
+        /**
+         *
+         * @param $el {jQuery}
+         */
+        close: function ($el) {
+            var _parent = $el.parent();
+            var _parentParent = $el.parent().parent();
+            _parent.css('display', '');
+            _parent.removeClass('open');
+            $el.removeClass('open');
+            $el.removeClass('focus');
+            $el.removeClass('active');
+            _parentParent.removeClass('open');
+            _parentParent.focus();
+        },
+        /**
+         * Opens the very root menu by a given origin
+         * @param $el
+         * @param $next
+         * @param direction {init} left = -1, right = 1
+         * @returns {*}
+         */
+        openRoot: function ($el, $next, direction) {
+            var _next = $next || this.topMost($el).parent()[direction === -1 ? 'prev' : 'next']();
+            var _trigger = $(_next.find('A')[0]);
+            _trigger.trigger('click');
+            var _navData = this.toNavigationData($(_next.find('UL')[0]), this.owner.getRootContainer());
+            if (_navData) {
+                return this.activate($(this.children(_navData.element)[0]), _navData.element, true);
+            }
+
+        },
+        destroy: function () {
+            delete this.owner;
+        },
+        /**
+         *
+         * @param $el {jQuery}
+         */
+        open: function ($el) {
+            $el.css('display', 'block');
+            var _navData = this.toNavigationData($el, this.owner.getRootContainer(), 'data', null, null);
+            var firstInner = this.children(_navData.parent)[0];
+            if (firstInner) {
+                _navData = this.toNavigationData($(firstInner), this.owner.getRootContainer());
+                this.activate(_navData.element, _navData.parent, true);
+            }
+        },
+        topMost: function ($el) {
+            if ($el) {
+                var data = $el.data();
+                if (data.item || data.data) {
+                    var next = $el.parent();
+                    var parentData = next.data();
+                    if (next && next[0] && (parentData.item || parentData.data)) {
+                        return this.topMost(next);
+                    }
+                    return $el;
+                }
+            }
+        },
+        keyboardHandler: function (event, $parent) {
+            var origin = $parent.data('currentTarget');
+            if (event.keyCode === 13) {
+                var trigger = origin.find("A");
+                var handler = trigger.data('handler');
+                if (handler) {
+                    var actionResult = handler();
+                    if (actionResult && actionResult.then) {
+                        actionResult.then(function () {
+                            origin.focus();
+                        });
+                    }
+                    return;
+                }
+                //perform action
+                origin.find("A").click();
+                origin.focus();
+                return;
+            }
+
+            var vertical = event.keyCode == 38 || event.keyCode == 40 || event.keyCode == 36 || event.keyCode == 35;
+            var horizontal = event.keyCode == 37 || event.keyCode == 39;
+            var direction = vertical ? (event.keyCode == 38 || event.keyCode == 36) ? -1 : 1 : (event.keyCode == 37 ? -1 : 1 );
+            var max = !!(event.keyCode == 36 || event.keyCode == 35 );
+
+            var nextElement = null;
+            var nextData = {};
+            var navData = null;
+            if (vertical) {
+                nextElement = max ? direction == 1 ? $(_.last(this.children($parent))) : $(_.first(this.children($parent))) : this.next($parent, origin, direction);
+                nextElement && (nextData = nextElement.data('item'));
+            }
+            if (horizontal) {
+                var data = origin.data('item');
+                if (data) {
+                    if (direction > 0) {
+                        //sub - items?, open them
+                        if (data.subMenuData) {
+                            var isOpen = data.subMenuData.css('display') === 'block';
+                            if (!isOpen) {
+                                return this.open(data.subMenuData);
+                            } else {
+                                //root bounce
+                                if (this.openRoot(origin, null, 1)) {
+                                    return;
+                                }
+                            }
+                        } else {
+                            //root bounce
+                            if (this.openRoot(origin, null, 1)) {
+                                return;
+                            }
+                        }
+                    } else {
+                        //left
+                        this.close(origin);
+                        navData = this.toNavigationData(origin, this.owner.getRootContainer());
+                        //root bounce
+                        if (_.isEmpty(navData.parent.parent().data())) {
+                            return this.openRoot(origin, null, -1);
+                        }
+                        return;
+                    }
+                }
+            }
+            if (nextElement && nextData) {
+                navData = this.toNavigationData(nextElement, this.owner.getRootContainer());
+                this.activate(navData.element, navData.parent, true);
+            }
+        },
+        initContainer: function ($container) {
+            var self = this;
+            if (!$container.data('didSetup')) {
+                $container.data('didSetup', true);
+                this.__on($container, 'keydown', null, function (evt) {
+                    if (($(evt.target).parent()[0] == $container[0])) {
+                        self.keyboardHandler(evt, $container);
+                    }
+                });
+            }
+        },
+        activate: function ($next, $parent, clear) {
+            if ($parent) {
+                this.initContainer($parent);
+            }
+            if (clear && $parent) {
+                this.children($parent, true).each(function (i, c) {
+                    $(c).removeClass('focus');
+                    $(c).removeClass('open');
+                    $(c).removeClass('active');
+                    var _s = $(c).find('.dropdown-context-sub');
+                    if (_s[0] && _s.css('display') === 'block') {
+                        _s.css('display', '');
+                        _s.removeClass('open');
+                        _s.removeClass('active');
+                    }
+                });
+            }
+            $next.addClass('focus');
+            $next.addClass('active');
+            $next.focus();
+            $parent.addClass('open');
+            $parent.data('currentTarget', $next);
+            return true;
+        },
+        clear: function ($parent) {
+            this.children($parent, true).each(function (i, c) {
+                $(c).removeClass('focus');
+                $(c).removeClass('open');
+                $(c).removeClass('active');
+                var _s = $(c).find('.dropdown-context-sub');
+                if (_s[0] && _s.css('display') === 'block') {
+                    _s.css('display', '');
+                    _s.removeClass('open');
+                }
+            });
+        }
+    });
+    return Module;
+});
+define('xide/widgets/ContextMenu',[
+    'dcl/dcl',
+    'xide/types',
+    'xlang/i18',
+    "xide/widgets/_Widget",
+    'xide/_base/_Widget',
+    "xide/mixins/ActionMixin",
+    'xaction/ActionContext',
+    "xide/widgets/_MenuMixin4",
+    "xide/model/Path",
+    "xide/_Popup",
+    "xide/$",
+    "xide/lodash",
+    "xide/widgets/_MenuKeyboard"
+], function (dcl, types, i18, _Widget, _XWidget, ActionMixin, ActionContext, MenuMixinClass, Path, _Popup, $, _, _MenuKeyboard) {
+    var ActionRendererClass = dcl(null, {
+        renderTopLevel: function (name, where) {
+            where = where || $(this.getRootContainer());
+            var item = $('<li class="dropdown">' +
+                '<a href="#" class="dropdown-toggle" data-toggle="dropdown">' + i18.localize(name) + '<b class="caret"></b></a>' +
+                '</li>');
+            where.append(item);
+            return item;
+
+        },
+        getRootContainer: function () {
+            return this.navBar;
+        }
+    });
+    var _debugTree = false;
+    var _debugMenuData = false;
+    var _debugOldMenuData = false;
+    var KeyboardControl = _MenuKeyboard;
+
+    var ContextMenu = dcl([_Widget.dcl, ActionContext.dcl, ActionMixin.dcl, ActionRendererClass, MenuMixinClass, _XWidget.StoreMixin], {
+        target: null,
+        openTarget: null,
+        visibility: types.ACTION_VISIBILITY.CONTEXT_MENU,
+        correctSubMenu: true,
+        limitTo: null,
+        declaredClass: 'xide.widgets.ContextMenu',
+        menuData: null,
+        addContext: function (selector, data) {
+            this.menuData = data;
+            var id,
+                $menu,
+                self = this,
+                target = this.openTarget ? this.openTarget : $(self.target);
+
+            if (typeof data.id !== 'undefined' && typeof data.data !== 'undefined') {
+                id = data.id;
+                $menu = $('body').find('#dropdown-' + id)[0];
+                if (typeof $menu === 'undefined') {
+                    $menu = self.buildMenu(data.data, id);
+                    selector.append($menu);
+                }
+            } else {
+                var d = new Date();
+                id = d.getTime();
+                $menu = self.buildMenu(data, id);
+                selector.append($menu);
+            }
+
+            var options = this.getDefaultOptions();
+
+            this.keyboardController = new KeyboardControl();
+            this.keyboardController.setup(this);
+
+            function mouseEnterHandlerSubs(e) {
+                var navigationData = this.keyboardController.toNavigationData($(e.target), this.getRootContainer());
+                if (!navigationData) {
+                    return;
+                }
+                this.keyboardController.clear(navigationData.parent);
+                this.menu.focus();
+                navigationData.element.focus();
+                this.menu.data('currentTarget', navigationData.element);
+
+            }
+
+            function setupContainer($container) {
+                self.__on($container, 'mouseenter', 'LI', mouseEnterHandlerSubs.bind(self));
+            }
+
+            function constextMenuHandler(e) {
+                if (self.limitTo) {
+                    var $target = $(e.target);
+                    $target = $target.parent();
+                    if (!$target.hasClass(self.limitTo)) {
+                        return;
+                    }
+                }
+                self.openEvent = e;
+                self.isOpen = true;
+                this.lastFocused = document.activeElement;
+                self.onOpen(e);
+                e.preventDefault();
+                e.stopPropagation();
+                $('.dropdown-context:not(.dropdown-context-sub)').hide();
+
+                var $dd = $('#dropdown-' + id);
+                $dd.css('zIndex', _Popup.nextZ(1));
+                if (!$dd.data('init')) {
+                    $dd.data('init', true);
+                    setupContainer($dd);
+                    self.keyboardController.initContainer($dd);
+                }
+
+                if (typeof options.above == 'boolean' && options.above) {
+                    $dd.css({
+                        top: e.pageY - 20 - $('#dropdown-' + id).height(),
+                        left: e.pageX - 13
+                    }).fadeIn(options.fadeSpeed);
+
+                } else if (typeof options.above == 'string' && options.above == 'auto') {
+                    $dd.removeClass('dropdown-context-up');
+                    var autoH = $dd.height() + 0;
+                    if ((e.pageY + autoH) > $('html').height()) {
+                        var top = e.pageY - 20 - autoH;
+                        if (top < 0) {
+                            top = 20;
+                        }
+                        $dd.css({
+                            top: top + 20,
+                            left: e.pageX - 13
+                        }).fadeIn(options.fadeSpeed);
+
+                    } else {
+                        $dd.css({
+                            top: e.pageY - 10,
+                            left: e.pageX - 13
+                        }).fadeIn(options.fadeSpeed);
+                    }
+                }
+
+                if (typeof options.left == 'boolean' && options.left) {
+                    $dd.addClass('dropdown-context-left').css({
+                        left: e.pageX - $dd.width()
+                    }).fadeIn(options.fadeSpeed);
+                } else if (typeof options.left == 'string' && options.left == 'auto') {
+                    $dd.removeClass('dropdown-context-left');
+                    var autoL = $dd.width() - 12;
+                    if ((e.pageX + autoL) > $('html').width()) {
+                        $dd.addClass('dropdown-context-left').css({
+                            left: e.pageX - $dd.width() + 13
+                        });
+                    }
+                }
+                this.keyboardController.activate($(this.keyboardController.children($dd)[0]), $dd);
+            }
+
+            this.__on(target, 'contextmenu', null, constextMenuHandler.bind(this));
+
+            this.__on($menu, 'keydown', function (e) {
+                if (e.keyCode == 27) {
+                    var navData = this.keyboardController.toNavigationData($(e.target), this.getRootContainer());
+                    navData && navData.element && this.keyboardController.close(navData.element);
+                    $(this.lastFocused).focus();
+                }
+            }.bind(this));
+
+            return $menu;
+        },
+        onRootAction: function () {
+            return null;
+        },
+        buildMenu: function (data, id, subMenu, update) {
+            var subClass = (subMenu) ? ' dropdown-context-sub' : ' scrollable-menu ',
+                menuString = '<ul tabindex="-1" aria-expanded="true" role="menu" class="dropdown-menu dropdown-context' + subClass + '" id="dropdown-' + id + '"></ul>',
+                $menu = update ? (this._rootMenu || $(menuString)) : $(menuString);
+
+            if (!subMenu) {
+                this._rootMenu = $menu;
+                this._rootMenu.addClass('contextMenu')
+            }
+            $menu.data('data', data);
+            return this.buildMenuItems($menu, data, id, subMenu);
+        },
+        onActionAdded: function (actions) {
+            this.setActionStore(this.getActionStore(), this, false, true, actions);
+        },
+        clearAction: function (action) {
+            var self = this;
+            if (action) {
+                var actionVisibility = action.getVisibility !== null ? action.getVisibility(self.visibility) : {};
+                if (actionVisibility) {
+                    var widget = actionVisibility.widget;
+                    action.removeReference && action.removeReference(widget);
+                    if (widget && widget.destroy) {
+                        widget.destroy();
+                    }
+                    delete actionVisibility.widget;
+                    actionVisibility.widget = null;
+                }
+            }
+        },
+        onActionRemoved: function (evt) {
+            this.clearAction(evt.target);
+        },
+        removeCustomActions: function () {
+            var oldStore = this.store;
+            if (!oldStore) {
+                console.warn('removeCustomActions : have no store');
+                return;
+            }
+            var oldActions = oldStore._find({
+                custom: true
+            });
+            var menuData = this.menuData;
+            _.each(oldActions, function (action) {
+                oldStore.removeSync(action.command);
+                var oldMenuItem = _.find(menuData, {
+                    command: action.command
+                });
+                oldMenuItem && menuData.remove(oldMenuItem);
+            });
+        },
+        setActionStore: function (store, owner, subscribe, update, itemActions) {
+            if (!update) {
+                if(this.store==store){
+                    return;
+                }
+                this._clear();
+                this.addActionStore(store);
+            }
+
+            var self = this,
+                visibility = self.visibility,
+                rootContainer = $(self.getRootContainer());
+
+            this.store = store;
+            if(!store){
+                return;
+            }
+            var tree = update ? self.lastTree : self.buildActionTree(store, owner);
+            var allActions = tree.allActions,
+                rootActions = tree.rootActions,
+                allActionPaths = tree.allActionPaths,
+                oldMenuData = self.menuData;
+            var data = [];
+            if (subscribe !== false) {
+                if (!this['_handleAdded_' + store.id]) {
+                    this.addHandle('added', store._on('onActionsAdded', function (actions) {
+                        self.onActionAdded(actions);
+                    }));
+
+                    this.addHandle('delete', store.on('delete', function (evt) {
+                        self.onActionRemoved(evt);
+                    }));
+                    this['_handleAdded_' + store.id] = true;
+                }
+            }
+            if (!update) {
+                _.each(tree.root, function (menuActions, level) {
+                    var root = self.onRootAction(level, rootContainer),
+                        lastGroup = '',
+                        lastHeader = {
+                            header: ''
+                        },
+                        groupedActions = menuActions.grouped;
+
+                    _.each(menuActions, function (command) {
+                        var action = self.getAction(command, store),
+                            isDynamicAction = false;
+
+                        if (!action) {
+                            isDynamicAction = true;
+                            action = self.createAction(command);
+                        }
+                        if (action) {
+                            var renderData = self.getActionData(action);
+                            var icon = renderData.icon,
+                                label = renderData.label,
+                                visibility = renderData.visibility,
+                                group = renderData.group;
+
+                            if (visibility.widget) {
+                                return;
+                            }
+                            if (!isDynamicAction && group && groupedActions[group] && groupedActions[group].length >= 1) {
+                                if (lastGroup !== group) {
+                                    var name = groupedActions[group].length >= 2 ? i18.localize(group) : "";
+                                    lastHeader = {header: name};
+                                    data.push(lastHeader);
+                                    lastGroup = group;
+                                }
+                            }
+                            var item = self.toMenuItem(action, owner, label, icon, visibility || {}, true);
+                            data.push(item);
+                            visibility.widget = item;
+                            self.addReference(action, item);
+                            function parseChildren(command, parent) {
+                                var childPaths = new Path(command).getChildren(allActionPaths, false),
+                                    isContainer = childPaths.length > 0,
+                                    childActions = isContainer ? self.toActions(childPaths, store) : null;
+                                if (childActions) {
+                                    var subs = [];
+                                    _.each(childActions, function (child) {
+                                        var _renderData = self.getActionData(child);
+                                        var _item = self.toMenuItem(child, owner, _renderData.label, _renderData.icon, _renderData.visibility, true);
+                                        self.addReference(child, _item);
+                                        subs.push(_item);
+
+                                        var _childPaths = new Path(child.command).getChildren(allActionPaths, false),
+                                            _isContainer = _childPaths.length > 0;
+                                        if (_isContainer) {
+                                            parseChildren(child.command, _item);
+                                        }
+                                    });
+                                    parent.subMenu = subs;
+                                }
+                            }
+                            parseChildren(command, item);
+                        }
+                    });
+                });
+                self.attach($('body'), data);
+                self.onDidRenderActions(store, owner);
+            } else {
+                if (itemActions || !_.isEmpty(itemActions)) {
+                    _.each(itemActions, function (newAction) {
+                        if (newAction) {
+                            var action = self.getAction(newAction.command);
+                            if (action) {
+                                var renderData = self.getActionData(action),
+                                    icon = renderData.icon,
+                                    label = renderData.label,
+                                    aVisibility = renderData.visibility,
+                                    group = renderData.group,
+                                    item = self.toMenuItem(action, owner, label, icon, aVisibility || {}, null, false);
+
+                                aVisibility.widget = item;
+
+                                self.addReference(newAction, item);
+
+                                var parentCommand = action.getParentCommand();
+                                var parent = self._findParentData(oldMenuData, parentCommand);
+                                if (parent && parent.subMenu) {
+                                    parent.lazy = true;
+                                    parent.subMenu.push(item);
+                                } else {
+                                    oldMenuData.splice(0, 0, item);
+                                }
+                            } else {
+                                console.error('cant find action ' + newAction.command);
+                            }
+                        }
+                    });
+                    self.buildMenu(oldMenuData, self.id, null, update);
+                }
+            }
+        }
+    });
+    return ContextMenu;
+});
 /** @module xDocker/Docker2 */
 define('xdocker/Docker2',[
     "dcl/dcl",
@@ -45080,9 +43031,12 @@ define('xfile/data/DriverStore',[
     }));
 });
 define('xfile/mainr.js',[
-    'dojo/Stateful',
-    'xgrid/ListRenderer',
     "dojo/_base/kernel",
+    'dojo/Stateful',
+    'dojo/query',
+    'dojo/cache',
+    'dojo/window',
+    'xgrid/ListRenderer',
     'xfile/types',
     'xfile/component',
     'xfile/views/GridLight',

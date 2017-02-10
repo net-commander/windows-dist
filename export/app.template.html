@@ -1,9 +1,7 @@
 <meta charset="utf-8"/>
-<meta http-equiv="content-type" content="text/html; charset=utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <meta http-equiv="content-type" content="text/html; charset=utf-8"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
-
 <script src="%libRoot%/external/sockjs-0.3.min.js"></script>
 <script src="%lodashUrl%"></script>
 <script src="%requireBaseUrl%/requirejs/require.js"></script>
@@ -169,14 +167,14 @@
             "main": "nxappmain\/server",
             "name": "Device Control Server",
             "autostart": true,
-            "port": "%port%",
+            "port": "%deviceServerPort%",
             "host": "localhost",
             "can": {"start": true, "stop": true, "stats": false, "debug": false, "info": true},
             "has": {"dojo": false, "logFile": null, "options": "--jhelp"},
             "pathResolved": "",
             "clients": 0,
             "status": "online",
-            "info": {"host": "http:\/\/localhost", "port": "%port%"}
+            "info": {"host": "http:\/\/localhost", "port": "%deviceServerPort%"}
         }],
         serviceUrl:'%RPC_URL%',
         mixins:[
@@ -235,7 +233,6 @@
      * @param settings
      */
     var startx = function (dfd, bootStrapper, context, settings) {
-
         console.log('Checkpoint 6. all dependencies loaded');
         appContext = context;
         dfd.resolve({
@@ -252,14 +249,11 @@
      * @returns {module:dojo/Deferred}
      */
     function bootx(settings,Deferred) {
-
         console.log('Checkpoint 2. bootx');
         var headDfd = new Deferred();
         require(['xapp/boot','xide/utils'], function (boot,utils) {
             var bootStrap = new boot();
-
             console.log('Checkpoint 3. xapp/boot ready');
-
             bootStrap.load().then(function () {
                 console.log('   Checkpoint 3.1 xapp/boot load()');
                 utils.mixin(settings,xideveSettings);

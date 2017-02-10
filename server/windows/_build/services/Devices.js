@@ -271,4 +271,9 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], DeviceService.prototype, "updateItemMetaData", null);
 exports.DeviceService = DeviceService;
+function getDevices(directory, scope, options) {
+    const service = new DeviceService(null);
+    return service.getItems(directory, scope, options);
+}
+exports.getDevices = getDevices;
 //# sourceMappingURL=Devices.js.map

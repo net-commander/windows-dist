@@ -57,7 +57,9 @@ exports.EEKey = {
     'RELEASE': 'RELEASE',
     'NODE_ROOT': 'NODE_ROOT',
     'ROOT': 'ROOT',
-    'VFS_URL': 'VFS_URL'
+    'VFS_URL': 'VFS_URL',
+    'VFS_CONFIG': 'VFS_CONFIG',
+    'SYSTEM_ROOT': 'SYSTEM_ROOT'
 };
 var ELayout;
 (function (ELayout) {

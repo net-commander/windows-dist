@@ -32,6 +32,9 @@ const bodyParser = require("koa-bodyparser");
 const serve = require("koa-static");
 const path = require("path");
 const _ = require("lodash");
+const os = require("os");
+const file_1 = require("../../io/file");
+const json_1 = require("../../io/json");
 const yargs_parser = require("yargs-parser");
 const mount = require('koa-mount');
 const qs = require('qs').parse;
@@ -43,11 +46,13 @@ const console_1 = require("../../console");
 const io = {
     serialize: JSON.stringify
 };
+var MODULE_ROOT = "../../";
 // tslint:disable-next-line:interface-name
 class ControlFreak extends Base_1.ApplicationBase {
     constructor(options) {
         super(options.root);
         this.deviceServer = null;
+        this.profile = null;
         this.options = options;
         this.root = options.root;
         const APP_ROOT = this.root;
@@ -73,7 +78,9 @@ class ControlFreak extends Base_1.ApplicationBase {
             'system_drivers': path.join(SYSTEM_ROOT, 'drivers'),
             'user_drivers': path.join(USER_DIRECTORY, 'drivers'),
             'system_devices': path.join(SYSTEM_ROOT, 'devices'),
-            'user_devices': path.join(USER_DIRECTORY, 'devices')
+            'user_devices': path.join(USER_DIRECTORY, 'devices'),
+            'user': path.join(USER_DIRECTORY),
+            'root': options.root
         };
         let params = {
             APP_ROOT: APP_ROOT,
@@ -108,22 +115,92 @@ class ControlFreak extends Base_1.ApplicationBase {
                 },
                 VFS_CONFIG: VFS_CONFIG,
                 USER_DIRECTORY: USER_DIRECTORY,
-                VFS_GET_URL: '../../files/'
+                VFS_GET_URL: '../../files/',
+                PLATFORM: os.platform()
             },
             absoluteVariables: {
                 'XASWEB': path.join(CLIENT_ROOT)
             }
         };
-        let packages = this.packages('../../../../../');
-        let relativeVariables = params['relativeVariables'];
-        relativeVariables['DOJOPACKAGES'] = JSON.stringify(packages);
-        relativeVariables['RESOURCE_VARIABLES'] = JSON.stringify(relativeVariables);
         this.config = params;
         this.config[Base_1.EEKey.NODE_ROOT] = NODE_ROOT;
+        //console.log('read profile: ',this._getProfile(argv.profile));
+        this.profile = this._getProfile(argv.profile);
         if (argv.print === 'true') {
             console_1.console.log("Config", util.inspect(params));
             console_1.console.log('\n\n');
             console_1.console.log("Options", util.inspect(this.options));
+        }
+    }
+    _getProfile(_path) {
+        let data = null;
+        try {
+            _path = _path ? path.resolve(_path) : path.join(this.path(Base_1.EEKey.NODE_ROOT), 'nxappmain/profile_device_server.json');
+            console_1.console.info('ControlFreak: use server profile from ' + _path);
+            data = json_1.deserialize(file_1.read(_path));
+        }
+        catch (e) {
+            console_1.console.error('error reading profile : ', e);
+        }
+        return data || {
+            mongo: {
+                port: 27017
+            },
+            http: {
+                port: 5555
+            }
+        };
+    }
+    /**
+     * runClass is a back - compat port for nxapp,
+     */
+    runClass(data, deviceServerContext) {
+        const _class = data['class'];
+        const _args = data['args'];
+        let _module = null;
+        const delegate = {
+            data: data,
+            clear: function () {
+                this.data.progress = null;
+                this.data.finish = null;
+                this.data.error = null;
+                this.data.data = null;
+            },
+            onProgress: function (progress, data) {
+                this.clear();
+                this.data.progress = progress;
+                this.data.data = data;
+                deviceServerContext.broadCastMessage(null, this.data);
+            },
+            onFinish: function (finish, data) {
+                this.clear();
+                this.data.finish = finish;
+                this.data.data = data;
+                deviceServerContext.broadCastMessage(null, this.data);
+            },
+            onError: function (error, data) {
+                this.clear();
+                this.data.error = error;
+                this.data.data = data;
+                deviceServerContext.broadCastMessage(null, this.data);
+            }
+        };
+        try {
+            _module = require(MODULE_ROOT + _class);
+        }
+        catch (e) {
+            console_1.console.error('runClass# Error : cant find class ' + _class);
+            data['error'] = e.message;
+            deviceServerContext.broadCastMessage(null, data);
+            return;
+        }
+        try {
+            let instance = new _module.default(_args, delegate);
+            instance.run();
+        }
+        catch (e) {
+            data['error'] = e.message;
+            deviceServerContext.broadCastMessage(null, data);
         }
     }
     externalServices() {
@@ -133,7 +210,8 @@ class ControlFreak extends Base_1.ApplicationBase {
         }
         if (argv['mqtt'] !== 'false') {
             const mongod = new Mongod_1.Mongod({
-                db: this.path(Base_1.EEKey.DB_ROOT)
+                db: this.path(Base_1.EEKey.DB_ROOT),
+                port: this.profile.mongo.port
             }, searchPaths, this.options.print);
             return [mongod];
         }
@@ -143,7 +221,7 @@ class ControlFreak extends Base_1.ApplicationBase {
     }
     vfsConfig() {
         return {
-            configPath: path.join(this.path('SYSTEM_ROOT'), 'vfs.json'),
+            configPath: path.join(this.path(Base_1.EEKey.SYSTEM_ROOT), 'vfs.json'),
             relativeVariables: {},
             absoluteVariables: this.vfsMounts()
         };
@@ -190,12 +268,12 @@ class ControlFreak extends Base_1.ApplicationBase {
             this._env(origin, key);
         }, this);
         const baseUrl = this._env(origin, Base_1.EEKey.XAS_WEB);
-        dst['BASE_URL'] = baseUrl(origin);
-        dst['APP_URL'] = this._env(origin, Base_1.EEKey.APP_URL)(origin);
+        dst[Base_1.EEKey.BASE_URL] = baseUrl(origin);
+        dst[Base_1.EEKey.APP_URL] = this._env(origin, Base_1.EEKey.APP_URL)(origin);
         dst['XASWEB'] = this._env(origin, Base_1.EEKey.APP_URL)(origin);
-        dst['RPC_URL'] = this._env(origin, Base_1.EEKey.RPC_URL)(origin);
+        dst[Base_1.EEKey.RPC_URL] = this._env(origin, Base_1.EEKey.RPC_URL)(origin);
         dst['VFS_URL'] = origin + '/files/';
-        dst['ROOT'] = origin + '/';
+        dst[Base_1.EEKey.ROOT] = origin + '/';
         const urlArgs = qs(ctx.request.req.url);
         let USER_DIRECTORY = urlArgs['userDirectory'];
         if (USER_DIRECTORY) {
@@ -205,7 +283,7 @@ class ControlFreak extends Base_1.ApplicationBase {
             VFS_CONF['user_devices'] = path.join(USER_DIRECTORY, 'devices');
             VFS_CONF['workspace'] = path.join(USER_DIRECTORY, 'workspace');
             VFS_CONF['workspace_user'] = path.join(USER_DIRECTORY, 'workspace');
-            dst['VFS_CONFIG'] = VFS_CONF;
+            dst[Base_1.EEKey.VFS_CONFIG] = VFS_CONF;
         }
         dst[Base_1.EEKey.DOJOPACKAGES] = io.serialize(this.packages(origin + '/files/', baseUrl(origin)));
         dst[Base_1.EEKey.RESOURCE_VARIABLES] = io.serialize(dst);
@@ -228,7 +306,7 @@ class ControlFreak extends Base_1.ApplicationBase {
             componentRoutes.push(...component.routes());
         });
         this._routes = [routes_1.default, filesRoute, app_1.default, smd_1.default, uploadRoute];
-        this._routes = this._routes.concat(componentRoutes);
+        this._routes.push(...componentRoutes);
         return this._routes;
     }
     setup() {
@@ -414,8 +492,9 @@ class ControlFreak extends Base_1.ApplicationBase {
             return new Promise((resolve, reject) => {
                 this.setup();
                 _super("run").call(this);
+                console_1.console.info('ControlFreak#run : serve www at : ' + this.path(Base_1.EEKey.APP_ROOT));
                 this.use(convert(serve(this.path(Base_1.EEKey.APP_ROOT))));
-                const port = this.options.port || process.env.PORT || 5555;
+                const port = this.profile.http.port || this.options.port || process.env.PORT || 5555;
                 console_1.console.info('ControlFreak#run : create HTTP server at 0.0.0.0:' + port);
                 this.server.listen(port, '0.0.0.0');
                 if (!deviceServer) {
@@ -436,6 +515,7 @@ class ControlFreak extends Base_1.ApplicationBase {
                 global.process.on('device-server-ready', (context) => {
                     // @TODO: v1 context in v2 app?
                     this.deviceServer = context;
+                    context.setAppServer(this);
                     console_1.console.info('ControlFreak#run : device server ready');
                     console_1.console.info('ControlFreak	can be accessed at http://0.0.0.0:' + port + '/app/xcf');
                     resolve(context);

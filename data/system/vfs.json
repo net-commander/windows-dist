@@ -35,6 +35,16 @@
 		{
 			"class": "cmx.types.Resource",
 			"type": "FILE_PROXY",
+			"name": "user",
+			"path": "%user%",
+			"url": "NOT SET",
+			"enabled": true,
+			"readOnly": true,
+			"label": "User Directory"
+		},
+		{
+			"class": "cmx.types.Resource",
+			"type": "FILE_PROXY",
 			"name": "workspace_user",
 			"path": "%workspace_user%",
 			"url": "NOT SET",

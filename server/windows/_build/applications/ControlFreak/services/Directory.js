@@ -21,6 +21,9 @@ class DirectoryService extends Directory_1.DirectoryService {
                 case 'user_devices': {
                     return this._userDir(user, 'devices');
                 }
+                case 'user': {
+                    return this._userDir(user, '');
+                }
             }
         }
         return _default;

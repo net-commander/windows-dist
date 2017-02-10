@@ -3,7 +3,7 @@
   "name": "xcf",
   "version": "0.1.5",
   "dependencies": {
-    "jsdoc-amddcl": "git://github.com/gbaumgart/jsdoc-amddcl.git#master"
+    "jsdoc-amddcl": "git://github.com/xblox/jsdoc-amddcl.git#master"
   },
   "devDependencies": {},
   "contributors": [
@@ -15,7 +15,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/gbaumgart/xcf.git"
+    "url": "https://github.com/xblox/xcf.git"
   },
   "licenses": [
     {

@@ -7,7 +7,6 @@
 
 <script src="<%-BASE_URL%>external/lodash.min.js"></script>
 <script src="<%-BASE_URL%>xibm/ibm/requirejs/require.js"></script>
-<script src="<%-BASE_URL%>xibm/ibm/requirejs/require.js"></script>
 <link rel="stylesheet" type="text/css" href="<%-BASE_URL%>/xapp/build/themes/layer_bootstrap.css">
 <link rel="stylesheet" type="text/css" href="<%-CSS%>">
 <script>
@@ -208,7 +207,7 @@
                     singleton: true,
                     resourceVariables: {
                         'VFS_CONFIG':<%-VFS_VARS%>,
-                        'USER_DIRECTORY':'%USER_DIRECTORY%',
+                        'USER_DIRECTORY':'<%-USER_DIRECTORY%>',
                         'VFS_GET_URL':'%VFS_GET_URL%'
 
                     }

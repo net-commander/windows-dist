@@ -95,6 +95,13 @@ define([
     "xdeliteful/MediaPlayer",
     "xdeliteful/Script",
     "deliteful/Accordion",
+    "dojo/_base/kernel",
+    'dojo/Stateful',
+    'dojo/query',
+    'dojo/cache',
+    'dojo/window',
+    'dojo/request',
+    'dojo/selector/lite',
     "requirejs-domready/domReady"
 ], function(Button,RunScript,register){
     

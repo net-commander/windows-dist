@@ -8,6 +8,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 const Base_1 = require("../../../applications/Base");
+const json_1 = require("../../../io/json");
 const views = require("co-views");
 const Router = require("koa-router");
 const _ = require("lodash");
@@ -38,10 +39,10 @@ PreviewRouter.get('/:preview/:mount/*', (ctx) => __awaiter(this, void 0, void 0,
         ROOT: variables[Base_1.EEKey.ROOT],
         RPC_URL: variables[Base_1.EEKey.RPC_URL],
         VFS_URL: variables[Base_1.EEKey.VFS_URL],
-        VFS_VARS: JSON.stringify(variables['VFS_CONFIG'], null, 2),
+        VFS_VARS: json_1.serialize(variables['VFS_CONFIG'], null, 2),
         CSS: variables[Base_1.EEKey.VFS_URL] + mount + '/' + filePath.replace('.dhtml', '.css'),
         DOC_BASE_URL: variables[Base_1.EEKey.VFS_URL] + mount + '/' + dir,
-        USER_DIRECTORY: encodeURIComponent(app.directoryService._getUser(ctx.request))
+        USER_DIRECTORY: encodeURIComponent(app.directoryService._getUser(ctx.request) || variables['VFS_CONFIG'].user)
     };
     let templateResolved = null;
     let content = null;

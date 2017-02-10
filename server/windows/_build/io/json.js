@@ -28,4 +28,12 @@ function to(data, path) {
     return data;
 }
 exports.to = to;
+function serialize(value, replacer, space) {
+    return JSON.stringify(value, replacer, space);
+}
+exports.serialize = serialize;
+function deserialize(value) {
+    return JSON.parse(value);
+}
+exports.deserialize = deserialize;
 //# sourceMappingURL=json.js.map

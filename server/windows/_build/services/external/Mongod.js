@@ -9,8 +9,9 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 const External_1 = require("../External");
 const mkdirp = require("mkdirp");
+const console_1 = require("../../console");
 const os = require('os');
-let arch = os.arch();
+const arch = os.arch();
 const path = require('path');
 const fs = require('fs');
 const jet = require('fs-jetpack');
@@ -156,6 +157,7 @@ class Mongod extends External_1.ExternalService {
                  * @return {Function}
                  */
                 const getDataPropagator = (event) => Mongod.getTextLineAggregator((line) => function (event, data) { });
+                console_1.console.info('start Mongo ' + this.mongoConfig.path + ' at port ' + this.mongoConfig.port + ' and data at ' + this.mongoConfig.db);
                 this.process = childprocess.spawn(this.mongoConfig.path, Mongod.parseFlags(this.mongoConfig));
                 this.process.stderr.on('data', dataListener);
                 this.process.stderr.on('data', getDataPropagator('stdout'));

@@ -17,7 +17,7 @@ const io = {
 };
 class BeanService extends Directory_1.DirectoryService {
     constructor(config) {
-        super(config.resourceConfiguration);
+        super(config ? config.resourceConfiguration : {});
         this.config = config;
     }
     getMetaData(scope, path, request) {

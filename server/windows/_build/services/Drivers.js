@@ -232,4 +232,9 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], DriverService.prototype, "removeGroup", null);
 exports.DriverService = DriverService;
+function getDrivers(driverPath, scope, options) {
+    const service = new DriverService(null);
+    return service.getDrivers(driverPath, scope, options);
+}
+exports.getDrivers = getDrivers;
 //# sourceMappingURL=Drivers.js.map
