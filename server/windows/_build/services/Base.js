@@ -67,16 +67,17 @@ class BaseService extends Resolver_1.ResourceResolver {
         const methods = this.getRpcMethods();
         return this.toMethods(methods);
     }
-    readConfig(path) {
+    readConfig(path, _default) {
         path = path || this.configPath;
         try {
             return io.parse(fs.readFileSync(path, 'utf8'));
         }
         catch (err) {
-            console.error('Error reading config : ' + path + ' in ' + this.method);
+            console.error('Error reading config : ' + err.code + ' @ ' + path + ' in ' + this.method, err);
             // create dir if it doesn't exist
             if (err.code === 'ENOENT') {
                 mkdirp.sync(_path.dirname(path), defaultPathMode);
+                write.sync(path, _default || '', writeFileOptions);
                 return {};
             }
             // improve the message of permission errors

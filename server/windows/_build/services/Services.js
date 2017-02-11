@@ -5,6 +5,10 @@ class NodeService extends JSONFile_1.JSONFileService {
     constructor() {
         super(...arguments);
         this.method = 'XIDE_NodeJS_Service';
+        this.deviceServerPort = 9998;
+    }
+    setDeviceServerPort(port) {
+        this.deviceServerPort = port;
     }
     methods() {
         return this.toMethods(['ls', 'stop', 'start']);
@@ -16,8 +20,11 @@ class NodeService extends JSONFile_1.JSONFileService {
         if (request) {
             items = _.map(items, function (item) {
                 item.host = request.host.split(':')[0];
+                if (item.name === 'Device Control Server') {
+                    item.port = this.deviceServerPort;
+                }
                 return item;
-            });
+            }.bind(this));
         }
         return items;
     }

@@ -10,6 +10,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 };
 const Base_1 = require("../services/Base");
 const JSONFile_1 = require("./JSONFile");
+const json_1 = require("../io/json");
 const dotProp = require("dot-prop");
 const _path = require("path");
 const _ = require("lodash");
@@ -30,7 +31,7 @@ class TrackingService extends JSONFile_1.JSONFileService {
                 file = _path.join(user, 'meta.json');
             }
         }
-        let data = this.readConfig(file);
+        let data = this.readConfig(file, json_1.serialize({ admin: { meta: {} } }));
         let result = {};
         result[section] = dotProp.get(data, this.root + path + section);
         return result;

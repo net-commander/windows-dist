@@ -29693,13 +29693,10 @@ define('xaction/ActionContext',[
             this._history.setNow(emitter);
         },
         _registerActionEmitter: function (emitter) {
-
             if(this[this.id +'_emitter_'+emitter.id]){
                 return;
             }
-
             this[this.id +'_emitter_'+emitter.id]=true;
-
             if (emitter && !emitter.getActionStore) {
                 _debug && console.error('_registerActionEmitter: is not an action provider');
                 return;
@@ -29713,18 +29710,11 @@ define('xaction/ActionContext',[
                     thiz.setActionEmitter(emitter, what, e);
                 },
                 _handle = emitter._on('selectionChanged', function (e) {
-                    e[thiz.id + '_aceDid'] = true;
                     var type = e.why == 'clear' ? 'selectionCleared' : 'selectionChanged';
                     handler(type, e);
                 });
 
-
-
             emitter.on('click', function (e) {
-                if(e.__did){
-                    return;
-                }
-                e.__did = true;
                 var doHandler = true;
                 if (emitter.handleActionClick) {
                     doHandler = emitter.handleActionClick(e);

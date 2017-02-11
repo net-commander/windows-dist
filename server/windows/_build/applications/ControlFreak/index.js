@@ -247,6 +247,7 @@ class ControlFreak extends Base_1.ApplicationBase {
         const devicesService = new Devices_1.DeviceService(serviceConfig);
         const logsService = new Logs_1.LogsService(serviceConfig);
         const nodeService = new Services_1.NodeService(path.join(this.path('DATA_ROOT'), 'system/services-debug.json'));
+        nodeService.setDeviceServerPort(this.profile.socket_server.port);
         const trackingService = new Tracking_1.TrackingService(path.join(this.path('USER_DIRECTORY'), 'meta.json'));
         const components = this.components();
         let componentServices = [];

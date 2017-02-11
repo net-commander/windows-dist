@@ -52620,7 +52620,6 @@ define('xcf/manager/DeviceManager_DeviceServer',[
         var osx = false;
         var arm = false;
         var windows = false;
-        
 
         var options = {
             linux32: linux32,
