@@ -47,6 +47,7 @@ const io = {
     serialize: JSON.stringify
 };
 var MODULE_ROOT = "../../";
+const index_1 = require("../../server/index");
 // tslint:disable-next-line:interface-name
 class ControlFreak extends Base_1.ApplicationBase {
     constructor(options) {
@@ -317,6 +318,7 @@ class ControlFreak extends Base_1.ApplicationBase {
         const rpcApp = new Koa();
         rpcApp.use(convert(this.rpc2.app()));
         this.use(convert(mount('/api', rpcApp)));
+        this.use(index_1.serveIndex(this.path(Base_1.EEKey.APP_ROOT), {}));
         // RPC services
         const services = this.rpcServices();
         _.each(services, service => {

@@ -17156,7 +17156,7 @@ define('xgrid/Actions',[
     'xide/lodash',
     'xide/$',
     'xide/console'
-], function (declare, types, ActionProvider, DefaultActions,_,$,console) {
+], function (declare, types, ActionProvider, DefaultActions, _, $, console) {
     var _debug = false;
     /**
      * @class module:xgrid/Actions
@@ -17233,7 +17233,7 @@ define('xgrid/Actions',[
                     }
                 }
             }
-            this._emit(types.EVENTS.ON_AFTER_ACTION,action);
+            this._emit(types.EVENTS.ON_AFTER_ACTION, action);
         },
         hasPermission: function (permission) {
             return DefaultActions.hasAction(this.permissions, permission);
@@ -17248,11 +17248,11 @@ define('xgrid/Actions',[
             if (action.keyCombo && _.isArray(action.keyCombo)) {
                 if (action.keyCombo.indexOf('dblclick') !== -1) {
                     var thiz = this;
-                    function handler(e){
+                    function handler(e) {
                         var row = thiz.row(e);
                         row && thiz.runAction(action, row.data);
                     }
-                    this.addHandle('dbclick',this.on('dblclick',handler));
+                    this.addHandle('dbclick', this.on('dblclick', handler));
                 }
             }
             return this.inherited(arguments);
@@ -17295,15 +17295,18 @@ define('xgrid/Actions',[
             thiz.domNode.tabIndex = -1;
             function clickHandler(evt) {
                 //container
-                if (evt && evt.target && $(evt.target).hasClass('dgrid-content')) {
-                    thiz.select([], null, false);
-                    thiz.deselectAll();
-                    if (evt.type !== 'contextmenu') {
-                        setTimeout(function () {
-                            thiz.domNode.focus();
-                            document.activeElement = thiz.domNode;
-                            $(thiz.domNode).focus();
-                        }, 1);
+                if (evt && evt.target) {
+                    var $target = $(evt.target);
+                    if ($target.hasClass('dgrid-content') || $target.hasClass('dgrid-extra')) {
+                        thiz.select([], null, false);
+                        thiz.deselectAll();
+                        if (evt.type !== 'contextmenu') {
+                            setTimeout(function () {
+                                thiz.domNode.focus();
+                                document.activeElement = thiz.domNode;
+                                $(thiz.domNode).focus();
+                            }, 1);
+                        }
                     }
                 }
             }
@@ -17316,7 +17319,7 @@ define('xgrid/Actions',[
                 var actions = evt.actions,
                     action = types.ACTION.HEADER;
 
-                if(!thiz.getAction(action)) {
+                if (!thiz.getAction(action)) {
                     actions.push(thiz.createAction({
                         label: 'Header',
                         command: action,
@@ -17478,7 +17481,7 @@ define('xgrid/typesLite',[
      * @enum module:xgrid/types/GRID_DEFAULT_FEATURES
      * @memberOf module:xgrid/types
      */
-    types.DEFAULT_GRID_FEATURES = {
+    types.DEFAULT_GRID_FEATURES_LITE = {
         SELECTION: {
             CLASS: Selection,
             IMPLEMENTATION: {},
@@ -17501,7 +17504,7 @@ define('xgrid/typesLite',[
      * @enum module:xgrid/types/GRID_FEATURES
      * @memberOf module:xgrid/types
      */
-    types.GRID_FEATURES = {
+    types.GRID_FEATURES_LITE = {
         SELECTION: {
             CLASS: Selection,
             IMPLEMENTATION: {},
@@ -17552,7 +17555,7 @@ define('xgrid/BaseLite',[
              miscUtil){
 
     var BASE_CLASSES = ['EVENTED','GRID','EDITOR','RENDERER','DEFAULTS','LAYOUT','FOCUS','i18'];
-    var DEFAULT_GRID_FEATURES = types.DEFAULT_GRID_FEATURES;
+    var DEFAULT_GRID_FEATURES = types.DEFAULT_GRID_FEATURES_LITE;
     var GRID_BASES = types.GRID_BASES;
     var DEFAULT_GRID_OPTIONS = types.DEFAULT_GRID_OPTIONS;
 
@@ -17812,7 +17815,7 @@ define('xgrid/BaseLite',[
     /**
      * Create root class with declare and default implementation
      */
-    var _default = declare('xgrid.Default', null, Implementation);
+    var _default = declare('xgrid.DefaultLite', null, Implementation);
 
     /**
      * 2-dim array search
@@ -17959,7 +17962,7 @@ define('xgrid/GridLite',[
 
     //track defaults on module
     grid.classFactory = Base.classFactory;
-    grid.DEFAULT_GRID_FEATURES = types.DEFAULT_GRID_FEATURES;
+    grid.DEFAULT_GRID_FEATURES = types.DEFAULT_GRID_FEATURES_LITE;
     grid.DEFAULT_GRID_BASES = Base.DEFAULT_GRID_BASES;
     grid.DEFAULT_GRID_OPTIONS = types.DEFAULT_GRID_OPTIONS;
     grid.DEFAULT_GRID_OPTION_KEYS = types.DEFAULT_GRID_OPTION_KEYS;
@@ -36349,9 +36352,7 @@ define('xfile/views/GridLight',[
             KEYBOARD_SELECTION: true,
             COLUMN_HIDER: true,
             COLUMN_REORDER: false,
-            CONTEXT_MENU: types.GRID_FEATURES.CONTEXT_MENU,
-            CLIPBOARD:types.GRID_FEATURES.CLIPBOARD,
-            ACTIONS:types.GRID_FEATURES.ACTIONS,
+            ACTIONS:types.GRID_FEATURES_LITE.ACTIONS,
             ITEM_ACTIONS: {
                 CLASS:FileActions
             },
