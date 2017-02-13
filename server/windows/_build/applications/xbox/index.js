@@ -12,7 +12,6 @@ const Base_1 = require("./../Base");
 const Service_1 = require("../../interfaces/Service");
 const app_1 = require("./route/app");
 const smd_1 = require("../../route/smd");
-const routes_1 = require("../../routes");
 const files_1 = require("../../route/files");
 const uploads_1 = require("../../route/uploads");
 const JSON_RPC_2_1 = require("../../rpc/JSON-RPC-2");
@@ -143,7 +142,7 @@ class xbox extends Base_1.ApplicationBase {
         }
         const filesRoute = files_1.create(this.directoryService, '/files', this);
         const uploadRoute = uploads_1.create(this.directoryService, '/upload', this);
-        this._routes = [routes_1.default, filesRoute, app_1.default, smd_1.default, uploadRoute];
+        this._routes = [filesRoute, app_1.default, smd_1.default, uploadRoute];
         return this._routes;
     }
     setup() {

@@ -45874,7 +45874,7 @@ define('xcf/manager/DriverManager',[
              * @returns {module:xide/data/TreeMemory}
              */
             createStore: function (data, scope, track) {
-
+                //@TODO: weird bug
                 if (data && !data.items && data['0']) {
                     data = {
                         items:data['0'].items
@@ -45898,7 +45898,7 @@ define('xcf/manager/DriverManager',[
                     store.setData(data.items);
                     _.each(data.items, function (item) {
                         item._store = store;
-                    })
+                    });
                 }
                 if (scope && track !== false) {
                     this.setStore(scope, store);
@@ -52465,158 +52465,24 @@ define('xcf/manager/DeviceManager_DeviceServer',[
     var debugServerMessages = false;
     var debugByteMessages = false;
 
+
+
     if (typeof sctx !== 'undefined' && sctx && !isServer) {
 
         var id = utils.createUUID();
         var rm = sctx.getResourceManager();
         var ctx = sctx;
         var application = sctx.getApplication();
-        application.createExportWizard = function () {
-            var thiz = this,
-                selectView = null,
-                selectItemsView = null,
-                selectedItems = [],
-                selectedItem = null,
-                ctx = thiz.ctx,
-                deviceManager = ctx.getDeviceManager(),
-                driver = thiz.getSelectedItem(),
-                protocolMgr = thiz.ctx.getProtocolManager(),
-                store = protocolMgr.getStore();
-
-
-
-
+        var doExport = false;
+        if(!doExport){
             return;
-            var wizardStruct = Wizards.createWizard('Select Protocol', false, {});
-
-            this._lastWizard = wizardStruct;
-            var wizard = wizardStruct.wizard;
-            var dialog = wizardStruct.dialog;
-            var done = function () {
-                wizard.destroy();
-                dialog.destroy();
-                thiz.importProtocol(selectedItem, selectedItems, driver);
-            };
-            dialog.show().then(function () {
-
-                /**
-                 * First protocol view, select item
-                 */
-                selectView = utils.addWidget(ProtocolTreeView, {
-                    title: 'Protocols',
-                    store: protocolMgr.getStore(),
-                    delegate: protocolMgr,
-                    beanContextName: '3',// thiz.ctx.mainView.beanContextName
-                    _doneFunction: function () {
-                        return false;
-                    },
-                    passFunction: function () {
-                        return true;
-                    },
-                    canGoBack: true,
-                    gridParams: {
-                        showHeader: true
-                    },
-                    editItem: function () {
-
-                        if (!this.isGroup(selectedItem)) {
-                            wizard._forward();
-                        }
-                    }
-
-                }, protocolMgr, wizard, true, null, [WizardPaneBase])._on(types.EVENTS.ON_ITEM_SELECTED, function (evt) {
-                    selectedItem = evt.item;
-                    wizard.adjustWizardButton('next', selectView.isGroup(evt.item));
-
-                });
-
-
-                /**
-                 * Select commands/variables view
-                 */
-                /**
-                 * First protocol view, select item
-                 */
-                selectItemsView = utils.addWidget(ProtocolTreeView, {
-                    title: 'Protocols',
-                    store: protocolMgr.getStore(),
-                    delegate: protocolMgr,
-                    beanContextName: '3',// thiz.ctx.mainView.beanContextName
-                    doneFunction: function () {
-                        done();
-                        return true;
-                    },
-                    passFunction: function () {
-                        //not used
-                        return true;
-                    },
-                    canGoBack: true,
-                    editItem: function () {
-
-                    },
-                    getRootFilter: function () {
-                        if (selectedItem) {
-                            return {
-                                parentId: selectedItem.path
-                            };
-                        } else {
-                            return {
-                                parentId: ''
-                            };
-                        }
-                    },
-                    canSelect: function (item) {
-                        if (item.virtual === true && item.isDir === false) {
-                            return true;
-                        }
-                        return false;
-                    }
-                }, protocolMgr, wizard, true, null, [WizardPaneBase], null, {
-                        getColumns: function () {
-
-                            var _res = this.inherited(arguments);
-                            _res.push({
-                                label: "Value",
-                                field: "value",
-                                sortable: false,
-                                _formatter: function (name, item) {
-
-                                    if (!thiz.isGroup(item) && item['user']) {
-                                        var meta = item['user'].meta;
-                                        var _in = meta ? utils.getCIInputValueByName(meta, types.PROTOCOL_PROPERTY.CF_PROTOCOL_TITLE) : null;
-                                        if (meta) {
-                                            return '<span class="grid-icon ' + 'fa-exchange' + '"></span>' + _in;
-                                        } else {
-                                            return item.name;
-                                        }
-                                        return _in;
-                                    } else {
-                                        return item.name;
-                                    }
-                                }
-                            });
-                            return _res;
-                        }
-                    })._on(types.EVENTS.ON_ITEM_SELECTED, function (evt) {
-                        selectedItems = selectItemsView.getSelection();
-                        wizard.adjustWizardButton('done', selectedItems.length === 0);
-
-                    });
-
-
-                wizard.onNext = function () {
-                    dialog.set('title', 'Select Commands & Variables');
-                    selectItemsView.grid.set('collection', store.filter(selectItemsView.getRootFilter()));
-                    selectItemsView.grid.refresh();
-                };
-            });
-        };
-
+        }
 
 
         console.log('root : ' + ctx.getMount('root'));
         console.log('user : ' + rm.getVariable('USER_DIRECTORY'));
         console.log('system : ' + rm.getVariable('SYSTEM'));
+
         var ROOT = ctx.getMount('root');
         var USER = rm.getVariable('USER_DIRECTORY');
         var SYSTEM = ROOT + '/data/';
@@ -52627,6 +52493,8 @@ define('xcf/manager/DeviceManager_DeviceServer',[
         var osx = false;
         var arm = false;
         var windows = false;
+
+
 
         var options = {
             linux32: linux32,

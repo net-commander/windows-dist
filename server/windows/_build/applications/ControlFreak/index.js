@@ -8,10 +8,10 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 const Base_1 = require("./../Base");
+const index_1 = require("../../interfaces/index");
 const Service_1 = require("../../interfaces/Service");
 const app_1 = require("./route/app");
 const smd_1 = require("../../route/smd");
-const routes_1 = require("../../routes");
 const files_1 = require("../../route/files");
 const uploads_1 = require("../../route/uploads");
 const JSON_RPC_2_1 = require("../../rpc/JSON-RPC-2");
@@ -47,7 +47,7 @@ const io = {
     serialize: JSON.stringify
 };
 var MODULE_ROOT = "../../";
-const index_1 = require("../../server/index");
+const index_2 = require("../../server/index");
 // tslint:disable-next-line:interface-name
 class ControlFreak extends Base_1.ApplicationBase {
     constructor(options) {
@@ -116,8 +116,11 @@ class ControlFreak extends Base_1.ApplicationBase {
                 },
                 VFS_CONFIG: VFS_CONFIG,
                 USER_DIRECTORY: USER_DIRECTORY,
+                //back compat
                 VFS_GET_URL: '../../files/',
-                PLATFORM: os.platform()
+                //required by export
+                PLATFORM: os.platform(),
+                ARCH: os.arch() === 'x64' ? index_1.EArch.x64 : index_1.EArch.x32,
             },
             absoluteVariables: {
                 'XASWEB': path.join(CLIENT_ROOT)
@@ -307,7 +310,7 @@ class ControlFreak extends Base_1.ApplicationBase {
         _.each(components, component => {
             componentRoutes.push(...component.routes());
         });
-        this._routes = [routes_1.default, filesRoute, app_1.default, smd_1.default, uploadRoute];
+        this._routes = [filesRoute, app_1.default, smd_1.default, uploadRoute];
         this._routes.push(...componentRoutes);
         return this._routes;
     }
@@ -318,7 +321,11 @@ class ControlFreak extends Base_1.ApplicationBase {
         const rpcApp = new Koa();
         rpcApp.use(convert(this.rpc2.app()));
         this.use(convert(mount('/api', rpcApp)));
-        this.use(index_1.serveIndex(this.path(Base_1.EEKey.APP_ROOT), {}));
+        //pretty index browser
+        this.use(index_2.serveIndex(this.path(Base_1.EEKey.APP_ROOT), {
+            icons: true,
+            view: 'details'
+        }));
         // RPC services
         const services = this.rpcServices();
         _.each(services, service => {

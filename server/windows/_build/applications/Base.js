@@ -76,6 +76,10 @@ function ENV_VAR(key) {
 }
 exports.ENV_VAR = ENV_VAR;
 class ApplicationBase extends Koa {
+    constructor(root) {
+        super();
+        this.uuid = 'no uuid';
+    }
     externalServices() {
         return [];
     }
@@ -127,9 +131,6 @@ class ApplicationBase extends Koa {
             dst[exports.EEKey.THEME] = theme;
         }
         return dst;
-    }
-    constructor(root) {
-        super();
     }
     rpcServices() {
         return [];
