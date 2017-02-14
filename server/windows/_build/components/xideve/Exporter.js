@@ -176,7 +176,7 @@ class Exporter {
                 this.exportClientEx(options);
             }
             else {
-                if (options.debug && forceDist !== true) {
+                if (!options.debug) {
                     this.exportClient(options);
                 }
                 else {
