@@ -273,6 +273,15 @@ class Mongod extends External_1.ExternalService {
                     }
                     catch (e) {
                     }
+                    //in export scenarion, mongod exists in root/mongo/mongod-[platform].exe
+                    const found = [];
+                    this.searchPaths.forEach(_path => {
+                        const bin = _path + path.sep + 'mongod-windows.exe';
+                        if (exists(bin)) {
+                            found.push(bin);
+                        }
+                    });
+                    this.searchPaths.push(...found);
                     break;
                 }
                 case 'darwin':
