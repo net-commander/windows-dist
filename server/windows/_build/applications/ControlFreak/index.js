@@ -282,7 +282,8 @@ class ControlFreak extends Base_1.ApplicationBase {
         const urlArgs = qs(ctx.request.req.url);
         let USER_DIRECTORY = urlArgs['userDirectory'];
         if (USER_DIRECTORY) {
-            this.config['userDirectory'] = decodeURI(ctx.params.userDirectory);
+            this.config['userDirectory'] = USER_DIRECTORY;
+            dst['USER_DIRECTORY'] = USER_DIRECTORY;
             const VFS_CONF = this.vfsMounts();
             VFS_CONF['user_drivers'] = path.join(USER_DIRECTORY, 'drivers');
             VFS_CONF['user_devices'] = path.join(USER_DIRECTORY, 'devices');
