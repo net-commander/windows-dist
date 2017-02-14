@@ -38,7 +38,8 @@ const CFOptions = {
     release: argv.release === 'true',
     clientRoot: argv.clientRoot,
     type: argv.type || Base_1.ELayout.SOURCE,
-    print: argv.print === 'true'
+    print: argv.print === 'true',
+    uuid: argv.uuid || 'ide',
 };
 function create(app) {
     let application;

@@ -52,10 +52,12 @@ const index_2 = require("../../server/index");
 class ControlFreak extends Base_1.ApplicationBase {
     constructor(options) {
         super(options.root);
+        this.uuid = 'ide';
         this.deviceServer = null;
         this.profile = null;
         this.options = options;
         this.root = options.root;
+        this.uuid = options.uuid;
         const APP_ROOT = this.root;
         const CLIENT_ROOT = path.join(APP_ROOT, 'Code/client/src/');
         const NODE_ROOT = options.release ? process.cwd() : path.join(APP_ROOT, 'server/nodejs/');
@@ -64,13 +66,13 @@ class ControlFreak extends Base_1.ApplicationBase {
         const TMP_PATH = osTmpdir();
         if (argv.mqtt !== 'false') {
             try {
-                mkdirp.sync(TMP_PATH + path.sep + '_MONGO');
+                mkdirp.sync(TMP_PATH + path.sep + '_MONGO' + '_' + this.uuid);
             }
             catch (e) {
-                console_1.console.error('error creating MONGO Database path ' + TMP_PATH + path.sep + '_MONGO');
+                console_1.console.error('error creating MONGO Database path ' + TMP_PATH + path.sep + '_MONGO' + '_' + this.uuid);
             }
         }
-        const DB_ROOT = path.resolve(TMP_PATH + path.sep + '_MONGO');
+        const DB_ROOT = path.resolve(TMP_PATH + path.sep + '_MONGO_' + this.uuid);
         const SYSTEM_ROOT = path.join(DATA_ROOT, '/system/');
         const VFS_CONFIG = {
             'workspace': path.join(USER_DIRECTORY, 'workspace'),
