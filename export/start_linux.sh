@@ -8,7 +8,7 @@ else
 fi
 
 if [ -z "$DISPLAY" ]; then
-    ./server noob --port=10001 --type=OFFLINE_RELEASE --release=true --root="../.." "$@" 
+    ./server noob --uid=export --port=10001 --type=OFFLINE_RELEASE --release=true --root="../.." "$@" 
 else
-    gnome-terminal -e "./server noob --port=10001 --type=OFFLINE_RELEASE --release=true --root=\"../..\" \"$@\""
+    gnome-terminal -e "./server noob --uid=export --port=10001 --type=OFFLINE_RELEASE --release=true --root=\"../..\" \"$@\""
 fi
