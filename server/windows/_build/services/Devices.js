@@ -96,7 +96,8 @@ class DeviceService extends Bean_1.BeanService {
                     if (dirItems.length) {
                         _.each(dirItems, function (file) {
                             if (file.indexOf(META_FILE_EXT) !== -1) {
-                                const meta = self.readConfig(_path + path.sep + file);
+                                const metaPath = _path + path.sep + file;
+                                const meta = self.readConfig(metaPath);
                                 if (!meta) {
                                     console.error('cant get device meta for ' + file + ' path = ' + _path + path.sep + file);
                                     return;
@@ -108,7 +109,6 @@ class DeviceService extends Bean_1.BeanService {
                                     }
                                 }
                                 const driverOptions = CIUtils_1.getCIByChainAndName(meta, 0, Device_1.DEVICE_PROPERTY.CF_DEVICE_DRIVER_OPTIONS);
-                                console.log('process device : ' + file + 'serverside : ', driverOptions.value);
                                 if (!meta) {
                                     console.warn('device has no meta ' + _path + path.sep + file);
                                 }

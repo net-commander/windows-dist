@@ -349,7 +349,7 @@ class Exporter {
                 devices.forEach(device => {
                     if (device.user) {
                         io.write(path.join(options.target, '/user/devices/' + device.path), json_1.serialize({
-                            inputs: device.user
+                            inputs: device.user.inputs
                         }, null, 2));
                     }
                 });
@@ -358,7 +358,7 @@ class Exporter {
                 devices.forEach(device => {
                     if (device.user) {
                         io.write(path.join(options.target, '/data/system/devices/' + device.path), json_1.serialize({
-                            inputs: device.user
+                            inputs: device.user.inputs
                         }, null, 2));
                     }
                 });
