@@ -107,6 +107,8 @@ class DeviceService extends Bean_1.BeanService {
                                         driverOptions.value = driverOptions.value | (1 << Driver_1.DRIVER_FLAGS.RUNS_ON_SERVER);
                                     }
                                 }
+                                const driverOptions = CIUtils_1.getCIByChainAndName(meta, 0, Device_1.DEVICE_PROPERTY.CF_DEVICE_DRIVER_OPTIONS);
+                                console.log('process device : ' + file + 'serverside : ', driverOptions.value);
                                 if (!meta) {
                                     console.warn('device has no meta ' + _path + path.sep + file);
                                 }

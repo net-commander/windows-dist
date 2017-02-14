@@ -1,4 +1,12 @@
 "use strict";
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 const file_1 = require("../../io/file");
 const json_1 = require("../../io/json");
 const Devices_1 = require("../../services/Devices");
@@ -103,6 +111,7 @@ class Exporter {
             this.onError('Export Manager: have no user');
             return;
         }
+        options.serverSide = true;
         if (!options.client) {
         }
         try {
@@ -330,21 +339,37 @@ class Exporter {
         io.write(file.replace('.dhtml', '.html'), dom.html());
     }
     exportDevices(options) {
-        try {
-            let userDevicesPath = path.resolve(options.target + '/user/devices');
-            let devices = Devices_1.getDevices(userDevicesPath, 'user_devices', options);
-            io.write(userDevicesPath + '/user_devices.json', json_1.serialize({
-                items: devices
-            }, null, 2));
-            let systemDevicesPath = path.resolve(options.target + '/data/system/devices');
-            devices = Devices_1.getDevices(systemDevicesPath, 'system_devices', options);
-            io.write(systemDevicesPath + '/system_devices.json', json_1.serialize({
-                items: devices
-            }, null, 2));
-        }
-        catch (e) {
-            console_1.console.error('error exporting devices:', e);
-        }
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                let userDevicesPath = path.resolve(options.target + '/user/devices');
+                let devices = yield Devices_1.getDevices(userDevicesPath, 'user_devices', options);
+                io.write(userDevicesPath + '/user_devices.json', json_1.serialize({
+                    items: devices
+                }, null, 2));
+                devices.forEach(device => {
+                    if (device.user) {
+                        io.write(path.join(options.target, '/user/devices/' + device.path), json_1.serialize({
+                            inputs: device.user
+                        }, null, 2));
+                    }
+                });
+                let systemDevicesPath = path.resolve(options.target + '/data/system/devices');
+                devices = (yield Devices_1.getDevices(systemDevicesPath, 'system_devices', options));
+                devices.forEach(device => {
+                    if (device.user) {
+                        io.write(path.join(options.target, '/data/system/devices/' + device.path), json_1.serialize({
+                            inputs: device.user
+                        }, null, 2));
+                    }
+                });
+                io.write(systemDevicesPath + '/system_devices.json', json_1.serialize({
+                    items: devices
+                }, null, 2));
+            }
+            catch (e) {
+                console_1.console.error('error exporting devices:', e);
+            }
+        });
     }
     exportDrivers(options) {
         let userDriversPath = path.resolve(options.target + '/user/drivers');

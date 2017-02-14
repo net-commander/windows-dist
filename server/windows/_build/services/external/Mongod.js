@@ -159,7 +159,6 @@ class Mongod extends External_1.ExternalService {
                 const getDataPropagator = (event) => Mongod.getTextLineAggregator((line) => function (event, data) { });
                 console_1.console.info('start Mongo ' + this.mongoConfig.path + ' at port ' + this.mongoConfig.port + ' and data at ' + this.mongoConfig.db);
                 this.process = childprocess.spawn(this.mongoConfig.path, Mongod.parseFlags(this.mongoConfig));
-                ["{\"manager_command\":\"startDevice\",\"host\":\"0.0.0.0\",\"port\":\"xxx\",\"protocol\":\"driver\",\"driver\":\"Audio-Player/VLC.js\",\"driverId\":\"9db866a4-bb3e-137b-ae23-793b729c44f8\",\"driverScope\":\"user_drivers\",\"id\":\"bc09b5c4-cfe6-b621-c412-407dbb7bcef8\",\"devicePath\":\"Audio-Player/VLC.meta.json\",\"deviceScope\":\"user_devices\",\"title\":\"VLC\",\"options\":\"{}\",\"enabled\":true,\"driverOptions\":4,\"serverSide\":true,\"isServer\":false,\"responseSettings\":{\"start\":false,\"startString\":\"\",\"cTypeByte\":false,\"cTypePacket\":false,\"cTypeDelimiter\":true,\"cTypeCount\":false,\"delimiter\":\"\\\\r\",\"count\":\"\",\"wDelimiter\":\"\\\\r\",\"wCount\":\"\"},\"source\":\"server\",\"user_devices\":\"/PMaster/projects/x4mm/mc007/user/devices\",\"system_devices\":\"/PMaster/projects/x4mm/mc007/data/system/devices\",\"system_drivers\":\"/PMaster/projects/x4mm/mc007/data/system/drivers\",\"user_drivers\":\"/PMaster/projects/x4mm/mc007/user/drivers\",\"loggingFlags\":\"{\\n  \\\"Device Disonnected\\\": 2,\\n  \\\"Device Connected\\\": 2,\\n  \\\"Response\\\": 0,\\n  \\\"Send Command\\\": 0\\n}\",\"hash\":\"4b4cb00bac12fddf13975cc02b70ed26\",\"userDirectory\":\"%USER_DIRECTORY%\",\"mqtt\":{\"driverScopeId\":\"have no driver instance\",\"driverId\":\"9db866a4-bb3e-137b-ae23-793b729c44f8\",\"deviceId\":\"Audio-Player/VLC.meta.json\"},\"tag\":\"startDevice\"}"];
                 this.process.stderr.on('data', dataListener);
                 this.process.stderr.on('data', getDataPropagator('stdout'));
                 this.process.stdout.on('data', dataListener);
@@ -273,7 +272,7 @@ class Mongod extends External_1.ExternalService {
                     }
                     catch (e) {
                     }
-                    //in export scenarion, mongod exists in root/mongo/mongod-[platform].exe
+                    //in export scenario, mongod exists in root/mongo/mongod-[platform].exe
                     const found = [];
                     this.searchPaths.forEach(_path => {
                         const bin = _path + path.sep + 'mongod-windows.exe';
