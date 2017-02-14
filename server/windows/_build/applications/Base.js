@@ -59,7 +59,13 @@ exports.EEKey = {
     'ROOT': 'ROOT',
     'VFS_URL': 'VFS_URL',
     'VFS_CONFIG': 'VFS_CONFIG',
-    'SYSTEM_ROOT': 'SYSTEM_ROOT'
+    'SYSTEM_ROOT': 'SYSTEM_ROOT',
+    'USER_DIRECTORY': 'USER_DIRECTORY',
+    'DEVICES': 'devices',
+    'DRIVERS': 'drivers',
+    'WORKSPACE': 'workspace',
+    'USER_DEVICES': 'user_devices',
+    'USER_DRIVERS': 'user_drivers',
 };
 var ELayout;
 (function (ELayout) {

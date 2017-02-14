@@ -282,12 +282,11 @@ class ControlFreak extends Base_1.ApplicationBase {
         const urlArgs = qs(ctx.request.req.url);
         let USER_DIRECTORY = urlArgs['userDirectory'];
         if (USER_DIRECTORY) {
-            this.config['userDirectory'] = USER_DIRECTORY;
-            dst['USER_DIRECTORY'] = USER_DIRECTORY;
+            dst[Base_1.EEKey.USER_DIRECTORY] = USER_DIRECTORY;
             const VFS_CONF = this.vfsMounts();
-            VFS_CONF['user_drivers'] = path.join(USER_DIRECTORY, 'drivers');
-            VFS_CONF['user_devices'] = path.join(USER_DIRECTORY, 'devices');
-            VFS_CONF['workspace'] = path.join(USER_DIRECTORY, 'workspace');
+            VFS_CONF[Base_1.EEKey.USER_DRIVERS] = path.join(USER_DIRECTORY, Base_1.EEKey.DRIVERS);
+            VFS_CONF[Base_1.EEKey.USER_DEVICES] = path.join(USER_DIRECTORY, Base_1.EEKey.DEVICES);
+            VFS_CONF[Base_1.EEKey.WORKSPACE] = path.join(USER_DIRECTORY, Base_1.EEKey.WORKSPACE);
             VFS_CONF['workspace_user'] = path.join(USER_DIRECTORY, 'workspace');
             dst[Base_1.EEKey.VFS_CONFIG] = VFS_CONF;
         }
