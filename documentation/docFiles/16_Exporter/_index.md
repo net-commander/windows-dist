@@ -5,22 +5,17 @@
 2.Run start.bat or start_linux.sh, located in the exported folder. The openend terminal will show at which URL the applications can 
    be opened.
 
+3.At this point all enabled devices have been auto-started by enabling the driver flags 'Run Server Side'
+
+4.Open your scene at http://localhost:5556/xideve/preview/workspace/my_scene_file_name.dhml
+
 **Remarks**
-
--The exported application will run the following server modules:
-  
-  -dfdf
-
-
-
 
 ## Data & Servers
 
- - web-server : runs at 8889, so you open this url: http://localhost:8889/
+ - web-server : runs at 5556, so you open this url: http://localhost:5556/
  
- - your workspace, located then at http://localhost:8889/user/workspace. You must open the files with *.html extension, not *.dhtml
- 
- - devices : all tagged with "Run Server-Side". The device server tries connecting/re-connecting every 3 secs
+  - devices : all tagged with "Run Server-Side". The device server tries connecting/re-connecting every 3 secs
  
  - drivers : no modification
  
@@ -29,31 +24,4 @@
  - database-server: runs at 27018 (Mongo)
  
  - mqtt-server: 1884 (Mosca)
-
-## More options:
-
-The export script (export.bat or export.sh) sets only default options. It basically goes in the server directory and runs:
- 
-    ./server noob --client="../../Code/client/" --file=export.js --system="../../data" --user="$1" --target="../../exported" --dist="../../server/" "$@"
-
-You see that it is using the first argument to specific the source location of your default user workspace (Documents\Control-Freak).
-
-Options:
-
-    -h, --help           output usage information
-    -V, --version        output the version number
-    -f, --file <path>    run a file
-    -r, --root <path>    root path to Control-Freak
-    -u, --user <path>    user directory
-    -t, --target <path>  target directory
-    -s, --system <name>  path to system scope location
-    -d, --dist <path>    path to the pre-compiled NodeJS servers
-    --windows <boolean>  true/false to export windows NodeJS server
-    --osx <boolean>      true/false to export OSX NodeJS server
-    --linux32 <boolean>  true/false to export Linux-32 Bit NodeJS server
-    --linux64 <boolean>  true/false to export Linux-64 NodeJS server
-    --arm <boolean>      true/false to export ARM-v7 NodeJS server
-    --client <string>    path to client root
-    
-The more interesting option is --target. It specifies where to export your application.
 
