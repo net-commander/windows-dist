@@ -1,6 +1,6 @@
 ## Usage
 
-1.Run IDE action "Window/Export" and follow the instructions.
+1. Run IDE action "Window/Export" and follow the instructions.
 
 2.Run start.bat or start_linux.sh, located in the exported folder. The openend terminal will show at which URL the applications can 
    be opened.
