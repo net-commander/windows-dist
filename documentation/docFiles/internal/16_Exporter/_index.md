@@ -1,16 +1,25 @@
 ## Usage
 
-1.Run IDE action "Window/Export" and follow the instructions.
 
-2.Run start.bat or start_linux.sh, located in the exported folder. The openend terminal will show at which URL the applications can 
-   be opened.
 
-**Remarks**
+### Windows
 
--The exported application will run the following server modules:
-  
-  -dfdf
+- Drag your user folder (MyUser\Documents\Control-Freak) onto Control-Freak\export.bat 
 
+### Linux/OSX
+
+    run ./Control-Freak/export.sh --user=MyUser/Documents/Control-Freak
+
+---------------------------------------------------------------------------------------
+
+
+1. wait til terminal closes (may last up to 5 minutes)
+
+2. your exported app is located at /exported (will be overridden the next time)
+
+3. run /exported/start.bat (linux/osx: start.sh)
+
+4. run /exported/stop_servers.bat (linux/osx: stop_servers.sh) to shutdown the app (important if you export the second time) on a non IDE computer, otherwise press CTRL-C in the existing running server terminal window
 
 
 
