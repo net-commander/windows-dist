@@ -9,19 +9,29 @@
 
 4.Open your scene at http://localhost:5556/xideve/preview/workspace/my_scene_file_name.dhml
 
+5.Or open your scene by browsing your workspace folder:  at http://localhost:5556/xideve/preview/workspace/
+
+
+
 **Remarks**
+
+
+## General
+
+-The exporter is basically creating a copy of its own but without the desktop application.
+
 
 ## Data & Servers
 
- - web-server : runs at 5556, so you open this url: http://localhost:5556/
+- web-server : runs at 5556, so you open this url: http://localhost:5556/
  
-  - devices : all tagged with "Run Server-Side". The device server tries connecting/re-connecting every 3 secs
+-devices : all tagged with "Run Server-Side". The device server tries connecting/re-connecting every 3 secs
  
- - drivers : no modification
+-drivers : no modification
  
- - device-server: runs at 9997
+-device-server: runs at 9997
  
- - database-server: runs at 27018 (Mongo)
+-database-server: runs at 27018 (Mongo)
  
- - mqtt-server: 1884 (Mosca)
+-mqtt-server: 1884 (Mosca)
 
