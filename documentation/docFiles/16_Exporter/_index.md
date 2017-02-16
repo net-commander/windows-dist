@@ -23,7 +23,9 @@
 
 ## Data & Servers
 
-- web-server : runs at 5556, so you open this url: http://localhost:5556/
+-All ports can be adjusted in exported/server/[Platform=windows|linux|arm]/nxappmain/profile_device_server.json
+
+-web-server : runs at 5556, so you open this url: http://localhost:5556/
  
 -devices : all tagged with "Run Server-Side". The device server tries connecting/re-connecting every 3 secs
  
