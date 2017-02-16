@@ -81,6 +81,7 @@ function serveIndex(root, options) {
     const stylesheet = opts.stylesheet || defaultStylesheet;
     const template = opts.template || defaultTemplate;
     const view = opts.view || 'tiles';
+    const remove = opts.remove || "";
     return function (ctx, next) {
         return co(function* () {
             if (ctx.method !== 'GET' && ctx.method !== 'HEAD') {
@@ -92,10 +93,19 @@ function serveIndex(root, options) {
             // parse URLs
             const url = parseUrl(ctx);
             const originalUrl = parseUrl.original(ctx);
-            const dir = decodeURIComponent(url.pathname);
-            const originalDir = decodeURIComponent(originalUrl.pathname);
+            let dir = decodeURIComponent(url.pathname);
+            dir = dir.replace(remove, '');
+            let originalDir = decodeURIComponent(originalUrl.pathname);
+            originalDir = originalDir.replace(remove, '');
             // join / normalize from root dir
             const path = normalize(join(rootPath, dir));
+            /*
+            console.log('p ', path);
+            console.log('dir ', dir);
+            console.log('rootPath ', rootPath);
+            console.log('ori  ', originalDir);
+            console.log('remove  ', remove);
+            */
             // null byte(s), bad request
             if (path.indexOf('\0') !== -1) {
                 throw createError(400);
@@ -146,7 +156,7 @@ function serveIndex(root, options) {
             if (!type) {
                 throw createError(406);
             }
-            yield serveIndex[mediaType[type]](ctx, files, next, originalDir, showUp, icons, path, view, template, stylesheet);
+            yield serveIndex[mediaType[type]](ctx, files, next, originalDir || remove, showUp, icons, path, view, template, stylesheet);
         });
     };
 }

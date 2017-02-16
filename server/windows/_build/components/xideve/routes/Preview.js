@@ -13,14 +13,31 @@ const views = require("co-views");
 const Router = require("koa-router");
 const _ = require("lodash");
 const path = require("path");
+const fs = require("fs");
+const index_1 = require("../../../server/index");
 const PreviewRouter = new Router({ prefix: '/xideve' });
-PreviewRouter.get('/:preview/:mount/*', (ctx) => __awaiter(this, void 0, void 0, function* () {
+PreviewRouter.get('/:preview/:mount/*', (ctx, next) => __awaiter(this, void 0, void 0, function* () {
     let render = null;
     const rtConfig = ctx.request.query.debug === 'true' ? 'debug' : 'release';
     const mount = ctx.params.mount;
     const filePath = ctx.params[0].replace('./', '/');
-    const dir = path.dirname(filePath).replace('.', '');
     const app = ctx.app;
+    const directoryService = app.directoryService;
+    const workspacePath = directoryService.resolve(mount, '', ctx.request);
+    let stat;
+    try {
+        stat = fs.statSync(path.join(workspacePath, filePath));
+    }
+    catch (err) {
+    }
+    if (!filePath || stat.isDirectory()) {
+        return index_1.serveIndex(workspacePath, {
+            remove: '/xideve/preview/' + mount + '/',
+            icons: true,
+            view: 'details'
+        })(ctx, next);
+    }
+    const dir = path.dirname(filePath).replace('.', '');
     if (app.options.type === Base_1.ELayout.OFFLINE_RELEASE) {
         render = views(path.join(app.path(Base_1.EEKey.NODE_ROOT), '/_build/components/xideve/views'), { ext: 'ejs' });
     }
@@ -61,7 +78,6 @@ PreviewRouter.get('/:preview/:mount/*', (ctx) => __awaiter(this, void 0, void 0,
     catch (e) {
         error = 'cant get file ' + mount + '://' + filePath;
         ctx.body = error;
-        console.error(error, e);
         return;
     }
     // fileContent.match(~\bbackground(-image)?\s*:(.*?)\(\s*('|")?(?<image>.*?)\3?\s*\)~i);
