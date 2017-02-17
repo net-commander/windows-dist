@@ -42,7 +42,7 @@ var dojoConfig ={
 		    'FileConsole':true,
 		    'deferredInstrumentation':false,
 		    'x-markdown':true,
-		    'xtrack':true
+		    'xtrack':false
         },
         tlmSiblingOfDojo: 0,
         parseOnLoad: false,
@@ -59,13 +59,6 @@ var dojoConfig ={
 var xcfConfig={
     "serviceUrl":"%RPC_URL%",
     "mixins":[
-        {
-            "declaredClass":'xtrack.manager.TrackingManager',
-            "mixin":{
-                "serviceUrl":"%RPC_URL%",
-                "singleton":true
-            }
-        },
         {
             "declaredClass":'xide.manager.ServerActionBase',
             "mixin":{

@@ -32,7 +32,7 @@ function __getLocation2(name,_default,offset){
             return name + '/' + offset;
         }
         if(_default === 'release'){
-            return '../build/' + name;
+            return name + '/build/';
         }
     }
 
@@ -81,7 +81,8 @@ require({
         },
         {
             name: 'dijit',
-            location: 'dijit',
+            location: __getLocation('dijit','release'),
+            _location: 'dijit',
             packageMap: {}
         },
         {
@@ -92,7 +93,7 @@ require({
         },
         {
             name: 'dojox',
-            location:'dojox',
+            location:__getLocation('dojox','release'),
             packageMap: {}
         },
         {
@@ -220,7 +221,8 @@ require({
         },
         {
             name: 'xace',
-            location: __getLocation2('xace','release','src'),
+            //location: __getLocation2('xace','release'),
+            location:"xace",
             packageMap: {}
         },
         {

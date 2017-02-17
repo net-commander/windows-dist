@@ -314,10 +314,6 @@
                         document.title = utils.pathinfo(xideveSettings.item.path).basename;
                     }
                     startx(headDfd, bootStrap, ctx, xideveSettings);
-                    if(window.__parent){
-                        console.error('tell parent');
-                        window.__parent.ready(ctx);
-                    }
                 });
             });
         });

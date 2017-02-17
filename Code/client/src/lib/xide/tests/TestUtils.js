@@ -1,10 +1,8 @@
 /** @module xide/tests/TestUtils **/
 define([
     "xdojo/declare",
-    "xide/factory",
-    "xide/types"
-], function (declare,factory,types) {
-
+    "xide/factory"
+], function (declare,factory) {
     var ctx = window.sctx;
     function createCIS(){
         var CIS = {
@@ -89,6 +87,7 @@ define([
         };
         return CIS;
     }
+
     /**
      *
      * @returns {{ctx: *, mainView: *, toolbar: *}}
@@ -98,11 +97,8 @@ define([
             ctx:ctx,
             mainView:ctx.mainView,
             toolbar:ctx.mainView.getToolbar()
-        }
+        };
     }
-
-
-
     /**
      *
      * @param title
@@ -110,7 +106,7 @@ define([
      * @param globalVariable
      * @returns {*|wcLayout}
      */
-    function createTab(title,panelType,globalVariable,target,location,ori){
+    function createTab(title,panelType,globalVariable){
 
         var ctx = window.sctx;
         var mainView = ctx.mainView;
@@ -125,20 +121,10 @@ define([
             docker.removePanel(window[globalVariable]);
         }
 
-
-        var args = {
+        var parent = docker.addTab(panelType , {
             title: title || 'TestTab',
             icon: 'fa-folder'
-            //target:target
-            //tabOrientation:ori || types.DOCKER.TAB.TOP,
-            //location:location || types.DOCKER.DOCK.STACKED
-        }
-
-        target && (args.target=target);
-        location && (args.location=location);
-        ori && (args.tabOrientation=ori);
-
-        var parent = docker.addTab(panelType ,args);
+        });
 
         window[globalVariable] = parent;
 
@@ -172,21 +158,24 @@ define([
             parentContainer: leftContainer,
             open:true,
             icon: 'fa-folder'
-        })
+        });
 
         window[globalVariable] = parent;
         parent.resize();
 
         return parent;
-    };
+    }
 
-    var Module = declare('xide.utils.TestUtils',null,{});
+    var Module = declare('xide.tests.TestUtils',null,{});
     Module.createTab = createTab;
     Module.createNavigationTab = createNavigationTab;
     Module.getContext = getContext;
 
 
     Module.normalize = function(id, toAbsMid){
+
+        console.error('normalize ',arguments);
+
         // summary:
         //	 Resolves id into a module id based on possibly-nested tenary expression that branches on has feature test value(s).
         //
@@ -221,8 +210,12 @@ define([
 
     Module.load = function(id, parentRequire, loaded){
         console.error('load',arguments);
-    }
+    };
+
+
     Module.createCIS = createCIS;
+
+
     return Module;
 });
 

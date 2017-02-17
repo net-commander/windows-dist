@@ -21,12 +21,11 @@ define([
     "davinci/library",
     "davinci/ve/metadata",
     "davinci/workbench/Preferences",
-    "dojox/html/_base",
-    'wcDocker/iframe'
+    "dojox/html/_base"
 ], function (require, declare, lang, domConstruct, query, Deferred, all,
              connect, windowUtils, factory, types,utils,has,
              Path, Runtime, Workbench, Library,
-             metadata, Preferences,html,iframe) {
+             metadata, Preferences) {
 
     var debugContent = false;
     /**
@@ -115,8 +114,12 @@ define([
             return packages;
         },
         _setSourcePostLoadRequires: function (source, callback, scope, newHtmlParams) {
+
+
             this._bootstrapModules = this.template.bootstrapModules;
+
             var fileName = source.fileName;
+
             
             // Remove any SCRIPT elements from model that include dojo.require() syntax
             // With Preview 4, user files must use AMD loader
@@ -157,6 +160,7 @@ define([
                 if (!dojoUrl) {
                     // #3839 Theme editor uses dojo from installed lib
                     // pull Dojo path from installed libs, if available
+                    var context = this;
                     dojo.some(Library.getUserLibs(resourceBase.toString()), function (lib) {
                         if (lib.id === "dojo") {
                         }
@@ -186,43 +190,22 @@ define([
                 var containerNode = this.containerNode;
                 containerNode.style.overflow = "hidden";
 
-                var editor = this.editor;
-                var designPane =editor._designCP;
-
-
-
-
-/*
-                var $container = $('<div style="position:absolute;top:0;left:0;right:0;bottom:0;"></div>');
-                designPane.layout().addItem($container);
-
-                var iFrame = new iframe($container, designPane);
-                iFrame.openURL("http://localhost/projects/x4mm/Code/xapp/xcf/index.php?view=smdCall&debug=true&run=run-release-debug&protocols=true&xideve=true&drivers=true&plugins=false&xblox=debug&files=true&dijit=debug&xdocker=debug&xfile=debug&davinci=debug&dgrid=debug&xgrid=debug&xace=debug&admin=true&wcDocker=debug&xaction=debug&dojox=debug&service=XIDE_VE_Service.view&file=d29ya3NwYWNlX3VzZXIlM0ElMkYlMkZBLUFDb25kU3RhdGUuZGh0bWw=&callback=asdf&raw=html&attachment=0&send=1&user=e741198e1842408aa660459240d430a6&sig=7c2bf37f60a68a7af01305422ff178ba6f9f1963&template=view.template.html&css=aHR0cDovL2xvY2FsaG9zdC9wcm9qZWN0cy94NG1tL0NvZGUveGFwcC94Y2YvaW5kZXgucGhwP3ZpZXc9c21kQ2FsbCZkZWJ1Zz10cnVlJnJ1bj1ydW4tcmVsZWFzZS1kZWJ1ZyZwcm90b2NvbHM9dHJ1ZSZ4aWRldmU9dHJ1ZSZkcml2ZXJzPXRydWUmcGx1Z2lucz1mYWxzZSZ4YmxveD1kZWJ1ZyZmaWxlcz10cnVlJmRpaml0PWRlYnVnJnhkb2NrZXI9ZGVidWcmeGZpbGU9ZGVidWcmZGF2aW5jaT1kZWJ1ZyZkZ3JpZD1kZWJ1ZyZ4Z3JpZD1kZWJ1ZyZ4YWNlPWRlYnVnJmFkbWluPXRydWUmd2NEb2NrZXI9ZGVidWcmeGFjdGlvbj1kZWJ1ZyZkb2pveD1kZWJ1ZyZzZXJ2aWNlPVhDT01fRGlyZWN0b3J5X1NlcnZpY2UuZ2V0MiZjYWxsYmFjaz1hc2RmJnJhdz1odG1sJmF0dGFjaG1lbnQ9MCZzZW5kPTEmbW91bnQ9L3dvcmtzcGFjZV91c2VyJnBhdGg9Li9BLUFDb25kU3RhdGUuY3Nz&baseOffset=.&userDirectory=%2FPMaster%2Fprojects%2Fx4mm%2Fuser%2F%2F");
-
-                iFrame.onLoaded(function(){
-                    var _win  = iFrame._window;
-                    var doc = _win.document;
-                });
-
-                return;
-*/
-
                 var frameParentNode = dojo.byId('xIFrames') || containerNode;
                 this.iframeattrs.style = "display:block;width:100%;height:100%;position:absolute;";
                 var frame = domConstruct.create("iframe", this.iframeattrs, frameParentNode);
-
-                console.log('did create iframe',[frame,frameParentNode]);
-
-                //$(frame).css('display','none');
+                $(frame).css('display','none');
                 frame.dvContext = this;
                 this.frameNode = frame;
                 /* this defaults to the base page */
                 var realUrl = Workbench.location() + "/";
+
+                /* change the base if needed */
+
                 if (this.baseURL) {
                     realUrl = this.baseURL;
                 }
 
-                var doc = frame.contentWindow.document,
+                var doc = frame.contentDocument || frame.contentWindow.document,
                     win = windowUtils.get(doc),
                     subs = {
                         baseUrl: realUrl
@@ -247,17 +230,39 @@ define([
                     //subs.requireUrl = realUrl + 'ibm-js/requirejs/require.js';
                     utils.mixin(subs,thiz.template.templateVariables);
 
+
                     var VFS_GET_URL = thiz.editor.ctx.getResourceManager().getVariable('VFS_GET_URL');
                     var item = thiz.editor.item;
                     subs['APP_CSS'] = VFS_GET_URL + '' + item.mount + '&path=' + encodeURIComponent(subs.SCENE_CSS);
                     subs.path = item.path;
                     subs.mount = item.mount;
                     subs['workspace_user'] = VFS_GET_URL + '' + item.mount + '&path=';
+
+                    //console.log('workspace_user : ' + subs['workspace_user']);
+                    /*
+                     source.themeCssFiles = [];
+                     source.themeCssFiles.push(subs.APP_CSS);
+
+                     if (source.themeCssFiles) { // css files need to be added to doc before body content
+                     subs.themeCssFiles = source.themeCssFiles.map(function (file) {
+                     return '<link rel="stylesheet" type="text/css" href="' + file + '">';
+                     }).join('');
+                     }
+                     */
+
+                    //console.log('themeCssFiles',subs.themeCssFiles);
+
                     subs.themeCssFiles = '';
+
+                    //console.error('app css ' + subs['APP_CSS']);
+
                     window["loading" + thiz._id] = function (parser, htmlUtil) {
+
+                        //console.log('requires ready, loading' + thiz._id);
                         var callbackData = thiz;
                         try {
-                            var body = (thiz.rootNode = doc.body);
+                            var win = windowUtils.get(doc),
+                                body = (thiz.rootNode = doc.body);
 
                             if (!body) {
                                 // Should never get here if domReady! fired?  Try again.
@@ -274,6 +279,8 @@ define([
                             body.id = "myapp";
                             lang.mixin(body.style,thiz.template.bodyStyle);
                             body.className = thiz.template.bodyTheme;
+
+
                             /*
 
                              // Kludge to enable full-screen layout widgets, like BorderContainer.
@@ -343,22 +350,20 @@ define([
                         thiz._continueLoading(data, callback, callbackData, scope);
                     }.bind(thiz);
 
-                    try {
-                        doc.open();
-                        var content = utils.replace(template, null, subs, {
-                            begin: '{{',
-                            end: '}}'
-                        });
+                    doc.open();
 
-                        debugContent && console.log('write doc content' + content);
+                    //var template = has('debug') ? newFileTemplate : newFileTemplateRelease;
 
-                        doc.write(content);
-                        doc.close();
-                        //console.log('did wrote content document',doc);
-                        ///debugger;
-                    }catch(e){
-                        console.error('error doc');
-                    }
+                    //template = newFileTemplateRelease;
+
+                    var content = utils.replace(template,null,subs,{
+                        begin:'{{',
+                        end:'}}'
+                    });
+
+                    debugContent && console.log('write doc content' + content);
+                    doc.write(content);
+                    doc.close();
 
                     // intercept BS key - prompt user before navigating backwards
                     connect.connect(doc.documentElement, "onkeypress", function (e) {
@@ -379,265 +384,15 @@ define([
                     }));
                     //window["loading" + thiz._id]();
                 };
+
                 this.ctx.getWidgetManager()._getText(has('debug') ? _require.toUrl("xideve/delite/newfile.template.html") : _require.toUrl("xideve/delite/newfile.template.release.html"),{sync:false}).then(function(template){
                     complete(template);
                 });
-            }
-        },
-        _setSourcePostLoadRequires_bak: function (source, callback, scope, newHtmlParams) {
 
 
-            this._bootstrapModules = this.template.bootstrapModules;
-
-            var fileName = source.fileName;
 
 
-            // Remove any SCRIPT elements from model that include dojo.require() syntax
-            // With Preview 4, user files must use AMD loader
-            source.find({elementType: 'HTMLElement', tag: 'script'}).forEach(function (scriptTag) {
-                for (var j = 0; j < scriptTag.children.length; j++) {
-                    var text = scriptTag.children[j].getText();
-                    if (text.indexOf('dojo.require') >= 0) {
-                        scriptTag.parent.removeChild(scriptTag);
-                        break;
-                    }
-                }
-            });
 
-            /*
-             source.find({elementType: 'HTMLElement', tag: 'style'}).forEach(function (styleTag) {
-             console.log('found style element ',styleTag);
-             });
-             */
-
-            var data = this._parse(source);
-            if (this.frameNode) {
-
-                if (!this.getGlobal()) {
-                    console.warn("Context._setContent called during initialization");
-                }
-                // tear down old error message, if any
-                query(".loading", this.frameNode.parentNode).orphan();
-                // frame has already been initialized, changing content (such as changes from the source editor)
-                this._continueLoading(data, callback, this, scope);
-            } else {
-                // initialize frame
-                var dojoUrl;
-
-                /* get the base path, removing the file extension.  the base is used in the library call below
-                 *
-                 */
-                var resourceBase = this.getBase();
-                if (!dojoUrl) {
-                    // #3839 Theme editor uses dojo from installed lib
-                    // pull Dojo path from installed libs, if available
-                    var context = this;
-                    dojo.some(Library.getUserLibs(resourceBase.toString()), function (lib) {
-                        if (lib.id === "dojo") {
-                        }
-                        return false;
-                    }, this);
-                    // if still not defined, use app's Dojo (which may cause other issues!)
-                    if (!dojoUrl) {
-                        dojoUrl = this.getDojoUrl();
-                        console.warn("Falling back to use workbench's Dojo in the editor iframe");
-                    }
-                }
-
-                // Make all custom widget module definitions relative to dojo.js
-                var currentFilePath = this.getFullResourcePath();
-                var currentFilePathFolder = currentFilePath.getParentPath();
-                var dojoPathRelative = new Path(dojoUrl);
-                var dojoPath = currentFilePathFolder.append(dojoPathRelative);
-                var dojoFolderPath = dojoPath.getParentPath();
-                var workspaceUrl = Runtime.getUserWorkspaceUrl();
-                for (var i = 0; i < this._customWidgetPackages.length; i++) {
-                    var cwp = this._customWidgetPackages[i];
-                    var relativePathString = cwp.location.substr(workspaceUrl.length);
-                    var relativePath = new Path(relativePathString);
-                    cwp.location = relativePath.relativeTo(dojoFolderPath).toString();
-                }
-
-                var containerNode = this.containerNode;
-                containerNode.style.overflow = "hidden";
-
-                var frameParentNode = dojo.byId('xIFrames') || containerNode;
-                this.iframeattrs.style = "display:block;width:100%;height:100%;position:absolute;";
-                var frame = domConstruct.create("iframe", this.iframeattrs, frameParentNode);
-                console.log('did create iframe',[frame,frameParentNode]);
-                //$(frame).css('display','none');
-                frame.dvContext = this;
-                this.frameNode = frame;
-                /* this defaults to the base page */
-                var realUrl = Workbench.location() + "/";
-
-                /* change the base if needed */
-
-                if (this.baseURL) {
-                    realUrl = this.baseURL;
-                }
-
-                var doc = frame.contentWindow.document,
-                    win = windowUtils.get(doc),
-                    subs = {
-                        baseUrl: realUrl
-                    },
-                    thiz = this;
-
-                var _require = require;
-
-                var complete = function(template) {
-                    if (dojoUrl) {
-                        //subs.dojoUrl = dojoUrl;
-                        subs.id = thiz._id;
-                    }
-
-
-                    subs.styles = data.styles || "";
-
-                    subs.SCENE_CSS = fileName.replace('.dhtml','.css');
-
-                    subs.SCENE_CSS = subs.SCENE_CSS.replace('.html','.css');
-
-                    //subs.requireUrl = realUrl + 'ibm-js/requirejs/require.js';
-                    utils.mixin(subs,thiz.template.templateVariables);
-
-
-                    var VFS_GET_URL = thiz.editor.ctx.getResourceManager().getVariable('VFS_GET_URL');
-                    var item = thiz.editor.item;
-                    subs['APP_CSS'] = VFS_GET_URL + '' + item.mount + '&path=' + encodeURIComponent(subs.SCENE_CSS);
-                    subs.path = item.path;
-                    subs.mount = item.mount;
-                    subs['workspace_user'] = VFS_GET_URL + '' + item.mount + '&path=';
-                    subs.themeCssFiles = '';
-                    window["loading" + thiz._id] = function (parser, htmlUtil) {
-                        var callbackData = thiz;
-                        try {
-                            var body = (thiz.rootNode = doc.body);
-
-                            if (!body) {
-                                // Should never get here if domReady! fired?  Try again.
-                                thiz._waiting = thiz._waiting || 0;
-                                if (thiz._waiting++ < 10) {
-                                    setTimeout(window["loading" + thiz._id], 500);
-                                    console.log("waiting for doc.body");
-                                    return;
-                                }
-                                throw "doc.body is null";
-                            }
-                            delete window["loading" + thiz._id];
-
-                            body.id = "myapp";
-                            lang.mixin(body.style,thiz.template.bodyStyle);
-                            body.className = thiz.template.bodyTheme;
-                            /*
-
-                             // Kludge to enable full-screen layout widgets, like BorderContainer.
-                             // What possible side-effects could there be setting 100%x100% on every document?
-                             // See note above about margin:0 temporary hack
-                             body.style.width = "100%";
-                             body.style.height = "100%";
-                             // Force visibility:visible because CSS stylesheets in dojox.mobile
-                             // have BODY { visibility:hidden;} only to set visibility:visible within JS code.
-                             // Maybe done to minimize flickering. Will follow up with dojox.mobile
-                             // folks to find out what's up. See #712
-                             body.style.visibility = "visible";
-                             body.style.margin = "0";
-                             */
-
-                            body._edit_context = this; // TODO: find a better place to stash the root context
-
-                            var requires = thiz._bootstrapModules.split(",");
-
-                            //var _doc = win.document;
-                            /*
-                             var script = _doc.createElement('script');
-                             script.type = 'text/javascript';
-                             script.src = realUrl + 'ibm-js/requirejs/require.js';
-
-                             script.onload = script.onreadystatechange = function(){
-                             thiz._continueLoading(data, callback, callbackData, scope);
-                             };*/
-
-                            //_doc.getElementsByTagName('head')[0].appendChild(script);
-
-                            /*
-                             if (requires.indexOf('dijit/dijit-all') != -1) {
-                             // this is needed for FF4 to keep dijit.editor.RichText from throwing at line 32 dojo 1.5
-                             win.dojo._postLoad = true;
-                             }
-                             */
-
-                            // see Dojo ticket #5334
-                            // If you do not have this particular dojo.isArray code, DataGrid will not render in the tool.
-                            // Also, any array value will be converted to {0: val0, 1: val1, ...}
-                            // after swapping back and forth between the design and code views twice. This is not an array!
-
-                            if(data.scripts){
-                                _.each(data.scripts,function(url){
-                                    thiz.addJavaScriptSrc(url,false,null,true);
-                                });
-                            }
-                            /*
-                             win.require("dojo/_base/lang").isArray = win.dojo.isArray = function (it) {
-                             return it && Object.prototype.toString.call(it) == "[object Array]";
-                             };
-                             */
-
-                            // Add module paths for all folders in lib/custom (or wherever custom widgets are stored)
-                            /*
-                             win.require({
-                             packages: thiz._customWidgetPackages
-                             });*/
-
-                        } catch (e) {
-                            console.error(e.stack || e);
-                            // recreate the Error since we crossed frames
-                            callbackData = new Error(e.message, e.fileName, e.lineNumber);
-                            utils.mixin(callbackData, e);
-                        }
-                        thiz._continueLoading(data, callback, callbackData, scope);
-                    }.bind(thiz);
-
-                    try {
-                        doc.open();
-                        var content = utils.replace(template, null, subs, {
-                            begin: '{{',
-                            end: '}}'
-                        });
-
-                        debugContent && console.log('write doc content' + content);
-
-                        doc.write(content);
-                        doc.close();
-                        //console.log('did wrote content document',doc);
-                        ///debugger;
-                    }catch(e){
-                        console.error('error doc');
-                    }
-
-                    // intercept BS key - prompt user before navigating backwards
-                    connect.connect(doc.documentElement, "onkeypress", function (e) {
-                        if (e.charOrCode == 8) {
-                            window.davinciBackspaceKeyTime = win.davinciBackspaceKeyTime = Date.now();
-                        }
-                    });
-                    // add key press listener
-                    connect.connect(doc.documentElement, "onkeydown", dojo.hitch(thiz, function (e) {
-                        // we let the editor handle stuff for us
-                        this.editor.handleKeyEvent(e);
-                    }));
-
-                    // add key press listener
-                    connect.connect(doc.documentElement, "onkeyup", dojo.hitch(thiz, function (e) {
-                        // we let the editor handle stuff for us
-                        this.editor.handleKeyEvent(e);
-                    }));
-                    //window["loading" + thiz._id]();
-                };
-                this.ctx.getWidgetManager()._getText(has('debug') ? _require.toUrl("xideve/delite/newfile.template.html") : _require.toUrl("xideve/delite/newfile.template.release.html"),{sync:false}).then(function(template){
-                    complete(template);
-                });
             }
         },
         //FIXME: private/protected?
@@ -925,7 +680,7 @@ define([
             var cache = this._loadFileDojoTypesCache;
             var doc = this.getDocument();
             for (var id in cache) {
-                var node = doc.querySelectorAll('.' + id)[0];
+                node = doc.querySelectorAll('.' + id)[0];
                 if (node) {
                     node.className = node.className.replace(' ' + id, '');
                     node.setAttribute('data-dojo-type', cache[id]);
@@ -945,15 +700,10 @@ define([
                 });
             } catch(e) {
                 failureInfo = e;
-                failureInfo = new Error(e.message, e.fileName, e.lineNumber);
-                lang.mixin(failureInfo, e);
-                logError(e,'error loading document');
                 // recreate the Error since we crossed frames
-        //			failureInfo = new Error(e.message, e.fileName, e.lineNumber);
+//			failureInfo = new Error(e.message, e.fileName, e.lineNumber);
 //			lang.mixin(failureInfo, e);
-
             } finally {
-                console.log('got loaded');
                 if (callback) {
                     if (promise) {
                         promise.then(function(){
@@ -965,5 +715,6 @@ define([
                 }
             }
         }
+
     });
 });

@@ -2734,13 +2734,7 @@ define('xide/types/Types',[
         ON_REMOVE_CONTAINER: 'onRemoveContainer',
         ON_CONTAINER_REPLACED: 'onContainerReplaced',
         ON_CONTAINER_SPLIT: 'onContainerSplit',
-        ON_RENDER_WELCOME_GRID_GROUP:'onRenderWelcomeGridGroup',
-
-        ON_DND_SOURCE_OVER:'/dnd/source/over',
-        ON_DND_START:'/dnd/start',
-        ON_DND_DROP_BEFORE:'/dnd/drop/before',
-        ON_DND_DROP:'/dnd/drop',
-        ON_DND_CANCEL:'/dnd/cancel'
+        ON_RENDER_WELCOME_GRID_GROUP:'onRenderWelcomeGridGroup'
     };
     /**
      * To be moved
@@ -4484,11 +4478,7 @@ define('dgrid/Tree',[
 				hasTransitionend = has('transitionend'),
 				promise;
 
-
 			target = row.element;
-            if(!target){
-                return;
-            }
 			target = target.className.indexOf('dgrid-expando-icon') > -1 ? target :
 				querySelector('.dgrid-expando-icon', target)[0];
 
@@ -4933,28 +4923,34 @@ define('xgrid/TreeRenderer',[
     './Renderer',
     'dgrid/Tree',
     "dojo/keys",
+    "xide/utils",
     "dojo/on"
-], function (declare, Renderer, Tree, keys, on) {
+], function (declare,Renderer,Tree,keys,utils,on) {
 
-    function KEYBOARD_HANDLER(evt) {
+
+    function KEYBOARD_HANDLER(evt){
+
         this.onTreeKey(evt);
         var thiz = this;
-        if (thiz.isThumbGrid) {
+        if(thiz.isThumbGrid){
             return;
         }
-        if (evt.keyCode == keys.LEFT_ARROW || evt.keyCode == keys.RIGHT_ARROW || evt.keyCode == keys.HOME || evt.keyCode == keys.END) {
-        } else {
+        if(evt.keyCode==keys.LEFT_ARROW ||evt.keyCode==keys.RIGHT_ARROW || evt.keyCode==keys.HOME || evt.keyCode==keys.END){
+        }else{
             return;
         }
         var target = evt.target;
-        if (target) {
-            if (target.className.indexOf('InputInner') != -1 || target.className.indexOf('input') != -1 || evt.target.type === 'text') {
+        if(target){
+            if(
+                target.className.indexOf('InputInner') != -1 ||
+                target.className.indexOf('input') != -1 ||
+                evt.target.type ==='text'
+            )
                 return;
-            }
         }
 
         var row = this.row(evt);
-        if (!row || !row.data) {
+        if(!row || !row.data){
             return;
         }
         var data = row.data,
@@ -4963,30 +4959,31 @@ define('xgrid/TreeRenderer',[
             storeItem = store.getSync(data[store.idProperty]);
 
         //old back compat: var children = data.getChildren ? data.getChildren() :  storeItem && storeItem.children ? null : store.children ? store.children(storeItem) : null;
-        var children = data.getChildren ? data.getChildren() : storeItem && storeItem.children ? storeItem.children : null;
+        var children = data.getChildren ? data.getChildren() :  storeItem && storeItem.children ? storeItem.children : null;
 
         //xideve hack
         var wasStoreBased = false;
-        if (children == null && store.getChildrenSync && storeItem) {
+        if(children==null && store.getChildrenSync && storeItem){
             children = store.getChildrenSync(storeItem);
-            if (children && children.length) {
+            if(children && children.length) {
                 wasStoreBased = true;
-            } else {
+            }else{
                 children = null;
             }
         }
 
         var isFolder = storeItem ? (storeItem.isDir || storeItem.directory) : false;
-        if (!isFolder && wasStoreBased && children) {
+        if(!isFolder && wasStoreBased && children){
             isFolder = true;
         }
         //xideve hack end
 
+
         var firstChild = children ? children[0] : false,
             focused = this._focusedNode,
-            last = focused ? this.down(focused, children ? children.length : 0, true) : null,
+            last = focused ? this.down(focused, children ? children.length : 0, true) :null,
             loaded = ( storeItem._EX === true || storeItem._EX == null ),
-            selection = this.getSelection ? this.getSelection() : [storeItem],
+            selection = this.getSelection ? this.getSelection () : [storeItem],
             down = this.down(focused, -1, true),
             up = this.down(focused, 1, true),
             defaultSelectArgs = {
@@ -4995,105 +4992,99 @@ define('xgrid/TreeRenderer',[
                 delay: 1
             };
 
-        if (firstChild && firstChild._reference) {
+        if(firstChild && firstChild._reference){
             var _b = store.getSync(firstChild._reference);
-            if (_b) {
+            if(_b){
                 firstChild = _b;
             }
         }
-        if (evt.keyCode == keys.END) {
-            if (isExpanded && isFolder && last && last.element !== focused) {
+        if(evt.keyCode==keys.END) {
+            if(isExpanded && isFolder && last && last.element !==focused){
                 this.select(last, null, true, defaultSelectArgs);
                 return;
             }
         }
 
-        function expand(what, expand) {
+        function expand(what,expand){
             _.each(what, function (item) {
-                var _row = thiz.row(item);
-                if (_row && _row.element) {
+                var _row  = thiz.row(item);
+                if(_row && _row.element) {
                     thiz.expand(_row, expand, true);
                 }
             });
         }
 
-        if (evt.keyCode == keys.LEFT_ARROW) {
+        if(evt.keyCode==keys.LEFT_ARROW){
             evt.preventDefault();
-            if (data[store.parentField]) {
+            if (data[store.parentField]){
                 var item = row.data;
                 if (!isExpanded) {
                     var parent = store.getSync(item[store.parentField]);
                     var parentRow = parent ? this.row(parent) : null;
                     //we select the parent only if its rendered at all
-                    if (parent && parentRow.element) {
+                    if (parent && parentRow.element ) {
                         return this.select([parent], null, true, defaultSelectArgs);
-                    } else {
-                        if (down) {
+                    }else{
+                        if(down) {
                             return this.select(down, null, true, defaultSelectArgs);
-                        } else {
+                        }else {
                             on.emit(this.contentNode, "keydown", {keyCode: 36, force: true});
                         }
                     }
                 }
             }
             if (row) {
-                if (isExpanded) {
-                    expand(selection, false);
-                } else {
+                if(isExpanded) {
+                    expand(selection,false);
+                }else{
                     this.select(down, null, true, defaultSelectArgs);
                 }
             }
         }
 
-        if (evt.keyCode == keys.RIGHT_ARROW) {
+        if(evt.keyCode==keys.RIGHT_ARROW){
             evt.preventDefault();
             // empty folder:
-            if (isFolder && loaded && isExpanded && !firstChild) {
+            if(isFolder && loaded && isExpanded && !firstChild){
                 //go to next
-                if (up) {
+                if(up) {
                     return this.select(up, null, true, defaultSelectArgs);
                 }
             }
 
-            if (loaded && isExpanded) {
+            if(loaded && isExpanded){
                 firstChild && this.select([firstChild], null, true, defaultSelectArgs);
-            } else {
+            }else{
                 //has children or not loaded yet
-                if (firstChild || !loaded || isFolder) {
-                    expand(selection, true);
-                } else {
+                if(firstChild || !loaded || isFolder) {
+                    expand(selection,true);
+                }else{
                     //case on an cell without no children: select
                     up && this.select(up, null, true, defaultSelectArgs);
                 }
             }
         }
     }
-
     /**
      *
      * @class module:xgrid/TreeRenderer
      * @extends module:xgrid/Renderer
      */
     var Implementation = {
-        _getLabel: function () {
-            return "Tree";
-        },
-        _getIcon: function () {
-            return "fa-tree";
-        },
-        deactivateRenderer: function (renderer) {
-        },
-        activateRenderer: function () {
+        _getLabel:function(){ return "Tree"; },
+        _getIcon:function(){ return "fa-tree"; },
+        deactivateRenderer:function(renderer){},
+        activateRenderer:function(){
             this._showHeader(true);
         },
-        __getParent: function (item) {
-            if (item && item.getParent) {
+        __getParent:function(item){
+            if(item && item.getParent){
                 var _parent = item.getParent();
-                if (_parent) {
+                if(_parent){
                     var row = this.row(_parent);
-                    if (row.element) {
+                    if(row.element){
                         return this.__getParent(_parent);
-                    } else {
+                    }else{
                         return _parent || item;
                     }
                 }
@@ -5103,27 +5094,27 @@ define('xgrid/TreeRenderer',[
         /**
          * @TODO: move to xfile
          */
-        getCurrentFolder: function () {
+        getCurrentFolder:function(){
             return this.__getParent(this.getRows()[0]);
         },
         _isExpanded: function (item) {
             return !!this._expanded[this.row(item).id];
         },
-        onTreeKey: function () {
+        onTreeKey:function(){
             this.inherited(arguments);
         },
-        startup: function () {
-            if (this._started) {
+        startup:function(){
+            if(this._started){
                 return;
             }
             var res = this.inherited(arguments);
-            this.on("keydown", KEYBOARD_HANDLER.bind(this));
+            this.on("keydown",KEYBOARD_HANDLER.bind(this));
             return res;
         }
     };
 
     //package via declare
-    var Module = declare('xgrid.TreeRenderer', [Renderer, Tree], Implementation);
+    var Module = declare('xgrid.TreeRenderer',[Renderer,Tree],Implementation);
     Module.Implementation = Implementation;
     Module.KEYBOARD_HANDLER = KEYBOARD_HANDLER;
     return Module;
@@ -9178,7 +9169,9 @@ define('xide/widgets/_Widget',[
     'xide/registry',
     'xlang/i18'
 ], function (declare,dcl,utils,EventedMixin,registry,i18) {
+    
     var forwardMethods = ['resize'];
+
     function _resize(what){
         try {
             if (typeof what['resize'] === "function" && what._started) {
@@ -9206,6 +9199,7 @@ define('xide/widgets/_Widget',[
             }
         },this);
     }
+
 
     /**
      * @class module:xide/widgets/_Widget
@@ -10202,6 +10196,36 @@ define('xide/mixins/ActionMixin',[
         setActionStore:function(store){
             return this.store = store;
         },
+        _publishActionWidget:function(widget,action,parent,visibility){
+            var thiz = this;
+            action._emit(thiz.visibility + '_WIDGET_CREATED',{
+                parent:parent,
+                widget:widget,
+                owner:thiz
+            });
+
+            action._emit('WIDGET_CREATED',{
+                parent:parent,
+                widget:widget,
+                visibility:thiz.visibility,
+                owner:thiz
+            });
+
+            if (visibility){
+                visibility.widget = widget;
+                visibility.widget.visibility = thiz.visibility;
+            }
+
+            if(action.addReference)
+            {
+                action.addReference(widget, {
+                    properties: {
+                        "value": true,
+                        "disabled":true
+                    }
+                }, true);
+            }
+        },
         /**
          * Sort
          * @param groups
@@ -10238,7 +10262,9 @@ define('xide/mixins/ActionMixin',[
          * @param visibility {string|null}
          */
         clearActions: function (visibility,_store) {
+
             visibility = visibility || this.visibility;
+
             var store = _store || this.getActionStore(),
                 actions = store.data;
 
@@ -10888,20 +10914,18 @@ define('xide/utils/ObjectUtils',[
     'require',
     "dojo/Deferred",
     'xide/lodash'
-], function (utils, require, Deferred, lodash) {
+], function (utils, require, Deferred,lodash) {
     var _debug = false;
     "use strict";
 
-    utils.delegate = (function () {
+    utils.delegate=(function(){
         // boodman/crockford delegation w/ cornford optimization
-        function TMP() {
-        }
-
-        return function (obj, props) {
+        function TMP(){}
+        return function(obj, props){
             TMP.prototype = obj;
             var tmp = new TMP();
             TMP.prototype = null;
-            if (props) {
+            if(props){
                 lang._mixin(tmp, props);
             }
             return tmp; // Object
@@ -10913,23 +10937,23 @@ define('xide/utils/ObjectUtils',[
     //  Loader utils
     //
     //////////////////////////////////////////////////////////////////////////////////////////////
-    utils.debounce = function (who, methodName, _function, delay, options, now, args) {
-        var _place = who[methodName + '_debounced'];
-        if (!_place) {
-            _place = who[methodName + '_debounced'] = lodash.debounce(_function, delay, options);
+    utils.debounce = function(who,methodName,_function,delay,options,now,args){
+        var _place = who[methodName+'_debounced'];
+        if(!_place){
+            _place = who[methodName+'_debounced'] =  lodash.debounce(_function, delay,options);
         }
-        if (now === true) {
-            if (!who[methodName + '_debouncedFirst']) {
-                who[methodName + '_debouncedFirst'] = true;
-                _function.apply(who, args);
+        if(now===true){
+            if(!who[methodName+'_debouncedFirst']){
+                who[methodName+'_debouncedFirst']=true;
+                _function.apply(who,args);
             }
         }
         return _place();
     };
 
 
-    utils.pluck = function (items, prop) {
-        return lodash.map(items, prop);
+    utils.pluck=function(items,prop){
+        return lodash.map(items,prop);
     };
 
     /**
@@ -10937,9 +10961,9 @@ define('xide/utils/ObjectUtils',[
      * @param filename
      * @param text
      */
-    utils.download = function (filename, text) {
+    utils.download  = function(filename, text){
         var element = document.createElement('a');
-        text = lodash.isString(text) ? text : JSON.stringify(text, null, 2);
+        text = lodash.isString(text) ? text : JSON.stringify(text,null,2);
         element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
         element.setAttribute('download', filename);
         element.style.display = 'none';
@@ -10967,7 +10991,7 @@ define('xide/utils/ObjectUtils',[
      * Safe require.toUrl
      * @param mid {string}
      */
-    utils.toUrl = function (mid) {
+    utils.toUrl = function(mid){
         var _require = require;
         //make sure cache bust is off otherwise it appends ?time
         _require({
@@ -11003,8 +11027,8 @@ define('xide/utils/ObjectUtils',[
                     });
                     return deferred.promise;
                 }
-            } catch (e) {
-                _debug && console.error('error in requiring ' + mixed, e);
+            }catch(e){
+                _debug &&  console.error('error in requiring '+mixed,e);
             }
             return result;
 
@@ -11087,7 +11111,7 @@ define('xide/utils/ObjectUtils',[
      * Internals
      */
 
-        //cache
+    //cache
     var toStr = Object.prototype.toString,
         _hasOwnProperty = Object.prototype.hasOwnProperty;
 
@@ -11106,7 +11130,7 @@ define('xide/utils/ObjectUtils',[
      * @returns {*}
      */
     function getKey(key) {
-        var intKey = parseInt(key, 10);
+        var intKey = parseInt(key,10);
         if (intKey.toString() === key) {
             return intKey;
         }
@@ -11472,35 +11496,34 @@ define('xide/utils/ObjectUtils',[
     //
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    /**
-     * Clones objects (including DOM nodes) and all children.
-     * Warning: do not clone cyclic structures.
-     * @param src {*} The object to clone.
-     * @returns {*}
-     */
-    utils.clone = function (src) {
-        if (!src || typeof src != "object" || utils.isFunction(src)) {
+    utils.clone=function(/*anything*/ src){
+        // summary:
+        // Clones objects (including DOM nodes) and all children.
+        // Warning: do not clone cyclic structures.
+        // src:
+        // The object to clone
+        if(!src || typeof src != "object" || utils.isFunction(src)){
             // null, undefined, any non-object, or function
             return src; // anything
         }
-        if (src.nodeType && "cloneNode" in src) {
+        if(src.nodeType && "cloneNode" in src){
             // DOM Node
             return src.cloneNode(true); // Node
         }
-        if (src instanceof Date) {
+        if(src instanceof Date){
             // Date
             return new Date(src.getTime()); // Date
         }
-        if (src instanceof RegExp) {
+        if(src instanceof RegExp){
             // RegExp
             return new RegExp(src); // RegExp
         }
         var r, i, l;
-        if (utils.isArray(src)) {
+        if(utils.isArray(src)){
             // array
             r = [];
-            for (i = 0, l = src.length; i < l; ++i) {
-                if (i in src) {
+            for(i = 0, l = src.length; i < l; ++i){
+                if(i in src){
                     r.push(utils.clone(src[i]));
                 }
             }
@@ -11508,7 +11531,7 @@ define('xide/utils/ObjectUtils',[
             // }else if(d.isFunction(src)){
             // // function
             // r = function(){ return src.apply(this, arguments); };
-        } else {
+        }else{
             // generic objects
             r = src.constructor ? new src.constructor() : {};
         }
@@ -11527,7 +11550,7 @@ define('xide/utils/ObjectUtils',[
      * @returns {object} dest, as modified
      * @private
      */
-    utils._mixin = function (dest, source, copyFunc) {
+    utils._mixin=function (dest, source, copyFunc) {
         var name, s, i, empty = {};
         for (name in source) {
             // the (!(name in empty) || empty[name] !== s) condition avoids copying properties in "source"
@@ -11576,12 +11599,13 @@ define('xide/utils/ObjectUtils',[
      *
      */
     utils.mixin = function (dest, sources) {
-        if (sources) {
+        if(sources) {
+
             if (!dest) {
-                dest = {};
-            }
+                dest = {};            }
+
             var l = arguments.length;
-            for (var i = 1; i < l; i++) {
+            for (var i = 1 ; i < l; i++) {
                 utils._mixin(dest, arguments[i]);
             }
             return dest; // Object
@@ -11612,7 +11636,7 @@ define('xide/utils/ObjectUtils',[
      * @param what
      * @returns {*}
      */
-    utils.isArray = function (what) {
+    utils.isArray=function(what){
         return lodash.isArray(what);
     };
     /**
@@ -11620,7 +11644,7 @@ define('xide/utils/ObjectUtils',[
      * @param what
      * @returns {*}
      */
-    utils.isObject = function (what) {
+    utils.isObject=function(what){
         return lodash.isObject(what);
     };
     /**
@@ -11628,7 +11652,7 @@ define('xide/utils/ObjectUtils',[
      * @param what
      * @returns {*}
      */
-    utils.isString = function (what) {
+    utils.isString=function(what){
         return lodash.isString(what);
     };
     /**
@@ -11636,104 +11660,22 @@ define('xide/utils/ObjectUtils',[
      * @param what
      * @returns {*}
      */
-    utils.isNumber = function (what) {
+    utils.isNumber=function(what){
         return lodash.isNumber(what);
     };
     /**
-     * Return true if it is a Function
+     *
      * @param it
      * @returns {*}
      */
-    utils.isFunction = function (it) {
+    utils.isFunction=function(it){
+        // summary:
+        // Return true if it is a Function
+        // it: anything
+        // Item to test.
         return lodash.isFunction(it);
     };
     return utils;
-});
-define('xide/cache/Circular',[], function () {
-
-    function CircularBuffer(capacity){
-        if(!(this instanceof CircularBuffer))return new CircularBuffer(capacity);
-        if(typeof capacity=="object"&&
-            Array.isArray(capacity["_buffer"])&&
-            typeof capacity._capacity=="number"&&
-            typeof capacity._first=="number"&&
-            typeof capacity._size=="number"){
-            for(var prop in capacity){
-                if(capacity.hasOwnProperty(prop))this[prop]=capacity[prop];
-            }
-        } else {
-            if(typeof capacity!="number"||capacity%1!=0||capacity<1)
-                throw new TypeError("Invalid capacity");
-            this._buffer=new Array(capacity);
-            this._capacity=capacity;
-            this._first=0;
-            this._size=0;
-        }
-    }
-    CircularBuffer.prototype = {
-        size: function () {
-            return this._size;
-        },
-        capacity: function () {
-            return this._capacity;
-        },
-        enq: function (value) {
-            if (this._first > 0)this._first--; else this._first = this._capacity - 1;
-            this._buffer[this._first] = value;
-            if (this._size < this._capacity)this._size++;
-        },
-        push: function (value) {
-            if (this._size == this._capacity) {
-                this._buffer[this._first] = value;
-                this._first = (this._first + 1) % this._capacity;
-            } else {
-                this._buffer[(this._first + this._size) % this._capacity] = value;
-                this._size++;
-            }
-        },
-        deq: function () {
-            if (this._size == 0)throw new RangeError("dequeue on empty buffer");
-            var value = this._buffer[(this._first + this._size - 1) % this._capacity];
-            this._size--;
-            return value;
-        },
-        pop: function () {
-            return this.deq();
-        },
-        shift: function () {
-            if (this._size == 0)throw new RangeError("shift on empty buffer");
-            var value = this._buffer[this._first];
-            if (this._first == this._capacity - 1)this._first = 0; else this._first++;
-            this._size--;
-            return value;
-        },
-        get: function (start, end) {
-            if (this._size == 0 && start == 0 && (end == undefined || end == 0))return [];
-            if (typeof start != "number" || start % 1 != 0 || start < 0)throw new TypeError("Invalid start");
-            if (start >= this._size)throw new RangeError("Index past end of buffer: " + start);
-
-            if (end == undefined)return this._buffer[(this._first + start) % this._capacity];
-
-            if (typeof end != "number" || end % 1 != 0 || end < 0)throw new TypeError("Invalid end");
-            if (end >= this._size)throw new RangeError("Index past end of buffer: " + end);
-
-            if (this._first + start >= this._capacity) {
-                //make sure first+start and first+end are in a normal range
-                start -= this._capacity; //becomes a negative number
-                end -= this._capacity;
-            }
-            if (this._first + end < this._capacity)
-                return this._buffer.slice(this._first + start, this._first + end + 1);
-            else
-                return this._buffer.slice(this._first + start, this._capacity).concat(this._buffer.slice(0, this._first + end + 1 - this._capacity));
-        },
-        toarray: function () {
-            if (this._size == 0)return [];
-            return this.get(0, this._size - 1);
-        }
-    };
-
-    return CircularBuffer;
 });
 /** @module xaction/Action **/
 define('xaction/Action',[
@@ -11742,11 +11684,8 @@ define('xaction/Action',[
     'xide/types',
     'xide/utils/ObjectUtils',
     'xide/utils',
-    'xide/mixins/EventedMixin',
-    'xide/cache/Circular'
-], function (dcl, Base, types, ObjectUtils, utils, EventedMixin, Circular) {
-
-    var Cache = null;//new Circular(100);
+    'xide/mixins/EventedMixin'
+], function (dcl, Base, types, ObjectUtils, utils,EventedMixin) {
     /***
      * Extend the core types for action visibility(main menu,...) options/enums:
      * 1. 'Main menu',
@@ -11897,31 +11836,8 @@ define('xaction/Action',[
      * @augments xide/model/Base
      */
     var Module = dcl([Base.dcl, EventedMixin.dcl], {
-        declaredClass: "xaction/Action",
+        declaredClass:"xaction/Action",
         disabled: false,
-        destroy: function () {
-            if (Cache && Cache.size() < 100) {
-                delete this._properties;
-                delete this._visibility;
-                delete this.keyboardMappings;
-                delete this.group;
-                delete this.tab;
-                delete this.owner;
-                delete this.item;
-                delete this.icon;
-                delete this.actionType;
-                delete this.label;
-                delete this.title;
-                delete this.type;
-                delete this.onCreate;
-                delete this.onChange;
-                delete this.addPermission;
-                delete this._store;
-                delete this.parameters;
-                delete this.handler;
-                Cache.push(this);
-            }
-        },
         /**
          * Turn on/off this action
          * @type {boolean}
@@ -12117,9 +12033,7 @@ define('xaction/Action',[
      * @returns {module:xaction/Action}
      */
     Module.create = function (label, icon, command, permanent, operation, btypes, group, visibility, register, handler, mixin) {
-        var _action = null;
-
-        var _args = {
+        var _action = new Module({
             permanent: permanent,
             command: command,
             icon: icon,
@@ -12130,15 +12044,7 @@ define('xaction/Action',[
             group: group,
             handler: handler,
             title: label
-        };
-        if (Cache && Cache.size()) {
-            _action = Cache.deq(0);
-            //console.log('re-use');
-            utils.mixin(_action, _args);
-        } else {
-            //console.log('-create!');
-            _action = new Module(_args);
-        }
+        });
         /*
          var VISIBILITY = types.ACTION_VISIBILITY,
          VISIBILITIES = [
@@ -15387,6 +15293,7 @@ define('xide/widgets/ActionToolbar4',[
                         }
                     }
                     function open() {
+
                         if($sub.data('open')){
                             return;
                         }
@@ -15492,14 +15399,18 @@ define('xide/widgets/ActionToolbar4',[
             if(!update && store && this.store && store!=this.store){
                 this.removeCustomActions();
             }
+
             if(!update){
                 this._clear();
                 this.addActionStore(store);
             }
+
             if(!store){
                 return;
             }
+
             this.store = store;
+
             var self = this,
                 visibility = self.visibility,
                 rootContainer = $(self.getRootContainer());
@@ -16131,7 +16042,8 @@ define('xide/widgets/ContextMenu',[
     "xide/$",
     "xide/lodash",
     "xide/widgets/_MenuKeyboard"
-], function (dcl, types, i18, _Widget, _XWidget, ActionMixin, ActionContext, MenuMixinClass, Path, _Popup, $, _, _MenuKeyboard) {
+], function (dcl,types,i18,_Widget,_XWidget,ActionMixin, ActionContext, MenuMixinClass,Path,_Popup,$,_,_MenuKeyboard) {
+
     var ActionRendererClass = dcl(null, {
         renderTopLevel: function (name, where) {
             where = where || $(this.getRootContainer());
@@ -16146,25 +16058,26 @@ define('xide/widgets/ContextMenu',[
             return this.navBar;
         }
     });
-    var _debugTree = false;
+    var _debugTree =false;
     var _debugMenuData = false;
     var _debugOldMenuData = false;
+
     var KeyboardControl = _MenuKeyboard;
 
-    var ContextMenu = dcl([_Widget.dcl, ActionContext.dcl, ActionMixin.dcl, ActionRendererClass, MenuMixinClass, _XWidget.StoreMixin], {
+    var ContextMenu = dcl([_Widget.dcl, ActionContext.dcl, ActionMixin.dcl, ActionRendererClass,MenuMixinClass,_XWidget.StoreMixin], {
         target: null,
-        openTarget: null,
+        openTarget:null,
         visibility: types.ACTION_VISIBILITY.CONTEXT_MENU,
-        correctSubMenu: true,
-        limitTo: null,
-        declaredClass: 'xide.widgets.ContextMenu',
-        menuData: null,
+        correctSubMenu:true,
+        limitTo:null,
+        declaredClass:'xide.widgets.ContextMenu',
+        menuData:null,
         addContext: function (selector, data) {
             this.menuData = data;
             var id,
                 $menu,
                 self = this,
-                target = this.openTarget ? this.openTarget : $(self.target);
+                target = this.openTarget ? (this.openTarget) : $(self.target);
 
             if (typeof data.id !== 'undefined' && typeof data.data !== 'undefined') {
                 id = data.id;
@@ -16185,27 +16098,26 @@ define('xide/widgets/ContextMenu',[
             this.keyboardController = new KeyboardControl();
             this.keyboardController.setup(this);
 
-            function mouseEnterHandlerSubs(e) {
-                var navigationData = this.keyboardController.toNavigationData($(e.target), this.getRootContainer());
-                if (!navigationData) {
+            function mouseEnterHandlerSubs(e){
+                var navigationData = this.keyboardController.toNavigationData($(e.target),this.getRootContainer());
+                if(!navigationData) {
                     return;
                 }
                 this.keyboardController.clear(navigationData.parent);
                 this.menu.focus();
                 navigationData.element.focus();
-                this.menu.data('currentTarget', navigationData.element);
+                this.menu.data('currentTarget',navigationData.element);
 
             }
-
-            function setupContainer($container) {
+            function setupContainer($container){
                 self.__on($container, 'mouseenter', 'LI', mouseEnterHandlerSubs.bind(self));
             }
 
             function constextMenuHandler(e) {
-                if (self.limitTo) {
+                if(self.limitTo){
                     var $target = $(e.target);
                     $target = $target.parent();
-                    if (!$target.hasClass(self.limitTo)) {
+                    if(!$target.hasClass(self.limitTo)){
                         return;
                     }
                 }
@@ -16218,9 +16130,9 @@ define('xide/widgets/ContextMenu',[
                 $('.dropdown-context:not(.dropdown-context-sub)').hide();
 
                 var $dd = $('#dropdown-' + id);
-                $dd.css('zIndex', _Popup.nextZ(1));
-                if (!$dd.data('init')) {
-                    $dd.data('init', true);
+                $dd.css('zIndex',_Popup.nextZ(1));
+                if(!$dd.data('init')){
+                    $dd.data('init',true);
                     setupContainer($dd);
                     self.keyboardController.initContainer($dd);
                 }
@@ -16236,7 +16148,7 @@ define('xide/widgets/ContextMenu',[
                     var autoH = $dd.height() + 0;
                     if ((e.pageY + autoH) > $('html').height()) {
                         var top = e.pageY - 20 - autoH;
-                        if (top < 0) {
+                        if(top < 0){
                             top = 20;
                         }
                         $dd.css({
@@ -16265,14 +16177,13 @@ define('xide/widgets/ContextMenu',[
                         });
                     }
                 }
-                this.keyboardController.activate($(this.keyboardController.children($dd)[0]), $dd);
+                this.keyboardController.activate($(this.keyboardController.children($dd)[0]),$dd);
             }
+            this.__on(target, 'contextmenu', null,constextMenuHandler.bind(this));
 
-            this.__on(target, 'contextmenu', null, constextMenuHandler.bind(this));
-
-            this.__on($menu, 'keydown', function (e) {
-                if (e.keyCode == 27) {
-                    var navData = this.keyboardController.toNavigationData($(e.target), this.getRootContainer());
+            this.__on($menu,'keydown',function(e){
+                if(e.keyCode==27){
+                    var navData = this.keyboardController.toNavigationData($(e.target),this.getRootContainer());
                     navData && navData.element && this.keyboardController.close(navData.element);
                     $(this.lastFocused).focus();
                 }
@@ -16280,27 +16191,27 @@ define('xide/widgets/ContextMenu',[
 
             return $menu;
         },
-        onRootAction: function () {
+        onRootAction:function(){
             return null;
         },
-        buildMenu: function (data, id, subMenu, update) {
+        buildMenu:function (data, id, subMenu,update) {
             var subClass = (subMenu) ? ' dropdown-context-sub' : ' scrollable-menu ',
                 menuString = '<ul tabindex="-1" aria-expanded="true" role="menu" class="dropdown-menu dropdown-context' + subClass + '" id="dropdown-' + id + '"></ul>',
                 $menu = update ? (this._rootMenu || $(menuString)) : $(menuString);
 
-            if (!subMenu) {
+            if(!subMenu){
                 this._rootMenu = $menu;
                 this._rootMenu.addClass('contextMenu')
             }
             $menu.data('data', data);
             return this.buildMenuItems($menu, data, id, subMenu);
         },
-        onActionAdded: function (actions) {
-            this.setActionStore(this.getActionStore(), this, false, true, actions);
+        onActionAdded:function(actions){
+            this.setActionStore(this.getActionStore(), this,false,true,actions);
         },
-        clearAction: function (action) {
+        clearAction : function(action){
             var self = this;
-            if (action) {
+            if(action) {
                 var actionVisibility = action.getVisibility !== null ? action.getVisibility(self.visibility) : {};
                 if (actionVisibility) {
                     var widget = actionVisibility.widget;
@@ -16313,32 +16224,30 @@ define('xide/widgets/ContextMenu',[
                 }
             }
         },
-        onActionRemoved: function (evt) {
+        onActionRemoved:function(evt){
             this.clearAction(evt.target);
         },
-        removeCustomActions: function () {
+        removeCustomActions:function(){
             var oldStore = this.store;
-            if (!oldStore) {
+            if(!oldStore){
                 console.warn('removeCustomActions : have no store');
                 return;
             }
             var oldActions = oldStore._find({
-                custom: true
+                custom:true
             });
-            var menuData = this.menuData;
-            _.each(oldActions, function (action) {
+            var menuData=this.menuData;
+            _.each(oldActions,function(action){
                 oldStore.removeSync(action.command);
-                var oldMenuItem = _.find(menuData, {
-                    command: action.command
+                var oldMenuItem = _.find(menuData,{
+                    command:action.command
                 });
                 oldMenuItem && menuData.remove(oldMenuItem);
             });
         },
-        setActionStore: function (store, owner, subscribe, update, itemActions) {
-            if (!update) {
-                if(this.store==store){
-                    return;
-                }
+        setActionStore: function (store, owner,subscribe,update,itemActions) {
+            console.log('set action store');
+            if(!update){
                 this._clear();
                 this.addActionStore(store);
             }
@@ -16346,19 +16255,22 @@ define('xide/widgets/ContextMenu',[
             var self = this,
                 visibility = self.visibility,
                 rootContainer = $(self.getRootContainer());
+            var tree = update ? self.lastTree : self.buildActionTree(store,owner);
 
-            this.store = store;
-            if(!store){
-                return;
-            }
-            var tree = update ? self.lastTree : self.buildActionTree(store, owner);
             var allActions = tree.allActions,
                 rootActions = tree.rootActions,
                 allActionPaths = tree.allActionPaths,
                 oldMenuData = self.menuData;
+
+            this.store = store;
+
             var data = [];
-            if (subscribe !== false) {
-                if (!this['_handleAdded_' + store.id]) {
+
+
+
+
+            if(subscribe!==false) {
+                if(!this['_handleAdded_' + store.id]) {
                     this.addHandle('added', store._on('onActionsAdded', function (actions) {
                         self.onActionAdded(actions);
                     }));
@@ -16366,11 +16278,13 @@ define('xide/widgets/ContextMenu',[
                     this.addHandle('delete', store.on('delete', function (evt) {
                         self.onActionRemoved(evt);
                     }));
-                    this['_handleAdded_' + store.id] = true;
+                    this['_handleAdded_' + store.id]=true;
                 }
             }
-            if (!update) {
+
+            if(!update) {
                 _.each(tree.root, function (menuActions, level) {
+
                     var root = self.onRootAction(level, rootContainer),
                         lastGroup = '',
                         lastHeader = {
@@ -16393,7 +16307,7 @@ define('xide/widgets/ContextMenu',[
                                 visibility = renderData.visibility,
                                 group = renderData.group;
 
-                            if (visibility.widget) {
+                            if(visibility.widget){
                                 return;
                             }
                             if (!isDynamicAction && group && groupedActions[group] && groupedActions[group].length >= 1) {
@@ -16404,7 +16318,7 @@ define('xide/widgets/ContextMenu',[
                                     lastGroup = group;
                                 }
                             }
-                            var item = self.toMenuItem(action, owner, label, icon, visibility || {}, true);
+                            var item = self.toMenuItem(action, owner, label, icon, visibility || {},true);
                             data.push(item);
                             visibility.widget = item;
                             self.addReference(action, item);
@@ -16416,7 +16330,7 @@ define('xide/widgets/ContextMenu',[
                                     var subs = [];
                                     _.each(childActions, function (child) {
                                         var _renderData = self.getActionData(child);
-                                        var _item = self.toMenuItem(child, owner, _renderData.label, _renderData.icon, _renderData.visibility, true);
+                                        var _item = self.toMenuItem(child, owner, _renderData.label, _renderData.icon, _renderData.visibility,true);
                                         self.addReference(child, _item);
                                         subs.push(_item);
 
@@ -16429,35 +16343,38 @@ define('xide/widgets/ContextMenu',[
                                     parent.subMenu = subs;
                                 }
                             }
+
                             parseChildren(command, item);
                         }
                     });
                 });
                 self.attach($('body'), data);
                 self.onDidRenderActions(store, owner);
-            } else {
-                if (itemActions || !_.isEmpty(itemActions)) {
+            }else{
+
+                if(itemActions || !_.isEmpty(itemActions)) {
                     _.each(itemActions, function (newAction) {
                         if (newAction) {
                             var action = self.getAction(newAction.command);
                             if (action) {
+
                                 var renderData = self.getActionData(action),
                                     icon = renderData.icon,
                                     label = renderData.label,
                                     aVisibility = renderData.visibility,
                                     group = renderData.group,
-                                    item = self.toMenuItem(action, owner, label, icon, aVisibility || {}, null, false);
+                                    item = self.toMenuItem(action, owner, label, icon, aVisibility || {},null,false);
 
                                 aVisibility.widget = item;
 
                                 self.addReference(newAction, item);
 
                                 var parentCommand = action.getParentCommand();
-                                var parent = self._findParentData(oldMenuData, parentCommand);
-                                if (parent && parent.subMenu) {
+                                var parent = self._findParentData(oldMenuData,parentCommand);
+                                if(parent && parent.subMenu){
                                     parent.lazy = true;
                                     parent.subMenu.push(item);
-                                } else {
+                                }else{
                                     oldMenuData.splice(0, 0, item);
                                 }
                             } else {
@@ -16465,7 +16382,8 @@ define('xide/widgets/ContextMenu',[
                             }
                         }
                     });
-                    self.buildMenu(oldMenuData, self.id, null, update);
+
+                    self.buildMenu(oldMenuData, self.id,null,update);
                 }
             }
         }
@@ -16486,7 +16404,6 @@ define('xgrid/ContextMenu',[
         },
         _createContextMenu: function () {
             var _ctorArgs = this.contextMenuArgs || {};
-            var node = this.contentNode;
             var mixin = {
                 owner: this,
                 delegate: this,
@@ -16494,21 +16411,19 @@ define('xgrid/ContextMenu',[
                     quick: true
                 }
             };
+
             utils.mixin(_ctorArgs, mixin);
+            var node = this.contentNode;
             var contextMenu = new ContextMenu(_ctorArgs, node);
             contextMenu.openTarget = node;
-            //@TODO: remove back dijit compat
-            //contextMenu.limitTo=null;
             contextMenu.init({preventDoubleContext: false});
             contextMenu._registerActionEmitter(this);
-            $(node).one('contextmenu',function(e){
-                e.preventDefault();
-                if(!this.store) {
-                    contextMenu.setActionStore(this.getActionStore(), this);
-                }
-            }.bind(this));
             this.contextMenu = contextMenu;
-            this.add(contextMenu);
+            if (this.add) {
+                this.add(contextMenu);
+            } else {
+                console.error('have no add!');
+            }
         },
         startup: function () {
             if (this._started) {
@@ -17348,7 +17263,7 @@ define('dgrid/OnDemandList',[
 		//		When refreshing the list, controls whether the scroll position is
 		//		preserved, or reset to the top.  This can also be overridden for
 		//		specific calls to refresh.
-		keepScrollPosition: true,
+		keepScrollPosition: false,
 
 		// rowHeight: Number
 		//		Average row height, computed in renderQuery during the rendering of
@@ -17532,7 +17447,7 @@ define('dgrid/OnDemandList',[
 
 			// Fall back to instance property if option is not defined
 			if (typeof keep === 'undefined') {
-				//keep = this.keepScrollPosition;
+				keep = this.keepScrollPosition;
 			}
 
 			// Store scroll position to be restored after new total is received
@@ -18006,6 +17921,7 @@ define('xide/widgets/TemplatedWidgetBase',[
     'xide/utils',
     'xide/_base/_Widget'
 ], function (dcl,utils,_XWidget2) {
+
     var Implementation = {
         declaredClass: 'xide.widgets.TemplatedWidgetBase',
         data: null,
@@ -18026,6 +17942,8 @@ define('xide/widgets/TemplatedWidgetBase',[
         },
         updateTitleNode: function (value) {}
     };
+
+    //var Module = declare("xide.widgets.TemplatedWidgetBase", [_Widget, _XWidget,_TemplatedMixin, _WidgetsInTemplateMixin, EventedMixin],Implementation);
     var Module = dcl([_XWidget2],Implementation);
     dcl.chainAfter(Module,'startup');
     dcl.chainAfter(Module,'destroy');
@@ -19901,15 +19819,13 @@ define('xide/data/_Base',[
         },
         _queryCache:null,
         query: function (query, options,allowCache) {
-            if(!this.getSync){
-                console.error('have no sync');
-                return [];
-            }
+
             //no query, return all
+
+
             if(lodash.isEmpty(query)){
-                var self = this;
                 return _.map(this.data,function(item){
-                    return self.getSync(item[self.idProperty]);
+                    return this.getSync(item[this.idProperty]);
                 },this);
             }else if(!_.some(query,function (value) { return value == null})){
                 //no empty props in query, return lodash.filter
@@ -21590,7 +21506,6 @@ define('xaction/ActionModel',[
     'xide/utils'
 ], function (dcl, Action, Model, Source, Path, utils) {
     var debug = false;
-    var count = 0;
     /**
      * @class module:xaction/ActionModel
      * @extends module:xide/data/Source
@@ -22586,6 +22501,7 @@ define('xaction/ActionProvider',[
          * @returns {*}
          */
         createAction2: function (options) {
+
             var thiz = this,
                 action = null,
                 mixin = options.mixin || {},
@@ -23195,8 +23111,6 @@ define('xgrid/Base',[
     var Implementation = {
         _isHighlighting:false,
         _featureMap:{},
-        getContextMenu:function(){},
-        getToolbar:function(){},
         /**
          * Returns true if there is anything rendered.
          * @param item {obj|null}
@@ -24409,8 +24323,173 @@ define('xfile/views/FileOperationDialog',[
 
 });
 define('dijit/registry',[
-    "xide/registry"
-], function(registry){
+	"dojo/_base/array", // array.forEach array.map
+	"dojo/_base/window", // win.body
+    "dojo/has",
+	"xide/registry",
+	"./main"	// dijit._scopeName
+], function(array, win, has, registry,dijit){
+	return registry;
+
+	// module:
+	//		dijit/registry
+
+	var _widgetTypeCtr = {}, hash = {};
+
+	var registry =  {
+		// summary:
+		//		Registry of existing widget on page, plus some utility methods.
+
+		// length: Number
+		//		Number of registered widgets
+		length: 0,
+
+		add: function(widget){
+			// summary:
+			//		Add a widget to the registry. If a duplicate ID is detected, a error is thrown.
+			// widget: dijit/_WidgetBase
+			//		Any dijit/_WidgetBase subclass.
+			if(this._hash[widget.id]){
+                if(has('xblox')) {
+                    console.error('already registered ' + widget.id + ' calss ' + widget.declaredClass);
+                    this.remove(widget.id);
+                    this.add(widget);
+                }else{
+                    throw new Error("Tried to register widget with id==" + widget.id + " but that id is already registered");
+                }
+			}
+			hash[widget.id] = widget;
+			this.length++;
+		},
+
+		remove: function(/*String*/ id){
+			// summary:
+			//		Remove a widget from the registry. Does not destroy the widget; simply
+			//		removes the reference.
+			if(hash[id]){
+				delete hash[id];
+				this.length--;
+			}
+		},
+
+		byId: function(/*String|Widget*/ id){
+			// summary:
+			//		Find a widget by it's id.
+			//		If passed a widget then just returns the widget.
+			return typeof id == "string" ? hash[id] : id;	// dijit/_WidgetBase
+		},
+
+		byNode: function(/*DOMNode*/ node){
+			// summary:
+			//		Returns the widget corresponding to the given DOMNode
+			return hash[node.getAttribute("widgetId")]; // dijit/_WidgetBase
+		},
+
+		toArray: function(){
+			// summary:
+			//		Convert registry into a true Array
+			//
+			// example:
+			//		Work with the widget .domNodes in a real Array
+			//		|	array.map(registry.toArray(), function(w){ return w.domNode; });
+
+			var ar = [];
+			for(var id in hash){
+				ar.push(hash[id]);
+			}
+			return ar;	// dijit/_WidgetBase[]
+		},
+
+		getUniqueId: function(/*String*/widgetType){
+			// summary:
+			//		Generates a unique id for a given widgetType
+
+			var id;
+			do{
+				id = widgetType + "_" +
+					(widgetType in _widgetTypeCtr ?
+						++_widgetTypeCtr[widgetType] : _widgetTypeCtr[widgetType] = 0);
+			}while(hash[id]);
+			return dijit._scopeName == "dijit" ? id : dijit._scopeName + "_" + id; // String
+		},
+
+		findWidgets: function(root, skipNode){
+			// summary:
+			//		Search subtree under root returning widgets found.
+			//		Doesn't search for nested widgets (ie, widgets inside other widgets).
+			// root: DOMNode
+			//		Node to search under.
+			// skipNode: DOMNode
+			//		If specified, don't search beneath this node (usually containerNode).
+
+			var outAry = [];
+
+			function getChildrenHelper(root){
+				for(var node = root.firstChild; node; node = node.nextSibling){
+					if(node.nodeType == 1){
+						var widgetId = node.getAttribute("widgetId");
+						if(widgetId){
+							var widget = hash[widgetId];
+							if(widget){	// may be null on page w/multiple dojo's loaded
+								outAry.push(widget);
+							}
+						}else if(node !== skipNode){
+							getChildrenHelper(node);
+						}
+					}
+				}
+			}
+
+			getChildrenHelper(root);
+			return outAry;
+		},
+
+		_destroyAll: function(){
+			// summary:
+			//		Code to destroy all widgets and do other cleanup on page unload
+
+			// Clean up focus manager lingering references to widgets and nodes
+			dijit._curFocus = null;
+			dijit._prevFocus = null;
+			dijit._activeStack = [];
+
+			// Destroy all the widgets, top down
+			array.forEach(registry.findWidgets(win.body()), function(widget){
+				// Avoid double destroy of widgets like Menu that are attached to <body>
+				// even though they are logically children of other widgets.
+				if(!widget._destroyed){
+					if(widget.destroyRecursive){
+						widget.destroyRecursive();
+					}else if(widget.destroy){
+						widget.destroy();
+					}
+				}
+			});
+
+
+		},
+
+		getEnclosingWidget: function(/*DOMNode*/ node){
+			// summary:
+			//		Returns the widget whose DOM tree contains the specified DOMNode, or null if
+			//		the node is not contained within the DOM tree of any widget
+			while(node){
+				var id = node.nodeType == 1 && node.getAttribute("widgetId");
+				if(id){
+					return hash[id];
+				}
+				node = node.parentNode;
+			}
+			return null;
+		},
+
+		// In case someone needs to access hash.
+		// Actually, this is accessed from WidgetSet back-compatibility code
+		_hash: hash
+	};
+
+	dijit.registry = registry;
+
 	return registry;
 });
 
@@ -26024,7 +26103,6 @@ define('xide/views/CIViewMixin',[
         tabContainerClass:_TabContainer,
         _didRenderCIS:false,
         typeMap:null,
-        containerArgs:null,
         getWidgetByType: function (type) {
             for (var i = 0; i < this.widgets.length; i++) {
                 var widget = this.widgets[i];
@@ -26044,12 +26122,12 @@ define('xide/views/CIViewMixin',[
             if (this.tabContainer) {
                 return this.tabContainer;
             }
-            var tabContainer = utils.addWidget(this.tabContainerClass || _TabContainer,utils.mixin({
+            var tabContainer = utils.addWidget(this.tabContainerClass || _TabContainer,{
                 direction:'left',
                 style: "min-width:450px;",
                 _parent:this,
                 resizeToParent:true
-            },this.containerArgs),null,this,true);
+            },null,this,true);
             this.tabContainer = tabContainer;
             this.add(tabContainer);
             return tabContainer;
@@ -28419,6 +28497,10 @@ define('wcDocker/splitter',[
                     minSize1.x = Math.max(minSize1.x, minSize2.x);
                 }
                 return minSize1;
+                return {
+                    x: Math.min(minSize1.x, minSize2.x),
+                    y: Math.min(minSize1.y, minSize2.y)
+                };
             } else if (minSize1) {
                 return minSize1;
             } else if (minSize2) {
@@ -28453,6 +28535,10 @@ define('wcDocker/splitter',[
                     maxSize1.x = Math.min(maxSize1.x, maxSize2.x);
                 }
                 return maxSize1;
+                return {
+                    x: Math.min(maxSize1.x, maxSize2.x),
+                    y: Math.min(maxSize1.y, maxSize2.y)
+                };
             } else if (maxSize1) {
                 return maxSize1;
             } else if (maxSize2) {
@@ -29527,7 +29613,7 @@ define('wcDocker/frame',[
         },
 
         __resizeEnd: function () {
-            this.__updateTabs(null,true);
+            this.__updateTabs();
             if (new Date() - this._resizeData.time < this._resizeData.delta) {
                 setTimeout(this.__resizeEnd.bind(this), this._resizeData.delta);
             } else {
@@ -29591,8 +29677,11 @@ define('wcDocker/frame',[
             }
         },
 
-        __updateTabs: function (autoFocus,isResize) {
+        __updateTabs: function (autoFocus) {
+
             this.$tabScroll.empty();
+
+
             var getOffset = function ($item) {
                 switch (this._tabOrientation) {
                     case wcDocker.TAB.BOTTOM:
@@ -29628,11 +29717,8 @@ define('wcDocker/frame',[
             this._titleVisible = true;
             this.$title.html('');
 
-
-
             // Determine if the title and tabs are visible based on the panels inside.
             for (var i = 0; i < this._panelList.length; ++i) {
-
                 var panel = this._panelList[i];
 
                 var $tab = null;
@@ -29651,16 +29737,13 @@ define('wcDocker/frame',[
                     this._titleVisible = false;
                 }
 
-                var $tabContent=null;
-                //if(isResize!==true) {
-                    $tabContent = this.$center.children('.wcPanelTabContent[id="' + i + '"]');
-                    if (!$tabContent.length) {
-                        $tabContent = $('<div class="wcPanelTabContent wcPanelTabContentHidden" id="' + i + '">');
-                        this.$center.append($tabContent);
-                    }
-                    panel.__container($tabContent);
-                //}
+                var $tabContent = this.$center.children('.wcPanelTabContent[id="' + i + '"]');
+                if (!$tabContent.length) {
+                    $tabContent = $('<div class="wcPanelTabContent wcPanelTabContentHidden" id="' + i + '">');
+                    this.$center.append($tabContent);
+                }
 
+                panel.__container($tabContent);
                 panel._parent = this;
 
                 var isVisible = this._curTab === i;
@@ -29671,11 +29754,11 @@ define('wcDocker/frame',[
                     });
                 }
 
-                $tabContent && $tabContent.removeClass('wcPanelTabUnused');
+                $tabContent.removeClass('wcPanelTabUnused');
 
                 if (isVisible) {
                     $tab && $tab.addClass('wcPanelTabActive active');
-                    $tabContent && $tabContent.removeClass('wcPanelTabContentHidden');
+                    $tabContent.removeClass('wcPanelTabContentHidden');
                     this.$title.html(panel.title());
                     if (panel.$icon) {
                         var $icon = panel.$icon.clone();
@@ -33159,6 +33242,12 @@ define('wcDocker/docker',[
             this._root = null;
             this.__eventHandles = [];
             this.__addPlaceholder();
+
+            // Setup our context menus.
+            if (this._options.allowContextMenu) {
+                this.menu('.wcFrame', [], true);
+            }
+
             //self.__on($(window), 'resize', this.__resize.bind(this));
             //self.__on(body, 'contextmenu', '.wcSplitterBar', __onContextDisable);
 
@@ -33735,7 +33824,7 @@ define('wcDocker/docker',[
                     self.__focus(self._draggingFrame);
                     //extra
                     var focusFrame = self._focusFrame;
-                    var cPanel = focusFrame.currentPanel ? focusFrame.currentPanel() : null;
+                    var cPanel = focusFrame.currentPanel();
                     if (cPanel) {
                         cPanel._emit('ON_VIEW_SELECT');
                     }
@@ -34782,6 +34871,7 @@ define('xdocker/Panel2',[
 
         /**
          * Std API
+         * @todo remove panel destruction in docker for 'removePanel'
          */
         destroy: function (removeFromDocker) {
             this.inherited(arguments);
@@ -34792,7 +34882,6 @@ define('xdocker/Panel2',[
             registry.remove(this.id);
         },
         __destroy: function () {
-            this._emit('destroy');
             _.each(this._findWidgets(),function(w){
                 if(w && w.destroy && !w._destroyed){
                     w.destroy();
@@ -35609,12 +35698,6 @@ define('xdocker/Docker2',[
         registry.add(docker);
         return docker;
     };
-
-    Module.DOCK = wcDocker.DOCK;
-    Module.EVENT = wcDocker.EVENT;
-    Module.LAYOUT = wcDocker.LAYOUT;
-    Module.ORIENTATION = wcDocker.ORIENTATION;
-
     return Module;
 });
 /** @module xfile/Breadcrumb **/
@@ -41402,6 +41485,7 @@ define('xide/manager/ServerActionBase',[
         runDeferred: function (serviceClassIn, method, args, options) {
             var self = this;
             if(this.serviceObject.__init){
+
                 if(this.serviceObject.__init.isResolved()){
                     return self._runDeferred(serviceClassIn,method,args,options);
                 }
@@ -41548,6 +41632,9 @@ define('xide/manager/ServerActionBase',[
                     this.options.singleton = this.singleton;
                 }
                 if (!this.serviceObject) {
+
+
+
                     if (!this.serviceUrl) {
                         console.error('have no service url : ' + this.declaredClass);
                         return;
@@ -41566,7 +41653,6 @@ define('xide/manager/ServerActionBase',[
                     if(this.config){
                         obj.serviceObject.config = this.config;
                     }
-                    !this.ctx.serviceObject && (this.ctx.serviceObject = this.serviceObject);
                 }
             } catch (e) {
                 console.error('error in rpc service creation : ' + e);
@@ -44920,6 +45006,7 @@ define('xfile/manager/MountManager',[
         },
 
         ls: function (readyCB) {
+
             function data(_data){
                 this.mountData = _data;
                 this.onMountDataReady(_data);

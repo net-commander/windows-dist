@@ -105,13 +105,6 @@ var xcfConfig={
             }
         },
         {
-            "declaredClass":'xtrack.manager.TrackingManager',
-            "mixin":{
-                "serviceUrl":"%RPC_URL%",
-                "singleton":true
-            }
-        },
-        {
             "declaredClass":'davinci.model.resource.File',
             "mixin":{
                 "serviceUrl":"%RPC_URL%",

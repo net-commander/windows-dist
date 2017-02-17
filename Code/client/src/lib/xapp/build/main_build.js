@@ -32107,15 +32107,11 @@ define('xnode/manager/NodeServiceManager',[
         init: function () {
             var dfd = new Deferred();
             var self = this;
-            if(this.serviceObject && this.serviceObject.__init) {
-                this.serviceObject.__init.then(function () {
-                    self.ls().then(function () {
-                        dfd.resolve();
-                    });
+            this.serviceObject.__init.then(function(){
+                self.ls().then(function(){
+                    dfd.resolve();
                 });
-            }else if(this.services){//exported apps have the services already
-                return this.ls();
-            }
+            });
             return dfd;
 
         },
@@ -32388,6 +32384,7 @@ define('xide/client/ClientBase',[
         onClosed: function () {
         },
         destroy: function () {
+
             if (this._socket && this._socket.close) {
                 this._socket.close();
                 this.onClosed();
@@ -33327,15 +33324,13 @@ define('xide/data/_Base',[
         },
         _queryCache:null,
         query: function (query, options,allowCache) {
-            if(!this.getSync){
-                console.error('have no sync');
-                return [];
-            }
+
             //no query, return all
+
+
             if(lodash.isEmpty(query)){
-                var self = this;
                 return _.map(this.data,function(item){
-                    return self.getSync(item[self.idProperty]);
+                    return this.getSync(item[this.idProperty]);
                 },this);
             }else if(!_.some(query,function (value) { return value == null})){
                 //no empty props in query, return lodash.filter
@@ -34991,53 +34986,41 @@ define('dstore/Store',[
 	};
 ====*/
 ;
-/**
- * @module dojo/Evented
- **/
-define('dojo/Evented',[
-    "./aspect",
-    "./on"
-], function (aspect, on) {
-    "use strict";
-    var after = aspect.after;
-    /**
-     * A class that can be used as a mixin or base class,
-     * to add on() and emit() methods to a class
-     * for listening for events and emitting events:
-     *
-     * @class module:dojo/Evented
-     * @example
-     *
-     * define(["dojo/Evented", "dojo/_base/declare", "dojo/Stateful"], function(Evented, declare, Stateful){
-		var EventedStateful = declare([Evented, Stateful], {...});
-		var instance = new EventedStateful();
-		instance.on("open", function(event){
-		//		... do something with event
-		});
-		instance.emit("open", {name:"some event", ...});
-     */
-    function Evented() {
-        // summary:
-        //		A class that can be used as a mixin or base class,
-        //		to add on() and emit() methods to a class
-        //		for listening for events and emitting events:
-        // example:
-        //		|
-    }
+define('dojo/Evented',["./aspect", "./on"], function(aspect, on){
+	// module:
+	//		dojo/Evented
 
-    Evented.prototype = {
-        on: function (type, listener) {
-            return on.parse(this, type, listener, function (target, type) {
-                return after(target, 'on' + type, listener, true);
-            });
-        },
-        emit: function (type, event) {
-            var args = [this];
-            args.push.apply(args, arguments);
-            return on.emit.apply(on, args);
-        }
-    };
-    return Evented;
+ 	"use strict";
+ 	var after = aspect.after;
+	function Evented(){
+		// summary:
+		//		A class that can be used as a mixin or base class,
+		//		to add on() and emit() methods to a class
+		//		for listening for events and emitting events:
+		// example:
+		//		|	define(["dojo/Evented", "dojo/_base/declare", "dojo/Stateful"
+		//		|	], function(Evented, declare, Stateful){
+		//		|		var EventedStateful = declare([Evented, Stateful], {...});
+		//		|		var instance = new EventedStateful();
+		//		|		instance.on("open", function(event){
+		//		|		... do something with event
+		//		|	 });
+		//		|
+		//		|	instance.emit("open", {name:"some event", ...});
+	}
+	Evented.prototype = {
+		on: function(type, listener){
+			return on.parse(this, type, listener, function(target, type){
+				return after(target, 'on' + type, listener, true);
+			});
+		},
+		emit: function(type, event){
+			var args = [this];
+			args.push.apply(args, arguments);
+			return on.emit.apply(on, args);
+		}
+	};
+	return Evented;
 });
 ;
 define('dstore/QueryMethod',[], function () {
@@ -36014,6 +35997,7 @@ define('xide/manager/ServerActionBase',[
         runDeferred: function (serviceClassIn, method, args, options) {
             var self = this;
             if(this.serviceObject.__init){
+
                 if(this.serviceObject.__init.isResolved()){
                     return self._runDeferred(serviceClassIn,method,args,options);
                 }
@@ -36160,6 +36144,9 @@ define('xide/manager/ServerActionBase',[
                     this.options.singleton = this.singleton;
                 }
                 if (!this.serviceObject) {
+
+
+
                     if (!this.serviceUrl) {
                         console.error('have no service url : ' + this.declaredClass);
                         return;
@@ -36178,7 +36165,6 @@ define('xide/manager/ServerActionBase',[
                     if(this.config){
                         obj.serviceObject.config = this.config;
                     }
-                    !this.ctx.serviceObject && (this.ctx.serviceObject = this.serviceObject);
                 }
             } catch (e) {
                 console.error('error in rpc service creation : ' + e);
@@ -40954,25 +40940,21 @@ define('xcf/manager/DriverManager',[
         /////////////////////////////////////////////////////////////////////////////////////
         _driverQueryCache:null,
         _getDriverById: function (id,store) {
-            if(!store || !store.getSync){
-                return;
-            }
-            var items = store.query();
+            var items = utils.queryStore(store, {
+                isDir: false
+            });
             if (!_.isArray(items)) {
                 items = [items];
             }
             for (var i = 0; i < items.length; i++) {
-                var item = items[i];
-                if(item.isDir){
-                    continue;
-                }
-                var meta = item['user'];
+                var driver = items[i];
+                var meta = driver['user'];
                 var _id = utils.getInputCIByName(meta, types.DRIVER_PROPERTY.CF_DRIVER_ID);
                 if (!_id) {
                     continue;
                 }
                 if (_id.value == id) {
-                    return store.getSync(item.path);
+                    return store.getSync(driver.path);
                 }
             }
             return null;
@@ -42553,18 +42535,6 @@ define('xblox/data/Store',[
             this._state.filter = data;
             return _res;
         },
-        getRootItem:function(){
-            return {
-                canAdd:function(){
-                    return true
-                },
-                id:this.id +'_root',
-                group:null,
-                name:'root',
-                isRoot:true,
-                parentId:null
-            }
-        },
         getChildren: function (object) {
             return this.root.filter({parentId: this.getIdentity(object)});
         },
@@ -43626,14 +43596,13 @@ define('xblox/model/Scope',[
                 group: types.COMMAND_TYPES.INIT_COMMAND
             })
 
-            var self = this;
             try {
                 _.each(initBlocks, function (block) {
                     if (block.enabled !== false && block.__started !== true) {
-                        block.solve(self);
+                        block.solve(this)
                         block.__started = true
                     }
-                }, this);
+                }, this)
             } catch (e) {
                 console.error('starting init blocks failed', e)
                 logError(e, this)
@@ -43873,7 +43842,7 @@ define('xblox/model/Scope',[
                 var obj = result[i]
                 if (obj.value === selected) {
                     obj.selected = true
-                    break;
+                    break
                 }
             }
             return result
@@ -43937,7 +43906,7 @@ define('xblox/model/Scope',[
                 return []
             }
             query = query || {id: /\S+/}// all blocks
-            var result = _.isEmpty(query) ? this.blockStore.data : this.blockStore.query(query, null, true);
+            var result = _.isEmpty(query) ? this.blockStore.data : this.blockStore.query(query,null,true);
             if (!isIDE && allowCache !== false) {
                 var hash = MD5(JSON.stringify(query), 1)
                 this._cached[hash] = result
@@ -44068,7 +44037,7 @@ define('xblox/model/Scope',[
             for (var i = 0; i < all.length; i++) {
                 var obj = all[i]
                 if (obj.parentId) {
-                    continue;
+                    continue
                 }
                 if (obj.group) {
                     if (!_has(obj.group)) {
@@ -44092,10 +44061,10 @@ define('xblox/model/Scope',[
             for (var e in data) {
                 var variable = data[e]
                 if (variable.serializeMe === false) {
-                    continue;
+                    continue
                 }
                 if (variable.keys == null) {
-                    continue;
+                    continue
                 }
                 var varOut = {}
                 for (var prop in variable) {
@@ -44132,20 +44101,20 @@ define('xblox/model/Scope',[
             for (var i = 0; i < data.length; i++) {
                 var _var = data[i]
                 if (_var == skipVariable) {
-                    continue;
+                    continue
                 }
                 var _varVal = '' + _var.value
 
                 // optimization
                 if (skipVariable && skipVariable.value && skipVariable.value.indexOf(_var.title) == -1) {
-                    continue;
+                    continue
                 }
                 if (expression && expression.indexOf(_var.title) == -1) {
-                    continue;
+                    continue
                 }
 
                 if (_varVal.length == 0) {
-                    continue;
+                    continue
                 }
                 if (!this.isScript(_varVal) && _varVal.indexOf("'") == -1) {
                     _varVal = "'" + _varVal + "'"
@@ -44158,6 +44127,7 @@ define('xblox/model/Scope',[
                 }
                 result.push(_varVal)
             }
+
             return result
         },
         variablesToJavascript: function (skipVariable, expression) {
@@ -44166,20 +44136,20 @@ define('xblox/model/Scope',[
             for (var i = 0; i < data.length; i++) {
                 var _var = data[i]
                 if (_var == skipVariable) {
-                    continue;
+                    continue
                 }
                 var _varVal = '' + _var.value
 
                 // optimization
                 if (skipVariable && skipVariable.value && skipVariable.value.indexOf(_var.title) == -1) {
-                    continue;
+                    continue
                 }
                 if (expression && expression.indexOf(_var.title) == -1) {
-                    continue;
+                    continue
                 }
 
                 if (_varVal.length == 0) {
-                    continue;
+                    continue
                 }
                 if (!this.isScript(_varVal) && _varVal.indexOf("'") == -1) {
                     _varVal = "'" + _varVal + "'"
@@ -44210,13 +44180,13 @@ define('xblox/model/Scope',[
                 variable['scope'] = this
                 if (!variable.declaredClass) {
                     console.log('   variable has no class ')
-                    continue;
+                    continue
                 }
                 var _class = utils.replaceAll('.', '/', variable.declaredClass)
                 var variableClassProto = require(_class)
                 if (!variableClassProto) {
                     console.log('couldnt resolve ' + _class)
-                    continue;
+                    continue
                 }
                 result.push(new variableClassProto(variable))// looks like a leak but the instance is tracked and destroyed in this scope
             }
@@ -44304,11 +44274,11 @@ define('xblox/model/Scope',[
             }
             for (var prop in block) {
                 if (prop == 'ctrArgs') {
-                    continue;
+                    continue
                 }
 
                 if (typeof block[prop] !== 'function' && !block.serializeField(prop)) {
-                    continue;
+                    continue
                 }
 
                 // copy all strings over
@@ -44354,10 +44324,10 @@ define('xblox/model/Scope',[
                 for (var b in data) {
                     var block = data[b]
                     if (block.keys == null) {
-                        continue;
+                        continue
                     }
                     if (block.serializeMe === false) {
-                        continue;
+                        continue
                     }
                     var blockOut = {
                         // this property is used to recreate the child blocks in the JSON -> blocks process
@@ -44366,11 +44336,11 @@ define('xblox/model/Scope',[
 
                     for (var prop in block) {
                         if (prop == 'ctrArgs') {
-                            continue;
+                            continue
                         }
 
                         if (typeof block[prop] !== 'function' && !block.serializeField(prop)) {
-                            continue;
+                            continue
                         }
 
                         // copy all strings over
@@ -44501,7 +44471,7 @@ define('xblox/model/Scope',[
                 // Create the block
                 if (!block.declaredClass) {
                     console.log('   not a class ')
-                    continue;
+                    continue
                 }
                 var blockClassProto = null
                 var _class = null
@@ -44516,7 +44486,7 @@ define('xblox/model/Scope',[
                 }
                 if (!blockClassProto) {
                     console.log('couldnt resolve ' + _class)
-                    continue;
+                    continue
                 }
 
                 var blockOut = null
@@ -44525,7 +44495,7 @@ define('xblox/model/Scope',[
                 } catch (e) {
                     console.error('error in block creation ', e + ' ' + block.declaredClass)
                     logError(e)
-                    continue;
+                    continue
                 }
 
                 // assign the children references into block._children
@@ -44551,7 +44521,7 @@ define('xblox/model/Scope',[
                                     errorCB('   couldnt resolve child: ' + block._children[propName] + '@' + block.name + ':' + block.declaredClass)
                                 }
                                 console.log('   couldnt resolve child: ' + block._children[propName] + '@' + block.name + ':' + block.declaredClass)
-                                continue;
+                                continue
                             }
                             block[propName] = child
                             child.parent = block
@@ -44569,7 +44539,7 @@ define('xblox/model/Scope',[
                                         errorCB('   couldnt resolve child: ' + block._children[propName] + '@' + block.name + ':' + block.declaredClass)
                                     }
                                     console.log('   couldnt resolve child: ' + block._children[propName][j] + '@' + block.name + ':' + block.declaredClass)
-                                    continue;
+                                    continue
                                 }
                                 block[propName].push(child)
                                 var _parent = this.getBlockById(child.parentId)
@@ -44629,8 +44599,8 @@ define('xblox/model/Scope',[
             }
             if (_device) {
                 var info = deviceManager.toDeviceControlInfo(_device);
-                if (!info) {
-                    console.warn('cant get device info for ' + _device.title, device);
+                if(!info){
+                    console.warn('cant get device info for ' + _device.title,device);
                     return;
                 }
 
@@ -44692,12 +44662,12 @@ define('xblox/model/Scope',[
             for (var b in blocks) {
                 var block = blocks[b]
                 if (block.keys == null) {
-                    continue;
+                    continue
                 }
                 result.push(block)
                 for (var prop in block) {
                     if (prop == 'ctrArgs') {
-                        continue;
+                        continue
                     }
                     // flatten children to ids. Skip "parent" field
                     if (prop !== 'parent') {
@@ -44725,7 +44695,7 @@ define('xblox/model/Scope',[
                 var block = blocks[b]
 
                 if (block.keys == null) {
-                    continue;
+                    continue
                 }
                 var found = _.find(result, {
                     id: block.id
@@ -44739,7 +44709,7 @@ define('xblox/model/Scope',[
 
                 for (var prop in block) {
                     if (prop == 'ctrArgs') {
-                        continue;
+                        continue
                     }
                     // flatten children to ids. Skip "parent" field
                     if (prop !== 'parent') {
@@ -44919,7 +44889,7 @@ define('xblox/model/Scope',[
             for (var i = 0; i < allblocks.length; i++) {
                 var obj = allblocks[i]
                 if (!obj) {
-                    continue;
+                    continue
                 }
                 try {
                     if (obj && obj.stop) {
@@ -44962,9 +44932,8 @@ define('xblox/model/Scope',[
          * @returns {boolean}
          */
         moveTo: function (source, target, before, add) {
-            console.log('move to : ', arguments);
             /**
-             * treat first the special cases of adding an item
+             * treat first the special case of adding an item
              */
             if (add) {
                 // remove it from the source parent and re-parent the source
@@ -44973,7 +44942,8 @@ define('xblox/model/Scope',[
                     if (sourceParent) {
                         sourceParent.removeBlock(source, false)
                     }
-                    return target.add(source, null, null);
+                    target.add(source, null, null)
+                    return
                 } else {
                     console.error('cant reparent')
                     return false
@@ -44981,7 +44951,7 @@ define('xblox/model/Scope',[
             }
 
             // for root level move
-            if (!target.parentId && add === false) {
+            if (!target.parentId && add == false) {
                 // if source is part of something, we remove it
                 var sourceParent = this.getBlockById(source.parentId)
                 if (sourceParent && sourceParent.removeBlock) {
@@ -45057,15 +45027,18 @@ define('xblox/model/Scope',[
                 if (!parent) {
                     return false
                 }
+
+                var maxSteps = 20
                 var items = parent[parent._getContainer(source)]
                 var cIndexSource = source.indexOf(items, source)
                 var cIndexTarget = source.indexOf(items, target)
                 var direction = cIndexSource > cIndexTarget ? -1 : 1
                 var distance = Math.abs(cIndexSource - (cIndexTarget + (before == true ? -1 : 1)))
                 for (var i = 0; i < distance - 1; i++) {
-                    source.move(direction);
+                    parent.move(source, direction)
                 }
-                return true;
+                return true
+
                 // we move within the different parents
             } else if (source.parentId && target.parentId && add == false && source.parentId !== target.parentId) {
                 console.log('same parent!')
@@ -45499,6 +45472,8 @@ define('xblox/model/ModelBase',[
          * @param {array} arguments
          */
         constructor: function(args){
+
+
             //simple mixin of constructor arguments
             for (var prop in args) {
                 if (args.hasOwnProperty(prop)) {
@@ -45509,9 +45484,12 @@ define('xblox/model/ModelBase',[
             if(!this.id){
                 this.id = this.createUUID();
             }
+
             //short cuts
             this.utils=utils;
             this.types=types;
+
+
         },
         ////////////////////////////////////////////////////////////
         //
@@ -45647,8 +45625,8 @@ define('xcf/manager/DeviceManager',[
     "xide/data/Reference",
     'xide/utils/StringUtils',
     'xcf/mixins/LogMixin',
-    'xdojo/has!xcf-ui?./DeviceManager_UI', /*NMD:Ignore*/
-    'xdojo/has!xexpression?xexpression/Expression', /*NMD:Ignore*/
+    'xdojo/has!xcf-ui?./DeviceManager_UI',/*NMD:Ignore*/
+    'xdojo/has!xexpression?xexpression/Expression',/*NMD:Ignore*/
     'dojo/promise/all',
     "xide/console",
     "xide/lodash"
@@ -45659,7 +45637,7 @@ define('xcf/manager/DeviceManager',[
              DeviceManager_Server, DeviceManager_DeviceServer, Memory, TreeMemory, has,
              ObservableStore, Trackable, Device, Deferred, ServerActionBase, Reference, StringUtils,
              LogMixin,
-             DeviceManager_UI, Expression, all, console, _, _console, xUtils) {
+             DeviceManager_UI, Expression, all, console,_,_console, xUtils) {
     /*
      var console = typeof window !== 'undefined' ? window.console : console;
      if(_console && _console.error && _console.warn){
@@ -45860,10 +45838,10 @@ define('xcf/manager/DeviceManager',[
         getFile: function (device) {
             var dfd = new Deferred();
             var ctx = this.ctx;
-            if (_.isString(device)) {
-                device = this.getItemByPath(device + '.meta.json') || this.getItemByPath(device) || device;
+            if(_.isString(device)){
+                device = this.getItemByPath(device+'.meta.json') || this.getItemByPath(device) || device;
             }
-            if (!device || !device.path) {
+            if(!device||!device.path){
                 debugger;
             }
             var fileManager = ctx.getFileManager();
@@ -46231,7 +46209,6 @@ define('xcf/manager/DeviceManager',[
                 this.checkDeviceServerConnection();
                 return;
             }
-
             var stores = this.getStores(),
                 thiz = this;
 
@@ -46255,6 +46232,8 @@ define('xcf/manager/DeviceManager',[
                     return;
                 }
                 store.connected = true;
+
+
                 var items = utils.queryStore(store, {
                     isDir: false
                 });
@@ -46272,28 +46251,22 @@ define('xcf/manager/DeviceManager',[
                         start(device);
                     }
                 }
+                /*
+                 if(store.scope==='user_devices' && !isServer){
+                 var storePath = this.getStorePath(store.scope);
+                 if(storePath){
+                 this.sendManagerCommand(types.SOCKET_SERVER_COMMANDS.INIT_DEVICES,{
+                 path: storePath,
+                 scope:store.scope
+                 });
+                 }
+                 }
+                 */
+
             }
 
-            if (this.deviceServerClient.dfd) {
-                this.deviceServerClient.dfd.then(function () {
-                    _.each(stores, connect, this);
-                }.bind(this));
-            } else {
-                _.each(stores, connect, this);
-            }
+            _.each(stores, connect, this);
             return all;
-        },
-        /**
-         *
-         * @param clientOptions
-         * @param localDevice {module:xcf/model/Device}
-         */
-        updateDevice: function (clientOptions, localDevice) {
-            if (localDevice) {
-                localDevice.setMetaValue(types.DEVICE_PROPERTY.CF_DEVICE_DRIVER_OPTIONS, clientOptions.driverOptions);
-                localDevice.setMetaValue(types.DEVICE_PROPERTY.CF_DEVICE_OPTIONS, clientOptions.options);
-                localDevice.setMetaValue(types.DEVICE_PROPERTY.CF_DEVICE_ENABLED, clientOptions.enabled);
-            }
         },
         debug: function () {
             console.info('Debug info stores : ');
@@ -46467,6 +46440,7 @@ define('xcf/manager/DeviceManager',[
          * @private
          */
         onMQTTMessage: function (msg) {
+
             var message = utils.getJson(msg.message);
             var isUs = false;
             var thiz = this;
@@ -46561,8 +46535,7 @@ define('xcf/manager/DeviceManager',[
          */
         onNodeServiceStoreReady: function (evt) {
             if (this.deviceServerClient) {
-                //this.deviceServerClient.destroy();
-                return this.deviceServerClient;
+                this.deviceServerClient.destroy();
             }
             var store = evt.store, thiz = this;
             var client = this.createDeviceServerClient(store);
@@ -46620,7 +46593,12 @@ define('xcf/manager/DeviceManager',[
             delete this.deviceInstances[hash];
             this.ctx.getBlockManager().removeScope(instance.options.id);
             this.ctx.getDriverManager().removeDriverInstance(instance, device);
+
             device.reset();
+            if (this.completeDevice) {
+                //this.completeDevice(null,device,instance.driver);
+            }
+
         },
         /**
          *
@@ -46688,6 +46666,7 @@ define('xcf/manager/DeviceManager',[
          * @returns {module:xcf/model/Device|null}
          */
         getDeviceById: function (id, store) {
+
             var self = this;
 
             function search(_store) {
@@ -46795,27 +46774,24 @@ define('xcf/manager/DeviceManager',[
             }
 
             //already device
-            //if (deviceInfo && deviceInfo._store) {
-            //return deviceInfo;
-            //}
+            if (deviceInfo && deviceInfo._store) {
+                //return deviceInfo;
+            }
             var scope = deviceInfo.deviceScope;
             var store = this.getStore(scope);
+
             if (!store) {
                 return;
             }
 
             var byPath = deviceInfo.devicePath ? this.getItemByPath(deviceInfo.devicePath) : null;
-            if (byPath) {
+            if(byPath){
                 return byPath;
             }
 
-            var items = _.filter(store.query(), function (item) {
-                return item.isDir !== true;
+            var items = utils.queryStore(store, {
+                isDir: false
             });
-            /*
-             utils.queryStore(store, {
-             isDir: false
-             });*/
 
             if (!items) {
                 _debug && !isServer && console.error('store returned nothing ' + deviceInfo.deviceScope);
@@ -47031,7 +47007,7 @@ define('xcf/manager/DeviceManager',[
                         }
                         //no instance yet
                         var info = self.toDeviceControlInfo(device);
-                        if (info) {
+                        if(info) {
                             var driver = self.getContext().getDriverManager().getDriverById(info.driverId);
                             if (driver) {
                                 if (!driver.blockScope) {
@@ -47040,8 +47016,8 @@ define('xcf/manager/DeviceManager',[
                                 }
                                 return true;
                             }
-                        } else {
-                            console.error('cant get device info for ', device);
+                        }else{
+                            console.error('cant get device info for ',device);
                         }
 
                     }
@@ -47110,7 +47086,6 @@ define('xcf/manager/DeviceManager',[
             var meta = item['user'],
                 host = utils.getCIInputValueByName(meta, DEVICE_PROPERTY.CF_DEVICE_HOST),
                 port = utils.getCIInputValueByName(meta, DEVICE_PROPERTY.CF_DEVICE_PORT),
-                enabled = utils.getCIInputValueByName(meta, DEVICE_PROPERTY.CF_DEVICE_ENABLED),
                 title = utils.getCIInputValueByName(meta, DEVICE_PROPERTY.CF_DEVICE_TITLE),
                 protocol = utils.getCIInputValueByName(meta, DEVICE_PROPERTY.CF_DEVICE_PROTOCOL),
                 driverId = utils.getCIInputValueByName(meta, DEVICE_PROPERTY.CF_DEVICE_DRIVER),
@@ -47145,7 +47120,6 @@ define('xcf/manager/DeviceManager',[
                     deviceScope: item.getScope(),
                     title: title,
                     options: options,
-                    enabled: enabled,
                     driverOptions: driverOptions,
                     serverSide: serverSide,
                     isServer: isServer,
@@ -47352,7 +47326,6 @@ define('xcf/manager/DeviceManager',[
             this._deviceInfoCache = {};
             this.subscribe(types.EVENTS.ON_DRIVER_VARIABLE_CHANGED, this.onVariableChanged);
             this.subscribe(types.EVENTS.ON_DEVICE_SERVER_CONNECTED, function () {
-                console.log('got device server connection');
                 var connect = has('drivers') && has('devices');
                 if (thiz.autoConnectDevices && connect) {
                     all(thiz.connectToAllDevices()).then(function () {
@@ -47407,7 +47380,6 @@ define('xcf/manager/DeviceManager',[
          */
         ls: function (scope, track) {
             var dfd = new Deferred();
-
             function data(data) {
                 try {
                     var store = this.createStore(data, scope, track);
@@ -47609,10 +47581,6 @@ define('xcf/manager/DeviceManager',[
                         value: "mqtt"
                     }
                 ];
-            }
-
-            if (!item.id) {
-                item.id = utils.getCIInputValueByName(meta, types.DEVICE_PROPERTY.CF_DEVICE_ID);
             }
 
             var optionsCI = utils.getCIByChainAndName(meta, 0, types.DEVICE_PROPERTY.CF_DEVICE_OPTIONS);
@@ -48170,15 +48138,6 @@ define('xcf/manager/DeviceManager_DeviceServer',[
             var requirePath = decodeURIComponent(packageUrl) + deviceInfo.driver;
             requirePath = requirePath.replace('', '').trim();
 
-            function updateDevice(device,deviceInfo){
-
-            }
-
-            if(isServer){
-                updateDevice(device,deviceInfo);
-
-            }
-
             var thiz = this,
                 ctx = thiz.ctx,
                 meta = device['user'],
@@ -48204,7 +48163,6 @@ define('xcf/manager/DeviceManager_DeviceServer',[
             }
 
             if (isServer && (!device.isServerSide() && !device.isServer() && !deviceInfo.isServer && !deviceInfo.serverSide)) {
-                var e = new Error();
                 dfd.reject('DeviceManager_DeviceServer: wont create driver instance! I am server and device isnt server side : ' + deviceInfo.title);
                 return dfd;
             }
@@ -49261,6 +49219,9 @@ define('xcf/manager/DeviceManager_DeviceServer',[
                             debug && !msg && console.error('invalid incoming message', data);
                             msg = msg || {};
 
+                            if (!thiz.handle(msg)) {
+                                return;
+                            }
                             if (msg && msg.data && msg.data.deviceMessage && msg.data.deviceMessage.event === types.EVENTS.ON_COMMAND_FINISH) {
                                 thiz.onCommandFinish(msg.data.device, msg.data.deviceMessage);
                                 return;
@@ -49312,10 +49273,6 @@ define('xcf/manager/DeviceManager_DeviceServer',[
                             }
                             if (msg.event === types.EVENTS.ON_FILE_CHANGED) {
                                 return thiz.ctx.onXIDEMessage(utils.fromJson(data.data));
-                            }
-
-                            if (!thiz.handle(msg)) {
-                                return;
                             }
                         }
                         thiz.onDeviceServerMessage(data);
@@ -49423,8 +49380,8 @@ define('xcf/manager/BeanManager',[
                         if (Track) {
                             this.getContext().getTrackingManager().track(
                                 this.getTrackingCategory(),
-                                this.getTrackingLabel(this.item),
-                                this.getTrackingUrl(this.item),
+                                this.getTrackingLabel(),
+                                this.getTrackingUrl(),
                                 types.ACTION.OPEN,
                                 this.getContext().getUserDirectory()
                             );
@@ -49832,9 +49789,6 @@ define('xblox/model/Block',[
             getIconClass: function () {
             }
         }));
-    }
-    if(Block_UI){
-        bases.push(Block_UI);
     }
 
     /***
@@ -50297,12 +50251,9 @@ define('xblox/model/Block',[
             };
             return _next(this, items, dir);
         },
-        getParent: function (createRoot) {
+        getParent: function () {
             if (this.parentId) {
                 return this.scope.getBlockById(this.parentId);
-            }
-            if(createRoot===true){
-                //return this._store.getRootItem();
             }
             return null;
         },
@@ -50335,6 +50286,7 @@ define('xblox/model/Block',[
             }
             return _res;
         },
+
         // adds array2 at the end of array1 => useful for returned "solve" commands
         addToEnd: function (array1, array2) {
             if (array2 && array1.length != null && array2.length != null) {
@@ -50359,7 +50311,7 @@ define('xblox/model/Block',[
                     delete what.items;
                 }
                 what.parent = null;
-                what.parentId = null;
+
                 if (this.items) {
                     this.items.remove(what);
                 }
@@ -50687,7 +50639,6 @@ define('xblox/model/Block',[
                         this[container].push(_block);
                     }
                 }
-                _block.group=null;
                 return _block;
             } catch (e) {
                 logError(e, '_add');
@@ -50866,6 +50817,9 @@ define('xblox/model/Block',[
 
     //that's really weird: using dynamic base classes nor Block.extend doesnt work.
     //however, move dojo complete out of blox
+    if (has('xblox-ui')) {
+        lang.mixin(Block.prototype, Block_UI.prototype);
+    }
 
     if (!Block.prototype.onSuccess) {
         Block.prototype.onSuccess = function () {
@@ -54726,15 +54680,7 @@ define('xblox/model/logic/SwitchBlock',[
         toText: function () {
             return this.getBlockIcon('H') + this.name + ' ';
         },
-        /**
-         *
-         * @param what {module:xblox/model/Block}
-         * @returns {*}
-         */
-        canAdd: function (what) {
-            if(what && what.isInstanceOf){
-                return what.isInstanceOf(CaseBlock) || what.isInstanceOf(DefaultBlock);
-            }
+        canAdd: function () {
             return [];
         },
         getFields: function () {
@@ -56555,12 +56501,6 @@ define('xblox/model/code/RunScript',[
             settings = settings || {};
             var _script = send || (this._get('method') ? this._get('method') : this.method);
 
-            if(!scope.expressionModel){
-                //console.error('mar',scope);
-                throw new Error('na');
-                return;
-            }
-
             var thiz=this,
                 ctx = this.getContext(),
                 items = this[this._getContainer()],
@@ -56568,10 +56508,7 @@ define('xblox/model/code/RunScript',[
                 //outer
                 dfd = new Deferred,
                 listener = settings.listener,
-                isDfd = thiz.deferred,
-                expressionModel = scope.getExpressionModel();
-
-
+                isDfd = thiz.deferred;
 
             this.onRunThis(settings);
 
@@ -56591,14 +56528,10 @@ define('xblox/model/code/RunScript',[
 
                 return ret;
             }
-            if(!expressionModel){
-                console.error('scope has no expression model');
-                return false;
-            }
-            var expression = expressionModel.replaceVariables(scope,_script,null,null);
-            var _function = expressionModel.expressionCache[expression];
+            var expression = scope.expressionModel.replaceVariables(scope,_script,null,null);
+            var _function = scope.expressionModel.expressionCache[expression];
             if(!_function){
-                _function = expressionModel.expressionCache[expression] = new Function("{" + expression + "}");
+                _function = scope.expressionModel.expressionCache[expression] = new Function("{" + expression + "}");
             }
             var _args = thiz.getArgs(settings) || [];
             try {
@@ -56647,7 +56580,7 @@ define('xblox/model/code/RunScript',[
             return result;
         },
         canAdd:function(){
-            return true;
+            return [];
         },
         getFields:function(){
             if(this.description === 'No Description'){
@@ -62200,15 +62133,6 @@ define('xide/manager/Context_UI',[
         settingsManager: null,
         trackingManager: null,
         mainView: null,
-        registerRoute:function(config){
-            if(!this.routes){
-                this.routes = [];
-            }
-            this.routes.push(config);
-        },
-        ready:function(){
-            this.getRouter();
-        },
         routes:null,
         /**
          * @type {module:xide/manager/Router}
@@ -62219,11 +62143,9 @@ define('xide/manager/Context_UI',[
          * @returns {module:xide/manager/Router}
          */
         getRouter:function(){
-            if(!this.router || !this.router.match){
-                this.router = new Router({routes:this.routes});
-            }
             return this.router;
         },
+
         /**
          *
          * @returns {null|module:xide/manager/WindowManager}
@@ -62278,6 +62200,7 @@ define('xide/manager/Context_UI',[
          * @returns {module:dojo/Deferred}
          */
         createEditor: function (ctrArgs, item, editorOverrides, where, owner) {
+
             var dfd = new Deferred(),
                 registerInWindowManager = owner && owner.registerEditors === true ? true : true;
 
@@ -62460,6 +62383,15 @@ define('xide/manager/Context_UI',[
                 isDefault: false
             });
 
+        },
+        registerRoute:function(config){
+            if(!this.routes){
+                this.routes = [];
+            }
+            this.routes.push(config);
+        },
+        ready:function(){
+            this.router = new Router({routes:this.routes});
         },
         constructManagers: function () {
             this.pluginManager = this.createManager(PluginManager);
@@ -63308,6 +63240,7 @@ define('xaction/ActionProvider',[
          * @returns {*}
          */
         createAction2: function (options) {
+
             var thiz = this,
                 action = null,
                 mixin = options.mixin || {},
@@ -65082,11 +65015,8 @@ define('xaction/Action',[
     'xide/types',
     'xide/utils/ObjectUtils',
     'xide/utils',
-    'xide/mixins/EventedMixin',
-    'xide/cache/Circular'
-], function (dcl, Base, types, ObjectUtils, utils, EventedMixin, Circular) {
-
-    var Cache = null;//new Circular(100);
+    'xide/mixins/EventedMixin'
+], function (dcl, Base, types, ObjectUtils, utils,EventedMixin) {
     /***
      * Extend the core types for action visibility(main menu,...) options/enums:
      * 1. 'Main menu',
@@ -65237,31 +65167,8 @@ define('xaction/Action',[
      * @augments xide/model/Base
      */
     var Module = dcl([Base.dcl, EventedMixin.dcl], {
-        declaredClass: "xaction/Action",
+        declaredClass:"xaction/Action",
         disabled: false,
-        destroy: function () {
-            if (Cache && Cache.size() < 100) {
-                delete this._properties;
-                delete this._visibility;
-                delete this.keyboardMappings;
-                delete this.group;
-                delete this.tab;
-                delete this.owner;
-                delete this.item;
-                delete this.icon;
-                delete this.actionType;
-                delete this.label;
-                delete this.title;
-                delete this.type;
-                delete this.onCreate;
-                delete this.onChange;
-                delete this.addPermission;
-                delete this._store;
-                delete this.parameters;
-                delete this.handler;
-                Cache.push(this);
-            }
-        },
         /**
          * Turn on/off this action
          * @type {boolean}
@@ -65457,9 +65364,7 @@ define('xaction/Action',[
      * @returns {module:xaction/Action}
      */
     Module.create = function (label, icon, command, permanent, operation, btypes, group, visibility, register, handler, mixin) {
-        var _action = null;
-
-        var _args = {
+        var _action = new Module({
             permanent: permanent,
             command: command,
             icon: icon,
@@ -65470,15 +65375,7 @@ define('xaction/Action',[
             group: group,
             handler: handler,
             title: label
-        };
-        if (Cache && Cache.size()) {
-            _action = Cache.deq(0);
-            //console.log('re-use');
-            utils.mixin(_action, _args);
-        } else {
-            //console.log('-create!');
-            _action = new Module(_args);
-        }
+        });
         /*
          var VISIBILITY = types.ACTION_VISIBILITY,
          VISIBILITIES = [
@@ -65507,92 +65404,6 @@ define('xaction/Action',[
     return Module;
 });
 ;
-define('xide/cache/Circular',[], function () {
-
-    function CircularBuffer(capacity){
-        if(!(this instanceof CircularBuffer))return new CircularBuffer(capacity);
-        if(typeof capacity=="object"&&
-            Array.isArray(capacity["_buffer"])&&
-            typeof capacity._capacity=="number"&&
-            typeof capacity._first=="number"&&
-            typeof capacity._size=="number"){
-            for(var prop in capacity){
-                if(capacity.hasOwnProperty(prop))this[prop]=capacity[prop];
-            }
-        } else {
-            if(typeof capacity!="number"||capacity%1!=0||capacity<1)
-                throw new TypeError("Invalid capacity");
-            this._buffer=new Array(capacity);
-            this._capacity=capacity;
-            this._first=0;
-            this._size=0;
-        }
-    }
-    CircularBuffer.prototype = {
-        size: function () {
-            return this._size;
-        },
-        capacity: function () {
-            return this._capacity;
-        },
-        enq: function (value) {
-            if (this._first > 0)this._first--; else this._first = this._capacity - 1;
-            this._buffer[this._first] = value;
-            if (this._size < this._capacity)this._size++;
-        },
-        push: function (value) {
-            if (this._size == this._capacity) {
-                this._buffer[this._first] = value;
-                this._first = (this._first + 1) % this._capacity;
-            } else {
-                this._buffer[(this._first + this._size) % this._capacity] = value;
-                this._size++;
-            }
-        },
-        deq: function () {
-            if (this._size == 0)throw new RangeError("dequeue on empty buffer");
-            var value = this._buffer[(this._first + this._size - 1) % this._capacity];
-            this._size--;
-            return value;
-        },
-        pop: function () {
-            return this.deq();
-        },
-        shift: function () {
-            if (this._size == 0)throw new RangeError("shift on empty buffer");
-            var value = this._buffer[this._first];
-            if (this._first == this._capacity - 1)this._first = 0; else this._first++;
-            this._size--;
-            return value;
-        },
-        get: function (start, end) {
-            if (this._size == 0 && start == 0 && (end == undefined || end == 0))return [];
-            if (typeof start != "number" || start % 1 != 0 || start < 0)throw new TypeError("Invalid start");
-            if (start >= this._size)throw new RangeError("Index past end of buffer: " + start);
-
-            if (end == undefined)return this._buffer[(this._first + start) % this._capacity];
-
-            if (typeof end != "number" || end % 1 != 0 || end < 0)throw new TypeError("Invalid end");
-            if (end >= this._size)throw new RangeError("Index past end of buffer: " + end);
-
-            if (this._first + start >= this._capacity) {
-                //make sure first+start and first+end are in a normal range
-                start -= this._capacity; //becomes a negative number
-                end -= this._capacity;
-            }
-            if (this._first + end < this._capacity)
-                return this._buffer.slice(this._first + start, this._first + end + 1);
-            else
-                return this._buffer.slice(this._first + start, this._capacity).concat(this._buffer.slice(0, this._first + end + 1 - this._capacity));
-        },
-        toarray: function () {
-            if (this._size == 0)return [];
-            return this.get(0, this._size - 1);
-        }
-    };
-
-    return CircularBuffer;
-});;
 /** @module xaction/ActionStore **/
 define('xaction/ActionStore',[
     "xdojo/declare",
@@ -65661,7 +65472,6 @@ define('xaction/ActionModel',[
     'xide/utils'
 ], function (dcl, Action, Model, Source, Path, utils) {
     var debug = false;
-    var count = 0;
     /**
      * @class module:xaction/ActionModel
      * @extends module:xide/data/Source
@@ -66488,9 +66298,8 @@ define('xide/manager/WindowManager',[
     'xide/editor/Registry',
     'xide/registry',
     'xdojo/has',
-    'xide/lodash',
     'dojo/has!xace?xace/views/Editor'
-], function (dcl, utils, types, ManagerBase, Registry, registry, has,_,Editor) {
+], function (dcl, utils, types, ManagerBase, Registry, registry, has, Editor) {
 
     function register(what, where, _active) {
         where.addActionEmitter(what);
@@ -66783,23 +66592,7 @@ define('xide/min',[
     'xide/factory/Events',
     'xide/lodash'
 ], function () {
-    if(!Array.prototype.remove) {
-        Array.prototype.remove = function () {
-            var what, a = arguments, L = a.length, ax;
-            while (L && this.length) {
-                what = a[--L];
-                if (this.indexOf == null) {
-                    break;
-                }
-                while ((ax = this.indexOf(what)) != -1) {
-                    this.splice(ax, 1);
-                }
-            }
-            return this;
-        };
-    }
-});
-;
+});;
 define('xide/debug',[
     'xdojo/declare',
     'dojo/has',
@@ -72163,14 +71956,9 @@ define('xapp/manager/Context',[
                         "blocks": [],
                         "variables": []
                     };
-                    var fileManager = this.getFileManager();
-                    if(fileManager.serviceObject) {
-                        this.getFileManager().mkfile(mount, path, JSON.stringify(content, null, 2)).then(function () {
-                            loadXBLOXFiles();
-                        });
-                    }else{
+                    this.getFileManager().mkfile(mount, path, JSON.stringify(content, null, 2)).then(function () {
                         loadXBLOXFiles();
-                    }
+                    });
                 }
             }
         },
@@ -73585,7 +73373,6 @@ define('xide/manager/ContextBase',[
                     ctx: this,
                     config: config || this.config
                 });
-
                 return mgr;
             } catch (e) {
                 console.error('error creating manager ' + e, arguments);
@@ -73969,20 +73756,18 @@ define('xide/utils/ObjectUtils',[
     'require',
     "dojo/Deferred",
     'xide/lodash'
-], function (utils, require, Deferred, lodash) {
+], function (utils, require, Deferred,lodash) {
     var _debug = false;
     "use strict";
 
-    utils.delegate = (function () {
+    utils.delegate=(function(){
         // boodman/crockford delegation w/ cornford optimization
-        function TMP() {
-        }
-
-        return function (obj, props) {
+        function TMP(){}
+        return function(obj, props){
             TMP.prototype = obj;
             var tmp = new TMP();
             TMP.prototype = null;
-            if (props) {
+            if(props){
                 lang._mixin(tmp, props);
             }
             return tmp; // Object
@@ -73994,23 +73779,23 @@ define('xide/utils/ObjectUtils',[
     //  Loader utils
     //
     //////////////////////////////////////////////////////////////////////////////////////////////
-    utils.debounce = function (who, methodName, _function, delay, options, now, args) {
-        var _place = who[methodName + '_debounced'];
-        if (!_place) {
-            _place = who[methodName + '_debounced'] = lodash.debounce(_function, delay, options);
+    utils.debounce = function(who,methodName,_function,delay,options,now,args){
+        var _place = who[methodName+'_debounced'];
+        if(!_place){
+            _place = who[methodName+'_debounced'] =  lodash.debounce(_function, delay,options);
         }
-        if (now === true) {
-            if (!who[methodName + '_debouncedFirst']) {
-                who[methodName + '_debouncedFirst'] = true;
-                _function.apply(who, args);
+        if(now===true){
+            if(!who[methodName+'_debouncedFirst']){
+                who[methodName+'_debouncedFirst']=true;
+                _function.apply(who,args);
             }
         }
         return _place();
     };
 
 
-    utils.pluck = function (items, prop) {
-        return lodash.map(items, prop);
+    utils.pluck=function(items,prop){
+        return lodash.map(items,prop);
     };
 
     /**
@@ -74018,9 +73803,9 @@ define('xide/utils/ObjectUtils',[
      * @param filename
      * @param text
      */
-    utils.download = function (filename, text) {
+    utils.download  = function(filename, text){
         var element = document.createElement('a');
-        text = lodash.isString(text) ? text : JSON.stringify(text, null, 2);
+        text = lodash.isString(text) ? text : JSON.stringify(text,null,2);
         element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
         element.setAttribute('download', filename);
         element.style.display = 'none';
@@ -74048,7 +73833,7 @@ define('xide/utils/ObjectUtils',[
      * Safe require.toUrl
      * @param mid {string}
      */
-    utils.toUrl = function (mid) {
+    utils.toUrl = function(mid){
         var _require = require;
         //make sure cache bust is off otherwise it appends ?time
         _require({
@@ -74084,8 +73869,8 @@ define('xide/utils/ObjectUtils',[
                     });
                     return deferred.promise;
                 }
-            } catch (e) {
-                _debug && console.error('error in requiring ' + mixed, e);
+            }catch(e){
+                _debug &&  console.error('error in requiring '+mixed,e);
             }
             return result;
 
@@ -74168,7 +73953,7 @@ define('xide/utils/ObjectUtils',[
      * Internals
      */
 
-        //cache
+    //cache
     var toStr = Object.prototype.toString,
         _hasOwnProperty = Object.prototype.hasOwnProperty;
 
@@ -74187,7 +73972,7 @@ define('xide/utils/ObjectUtils',[
      * @returns {*}
      */
     function getKey(key) {
-        var intKey = parseInt(key, 10);
+        var intKey = parseInt(key,10);
         if (intKey.toString() === key) {
             return intKey;
         }
@@ -74553,35 +74338,34 @@ define('xide/utils/ObjectUtils',[
     //
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    /**
-     * Clones objects (including DOM nodes) and all children.
-     * Warning: do not clone cyclic structures.
-     * @param src {*} The object to clone.
-     * @returns {*}
-     */
-    utils.clone = function (src) {
-        if (!src || typeof src != "object" || utils.isFunction(src)) {
+    utils.clone=function(/*anything*/ src){
+        // summary:
+        // Clones objects (including DOM nodes) and all children.
+        // Warning: do not clone cyclic structures.
+        // src:
+        // The object to clone
+        if(!src || typeof src != "object" || utils.isFunction(src)){
             // null, undefined, any non-object, or function
             return src; // anything
         }
-        if (src.nodeType && "cloneNode" in src) {
+        if(src.nodeType && "cloneNode" in src){
             // DOM Node
             return src.cloneNode(true); // Node
         }
-        if (src instanceof Date) {
+        if(src instanceof Date){
             // Date
             return new Date(src.getTime()); // Date
         }
-        if (src instanceof RegExp) {
+        if(src instanceof RegExp){
             // RegExp
             return new RegExp(src); // RegExp
         }
         var r, i, l;
-        if (utils.isArray(src)) {
+        if(utils.isArray(src)){
             // array
             r = [];
-            for (i = 0, l = src.length; i < l; ++i) {
-                if (i in src) {
+            for(i = 0, l = src.length; i < l; ++i){
+                if(i in src){
                     r.push(utils.clone(src[i]));
                 }
             }
@@ -74589,7 +74373,7 @@ define('xide/utils/ObjectUtils',[
             // }else if(d.isFunction(src)){
             // // function
             // r = function(){ return src.apply(this, arguments); };
-        } else {
+        }else{
             // generic objects
             r = src.constructor ? new src.constructor() : {};
         }
@@ -74608,7 +74392,7 @@ define('xide/utils/ObjectUtils',[
      * @returns {object} dest, as modified
      * @private
      */
-    utils._mixin = function (dest, source, copyFunc) {
+    utils._mixin=function (dest, source, copyFunc) {
         var name, s, i, empty = {};
         for (name in source) {
             // the (!(name in empty) || empty[name] !== s) condition avoids copying properties in "source"
@@ -74657,12 +74441,13 @@ define('xide/utils/ObjectUtils',[
      *
      */
     utils.mixin = function (dest, sources) {
-        if (sources) {
+        if(sources) {
+
             if (!dest) {
-                dest = {};
-            }
+                dest = {};            }
+
             var l = arguments.length;
-            for (var i = 1; i < l; i++) {
+            for (var i = 1 ; i < l; i++) {
                 utils._mixin(dest, arguments[i]);
             }
             return dest; // Object
@@ -74693,7 +74478,7 @@ define('xide/utils/ObjectUtils',[
      * @param what
      * @returns {*}
      */
-    utils.isArray = function (what) {
+    utils.isArray=function(what){
         return lodash.isArray(what);
     };
     /**
@@ -74701,7 +74486,7 @@ define('xide/utils/ObjectUtils',[
      * @param what
      * @returns {*}
      */
-    utils.isObject = function (what) {
+    utils.isObject=function(what){
         return lodash.isObject(what);
     };
     /**
@@ -74709,7 +74494,7 @@ define('xide/utils/ObjectUtils',[
      * @param what
      * @returns {*}
      */
-    utils.isString = function (what) {
+    utils.isString=function(what){
         return lodash.isString(what);
     };
     /**
@@ -74717,15 +74502,19 @@ define('xide/utils/ObjectUtils',[
      * @param what
      * @returns {*}
      */
-    utils.isNumber = function (what) {
+    utils.isNumber=function(what){
         return lodash.isNumber(what);
     };
     /**
-     * Return true if it is a Function
+     *
      * @param it
      * @returns {*}
      */
-    utils.isFunction = function (it) {
+    utils.isFunction=function(it){
+        // summary:
+        // Return true if it is a Function
+        // it: anything
+        // Item to test.
         return lodash.isFunction(it);
     };
     return utils;
@@ -74939,26 +74728,6 @@ define('xide/utils/CIUtils',[
             for (var i = 0; i < dstChain.length; i++) {
                 var ci = dstChain[i];
                 var _n = utils.getStringValue(ci.name);
-                if (_n!=null && _n.toLowerCase() === name.toLowerCase()){
-                    return ci;
-                }
-            }
-        }
-        return null;
-    };
-    utils.getInputCIById = function (data,name){
-        if(!data){
-            return null;
-        }
-        var chain = 0;
-        var dstChain = chain == 0 ? data.inputs : chain == 1 ? data.outputs : null;
-        if(!dstChain){//has no chains, be nice
-            dstChain=data;
-        }
-        if (dstChain != null) {
-            for (var i = 0; i < dstChain.length; i++) {
-                var ci = dstChain[i];
-                var _n = utils.getStringValue(ci.id);
                 if (_n!=null && _n.toLowerCase() === name.toLowerCase()){
                     return ci;
                 }
@@ -79922,13 +79691,7 @@ define('xide/types/Types',[
         ON_REMOVE_CONTAINER: 'onRemoveContainer',
         ON_CONTAINER_REPLACED: 'onContainerReplaced',
         ON_CONTAINER_SPLIT: 'onContainerSplit',
-        ON_RENDER_WELCOME_GRID_GROUP:'onRenderWelcomeGridGroup',
-
-        ON_DND_SOURCE_OVER:'/dnd/source/over',
-        ON_DND_START:'/dnd/start',
-        ON_DND_DROP_BEFORE:'/dnd/drop/before',
-        ON_DND_DROP:'/dnd/drop',
-        ON_DND_CANCEL:'/dnd/cancel'
+        ON_RENDER_WELCOME_GRID_GROUP:'onRenderWelcomeGridGroup'
     };
     /**
      * To be moved
