@@ -22,7 +22,7 @@ const JSONFile_1 = require("../../services/JSONFile");
 const Mounts_1 = require("../../services/Mounts");
 const Services_1 = require("../../services/Services");
 const Tracking_1 = require("../../services/Tracking");
-const Mongod_1 = require("../../services/external/Mongod");
+//import { Mongod } from '../../services/external/Mongod';
 const xideve_1 = require("../../components/xideve/xideve");
 const Logs_1 = require("../../services/Logs");
 const register_1 = require("../../services/register");
@@ -63,16 +63,17 @@ class ControlFreak extends Base_1.ApplicationBase {
         const NODE_ROOT = options.release ? process.cwd() : path.join(APP_ROOT, 'server/nodejs/');
         const USER_DIRECTORY = path.join(APP_ROOT, '/user');
         const DATA_ROOT = path.join(APP_ROOT, '/data/');
+        /*
         const TMP_PATH = osTmpdir();
         if (argv.mqtt !== 'false') {
             try {
                 mkdirp.sync(TMP_PATH + path.sep + '_MONGO' + '_' + this.uuid);
-            }
-            catch (e) {
-                console_1.console.error('error creating MONGO Database path ' + TMP_PATH + path.sep + '_MONGO' + '_' + this.uuid);
+            } catch (e) {
+                console.error('error creating MONGO Database path ' + TMP_PATH + path.sep + '_MONGO' + '_' + this.uuid);
             }
         }
-        const DB_ROOT = path.resolve(TMP_PATH + path.sep + '_MONGO_' + this.uuid);
+        */
+        //const DB_ROOT = path.resolve(TMP_PATH + path.sep + '_MONGO_' + this.uuid);
         const SYSTEM_ROOT = path.join(DATA_ROOT, '/system/');
         const VFS_CONFIG = {
             'workspace': path.join(USER_DIRECTORY, 'workspace'),
@@ -87,7 +88,7 @@ class ControlFreak extends Base_1.ApplicationBase {
         };
         let params = {
             APP_ROOT: APP_ROOT,
-            DB_ROOT: DB_ROOT,
+            //DB_ROOT: DB_ROOT,
             USER_DIRECTORY: USER_DIRECTORY,
             DATA_ROOT: DATA_ROOT,
             SYSTEM_ROOT: SYSTEM_ROOT,
@@ -211,19 +212,23 @@ class ControlFreak extends Base_1.ApplicationBase {
     }
     externalServices() {
         let searchPaths = [];
-        if (this.options.type === Base_1.ELayout.OFFLINE_RELEASE) {
-            searchPaths.push(path.resolve(path.join(this.path(Base_1.EEKey.APP_ROOT), 'mongo')));
+        return [];
+        /*
+        if (this.options.type === ELayout.OFFLINE_RELEASE) {
+            searchPaths.push(path.resolve(
+                path.join(this.path(EEKey.APP_ROOT), 'mongo'))
+            );
         }
         if (argv['mqtt'] !== 'false') {
-            const mongod = new Mongod_1.Mongod({
-                db: this.path(Base_1.EEKey.DB_ROOT),
+            const mongod: Mongod = new Mongod({
+                db: this.path(EEKey.DB_ROOT),
                 port: this.profile.mongo.port
             }, searchPaths, this.options.print);
             return [mongod];
-        }
-        else {
+        } else {
             return [];
         }
+        */
     }
     vfsConfig() {
         return {
