@@ -328,7 +328,7 @@ class ControlFreak extends Base_1.ApplicationBase {
         const rpcApp = new Koa();
         rpcApp.use(convert(this.rpc2.app()));
         this.use(convert(mount('/api', rpcApp)));
-        //pretty index browser
+        //pretty index browser, must be 'used' no later than at this point
         this.use(index_2.serveIndex(this.path(Base_1.EEKey.APP_ROOT), {
             icons: true,
             view: 'details'

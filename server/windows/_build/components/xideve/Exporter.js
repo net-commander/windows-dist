@@ -154,7 +154,7 @@ class Exporter {
             if (!options.http_port) {
                 options.http_port = 5556;
             }
-            this.exportMongo(options);
+            //this.exportMongo(options);
             this.createDirectoryLayout(options);
             this.exportServer(options);
             this.onProgress('Exported Servers');

@@ -4992,9 +4992,12 @@ define('xgrid/TreeRenderer',[
         var firstChild = children ? children[0] : false,
             focused = this._focusedNode,
             last = focused ? this.down(focused, children ? children.length : 0, true) : null,
-            loaded = (storeItem._EX === true || storeItem._EX == null),
-            selection = this.getSelection ? this.getSelection() : [storeItem],
-            down = this.down(focused, -1, true),
+            loaded = (storeItem._EX === true || storeItem._EX == null);
+
+        var selection = this.getSelection ? this.getSelection() : [storeItem];
+        //var selection2 = this.getSelection ? this._getSelected() : [storeItem];
+
+        var down = this.down(focused, -1, true),
             up = this.down(focused, 1, true),
             defaultSelectArgs = {
                 focus: true,
@@ -5138,7 +5141,7 @@ define('xgrid/TreeRenderer',[
             }
             var res = this.inherited(arguments);
             this.on("keydown", KEYBOARD_HANDLER.bind(this));
-            if(!this.renderers){
+            if (!this.renderers) {
                 //we are the only renderer
                 this.activateRenderer();
             }
@@ -6014,7 +6017,7 @@ define('xgrid/Selection',[
     'dojo/Deferred',
     'xide/lodash',
     'xide/$'
-], function (declare,has,types,utils,Selection,domClass,on,Deferred,_,$) {
+], function (declare, has, types, utils, Selection, domClass, on, Deferred, _, $) {
 
     /////////////////////////////////////////////////////////////////////
     //
@@ -6038,10 +6041,10 @@ define('xgrid/Selection',[
      * @param selection to ids
      * @returns {string[]}
      */
-    function rows(selection){
+    function rows(selection) {
         var result = [];
-        if(selection && selection.rows){
-            selection.rows.forEach(function(row){
+        if (selection && selection.rows) {
+            selection.rows.forEach(function (row) {
                 result.push(row.id);
             });
         }
@@ -6054,7 +6057,7 @@ define('xgrid/Selection',[
      * @returns {*|Array}
      */
     function allArraysAlike(arrays) {
-        return _.all(arrays, function(array) {
+        return _.all(arrays, function (array) {
             return array.length == arrays[0].length && _.difference(array, arrays[0]).length == 0;
         });
     }
@@ -6065,10 +6068,10 @@ define('xgrid/Selection',[
      * @param newSelection
      * @returns {*|Array}
      */
-    function equals(lastSelection,newSelection){
+    function equals(lastSelection, newSelection) {
         var cSelected = rows(lastSelection);
         var nSelected = rows(newSelection);
-        return allArraysAlike([cSelected,nSelected]);
+        return allArraysAlike([cSelected, nSelected]);
     }
 
     /**
@@ -6078,21 +6081,21 @@ define('xgrid/Selection',[
      * @param idProperty
      * @returns {boolean}
      */
-    function isSame(items,now,idProperty){
-        var newSelection = items ? items.map(function(item){
+    function isSame(items, now, idProperty) {
+        var newSelection = items ? items.map(function (item) {
             return item ? item.data || item : {};
         }) : [];
-        var idsNew = newSelection.map( function(x){ return x[idProperty]; } );
-        var idsNow = now.map( function(x){ return x[idProperty]; } );
-        return (idsNew.join(',') === idsNow.join(',') );
+        var idsNew = newSelection.map(function (x) { return x[idProperty]; });
+        var idsNow = now.map(function (x) { return x[idProperty]; });
+        return (idsNew.join(',') === idsNow.join(','));
     }
 
     /**
      *
      * @param self {module:xgrid/Base}
      */
-    function clearFocused(self){
-        $(self.domNode).find('.dgrid-focus').each(function(i,el){
+    function clearFocused(self) {
+        $(self.domNode).find('.dgrid-focus').each(function (i, el) {
             $(el).removeClass('dgrid-focus');
         });
     }
@@ -6104,19 +6107,19 @@ define('xgrid/Selection',[
      * @lends module:xgrid/Base
      */
     var Implementation = {
-        _lastSelection:null,
-        _lastFocused:null,
-        _refreshInProgress:null,
-        __lastLast:null,
-        __lastFirst:null,
+        _lastSelection: null,
+        _lastFocused: null,
+        _refreshInProgress: null,
+        __lastLast: null,
+        __lastFirst: null,
         /**
          * Mute any selection events.
          */
-        _muteSelectionEvents:true,
-        selectAll:function(filter){
-            this.select(this.getRows(filter),null,true,{
-                append:false,
-                delay:1
+        _muteSelectionEvents: true,
+        selectAll: function (filter) {
+            this.select(this.getRows(filter), null, true, {
+                append: false,
+                delay: 1
             });
         },
         /**
@@ -6124,12 +6127,12 @@ define('xgrid/Selection',[
          * @param state
          * @returns {object}
          */
-        setState:function(state) {
-            state && state.selection && state.selection.selection && this.select(state.selection.selection,null,true,{
-                expand:true,
-                append:false,
-                scrollInto:true
-            },'restore');
+        setState: function (state) {
+            state && state.selection && state.selection.selection && this.select(state.selection.selection, null, true, {
+                expand: true,
+                append: false,
+                scrollInto: true
+            }, 'restore');
             return this.inherited(arguments);
         },
         /**
@@ -6137,22 +6140,22 @@ define('xgrid/Selection',[
          * @param state
          * @returns {object}
          */
-        getState:function(state) {
+        getState: function (state) {
             state = this.inherited(arguments) || {};
             var selection = this._preserveSelection();
             var thisState = {
-                selection:[]
+                selection: []
             };
             var collection = this.collection;
             var idProp = collection.idProperty;
-            if(selection.selection && idProp){
-                _.each(selection.selection,function(item){
-                    if(item && item[idProp]) {
+            if (selection.selection && idProp) {
+                _.each(selection.selection, function (item) {
+                    if (item && item[idProp]) {
                         thisState.selection.push(item[idProp]);
                     }
                 });
             }
-            if(selection.focused){
+            if (selection.focused) {
                 thisState.focused = selection.focused.path;
             }
             state.selection = thisState;
@@ -6163,24 +6166,24 @@ define('xgrid/Selection',[
          * @param restoreSelection
          * @returns {*}
          */
-        refresh:function(restoreSelection){
-            if(!this.isRendered()){
+        refresh: function (restoreSelection) {
+            if (!this.isRendered()) {
                 return false;
             }
-            if(this._refreshInProgress){
+            if (this._refreshInProgress) {
                 return this._refreshInProgress;
             }
 
-            var _restore = restoreSelection !==false ? this._preserveSelection() : null,
+            var _restore = restoreSelection !== false ? this._preserveSelection() : null,
                 thiz = this,
                 active = this.isActive(),
                 res = this.inherited(arguments);
 
             this._refreshInProgress = res;
 
-            res && res.then && res.then(function(){
+            res && res.then && res.then(function () {
                 thiz._refreshInProgress = null;
-                active && _restore && thiz._restoreSelection(_restore,1,!active,'restore');
+                active && _restore && thiz._restoreSelection(_restore, 1, !active, 'restore');
             });
             return res;
         },
@@ -6190,88 +6193,88 @@ define('xgrid/Selection',[
          * @returns {*}
          * @private
          */
-        _normalize:function(what){
-            if(!what){
+        _normalize: function (what) {
+            if (!what) {
                 return null;
             }
-            if(!what.element){
+            if (!what.element) {
                 what = this.cell(what);
             }
-            if(what && what.row){
-                what=what.row;
+            if (what && what.row) {
+                what = what.row;
             }
             return what;
         },
         /**
          * save deselect
          */
-        deselectAll:function(){
-            if(!this._lastSelection){
+        deselectAll: function () {
+            if (!this._lastSelection) {
                 return;
             }
             this.clearSelection();
-            this._lastSelection=null;
-            this._lastFocused=null;
-            $(this.domNode).find('.dgrid-focus').each(function(i,el){
+            this._lastSelection = null;
+            this._lastFocused = null;
+            $(this.domNode).find('.dgrid-focus').each(function (i, el) {
                 $(el).removeClass('dgrid-focus');
             });
-            this._emit('selectionChanged',{
-                selection:[],
-                why:"clear",
-                source:'code'
+            this._emit('selectionChanged', {
+                selection: [],
+                why: "clear",
+                source: 'code'
             });
         },
-        invertSelection:function(items){
+        invertSelection: function (items) {
             var selection = items || this._getSelection() || [];
             var newSelection = [],
                 all = this.getRows();
-            _.each(all,function(data){
-                if(selection.indexOf(data)===-1){
+            _.each(all, function (data) {
+                if (selection.indexOf(data) === -1) {
                     newSelection.push(data);
                 }
             });
-            return this.select(newSelection,null,true,{
-                append:false
+            return this.select(newSelection, null, true, {
+                append: false
             });
         },
-        runAction:function(action){
-            if(_.isString(action)){
+        runAction: function (action) {
+            if (_.isString(action)) {
                 action = this.getActionStore().getSync(action);
             }
-            if(action.command==='File/Select/None'){
+            if (action.command === 'File/Select/None') {
                 this.deselectAll();
                 return true;
             }
-            if(action.command==='File/Select/All'){
+            if (action.command === 'File/Select/All') {
                 this.selectAll();
                 return true;
             }
-            if(action.command==='File/Select/Invert'){
+            if (action.command === 'File/Select/Invert') {
                 return this.invertSelection();
             }
             return this.inherited(arguments);
         },
-        _preserveSelection:function(){
+        _preserveSelection: function () {
             this.__lastSelection = this._getSelection();
             this._lastFocused = this.getFocused();
             return {
-                selection : this._getSelection(),
-                focused : this.getFocused()
+                selection: this._getSelection(),
+                focused: this.getFocused()
             };
         },
-        _restoreSelection:function(what,delay,silent,reason){
+        _restoreSelection: function (what, delay, silent, reason) {
             var lastFocused = what ? what.focused : this._lastFocused;
             var lastSelection = what ? what.selection : this.__lastSelection;
-            if(_.isEmpty(lastSelection)){
-                lastFocused=null;
-                this._lastFocused=null;
-            }else {
+            if (_.isEmpty(lastSelection)) {
+                lastFocused = null;
+                this._lastFocused = null;
+            } else {
                 //restore:
                 var dfd = this.select(lastSelection, null, true, {
                     silent: silent != null ? silent : true,
                     append: false,
-                    delay: delay !=null ? delay : 0
-                },reason);
+                    delay: delay != null ? delay : 0
+                }, reason);
 
                 if (lastFocused && this.isActive()) {
                     this.focus(this.row(lastFocused));
@@ -6286,20 +6289,20 @@ define('xgrid/Selection',[
          * @param skipSelected
          * @returns {*}
          */
-        getPrevious:function(from,domNode,skipSelected){
+        getPrevious: function (from, domNode, skipSelected) {
             from = from || this.getFocused(domNode);
             from = this._normalize(from);
             var nextNode = this.cell(this._move(from, -1, "dgrid-row"));
-            if(nextNode && nextNode.row){
-                nextNode = nextNode.row[domNode? 'element' : 'data' ];
-                if(skipSelected===true) {
-                    if(this.isSelected(nextNode)){
+            if (nextNode && nextNode.row) {
+                nextNode = nextNode.row[domNode ? 'element' : 'data'];
+                if (skipSelected === true) {
+                    if (this.isSelected(nextNode)) {
                         //nothing previous here
-                        if(from && from.data && from.data == nextNode){
+                        if (from && from.data && from.data == nextNode) {
                             return null;
                         }
-                        var _nextNode = this.getPrevious(nextNode,domNode,skipSelected);
-                        if(_nextNode){
+                        var _nextNode = this.getPrevious(nextNode, domNode, skipSelected);
+                        if (_nextNode) {
                             return _nextNode;
                         }
                     }
@@ -6314,20 +6317,20 @@ define('xgrid/Selection',[
          * @param skipSelected
          * @returns {*}
          */
-        getNext:function(from,domNode,skipSelected){
+        getNext: function (from, domNode, skipSelected) {
             from = from || this.getFocused(domNode);
             from = this._normalize(from);
             var nextNode = this.cell(this._move(from, 1, "dgrid-row"));
-            if(nextNode && nextNode.row){
-                nextNode = nextNode.row[domNode? 'element' : 'data' ];
-                if(skipSelected===true) {
-                    if(this.isSelected(nextNode)){
+            if (nextNode && nextNode.row) {
+                nextNode = nextNode.row[domNode ? 'element' : 'data'];
+                if (skipSelected === true) {
+                    if (this.isSelected(nextNode)) {
                         //nothing previous here
-                        if(from && from.data && from.data == nextNode){
+                        if (from && from.data && from.data == nextNode) {
                             return null;
                         }
-                        var _nextNode = this.getNext(nextNode,domNode,skipSelected);
-                        if(_nextNode){
+                        var _nextNode = this.getNext(nextNode, domNode, skipSelected);
+                        if (_nextNode) {
                             return _nextNode;
                         }
                     }
@@ -6340,7 +6343,7 @@ define('xgrid/Selection',[
          * @param filterFunction
          * @returns selection {Object[] | NULL }
          */
-        getSelection:function(filterFunction){
+        getSelection: function (filterFunction) {
             return this._getSelection(filterFunction);
         },
         /**
@@ -6348,10 +6351,10 @@ define('xgrid/Selection',[
          * @param filterFunction
          * @returns selection {Object[] | NULL }
          */
-        _getSelection:function(filterFunction){
+        _getSelection: function (filterFunction) {
             var result = [];
-            var collection =this.collection;
-            if(collection) {
+            var collection = this.collection;
+            if (collection) {
                 for (var id in this.selection) {
                     var item = this.collection.getSync(id);
                     item && result.push(item);
@@ -6364,12 +6367,20 @@ define('xgrid/Selection',[
         },
         /**
          *
+         * @param filterFunction
+         * @returns selection {Object[] | NULL }
+         */
+        _getSelected: function () {
+            return $('.dgrid-selected', this.domNode);
+        },
+        /**
+         *
          * @param filter
          * @returns {*}
          */
-        getSelectedItem:function(filter){
+        getSelectedItem: function (filter) {
             var _selection = this.getSelection(filter);
-            if(_selection.length===1){
+            if (_selection.length === 1) {
                 return _selection[0];
             }
             return null;
@@ -6378,25 +6389,26 @@ define('xgrid/Selection',[
          * Override std::postCreate
          * @returns {*}
          */
-        postCreate:function(){
+        postCreate: function () {
             var thiz = this;
-            if(this.options[types.GRID_OPTION.CLEAR_SELECTION_ON_CLICK]===true){
-                var clickHandler = function(evt) {
+            if (this.options[types.GRID_OPTION.CLEAR_SELECTION_ON_CLICK] === true) {
+                var clickHandler = function (evt) {
                     if (evt && evt.target && domClass.contains(evt.target, 'dgrid-content')) {
-                        this.deselectAll();                    }
+                        this.deselectAll();
+                    }
                 }.bind(this);
                 this.on("click", function (evt) {
                     clickHandler(evt);
                 }.bind(this));
             }
             this.on("dgrid-select", function (data) {
-                if(!equals(thiz._lastSelection,data)){
+                if (!equals(thiz._lastSelection, data)) {
                     delete thiz._lastSelection;
-                    thiz._lastSelection=data;
-                    thiz._emit('selectionChanged',{
-                        selection:thiz._getSelection(),
-                        why:"select",
-                        source:data.parentType
+                    thiz._lastSelection = data;
+                    thiz._emit('selectionChanged', {
+                        selection: thiz._getSelection(),
+                        why: "select",
+                        source: data.parentType
                     })
                 }
             });
@@ -6407,56 +6419,56 @@ define('xgrid/Selection',[
          * @returns {*}
          * @private
          */
-        _fireSelectionEvents:function(){
-            if(this._muteSelectionEvents===true){
+        _fireSelectionEvents: function () {
+            if (this._muteSelectionEvents === true) {
                 return;
             }
             return this.inherited(arguments);
         },
-        __select:function(items,toRow,select,dfd,reason){
-            _.each(items,function(item){
-                if(item) {
+        __select: function (items, toRow, select, dfd, reason) {
+            _.each(items, function (item) {
+                if (item) {
                     var _row = this.row(item);
-                    if(_row) {
+                    if (_row) {
                         this._select(_row, toRow, select);
                     }
                 }
-            },this);
+            }, this);
             dfd && dfd.resolve(items);
-            this._muteSelectionEvents=false;
+            this._muteSelectionEvents = false;
             this._fireSelectionEvents();
             var rows = this.getRows();
-            if(rows && rows.length && items && items.length && select && reason && reason!=='mouse'){
+            if (rows && rows.length && items && items.length && select && reason && reason !== 'mouse') {
                 //trigger bounce if we hit
-                var _last = items[items.length-1];
-                if(rows[rows.length-1] == _last){
-                    if(this.__lastLast && this.__lastLast==_last){
-                        reason.indexOf('pointer') ===-1 && this._emit('bounced',{
-                            direction:1,
-                            item:_last
+                var _last = items[items.length - 1];
+                if (rows[rows.length - 1] == _last) {
+                    if (this.__lastLast && this.__lastLast == _last) {
+                        reason.indexOf('pointer') === -1 && this._emit('bounced', {
+                            direction: 1,
+                            item: _last
                         });
                         return;
                     }
                     this.__lastLast = _last;
-                }else{
+                } else {
                     this.__lastLast = null;
                 }
 
 
                 var _first = items[0];
-                if(rows[0] == _first){
-                    if(this.__lastFirst && this.__lastFirst==_first){
-                        reason.indexOf('pointer') ===-1 && this._emit('bounced',{
-                            direction:-1,
-                            item:_first
+                if (rows[0] == _first) {
+                    if (this.__lastFirst && this.__lastFirst == _first) {
+                        reason.indexOf('pointer') === -1 && this._emit('bounced', {
+                            direction: -1,
+                            item: _first
                         })
                         return;
                     }
                     this.__lastFirst = _first;
-                }else{
+                } else {
                     this.__lastFirst = null;
                 }
-            }else {
+            } else {
                 this.__lastFirst = null;
             }
         },
@@ -6474,24 +6486,24 @@ define('xgrid/Selection',[
          * @param reason {string} the origin event's type
          * returns dojo/Deferred
          */
-        select:function(mixed,toRow,select,options,reason){
+        select: function (mixed, toRow, select, options, reason) {
             clearTimeout(this._selectTimer);
             this._selectTimer = null;
-            var isMouse = reason ==='mouse',
-                isPrioritySelect= isMouse || reason==='update',
+            var isMouse = reason === 'mouse',
+                isPrioritySelect = isMouse || reason === 'update',
                 isActive = this.isActive(),
-                def  = new Deferred();
+                def = new Deferred();
 
-            reason = reason  || '';
+            reason = reason || '';
 
             //sanitize/defaults
             options = options || {};
 
-            if(isPrioritySelect){
+            if (isPrioritySelect) {
                 isActive = true;
             }
-            if(isMouse){
-                options.focus=true;
+            if (isMouse) {
+                options.focus = true;
             }
             select = select === null ? true : select;
             var delay = options.delay || 0,
@@ -6500,42 +6512,42 @@ define('xgrid/Selection',[
                 idProperty = coll.idProperty;
 
             //silence selection change (batch or state restoring job)
-            if(options.silent===true){
-                self._muteSelectionEvents=true;
+            if (options.silent === true) {
+                self._muteSelectionEvents = true;
             }
 
             //normalize to array
             var items = utils.isArray(mixed) ? mixed : [mixed];
-            if(_.isEmpty(items)){
+            if (_.isEmpty(items)) {
                 return;
             }
             var _newItems = [];
 
             //indices to items
-            if(_.isNumber(items[0])){
+            if (_.isNumber(items[0])) {
                 var rows = self.getRows();
-                _.each(items,function(item){
+                _.each(items, function (item) {
                     _newItems.push(rows[item]);
                 });
                 items = _newItems;
-            }else if(_.isString(items[0])){
-                _.each(items,function(item) {
+            } else if (_.isString(items[0])) {
+                _.each(items, function (item) {
                     var _item = coll.getSync(item);
-                    if(_item) {
+                    if (_item) {
                         _newItems.push(_item);
                     }
                 });
 
                 items = _newItems;
-            }else if(items && items[0] && items[0].tagName){
-                _.each(items,function(item){
+            } else if (items && items[0] && items[0].tagName) {
+                _.each(items, function (item) {
                     _newItems.push(self.row(item).data);
                 });
                 items = _newItems;
             }
 
-            if(!items.length){
-                if(has('debug')) {
+            if (!items.length) {
+                if (has('debug')) {
                     _debug && console.log('nothing to select!');
                 }
                 def.resolve();
@@ -6543,35 +6555,35 @@ define('xgrid/Selection',[
             }
 
 
-            if(has('debug')) {
+            if (has('debug')) {
                 debugSelect && console.log('selected : ', _.map(items, "name"));
             }
 
             var _last = this._lastSelection ? this._lastSelection.rows : [];
-            var now = _last.map(function(x){return x.data;});
+            var now = _last.map(function (x) { return x.data; });
 
-            var isEqual=isSame(items,now,idProperty);
+            var isEqual = isSame(items, now, idProperty);
 
             //store update
-            if(reason==='update' && select){
-                options.focus=true;
-                options.append=false;
-                options.delay=1;
+            if (reason === 'update' && select) {
+                options.focus = true;
+                options.append = false;
+                options.delay = 1;
                 //this.focus();
             }
 
-            if(reason==='dgrid-cellfocusin'){
-                options.focus=true;
+            if (reason === 'dgrid-cellfocusin') {
+                options.focus = true;
             }
 
             //clear previous selection
-            if(options.append===false && select && !isEqual){
+            if (options.append === false && select && !isEqual) {
                 self.clearSelection(items);
                 clearFocused(self);
             }
 
-            if(isEqual && (reason==='update' || reason === 'dgrid-cellfocusin')){
-                if(options.focus){
+            if (isEqual && (reason === 'update' || reason === 'dgrid-cellfocusin')) {
+                if (options.focus) {
                     clearFocused(self);
                     self.focus(items[0]);
                 }
@@ -6579,44 +6591,44 @@ define('xgrid/Selection',[
             }
 
             //focus
-            if(options.focus===true){
-                if(options.expand){
-                    if(!self.isRendered(items[0])){
+            if (options.focus === true) {
+                if (options.expand) {
+                    if (!self.isRendered(items[0])) {
                         self._expandTo(items[0]);
                     }
                 }
             }
-            if(options.expand){
-                if(!self.isRendered(items[0])){
+            if (options.expand) {
+                if (!self.isRendered(items[0])) {
                     self._expandTo(items[0]);
                 }
             }
-            if(options.scrollInto && reason!=='restore'){
+            if (options.scrollInto && reason !== 'restore') {
                 var row = this.row(items[0]);
-                if(row.element){
+                if (row.element) {
                     row.element.scrollIntoView();
                 }
             }
 
-            if(delay && items.length) {
+            if (delay && items.length) {
                 this._selectTimer = setTimeout(function () {
-                    if(self.destroyed || !self.collection){
+                    if (self.destroyed || !self.collection) {
                         return;
                     }
-                    if(options.append===false) {
+                    if (options.append === false) {
                         self.clearSelection();
                     }
                     clearFocused(self);
-                    self.focus(items[0],false);
-                    self.__select(items,toRow,select,def,reason);
+                    self.focus(items[0], false);
+                    self.__select(items, toRow, select, def, reason);
                 }, delay);
-            }else{
-                self.__select(items,toRow,select,def,reason);
+            } else {
+                self.__select(items, toRow, select, def, reason);
             }
             return def;
         },
 
-        _setLast:function(selection){
+        _setLast: function (selection) {
             var _ids = [];
             for (var i = 0; i < selection.length; i++) {
                 var obj = selection[i];
@@ -6624,26 +6636,26 @@ define('xgrid/Selection',[
             }
         },
         isExpanded: function (item) {
-            item  = this._normalize('root');
+            item = this._normalize('root');
             return !!this._expanded[item.id];
         },
-        _expandTo:function(item){
-            if(!item){
+        _expandTo: function (item) {
+            if (!item) {
                 return;
             }
             var store = this.collection;
-            if(_.isString(item)){
+            if (_.isString(item)) {
                 item = store.getSync(item);
             }
             var parent = store.getSync(item[store.parentField]) || item.getParent ? item.getParent() : null;
-            if(parent){
-                if(!this.isRendered(parent)) {
+            if (parent) {
+                if (!this.isRendered(parent)) {
                     this._expandTo(parent);
-                }else{
-                    if(!this.isExpanded(parent)){
+                } else {
+                    if (!this.isExpanded(parent)) {
                         this.expand(parent, true, true);
                     }
-                    if(!this.isExpanded(item)){
+                    if (!this.isExpanded(item)) {
                         this.expand(item, true, true);
                     }
                 }
@@ -6652,7 +6664,7 @@ define('xgrid/Selection',[
         startup: function () {
             var result = this.inherited(arguments);
             //we want keyboard navigation also when nothing is selected
-            this.addHandle('keyup',on(this.domNode, 'keyup', function (event) {
+            this.addHandle('keyup', on(this.domNode, 'keyup', function (event) {
                 // For now, don't squash browser-specific functionality by letting
                 // ALT and META function as they would natively
                 if (event.metaKey || event.altKey) {
@@ -6669,7 +6681,7 @@ define('xgrid/Selection',[
         }
     };
     //package via declare
-    var _class = declare('xgrid.Selection',Selection,Implementation);
+    var _class = declare('xgrid.Selection', Selection, Implementation);
     _class.Implementation = Implementation;
 
     return _class;
@@ -39938,7 +39950,7 @@ define('xfile/data/Store',[
     'xide/data/ObservableStore',
     'xfile/model/File',
     'xide/lodash'
-], function (declare, lang, Deferred, ReloadMixin, ServerActionBase, Cache, QueryResults, types, utils, when, TreeMemory, Trackable, ObservableStore, File,_) {
+], function (declare, lang, Deferred, ReloadMixin, ServerActionBase, Cache, QueryResults, types, utils, when, TreeMemory, Trackable, ObservableStore, File, _) {
     var _debug = false;
     /**
      * Constants
@@ -39990,7 +40002,7 @@ define('xfile/data/Store',[
              * 'recursive' will tell the server to run the directory listing recursive for server method 'ls'
              * @type {boolean}
              */
-            recursive:false,
+            recursive: false,
             rootSegment: ".",
             Model: File,
             /**
@@ -40182,7 +40194,7 @@ define('xfile/data/Store',[
                         }
                         return item;
                     });
-                    if(this._onAfterSort){
+                    if (this._onAfterSort) {
                         data = this._onAfterSort(data);
                     }
                 }
@@ -40222,8 +40234,8 @@ define('xfile/data/Store',[
                                 bValue != null && (bValue = bValue.valueOf());
 
                                 if (ignoreCase) {
-                                    aValue.toUpperCase && ( aValue = aValue.toUpperCase() );
-                                    bValue.toUpperCase && ( bValue = bValue.toUpperCase() );
+                                    aValue.toUpperCase && (aValue = aValue.toUpperCase());
+                                    bValue.toUpperCase && (bValue = bValue.toUpperCase());
                                 }
                                 comparison = aValue === bValue ? 0 : (!!descending === (aValue === null || aValue > bValue) ? -1 : 1);
                             }
@@ -40244,7 +40256,7 @@ define('xfile/data/Store',[
             _getItem: function (path, allowNonLoaded) {
                 //try instant and return when loaded
                 //this.getSync(path.replace('./',''))
-                if(path==='/'){
+                if (path === '/') {
                     path = '.';
                 }
                 var item = this.getSync(path) || this.getSync('./' + path);
@@ -40268,13 +40280,10 @@ define('xfile/data/Store',[
              *
              * @returns {Object|Deferred|null}
              */
-            getItem: function (path, load,options) {
-                
-                path = path.replace('./','');
-
+            getItem: function (path, load, options) {
+                path = path.replace('./', '');
                 if (load == false) {
                     return this._getItem(path);
-
                 } else if (load == true) {
                     //at this point we have to load recursively
                     var parts = path.split('/'),
@@ -40286,12 +40295,11 @@ define('xfile/data/Store',[
                         return item;
                     }
 
-
                     //new head promise for all underlying this.getItem calls
                     var deferred = new Deferred();
                     var _loadNext = function () {
                         //no additional lodash or array stuff please, keep it simple
-                        var isFinish = !_.find(partsToLoad, {loaded: false});
+                        var isFinish = !_.find(partsToLoad, { loaded: false });
                         if (isFinish) {
                             deferred.resolve(thiz._getItem(path));
                         } else {
@@ -40307,7 +40315,7 @@ define('xfile/data/Store',[
                                             break;
                                         }
                                     }
-                                    thiz._loadPath(partsToLoad[i].path,false,options).then(function (items) {
+                                    thiz._loadPath(partsToLoad[i].path, false, options).then(function (items) {
                                         partsToLoad[i].loaded = true;
                                         _loadNext();
                                     }, function (err) {
@@ -40339,7 +40347,7 @@ define('xfile/data/Store',[
                             itemStr += '/';
                         }
                         itemStr += parts[i];
-                        partsToLoad.push({path: itemStr, loaded: false});
+                        partsToLoad.push({ path: itemStr, loaded: false });
                     }
                     //fire
                     _loadNext();
@@ -40427,9 +40435,7 @@ define('xfile/data/Store',[
              */
             _parse: function (item) {
                 item._S = this;
-
                 if (!_.isEmpty(item.children)) {
-
                     _.each(item.children, function (_item) {
                         _item.parent = item.path;
                         this._parse(_item);
@@ -40455,29 +40461,31 @@ define('xfile/data/Store',[
              * @returns {*}
              * @private
              */
-            _loadPath: function (path,force,options) {
+            _loadPath: function (path, force, options) {
                 var thiz = this;
-                var result = this._request(path,options);
+                var result = this._request(path, options);
+                //console.log('load path : ' + path);
                 result.then(function (items) {
-                        var _item = thiz._getItem(path, true);
-                        if (_item) {
-                            if (force) {
-                                if (!_.isEmpty(_item.children)) {
-                                    thiz.removeItems(_item.children);
-                                }
-                            }
-                            _item._EX = true;
-                            thiz.addItems(items, force);
-                            _item.children = items;
-                            return items;
-                        } else {
-                            if(options && options.onError) {
-                                options.onError('Error Requesting path on server : '+path);
-                            }else{
-                                throw new Error('cant get item at ' + path);
+                    //console.log('got : items for ' + path, items);
+                    var _item = thiz._getItem(path, true);
+                    if (_item) {
+                        if (force) {
+                            if (!_.isEmpty(_item.children)) {
+                                thiz.removeItems(_item.children);
                             }
                         }
-                    }.bind(this),
+                        _item._EX = true;
+                        thiz.addItems(items, force);
+                        _item.children = items;
+                        return items;
+                    } else {
+                        if (options && options.onError) {
+                            options.onError('Error Requesting path on server : ' + path);
+                        } else {
+                            throw new Error('cant get item at ' + path);
+                        }
+                    }
+                }.bind(this),
                     function (err) {
                         console.error('error in load');
                     });
@@ -40550,7 +40558,7 @@ define('xfile/data/Store',[
             },
             add: function (item) {
                 var _item = this.getSync(item.path);
-                if (!_item){
+                if (!_item) {
                     _item = this.addSync(item);
                     _item._S = this;
                     _item.getPath = function () {
@@ -40567,8 +40575,8 @@ define('xfile/data/Store',[
                 }, this);
             },
             getSync: function (id) {
-                var data =this.storage.fullData;
-                return data[this.storage.index[id]] || data[this.storage.index[id.replace('./','')]];
+                var data = this.storage.fullData;
+                return data[this.storage.index[id]] || data[this.storage.index[id.replace('./', '')]];
             },
             addItems: function (items) {
                 var result = [];
@@ -40600,7 +40608,7 @@ define('xfile/data/Store',[
                 }
             },
             getDefaultSort: function () {
-                return [{property: 'name', descending: false, ignoreCase: true}];
+                return [{ property: 'name', descending: false, ignoreCase: true }];
             },
             filter: function (data) {
                 if (data.parent) {
@@ -40611,7 +40619,7 @@ define('xfile/data/Store',[
                     if (!this.isItemLoaded(item)) {
                         item.isLoading = true;
                         this._state.filterDef = this._loadPath(item.path);
-                        this._state.filterDef.then(function(){
+                        this._state.filterDef.then(function () {
                             item.isLoading = false;
                         })
                     } else {
@@ -40630,26 +40638,27 @@ define('xfile/data/Store',[
                 this._state.filter = data;
                 return this.inherited(arguments);
             },
-            _request: function (path,options) {
+            _request: function (path, options) {
                 var collection = this;
+                //console.log('requesting ' + path);
                 return this.runDeferred(null, 'ls', {
-                        path: path,
-                        mount: this.mount,
-                        options: this.options,
-                        recursive:this.recursive
-                    },
-                    utils.mixin({checkErrors: false,displayError: true},options)).then(function (response) {
-                    var results = collection._normalize(response);
-                    collection._parse(results);
-                    // support items in the results
-                    results = results.children || results;
-                    return results;
-                }, function (e) {
-                    if(options && options.displayError===false){
-                        return;
-                    }
-                    logError(e,'error in FileStore : ' + this.mount + ' :' + e);
-                });
+                    path: path,
+                    mount: this.mount,
+                    options: this.options,
+                    recursive: this.recursive
+                },
+                    utils.mixin({ checkErrors: false, displayError: true }, options)).then(function (response) {
+                        var results = collection._normalize(response);
+                        collection._parse(results);
+                        // support items in the results
+                        results = results.children || results;
+                        return results;
+                    }, function (e) {
+                        if (options && options.displayError === false) {
+                            return;
+                        }
+                        logError(e, 'error in FileStore : ' + this.mount + ' :' + e);
+                    });
             },
             fetchRangeSync: function () {
                 var data = this.fetchSync();
@@ -40674,10 +40683,10 @@ define('xfile/data/Store',[
                 return new QueryResults(results.then(function (data) {
                     return data;
                 }), {
-                    totalLength: results.then(function (data) {
-                        return data.length;
-                    })
-                });
+                        totalLength: results.then(function (data) {
+                            return data.length;
+                        })
+                    });
             },
             initRoot: function () {
                 //first time load
@@ -40687,7 +40696,7 @@ define('xfile/data/Store',[
                 if (!this.isInitiated()) {
                     return thiz._request(_path).then(function (data) {
                         if (!thiz.isInitiated()) {
-                            _.each(data, thiz._parse,thiz);
+                            _.each(data, thiz._parse, thiz);
                             thiz.setData(data);
                             thiz.setInitiated(true);
                             thiz.emit('loaded');
@@ -40730,7 +40739,7 @@ define('xfile/data/Store',[
                 }
                 return thiz._request(_path).then(function (data) {
                     if (!thiz.isInitiated()) {
-                        _.each(data, thiz._parse,thiz);
+                        _.each(data, thiz._parse, thiz);
                         thiz.setData(data);
                         thiz.setInitiated(true);
                         thiz.emit('loaded');
