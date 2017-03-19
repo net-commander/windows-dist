@@ -50546,7 +50546,7 @@ define('xcf/manager/DeviceManager',[
             //
             /////////////////////////////////////////////////////////////////////////////////////
             onRunClassEvent: function (data) {
-                var id = data.args.id;
+                var id = data.args.id || data.id;
                 if (this.running && this.running[id]) {
                     var runData = this.running[id];
                     var delegate = runData.delegate;
@@ -50556,16 +50556,24 @@ define('xcf/manager/DeviceManager',[
                     if (data.error) {
                         if (delegate.onError) {
                             delegate.onError(data.error);
+                            delete this.running[id];
                         }
                     }
                     if (data.finish) {
                         if (delegate.onFinish) {
                             delegate.onFinish(data.finish);
+                            delete this.running[id];
                         }
                     }
                     if (data.progress) {
                         if (delegate.onProgress) {
                             delegate.onProgress(data.progress);
+                        }
+                    }
+                    
+                    if (data.interrupt) {
+                        if (delegate.onInterrupt) {
+                            delegate.onInterrupt(data.interrupt);
                         }
                     }
                 }
@@ -50598,13 +50606,13 @@ define('xcf/manager/DeviceManager',[
                 var fileManager = ctx.getFileManager();
                 var fileStore = fileManager.getStore(device.scope);
                 var item = fileStore._getItem(device.path);
-                if(item){
+                if (item) {
                     dfd.resolve(item);
                     return dfd;
                 }
                 fileStore.initRoot().then(function () {
                     fileStore._loadPath('.', true).then(function () {
-                        fileStore.getItem(device.path,true).then(function (item) {
+                        fileStore.getItem(device.path, true).then(function (item) {
                             dfd.resolve(item);
                         });
                     });
@@ -50644,18 +50652,17 @@ define('xcf/manager/DeviceManager',[
              */
             addDriverFunctions: function (target, source) {
                 for (var i in source) {
-
                     if (i === 'constructor' ||
                         i === 'inherited' ||
-                        i == 'getInherited' ||
-                        i == 'isInstanceOf' ||
-                        i == '__inherited' ||
-                        i == 'onModuleReloaded' ||
-                        i == 'start' ||
-                        i == 'publish' ||
-                        i == 'subscribe' ||
-                        i == 'getInherited' ||
-                        i == 'getInherited'
+                        i === 'getInherited' ||
+                        i === 'isInstanceOf' ||
+                        i === '__inherited' ||
+                        i === 'onModuleReloaded' ||
+                        i === 'start' ||
+                        i === 'publish' ||
+                        i === 'subscribe' ||
+                        i === 'getInherited' ||
+                        i === 'getInherited'
                     ) {
                         continue;
                     }
@@ -50823,15 +50830,15 @@ define('xcf/manager/DeviceManager',[
                 for (var i in driver) {
                     if (i === 'constructor' ||
                         i === 'inherited' ||
-                        i == 'getInherited' ||
-                        i == 'isInstanceOf' ||
-                        i == '__inherited' ||
-                        i == 'onModuleReloaded' ||
-                        i == 'start' ||
-                        i == 'publish' ||
-                        i == 'subscribe' ||
-                        i == 'getInherited' ||
-                        i == 'getInherited'
+                        i === 'getInherited' ||
+                        i === 'isInstanceOf' ||
+                        i === '__inherited' ||
+                        i === 'onModuleReloaded' ||
+                        i === 'start' ||
+                        i === 'publish' ||
+                        i === 'subscribe' ||
+                        i === 'getInherited' ||
+                        i === 'getInherited'
                     ) {
                         continue;
                     }
@@ -50926,9 +50933,9 @@ define('xcf/manager/DeviceManager',[
                     var device = items[i];
                     var enabled = this.getMetaValue(device, DEVICE_PROPERTY.CF_DEVICE_ENABLED);
 
-                    if ((enabledOnly === true && enabled == true || enabled == null) || enabledOnly === false) {
+                    if ((enabledOnly === true && enabled === true || enabled === null) || enabledOnly === false) {
                         result.push(device);
-                        if (addDriver == true) {
+                        if (addDriver === true) {
                             var driverId = this.getMetaValue(device, DEVICE_PROPERTY.CF_DEVICE_DRIVER);
                             if (!driverId) {
                                 _debug && console.error('device has no driver id!');
@@ -50936,7 +50943,7 @@ define('xcf/manager/DeviceManager',[
                             }
                             var driver = this.ctx.getDriverManager().getItemById(driverId);
                             if (driver) {
-                                device['driver'] = driver;
+                                device.driver = driver;
                             }
                         }
                     }
@@ -51225,7 +51232,7 @@ define('xcf/manager/DeviceManager',[
                     _debugMQTT && console.info('onMQTTMessage:');
                     //
                     var parts = msg.topic.split('/');
-                    if (parts.length == 4 && parts[2] == 'Variable' && message.device) {
+                    if (parts.length == 4 && parts[2] === 'Variable' && message.device) {
                         var _device = this.getDeviceStoreItem(message.device);
                         if (_device) {
                             _debugMQTT && console.info('\tonMQTTMessage: on mqtt variable topic ' + msg.topic);
@@ -52476,7 +52483,7 @@ define('xcf/manager/DeviceManager_DeviceServer',[
         var ctx = sctx;
         var application = sctx.getApplication();
         var doExport = false;
-        if(!doExport){
+        if (!doExport) {
             return;
         }
 
@@ -52631,6 +52638,85 @@ define('xcf/manager/DeviceManager_DeviceServer',[
                     delegate: delegate
                 };
                 this.deviceServerClient.emit(null, dataOut, types.SOCKET_SERVER_COMMANDS.RUN_APP_SERVER_CLASS);
+            } else {
+                this.onHaveNoDeviceServer();
+            }
+        },
+        runAppServerClassMethod: function (_class, method, args, delegate) {
+            this.checkDeviceServerConnection();
+            if (this.deviceServerClient) {
+                var id = utils.createUUID();
+                args.id = id;
+                var dataOut = {
+                    "class": _class,
+                    "method": _method,
+                    args: args,
+                    manager_command: types.SOCKET_SERVER_COMMANDS.RUN_APP_SERVER_CLASS_METHOD
+                };
+                !this.running && (this.running = {});
+                this.running[id] = {
+                    "class": _class,
+                    args: args,
+                    delegate: delegate,
+                    "method": _method
+                };
+                this.deviceServerClient.emit(null, dataOut, types.SOCKET_SERVER_COMMANDS.RUN_APP_SERVER_CLASS_METHOD);
+            } else {
+                this.onHaveNoDeviceServer();
+            }
+        },
+        runAppServerComponentMethod: function (component, method, args, options, delegate) {
+            this.checkDeviceServerConnection();
+
+            if (this.deviceServerClient) {
+                var id = utils.createUUID();
+                args.id = id;
+
+                var dataOut = {
+                    "component": component,
+                    "method": method,
+                    options: options,
+                    args: args,
+                    id: id,
+                    manager_command: types.SOCKET_SERVER_COMMANDS.RUN_APP_SERVER_COMPONENT_METHOD
+                };
+                !this.running && (this.running = {});
+                this.running[id] = {
+                    "component": component,
+                    args: args,
+                    delegate: delegate,
+                    "method": method
+                };
+                this.deviceServerClient.emit(null, dataOut, types.SOCKET_SERVER_COMMANDS.RUN_APP_SERVER_COMPONENT_METHOD);
+            } else {
+                this.onHaveNoDeviceServer();
+            }
+        },
+        cancelAppServerComponentMethod: function (component, id) {
+            this.checkDeviceServerConnection();
+            if (this.deviceServerClient) {
+                var dataOut = {
+                    "component": component,
+                    id: id,
+                    manager_command: types.SOCKET_SERVER_COMMANDS.CANCEL_APP_SERVER_COMPONENT_METHOD
+                };
+                !this.running && (this.running = {});
+                this.deviceServerClient.emit(null, dataOut, types.SOCKET_SERVER_COMMANDS.CANCEL_APP_SERVER_COMPONENT_METHOD);
+            } else {
+                this.onHaveNoDeviceServer();
+            }
+        },
+        answerAppServerComponentMethodInterrupt: function (component, id, answer) {
+            this.checkDeviceServerConnection();
+            if (this.deviceServerClient) {
+                var dataOut = {
+                    "component": component,
+                    id: id,
+                    manager_command: types.SOCKET_SERVER_COMMANDS.ANSWER_APP_SERVER_COMPONENT_METHOD_INTERRUPT,
+                    answer: answer
+                };
+                !this.running && (this.running = {});
+                this.deviceServerClient.emit(null, dataOut, types.SOCKET_SERVER_COMMANDS.ANSWER_APP_SERVER_COMPONENT_METHOD_INTERRUPT);
             } else {
                 this.onHaveNoDeviceServer();
             }
@@ -63008,18 +63094,18 @@ define('xcf/types/Types',[
     'xide/utils/ObjectUtils',
     'xide/utils',
     'xide/utils/HexUtils'
-], function (aTypes,cTypes,types,ObjectUtils,utils,HexUtils) {
-    
-    if(!String.prototype.setBytes) {
+], function (aTypes, cTypes, types, ObjectUtils, utils, HexUtils) {
+
+    if (!String.prototype.setBytes) {
         String.prototype.setBytes = function (bytes) {
             this.bytes = bytes;
         };
     }
-    if(!String.prototype.getBytes){
-        String.prototype.getBytes = function() {
-            if(this.bytes){
+    if (!String.prototype.getBytes) {
+        String.prototype.getBytes = function () {
+            if (this.bytes) {
                 return this.bytes;
-            }else{
+            } else {
                 return HexUtils.stringToBuffer(this);
             }
         };
@@ -63035,8 +63121,8 @@ define('xcf/types/Types',[
         };
     }
 
-    if(!String.prototype.hexString){
-        String.prototype.hexString= function() {
+    if (!String.prototype.hexString) {
+        String.prototype.hexString = function () {
             var bytes = this.getBytes();
             return HexUtils.bufferToHexString(bytes);
         };
@@ -63049,8 +63135,8 @@ define('xcf/types/Types',[
      * @global
      */
     types.VARIABLE_FLAGS = {
-        PUBLISH:0x00000002,
-        PUBLISH_IF_SERVER:0x00000004
+        PUBLISH: 0x00000002,
+        PUBLISH_IF_SERVER: 0x00000004
     };
     /**
      * Flags to define logging outputs per device or view
@@ -63130,8 +63216,8 @@ define('xcf/types/Types',[
      * @property {object} responseSettings Contains the constants for receiving data from a device its being set at initialization time and has this structure:
      * @property {boolean} responseSettings.start 
      */
-    
-    
+
+
     utils.mixin(types.ITEM_TYPE, {
         DEVICE: 'Device',
         DEVICE_GROUP: 'Device Group',
@@ -63140,7 +63226,7 @@ define('xcf/types/Types',[
         PROTOCOL: 'Protocol',
         PROTOCOL_GROUP: 'Protocol Group'
     });
-    
+
     /**
      * Possible Node-JS service status modes.
      *
@@ -63176,17 +63262,17 @@ define('xcf/types/Types',[
         ON_DEVICE_GROUP_SELECTED: 'onDeviceGroupSelected',
         ON_PROTOCOL_SELECTED: 'onProtocolSelected',
         ON_PROTOCOL_GROUP_SELECTED: 'onProtocolGroupSelected',
-        ON_PROTOCOL_CHANGED:'onProtocolChanged',
-        ON_MQTT_MESSAGE:'onMQTTMessage',
+        ON_PROTOCOL_CHANGED: 'onProtocolChanged',
+        ON_MQTT_MESSAGE: 'onMQTTMessage',
         ON_DEVICE_MESSAGE: 'onDeviceMessage',
         ON_DEVICE_MESSAGE_EXT: 'onDeviceMessageExt',
-        ON_COMMAND_FINISH:'onCommandFinish',
-        ON_COMMAND_PROGRESS:'onCommandProgress',
-        ON_COMMAND_PAUSED:'onCommandPaused',
-        ON_COMMAND_STOPPED:'onCommandStopped',
-        ON_COMMAND_ERROR:'onCommandError',
+        ON_COMMAND_FINISH: 'onCommandFinish',
+        ON_COMMAND_PROGRESS: 'onCommandProgress',
+        ON_COMMAND_PAUSED: 'onCommandPaused',
+        ON_COMMAND_STOPPED: 'onCommandStopped',
+        ON_COMMAND_ERROR: 'onCommandError',
         ON_DEVICE_DISCONNECTED: 'onDeviceDisconnected',
-        ON_DEVICE_CONNECTED:'onDeviceConnected',
+        ON_DEVICE_CONNECTED: 'onDeviceConnected',
         ON_DEVICE_COMMAND: 'onDeviceCommand',
         ON_DEVICE_STATE_CHANGED: 'onDeviceStateChanged',
         ON_DEVICE_DRIVER_INSTANCE_READY: 'onDeviceDriveInstanceReady',
@@ -63199,15 +63285,15 @@ define('xcf/types/Types',[
         ON_DRIVER_COMMAND_REMOVED: 'onDriverCommandRemoved',
         ON_DRIVER_COMMAND_CHANGE: 'onDriverVariableChanged',
         ON_SCOPE_CREATED: 'onScopeCreated',
-        ON_DRIVER_MODIFIED:'onDriverModified',
-        SET_DEVICE_VARIABLES:'setDeviceVariables',
+        ON_DRIVER_MODIFIED: 'onDriverModified',
+        SET_DEVICE_VARIABLES: 'setDeviceVariables',
         ON_SERVER_LOG_MESSAGE: 'onServerLogMessage',
         ON_CLIENT_LOG_MESSAGE: 'onClientLogMessage',
-        ON_DEVICE_SERVER_CONNECTED:'onDeviceServerConnected',
+        ON_DEVICE_SERVER_CONNECTED: 'onDeviceServerConnected',
         ON_RUN_CLASS_EVENT: 'onRunClassEvent'
     };
-    
-    utils.mixin(types.EVENTS,Events);
+
+    utils.mixin(types.EVENTS, Events);
 
     /**
      * Enumeration to define a source type for variable change.
@@ -63242,7 +63328,7 @@ define('xcf/types/Types',[
         READY: 'DeviceIsReady',
         DISCONNECTED: 'DeviceIsDisconnected',
         DISABLED: 'DeviceIsDisabled',
-        LOST_DEVICE_SERVER:'LostDeviceServerConnection'
+        LOST_DEVICE_SERVER: 'LostDeviceServerConnection'
     };
 
     /**
@@ -63265,7 +63351,7 @@ define('xcf/types/Types',[
      * @enum module:xide/types/PROTOCOL_PROPERTY
      * @memberOf module:xide/types
      */
-    types.PROTOCOL_PROPERTY ={
+    types.PROTOCOL_PROPERTY = {
         CF_PROTOCOL_TITLE: 'Title',
         CF_PROTOCOL_ICON: 'CF_PROTOCOL_ICON',
         CF_PROTOCOL_CLASS: 'CF_PROTOCOL_CLASS',
@@ -63298,12 +63384,12 @@ define('xcf/types/Types',[
      * @enum {int} DEVICE_LOGGING_SOURCE
      * @global
      */
-    types.LOG_OUTPUT = {        
-        DEVICE_CONNECTED:'Device Connected',
-        DEVICE_DISCONNECTED:'Device Disonnected',
-        RESPONSE:'Response',
-        SEND_COMMAND:'Send Command',
-        DEVICE_ERROR:'Device Error'       
+    types.LOG_OUTPUT = {
+        DEVICE_CONNECTED: 'Device Connected',
+        DEVICE_DISCONNECTED: 'Device Disonnected',
+        RESPONSE: 'Response',
+        SEND_COMMAND: 'Send Command',
+        DEVICE_ERROR: 'Device Error'
     };
 
     /**
@@ -63313,9 +63399,9 @@ define('xcf/types/Types',[
     types.DEFAULT_DEVICE_LOGGING_FLAGS = {};
 
     var LOGGING_FLAGS = types.LOGGING_FLAGS;
-    
-    types.DEFAULT_DEVICE_LOGGING_FLAGS[types.LOG_OUTPUT.DEVICE_CONNECTED]  = LOGGING_FLAGS.GLOBAL_CONSOLE | LOGGING_FLAGS.POPUP |  LOGGING_FLAGS.STATUS_BAR | LOGGING_FLAGS.DEVICE_CONSOLE;
-    types.DEFAULT_DEVICE_LOGGING_FLAGS[types.LOG_OUTPUT.DEVICE_DISCONNECTED]  = LOGGING_FLAGS.GLOBAL_CONSOLE | LOGGING_FLAGS.POPUP |  LOGGING_FLAGS.STATUS_BAR | LOGGING_FLAGS.DEVICE_CONSOLE;
+
+    types.DEFAULT_DEVICE_LOGGING_FLAGS[types.LOG_OUTPUT.DEVICE_CONNECTED] = LOGGING_FLAGS.GLOBAL_CONSOLE | LOGGING_FLAGS.POPUP | LOGGING_FLAGS.STATUS_BAR | LOGGING_FLAGS.DEVICE_CONSOLE;
+    types.DEFAULT_DEVICE_LOGGING_FLAGS[types.LOG_OUTPUT.DEVICE_DISCONNECTED] = LOGGING_FLAGS.GLOBAL_CONSOLE | LOGGING_FLAGS.POPUP | LOGGING_FLAGS.STATUS_BAR | LOGGING_FLAGS.DEVICE_CONSOLE;
     types.DEFAULT_DEVICE_LOGGING_FLAGS[types.LOG_OUTPUT.RESPONSE] = LOGGING_FLAGS.DEVICE_CONSOLE | LOGGING_FLAGS.GLOBAL_CONSOLE;
     types.DEFAULT_DEVICE_LOGGING_FLAGS[types.LOG_OUTPUT.SEND_COMMAND] = LOGGING_FLAGS.DEVICE_CONSOLE | LOGGING_FLAGS.GLOBAL_CONSOLE;
     types.DEFAULT_DEVICE_LOGGING_FLAGS[types.LOG_OUTPUT.DEVICE_ERROR] = LOGGING_FLAGS.GLOBAL_CONSOLE | LOGGING_FLAGS.POPUP | LOGGING_FLAGS.STATUS_BAR | LOGGING_FLAGS.DEV_CONSOLE | LOGGING_FLAGS.DEVICE_CONSOLE;
@@ -63352,25 +63438,25 @@ define('xcf/types/Types',[
         CF_DRIVER_RESPONSE_VARIABLE: 'DriverResponseVariable'
     };
 
-    utils.mixin(types.ITEM_TYPE,ITEM_TYPES);
+    utils.mixin(types.ITEM_TYPE, ITEM_TYPES);
 
     types.BLOCK_GROUPS =
-    {
-        CF_DRIVER_VARIABLE: 'DriverVariable',
-        CF_DRIVER_BASIC_COMMAND: 'DriverBasicCommand',
-        CF_DRIVER_CONDITIONAL_COMMAND: 'DriverConditionalCommand',
-        CF_DRIVER_RESPONSE_VARIABLE: 'DriverResponseVariable',
-        CF_DRIVER_RESPONSE_BLOCKS: 'conditionalProcess',
-        CF_DRIVER_RESPONSE_VARIABLES: 'processVariables',
-        CF_DRIVER_BASIC_VARIABLES: 'basicVariables'
-    };
+        {
+            CF_DRIVER_VARIABLE: 'DriverVariable',
+            CF_DRIVER_BASIC_COMMAND: 'DriverBasicCommand',
+            CF_DRIVER_CONDITIONAL_COMMAND: 'DriverConditionalCommand',
+            CF_DRIVER_RESPONSE_VARIABLE: 'DriverResponseVariable',
+            CF_DRIVER_RESPONSE_BLOCKS: 'conditionalProcess',
+            CF_DRIVER_RESPONSE_VARIABLES: 'processVariables',
+            CF_DRIVER_BASIC_VARIABLES: 'basicVariables'
+        };
 
     types.COMMAND_TYPES =
-    {
-        BASIC_COMMAND: 'basic',
-        CONDITIONAL_COMMAND: 'conditional',
-        INIT_COMMAND: 'init'
-    };
+        {
+            BASIC_COMMAND: 'basic',
+            CONDITIONAL_COMMAND: 'conditional',
+            INIT_COMMAND: 'init'
+        };
 
 
     /**
@@ -63393,32 +63479,36 @@ define('xcf/types/Types',[
      * @global SERVER_COMMAND
      */
     types.SOCKET_SERVER_COMMANDS =
-    {
-        SIGNAL_MANAGER: 'Manager_command',
-        RUN_FILE: 'Run_File',
-        RUN_CLASS: 'Run_Class',
-        RUN_APP_SERVER_CLASS: 'Run_App_Server_Class',
-        SIGNAL_DEVICE: 'Device_command',
-        SIGNAL_RESPONSE: 'WebSocket_response',
-        MANAGER_TEST: 'Manager_Test',
-        MANAGER_CLOSE_ALL: 'Close_All_Connections',
-        MANAGER_STATUS: 'status',
-        MANAGER_START_DRIVER: 'startDriver',
-        START_DEVICE: 'startDevice',
-        STOP_DEVICE: 'stopDevice',
-        CREATE_CONNECTION: 'createConnection',
-        MANAGER_STOP_DRIVER: 'stopDriver',
-        DEVICE_SEND: 'Device_Send',
-        CALL_METHOD: 'Call_Method',
-        RUN_SHELL: 'Run_Shell',
-        WATCH: 'Watch_Directory',
-        MQTT_PUBLISH:'MQTT_PUBLISH',
-        MQTT_SUBSCRIBE:'MQTT_SUBSCRIBE',
-        GET_DEVICE_VARIABLES: 'getVariables',
-        WRITE_LOG_MESSAGE:'Write_Log_Message',
-        INIT_DEVICES:'INIT_DEVICES',
-        PROTOCOL_METHOD:'PROTOCOL_METHOD'
-    };
+        {
+            SIGNAL_MANAGER: 'Manager_command',
+            RUN_FILE: 'Run_File',
+            RUN_CLASS: 'Run_Class',
+            RUN_APP_SERVER_CLASS: 'Run_App_Server_Class',
+            RUN_APP_SERVER_CLASS_METHOD: 'Run_App_Server_Class_Method',
+            RUN_APP_SERVER_COMPONENT_METHOD: 'Run_App_Server_Component_Method',
+            CANCEL_APP_SERVER_COMPONENT_METHOD: 'Cancel_App_Server_Component_Method',
+            ANSWER_APP_SERVER_COMPONENT_METHOD_INTERRUPT: 'Answer_App_Server_Component_Method_Interrupt',
+            SIGNAL_DEVICE: 'Device_command',
+            SIGNAL_RESPONSE: 'WebSocket_response',
+            MANAGER_TEST: 'Manager_Test',
+            MANAGER_CLOSE_ALL: 'Close_All_Connections',
+            MANAGER_STATUS: 'status',
+            MANAGER_START_DRIVER: 'startDriver',
+            START_DEVICE: 'startDevice',
+            STOP_DEVICE: 'stopDevice',
+            CREATE_CONNECTION: 'createConnection',
+            MANAGER_STOP_DRIVER: 'stopDriver',
+            DEVICE_SEND: 'Device_Send',
+            CALL_METHOD: 'Call_Method',
+            RUN_SHELL: 'Run_Shell',
+            WATCH: 'Watch_Directory',
+            MQTT_PUBLISH: 'MQTT_PUBLISH',
+            MQTT_SUBSCRIBE: 'MQTT_SUBSCRIBE',
+            GET_DEVICE_VARIABLES: 'getVariables',
+            WRITE_LOG_MESSAGE: 'Write_Log_Message',
+            INIT_DEVICES: 'INIT_DEVICES',
+            PROTOCOL_METHOD: 'PROTOCOL_METHOD'
+        };
     return types;
 });
 ;
@@ -75875,293 +75965,315 @@ define('xfile/types',[
     'xide/types',
     'xide/types/Types',
     'xaction/types'
-],function(utils,types){
-        /**
-         * Public mime registry setter
-         * @param type
-         * @param map
-         */
-        types.registerCustomMimeIconExtension = function (type, map) {
-            types['customMimeIcons'][type] = map;
-        };
+], function (utils, types) {
+    /**
+     * Public mime registry setter
+     * @param type
+     * @param map
+     */
+    types.registerCustomMimeIconExtension = function (type, map) {
+        types['customMimeIcons'][type] = map;
+    };
 
-        var ACTION = types.ACTION;
+    var ACTION = types.ACTION;
 
-        var DEFAULT_PERMISSIONS = [
-            ACTION.EDIT,
-            ACTION.COPY,
-            ACTION.CLOSE,
-            ACTION.MOVE,
-            ACTION.RENAME,
-            ACTION.DOWNLOAD,
-            ACTION.RELOAD,
-            ACTION.DELETE,
-            ACTION.NEW_FILE,
-            ACTION.NEW_DIRECTORY,
-            ACTION.CLIPBOARD,
-            ACTION.LAYOUT,
-            ACTION.COLUMNS,
-            ACTION.SELECTION,
-            ACTION.PREVIEW,
-            ACTION.OPEN_IN,
-            ACTION.GO_UP,
-            ACTION.SEARCH,
-            ACTION.OPEN_IN_TAB,
-            ACTION.TOOLBAR,
-            ACTION.STATUSBAR,
-            ACTION.UPLOAD,
-            ACTION.SIZE_STATS,
-            ACTION.CONSOLE,
-            ACTION.HEADER,
-            'File/Compress',
-            'File/New',
-            ACTION.CONTEXT_MENU,
-            ACTION.SOURCE,
-            'File/OpenInOS'
-        ];
+    var DEFAULT_PERMISSIONS = [
+        ACTION.EDIT,
+        ACTION.COPY,
+        ACTION.CLOSE,
+        ACTION.MOVE,
+        ACTION.RENAME,
+        ACTION.DOWNLOAD,
+        ACTION.RELOAD,
+        ACTION.DELETE,
+        ACTION.NEW_FILE,
+        ACTION.NEW_DIRECTORY,
+        ACTION.CLIPBOARD,
+        ACTION.LAYOUT,
+        ACTION.COLUMNS,
+        ACTION.SELECTION,
+        ACTION.PREVIEW,
+        ACTION.OPEN_IN,
+        ACTION.GO_UP,
+        ACTION.SEARCH,
+        ACTION.OPEN_IN_TAB,
+        ACTION.TOOLBAR,
+        ACTION.STATUSBAR,
+        ACTION.UPLOAD,
+        ACTION.SIZE_STATS,
+        ACTION.CONSOLE,
+        ACTION.HEADER,
+        'File/Compress',
+        'File/New',
+        ACTION.CONTEXT_MENU,
+        ACTION.SOURCE,
+        'File/OpenInOS'
+    ];
 
-        types.DEFAULT_FILE_GRID_PERMISSIONS = DEFAULT_PERMISSIONS;
+    types.DEFAULT_FILE_GRID_PERMISSIONS = DEFAULT_PERMISSIONS;
 
-        types.FIELDS = {
-            SHOW_ISDIR:1602,
-            SHOW_OWNER:1604,
-            SHOW_MIME:1608,
-            SHOW_SIZE:1616,
-            SHOW_PERMISSIONS:1632,
-            SHOW_TIME:1633,
-            SHOW_FOLDER_SIZE:1634,
-            SHOW_FOLDER_HIDDEN:1635,
-            SHOW_TYPE:1636,
-            SHOW_MEDIA_INFO:1637
-        };
+    types.FIELDS = {
+        SHOW_ISDIR: 1602,
+        SHOW_OWNER: 1604,
+        SHOW_MIME: 1608,
+        SHOW_SIZE: 1616,
+        SHOW_PERMISSIONS: 1632,
+        SHOW_TIME: 1633,
+        SHOW_FOLDER_SIZE: 1634,
+        SHOW_FOLDER_HIDDEN: 1635,
+        SHOW_TYPE: 1636,
+        SHOW_MEDIA_INFO: 1637
+    };
 
-        types.FILE_PANEL_LAYOUT =
+    types.FILE_PANEL_LAYOUT =
         {
-            TREE:1,
-            LIST:2,
-            THUMB:3,
-            PREVIEW:4,
-            COVER:5,
-            SPLIT_VERTICAL:6,
-            SPLIT_HORIZONTAL:7,
-            IMAGE_GRID:8
+            TREE: 1,
+            LIST: 2,
+            THUMB: 3,
+            PREVIEW: 4,
+            COVER: 5,
+            SPLIT_VERTICAL: 6,
+            SPLIT_HORIZONTAL: 7,
+            IMAGE_GRID: 8
         };
 
-        types.LAYOUT_PRESET =
+    types.LAYOUT_PRESET =
         {
-            DUAL:1,
-            SINGLE:2,
-            BROWSER:3,
-            PREVIEW:4,
-            GALLERY:5,
-            EDITOR:6
+            DUAL: 1,
+            SINGLE: 2,
+            BROWSER: 3,
+            PREVIEW: 4,
+            GALLERY: 5,
+            EDITOR: 6
         };
 
-        types.PANEL_OPTIONS = {
-            ALLOW_NEW_TABS:true,
-            ALLOW_MULTI_TAB:false,
-            ALLOW_INFO_VIEW:true,
-            ALLOW_LOG_VIEW:true,
-            ALLOW_CONTEXT_MENU:true,
-            ALLOW_LAYOUT_SELECTOR:true,
-            ALLOW_SOURCE_SELECTOR:true,
-            ALLOW_COLUMN_RESIZE:true,
-            ALLOW_COLUMN_REORDER:true,
-            ALLOW_COLUMN_HIDE:true,
-            ALLOW_ACTION_TOOLBAR:true,
-            ALLOW_MAIN_MENU:true
-        };
+    types.PANEL_OPTIONS = {
+        ALLOW_NEW_TABS: true,
+        ALLOW_MULTI_TAB: false,
+        ALLOW_INFO_VIEW: true,
+        ALLOW_LOG_VIEW: true,
+        ALLOW_CONTEXT_MENU: true,
+        ALLOW_LAYOUT_SELECTOR: true,
+        ALLOW_SOURCE_SELECTOR: true,
+        ALLOW_COLUMN_RESIZE: true,
+        ALLOW_COLUMN_REORDER: true,
+        ALLOW_COLUMN_HIDE: true,
+        ALLOW_ACTION_TOOLBAR: true,
+        ALLOW_MAIN_MENU: true
+    };
 
-        /**
-         * @TODO: remove
-         * @type {{LAYOUT: number, AUTO_OPEN: boolean}}
-         */
-        types.FILE_PANEL_OPTIONS_LEFT={
-            LAYOUT:2,
-            AUTO_OPEN:true
-        };
+    /**
+     * @TODO: remove
+     * @type {{LAYOUT: number, AUTO_OPEN: boolean}}
+     */
+    types.FILE_PANEL_OPTIONS_LEFT = {
+        LAYOUT: 2,
+        AUTO_OPEN: true
+    };
 
-        types.FILE_PANEL_OPTIONS_MAIN={
-            LAYOUT:3,
-            AUTO_OPEN:true
-        };
+    types.FILE_PANEL_OPTIONS_MAIN = {
+        LAYOUT: 3,
+        AUTO_OPEN: true
+    };
 
-        types.FILE_PANEL_OPTIONS_RIGHT={
-            LAYOUT:3,
-            AUTO_OPEN:true
-        };
-        types.FILE_GRID_COLUMNS =
+    types.FILE_PANEL_OPTIONS_RIGHT = {
+        LAYOUT: 3,
+        AUTO_OPEN: true
+    };
+    types.FILE_GRID_COLUMNS =
         {
-            NAME:'name',
-            SIZE:'size',
-            MODIFIED:'modified'
+            NAME: 'name',
+            SIZE: 'size',
+            MODIFIED: 'modified'
         };
-        types.ACTION_TOOLBAR_MODE =
+    types.ACTION_TOOLBAR_MODE =
         {
-            SELF:'self'
+            SELF: 'self'
         };
 
-        utils.mixin(types.ITEM_TYPE,{
-            FILE:'BTFILE'
-        });
+    utils.mixin(types.ITEM_TYPE, {
+        FILE: 'BTFILE'
+    });
 
-        /***
-         *
-         * Extend the core events with xfile specific events
-         */
-        /**
-         * ActionVisibility
-         * @enum module:xide/types/EVENTS
-         * @memberOf module:xide/types
-         */
-        utils.mixin(types.EVENTS,{
-            STORE_CHANGED:'onStoreChange',
-            BEFORE_STORE_CHANGE:'onBeforeStoreChange',
-            STORE_REFRESHED:'onStoreRefreshed',
-            ON_FILE_STORE_READY:'onFileStoreReady',
-            ON_DID_OPEN_ITEM:'onDidOpenItem',
-            ON_SHOW_PANEL:'onShowPanel',
-            ITEM_SELECTED:'onItemSelected',
-            ERROR:'fileOperationError',
-            STATUS:'fileOperationStatus',
-            IMAGE_LOADED:'imageLoaded',
-            IMAGE_ERROR:'imageError',
-            RESIZE:'resize',
-            ON_UPLOAD_BEGIN:'onUploadBegin',
-            ON_UPLOAD_PROGRESS:'onUploadProgress',
-            ON_UPLOAD_FINISH:'onUploadFinish',
-            ON_UPLOAD_FAILED: 'onUploadFailed',
-            ON_CLIPBOARD_COPY:'onClipboardCopy',
-            ON_CLIPBOARD_PASTE:'onClipboardPaste',
-            ON_CLIPBOARD_CUT:'onClipboardCut',
-            ON_CONTEXT_MENU_OPEN:'onContextMenuOpen',
-            ON_PLUGIN_LOADED:'onPluginLoaded',
-            ON_PLUGIN_READY:'onPluginReady',
-            ON_MAIN_VIEW_READY:'onMainViewReady',
-            ON_FILE_CONTENT_CHANGED:'onFileContentChanged',
-            ON_PANEL_CLOSED:'onPanelClosed',
-            ON_PANEL_CREATED:'onPanelCreated',
-            ON_COPY_BEGIN:'onCopyBegin',
-            ON_COPY_END:'onCopyEnd',
-            ON_DOWNLOAD_TO_BEGIN:'onDownloadToBegin',
-            ON_DOWNLOAD_TO_END:'onDownloadToEnd',
-            ON_DELETE_BEGIN:'onDeleteBegin',
-            ON_DELETE_END:'onDeleteEnd',
-            ON_MOVE_BEGIN:'onMoveBegin',
-            ON_MOVE_END:'onMoveEnd',
-            ON_COMPRESS_BEGIN:'onCompressBegin',
-            ON_COMPRESS_END:'onCompressEnd',
-            ON_SOURCE_MENU_OPEN:'onSourceMenuOpen',
-            ON_MOUNT_DATA_READY:'onMountDataReady',
-            ON_XFILE_READY:'onXFileReady',
-            ON_CHANGE_PERSPECTIVE:'onChangePerspective',
-            ON_FILE_PROPERTIES_RENDERED:'onFilePropertiesRendered'
-        });
+    /***
+     *
+     * Extend the core events with xfile specific events
+     */
+    /**
+     * ActionVisibility
+     * @enum module:xide/types/EVENTS
+     * @memberOf module:xide/types
+     */
+    utils.mixin(types.EVENTS, {
+        STORE_CHANGED: 'onStoreChange',
+        BEFORE_STORE_CHANGE: 'onBeforeStoreChange',
+        STORE_REFRESHED: 'onStoreRefreshed',
+        ON_FILE_STORE_READY: 'onFileStoreReady',
+        ON_DID_OPEN_ITEM: 'onDidOpenItem',
+        ON_SHOW_PANEL: 'onShowPanel',
+        ITEM_SELECTED: 'onItemSelected',
+        ERROR: 'fileOperationError',
+        STATUS: 'fileOperationStatus',
+        IMAGE_LOADED: 'imageLoaded',
+        IMAGE_ERROR: 'imageError',
+        RESIZE: 'resize',
+        ON_UPLOAD_BEGIN: 'onUploadBegin',
+        ON_UPLOAD_PROGRESS: 'onUploadProgress',
+        ON_UPLOAD_FINISH: 'onUploadFinish',
+        ON_UPLOAD_FAILED: 'onUploadFailed',
+        ON_CLIPBOARD_COPY: 'onClipboardCopy',
+        ON_CLIPBOARD_PASTE: 'onClipboardPaste',
+        ON_CLIPBOARD_CUT: 'onClipboardCut',
+        ON_CONTEXT_MENU_OPEN: 'onContextMenuOpen',
+        ON_PLUGIN_LOADED: 'onPluginLoaded',
+        ON_PLUGIN_READY: 'onPluginReady',
+        ON_MAIN_VIEW_READY: 'onMainViewReady',
+        ON_FILE_CONTENT_CHANGED: 'onFileContentChanged',
+        ON_PANEL_CLOSED: 'onPanelClosed',
+        ON_PANEL_CREATED: 'onPanelCreated',
+        ON_COPY_BEGIN: 'onCopyBegin',
+        ON_COPY_END: 'onCopyEnd',
+        ON_DOWNLOAD_TO_BEGIN: 'onDownloadToBegin',
+        ON_DOWNLOAD_TO_END: 'onDownloadToEnd',
+        ON_DELETE_BEGIN: 'onDeleteBegin',
+        ON_DELETE_END: 'onDeleteEnd',
+        ON_MOVE_BEGIN: 'onMoveBegin',
+        ON_MOVE_END: 'onMoveEnd',
+        ON_COMPRESS_BEGIN: 'onCompressBegin',
+        ON_COMPRESS_END: 'onCompressEnd',
+        ON_SOURCE_MENU_OPEN: 'onSourceMenuOpen',
+        ON_MOUNT_DATA_READY: 'onMountDataReady',
+        ON_XFILE_READY: 'onXFileReady',
+        ON_CHANGE_PERSPECTIVE: 'onChangePerspective',
+        ON_FILE_PROPERTIES_RENDERED: 'onFilePropertiesRendered'
+    });
 
-        /**
-         * SELECTION_MODE specfies the possible selection modes for xfile grid views
-         * @enum module:xide/types/SELECTION_MODE
-         * @memberOf module:xide/types
-         */
-        types.SELECTION_MODE =
+    /**
+     * SELECTION_MODE specfies the possible selection modes for xfile grid views
+     * @enum module:xide/types/SELECTION_MODE
+     * @memberOf module:xide/types
+     */
+    types.SELECTION_MODE =
         {
             /** Single
              * @const
              * @type {string}
              */
-            SINGLE:'single',
+            SINGLE: 'single',
             /** Multiple
              * @const
              * @type {string}
              */
-            MULTI:'multiple',
+            MULTI: 'multiple',
             /** Extended
              * @const
              * @type {string}
              */
-            EXTENDED:'extended'
+            EXTENDED: 'extended'
         };
 
-        /**
-         * @TODO: remove
-         * OPERATION is the string representation of xfile commands
-         * @enum module:xide/types/OPERATION
-         * @memberOf module:xide/types
-         */
-        types.OPERATION=
+    /**
+     * @TODO: remove
+     * OPERATION is the string representation of xfile commands
+     * @enum module:xide/types/OPERATION
+     * @memberOf module:xide/types
+     */
+    types.OPERATION =
         {
 
-            COPY:'copy',
-            MOVE:'move',
-            RENAME:'rename',
-            DELETE:'delete',
-            OPEN:'open',
-            EDIT:'edit',
-            DOWNLOAD:'download',
-            DOWNLOAD_TO:'downloadTo',
-            INFO:'info',
-            COMPRESS:'compress',
-            RELOAD:'reload',
-            PREVIEW:'preview',
-            INSERT_IMAGE:'insertImage',
-            COPY_PASTE:'copypaste',
-            DND:'dnd',
-            OPTIONS:'options',
-            NEW_FILE:'mkfile',
-            NEW_DIRECTORY:'mkdir',
-            GET_CONTENT:'get',
-            SET_CONTENT:'set',
-            FIND:'find',
-            CUSTOM:'custom',
-            PERMA_LINK:'permaLink',
-            ADD_MOUNT:'ADD_MOUNT',
-            REMOVE_MOUNT:'REMOVE_MOUNT',
-            EDIT_MOUNT:'EDIT_MOUNT',
-            PERSPECTIVE:'PERSPECTIVE',
-            EXTRACT:'extract'
+            COPY: 'copy',
+            MOVE: 'move',
+            RENAME: 'rename',
+            DELETE: 'delete',
+            OPEN: 'open',
+            EDIT: 'edit',
+            DOWNLOAD: 'download',
+            DOWNLOAD_TO: 'downloadTo',
+            INFO: 'info',
+            COMPRESS: 'compress',
+            RELOAD: 'reload',
+            PREVIEW: 'preview',
+            INSERT_IMAGE: 'insertImage',
+            COPY_PASTE: 'copypaste',
+            DND: 'dnd',
+            OPTIONS: 'options',
+            NEW_FILE: 'mkfile',
+            NEW_DIRECTORY: 'mkdir',
+            GET_CONTENT: 'get',
+            SET_CONTENT: 'set',
+            FIND: 'find',
+            CUSTOM: 'custom',
+            PERMA_LINK: 'permaLink',
+            ADD_MOUNT: 'ADD_MOUNT',
+            REMOVE_MOUNT: 'REMOVE_MOUNT',
+            EDIT_MOUNT: 'EDIT_MOUNT',
+            PERSPECTIVE: 'PERSPECTIVE',
+            EXTRACT: 'extract'
         };
 
-        /**
-         * @TODO: remove
-         * OPERATION_INT is the integer version of {xide/types/OPERATION}
-         * @enum module:xide/types/OPERATION_INT
-         * @memberOf module:xide/types
-         */
-        types.OPERATION_INT={
-            NONE:0,
-            EDIT:1,
-            COPY:2,
-            MOVE:3,
-            INFO:4,
-            DOWNLOAD:5,
-            COMPRESS:6,
-            DELETE:7,
-            RENAME:8,
-            DND:9,
-            COPY_PASTE:10,
-            OPEN:11,
-            RELOAD:12,
-            PREVIEW:13,
-            INSERT_IMAGE:15,
-            NEW_FILE:16,
-            NEW_DIRECTORY:17,
-            UPLOAD:18,
-            READ:19,
-            WRITE:20,
-            PLUGINS:21,
-            CUSTOM:22,
-            FIND:23,
-            PERMA_LINK:24,
-            ADD_MOUNT:25,
-            REMOVE_MOUNT:26,
-            EDIT_MOUNT:27,
-            PERSPECTIVE:28,      //change perspective
-            CLIPBOARD_COPY:29,
-            CLIPBOARD_CUT:30,
-            CLIPBOARD_PASTE:31,
-            EXTRACT:32
-        };
+    /**
+     * @TODO: remove
+     * OPERATION_INT is the integer version of {xide/types/OPERATION}
+     * @enum module:xide/types/OPERATION_INT
+     * @memberOf module:xide/types
+     */
+    types.OPERATION_INT = {
+        NONE: 0,
+        EDIT: 1,
+        COPY: 2,
+        MOVE: 3,
+        INFO: 4,
+        DOWNLOAD: 5,
+        COMPRESS: 6,
+        DELETE: 7,
+        RENAME: 8,
+        DND: 9,
+        COPY_PASTE: 10,
+        OPEN: 11,
+        RELOAD: 12,
+        PREVIEW: 13,
+        INSERT_IMAGE: 15,
+        NEW_FILE: 16,
+        NEW_DIRECTORY: 17,
+        UPLOAD: 18,
+        READ: 19,
+        WRITE: 20,
+        PLUGINS: 21,
+        CUSTOM: 22,
+        FIND: 23,
+        PERMA_LINK: 24,
+        ADD_MOUNT: 25,
+        REMOVE_MOUNT: 26,
+        EDIT_MOUNT: 27,
+        PERSPECTIVE: 28,      //change perspective
+        CLIPBOARD_COPY: 29,
+        CLIPBOARD_CUT: 30,
+        CLIPBOARD_PASTE: 31,
+        EXTRACT: 32
+    };
 
+    types.EResolveMode = {
+        "SKIP": "SKIP",
+        "OVERWRITE": "OVERWRITE",
+        "IF_NEWER": "IF_NEWER",
+        "IF_SIZE_DIFFERS": "IF_SIZE_DIFFERS",
+        "APPEND": "APPEND",
+        "THROW": "THROW",
+        "ABORT": "ABORT"
+    }
+    
+    types.EResolve = {
+        ALWAYS: "ALWAYS",
+        THIS: "THIS"
+    }
+    
+    types.EError = {
+        NONE: 'None',
+        EXISTS: 'EEXIST',
+        PERMISSION: 'EACCES',
+        NOEXISTS: 'ENOENT',
+        ISDIR:'EISDIR'
+    }
     return types;
 });;
 /** @module xide/utils/CSSUtils
