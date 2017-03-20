@@ -106,19 +106,31 @@ const proto = module.exports = {
 
     if (!(err instanceof Error)) err = new Error(`non-error thrown: ${err}`);
 
+    let headerSent = false;
+    if (this.headerSent || !this.writable) {
+      headerSent = err.headerSent = true;
+    }
+
     // delegate
     this.app.emit('error', err, this);
 
     // nothing we can do here other
     // than delegate to the app-level
     // handler and log.
-    if (this.headerSent || !this.writable) {
-      err.headerSent = true;
+    if (headerSent) {
       return;
     }
 
-    // unset all headers, and set those specified
-    this.res._headers = {};
+    const { res } = this;
+
+    // first unset all headers
+    if (typeof res.getHeaderNames === 'function') {
+      res.getHeaderNames().forEach(name => res.removeHeader(name));
+    } else {
+      res._headers = {}; // Node < 7.7
+    }
+
+    // then set those specified
     this.set(err.headers);
 
     // force text/plain

@@ -12,6 +12,15 @@ const Base_1 = require("../services/Base");
 const dotProp = require("dot-prop");
 const _ = require("lodash");
 const pathUtil = require("path");
+/**
+ * This service sets/gets data in a json file, utilizing 'dot-prop' to select certain data in the object.
+ *
+ * @export
+ * @class JSONFileService
+ * @extends {BaseService}
+ * @implements {IStoreIO}
+ * @implements {IStoreAccess}
+ */
 class JSONFileService extends Base_1.BaseService {
     constructor(config) {
         super(config, null, null);
@@ -38,16 +47,14 @@ class JSONFileService extends Base_1.BaseService {
         return result;
     }
     set(section, path = '.', searchQuery = null, value, decodeValue = true) {
-        let configPath = this._getConfigPath(arguments);
-        let data = this.readConfig(configPath);
+        let data = this.readConfig(this._getConfigPath(arguments));
         const dataAt = dotProp.get(data, this.root + path + section);
         dataAt && _.extend(_.find(dataAt, searchQuery), value);
         this.write(null, data);
         return data;
     }
     update(section, path = '.', searchQuery = null, value = null, decodeValue = true) {
-        let configPath = this._getConfigPath(arguments);
-        return this.writeConfig(configPath, this.set(section, path, searchQuery, value, decodeValue));
+        return this.writeConfig(this._getConfigPath(arguments), this.set(section, path, searchQuery, value, decodeValue));
     }
     read(path) {
         return this.readConfig(path);
@@ -56,7 +63,7 @@ class JSONFileService extends Base_1.BaseService {
         this.writeConfig(path, val);
     }
     //
-    // ─── DECORATORS ─────────────────────────────────────────────────────────────────
+    // ─── DECORATORS
     //
     getRpcMethods() {
         throw new Error("Should be implemented by decorator");

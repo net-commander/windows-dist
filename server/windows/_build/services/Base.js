@@ -17,6 +17,13 @@ const io = {
     parse: json_1.deserialize,
     serialize: json_1.serialize
 };
+/**
+ * Decorator to mark a method as RPC method (in this.rpcMethods), collected during service registratation.
+ *
+ * @param {Object} target
+ * @param {string} propName
+ * @param {*} propertyDescriptor
+ */
 exports.RpcMethod = (target, propName, propertyDescriptor) => {
     const desc = Object.getOwnPropertyDescriptor(target, "getRpcMethods");
     if (desc && desc.configurable) {
