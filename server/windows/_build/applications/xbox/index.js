@@ -66,7 +66,7 @@ class xbox extends Base_1.ApplicationBase {
         this.root = options.root;
         const APP_ROOT = this.root;
         let CLIENT_ROOT = options.clientRoot || path.join(APP_ROOT, 'Code/client/src/');
-        const NODE_ROOT = options.release ? process.cwd() : path.join(APP_ROOT, 'server/nodejs/');
+        const NODE_ROOT = options.release === true ? process.cwd() : path.join(APP_ROOT, 'server/nodejs/');
         const DATA_ROOT = path.join(APP_ROOT, '/data/');
         const SYSTEM_ROOT = path.join(DATA_ROOT, '/system/');
         const USER_DIRECTORY = path.join(APP_ROOT, '/user');
@@ -108,11 +108,6 @@ class xbox extends Base_1.ApplicationBase {
                 'XASWEB': path.join(CLIENT_ROOT)
             }
         };
-        let packages = this.packages('../../../../../');
-        let relativeVariables = params['relativeVariables'];
-        // console.log('sdfdf',util.inspect(relativeVariables));
-        relativeVariables['DOJOPACKAGES'] = JSON.stringify(packages);
-        relativeVariables['RESOURCE_VARIABLES'] = JSON.stringify(relativeVariables);
         this.config = params;
         this.config['NODE_ROOT'] = NODE_ROOT;
     }
@@ -132,7 +127,7 @@ class xbox extends Base_1.ApplicationBase {
         }
         const settingsService = this.settingsService = new JSONFile_1.JSONFileService(path.join(this.path('USER_DIRECTORY'), 'settings.json'));
         const directoryService = this.directoryService = new Directory_1.DirectoryService(this.vfsConfig());
-        const mountService = new Mounts_1.MountService(path.join(this.path('DATA_ROOT'), 'system/vfs.json'));
+        const mountService = new Mounts_1.MountService(path.join(this.path(Base_1.EEKey.DATA_ROOT), 'system/vfs.json'));
         this._services = [directoryService, mountService, settingsService];
         return this._services;
     }

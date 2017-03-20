@@ -35,21 +35,18 @@ class BaseService extends Resolver_1.ResourceResolver {
     ;
     _getUser(request) {
         if (request) {
-            //pick userDirectory from referrer (xide RPC calls don't have it has it as url parameter )
+            // pick userDirectory from referrer (xide RPC calls don't have it has it as url parameter )
             let urlArgs = qs(request.get('referrer'));
             let user = urlArgs['userDirectory'];
             if (user) {
                 return user;
             }
-            //try to pick userDirectory from url
+            // try to pick userDirectory from url
             urlArgs = qs(url.parse(request.url).query);
             user = urlArgs['userDirectory'];
             if (user) {
                 return user;
             }
-        }
-        else {
-            console.warn('have no request', new Error().stack);
         }
     }
     _getRequest(args) {
@@ -73,7 +70,6 @@ class BaseService extends Resolver_1.ResourceResolver {
             return io.parse(fs.readFileSync(path, 'utf8'));
         }
         catch (err) {
-            console.error('Error reading config : ' + err.code + ' @ ' + path + ' in ' + this.method, err);
             // create dir if it doesn't exist
             if (err.code === 'ENOENT') {
                 mkdirp.sync(_path.dirname(path), defaultPathMode);
@@ -99,7 +95,7 @@ class BaseService extends Resolver_1.ResourceResolver {
             // make sure the folder exists as it
             // could have been deleted in the meantime
             mkdirp.sync(_path.dirname(path), defaultPathMode);
-            write.sync(path, JSON.stringify(val, null, 4), writeFileOptions);
+            write.sync(path, json_1.serialize(val, null, 4), writeFileOptions);
         }
         catch (err) {
             // improve the message of permission errors
@@ -143,9 +139,6 @@ class BaseService extends Resolver_1.ResourceResolver {
             let userRoot = this.resolveAbsolute(resource);
             if (request) {
                 userRoot = this._resolveUserMount(mount, request, userRoot);
-            }
-            else {
-                console.warn('BaseService: have no request', new Error().stack);
             }
             return _path.join(userRoot, path);
         }

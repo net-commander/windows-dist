@@ -1,7 +1,9 @@
 "use strict";
 class Component {
-    constructor(application) {
+    destroy() { }
+    constructor(application, serviceConfig) {
         this.application = application;
+        this.serviceConfig = serviceConfig;
     }
     label() {
         return "Component";

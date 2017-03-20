@@ -11,6 +11,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 const Base_1 = require("../services/Base");
 const dotProp = require("dot-prop");
 const _ = require("lodash");
+const pathUtil = require("path");
 class JSONFileService extends Base_1.BaseService {
     constructor(config) {
         super(config, null, null);
@@ -18,27 +19,41 @@ class JSONFileService extends Base_1.BaseService {
         this.configPath = config;
         this.root = 'admin';
     }
+    _userDir(userRoot, what) {
+        return pathUtil.resolve(pathUtil.join(userRoot + pathUtil.sep + what));
+    }
+    _getConfigPath(args) {
+        const user = this._getUser(this._getRequest(args));
+        let configPath = this.configPath;
+        if (user) {
+            configPath = this._userDir(user, 'settings.json');
+        }
+        return configPath;
+    }
     get(section, path, query) {
-        let data = this.readConfig();
+        let configPath = this._getConfigPath(arguments);
+        let data = this.readConfig(configPath);
         let result = {};
         result[section] = dotProp.get(data, this.root + path + section);
         return result;
     }
     set(section, path = '.', searchQuery = null, value, decodeValue = true) {
-        let data = this.readConfig();
+        let configPath = this._getConfigPath(arguments);
+        let data = this.readConfig(configPath);
         const dataAt = dotProp.get(data, this.root + path + section);
         dataAt && _.extend(_.find(dataAt, searchQuery), value);
         this.write(null, data);
         return data;
     }
     update(section, path = '.', searchQuery = null, value = null, decodeValue = true) {
-        return this.writeConfig(null, this.set(section, path, searchQuery, value, decodeValue));
+        let configPath = this._getConfigPath(arguments);
+        return this.writeConfig(configPath, this.set(section, path, searchQuery, value, decodeValue));
     }
     read(path) {
         return this.readConfig(path);
     }
     write(path, val) {
-        return this.writeConfig(path, val);
+        this.writeConfig(path, val);
     }
     //
     // ─── DECORATORS ─────────────────────────────────────────────────────────────────

@@ -5,6 +5,9 @@ const Preview_1 = require("./routes/Preview");
 const d = {};
 const e = {};
 class XIDEVE extends Component_1.Component {
+    label() {
+        return "xideve";
+    }
     services(config) {
         return [new Workbench_1.WorkbenchService(config)];
     }

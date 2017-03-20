@@ -59,7 +59,7 @@ class BeanService extends Directory_1.DirectoryService {
                 }
             }
             catch (e) {
-                console.error(e);
+                console.error('ls error ', e);
             }
         });
     }

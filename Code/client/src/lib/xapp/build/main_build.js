@@ -45415,6 +45415,9 @@ define('xcf/manager/DriverManager',[
          * @extends module:xcf/manager/DriverManager_UI
          */
         return dcl(bases, {
+            beanName: 'Driver',
+            beanUrlPattern: "{id}",
+            breanScheme: "driver://",
             onStoreCreated: function (evt) {
                 var type = evt.type,
                     store = evt.store,
@@ -45865,6 +45868,7 @@ define('xcf/manager/DriverManager',[
             },
             onStoreReady: function (store) {
                 has('xcf-ui') && types.registerEnumeration('Driver', this.getDriversAsEnumeration(store));
+                console.log('driver store: ', store);
             },
             /***
              * Init the store with the driver data
@@ -45877,7 +45881,7 @@ define('xcf/manager/DriverManager',[
                 //@TODO: weird bug
                 if (data && !data.items && data['0']) {
                     data = {
-                        items:data['0'].items
+                        items: data['0'].items
                     };
                 }
 
@@ -76253,18 +76257,18 @@ define('xfile/types',[
     };
 
     types.EResolveMode = {
-        "SKIP": "SKIP",
-        "OVERWRITE": "OVERWRITE",
-        "IF_NEWER": "IF_NEWER",
-        "IF_SIZE_DIFFERS": "IF_SIZE_DIFFERS",
-        "APPEND": "APPEND",
-        "THROW": "THROW",
-        "ABORT": "ABORT"
+        "SKIP": 0,
+        "OVERWRITE": 1,
+        "IF_NEWER": 2,
+        "IF_SIZE_DIFFERS": 3,
+        "APPEND": 4,
+        "THROW": 5,
+        "ABORT": 6
     }
     
     types.EResolve = {
-        ALWAYS: "ALWAYS",
-        THIS: "THIS"
+        ALWAYS: 0,
+        THIS: 1
     }
     
     types.EError = {

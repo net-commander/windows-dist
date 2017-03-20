@@ -30,7 +30,7 @@ const path = require("path");
 const MKCI = CIUtils_1.getCIByChainAndName;
 const DProp = Device_1.DEVICE_PROPERTY, LFLAGS = DProp.CF_DEVICE_LOGGING_FLAGS;
 const META_FILE_EXT = '.meta.json';
-exports.MK_DEVICE_CIS = function (cis) {
+exports.MK_DEVICE_CIS = (cis) => {
     return [
         MKCI(cis, 0, DProp.CF_DEVICE_TITLE),
         MKCI(cis, 0, DProp.CF_DEVICE_HOST),
@@ -108,7 +108,6 @@ class DeviceService extends Bean_1.BeanService {
                                         driverOptions.value = driverOptions.value | (1 << Driver_1.DRIVER_FLAGS.RUNS_ON_SERVER);
                                     }
                                 }
-                                const driverOptions = CIUtils_1.getCIByChainAndName(meta, 0, Device_1.DEVICE_PROPERTY.CF_DEVICE_DRIVER_OPTIONS);
                                 if (!meta) {
                                     console.warn('device has no meta ' + _path + path.sep + file);
                                 }

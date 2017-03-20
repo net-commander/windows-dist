@@ -66,6 +66,8 @@ exports.EEKey = {
     'WORKSPACE': 'workspace',
     'USER_DEVICES': 'user_devices',
     'USER_DRIVERS': 'user_drivers',
+    'SYSTEM_DRIVERS': 'system_drivers',
+    'SYSTEM_DEVICES': 'SYSTEM_DEVICES'
 };
 var ELayout;
 (function (ELayout) {

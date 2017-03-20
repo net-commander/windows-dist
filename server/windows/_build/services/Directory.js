@@ -34,51 +34,6 @@ try {
 catch (e) { }
 const DEBUG = false;
 const posixCache = {};
-const async = require('async');
-function size(item, ignoreRegEx, callback) {
-    return __awaiter(this, void 0, void 0, function* () {
-        return new Promise((resolve, reject) => {
-            let cb;
-            let ignoreRegExp;
-            if (!callback) {
-                cb = ignoreRegEx;
-                ignoreRegExp = null;
-            }
-            else {
-                cb = callback;
-                ignoreRegExp = ignoreRegEx;
-            }
-            fs.lstat(item, function lstat(e, stats) {
-                let total = !e ? (stats.size || 0) : 0;
-                if (!e && stats.isDirectory()) {
-                    fs.readdir(item, function readdir(err, list) {
-                        if (err) {
-                            reject(err);
-                        }
-                        async.forEach(list, function iterate(dirItem, next) {
-                            size(_path.join(item, dirItem), ignoreRegExp, function readSize(error, size) {
-                                if (!error) {
-                                    total += size;
-                                }
-                                next(error);
-                            });
-                        }, function done(finalErr) {
-                            // cb(finalErr, total);
-                            resolve({ error: finalErr, total: total });
-                        });
-                    });
-                }
-                else {
-                    if (ignoreRegExp && ignoreRegExp.test(item)) {
-                        total = 0;
-                    }
-                    resolve({ error: e, total: total });
-                }
-            });
-        });
-    });
-}
-exports.size = size;
 function FileSizeToString(size) {
     const isNumber = typeof size === 'number', l1KB = 1024, l1MB = l1KB * l1KB, l1GB = l1MB * l1KB, l1TB = l1GB * l1KB, l1PB = l1TB * l1KB;
     if (isNumber) {
@@ -281,15 +236,15 @@ class DirectoryService extends Base_1.BaseService {
             const args = arguments;
             return new Promise((resolve, reject) => {
                 let destParts = this.resolveShort(dst);
-                const dstVFS = this.getVFS(destParts['mount'], this._getRequest(args));
+                const dstVFS = this.getVFS(destParts.mount, this._getRequest(args));
                 if (!dstVFS) {
-                    reject('Cant find target VFS for ' + destParts['mount']);
+                    reject('Cant find target VFS for ' + destParts.mount);
                 }
-                const targetDirectory = this.resolvePath(destParts['mount'], destParts['path'], this._getRequest(args));
+                const targetDirectory = this.resolvePath(destParts.mount, destParts['path'], this._getRequest(args));
                 let errors = [];
                 // let success: Array<string> = [];
                 let others = this.getFiles(targetDirectory);
-                function newName(name) {
+                const newName = (name) => {
                     let ext = _path.extname(name);
                     let fileName = _path.basename(name, ext);
                     let found = false;
@@ -308,16 +263,18 @@ class DirectoryService extends Base_1.BaseService {
                         }
                     }
                     return newName;
-                }
+                };
                 _.each(selection, (path) => {
                     let srcParts = this.resolveShort(path);
-                    const srcVFS = this.getVFS(srcParts['mount']);
+                    let srcPath = this.resolvePath(srcParts.mount, srcParts.path, this._getRequest(args));
+                    const srcVFS = this.getVFS(srcParts.mount, reqest);
                     if (!srcVFS) {
-                        reject('Cant find VFS for ' + srcParts['mount']);
+                        reject('Cant find VFS for ' + srcParts.mount);
                     }
-                    let srcPath = this.resolvePath(srcParts['mount'], srcParts['path'], this._getRequest(args));
                     const exists = others.indexOf(_path.basename(srcPath)) !== -1;
-                    const newPath = exists ? (_path.dirname(srcPath) + _path.sep + newName(_path.basename(srcPath))) : (_path.dirname(targetDirectory) + _path.sep + _path.basename(srcPath));
+                    const newPath = exists ?
+                        (_path.dirname(srcPath) + _path.sep + newName(_path.basename(srcPath))) :
+                        (_path.dirname(targetDirectory) + _path.sep + _path.basename(srcPath));
                     _fs.copy(srcPath, newPath, function (err) {
                         if (err) {
                             errors.push(err);
@@ -341,7 +298,7 @@ class DirectoryService extends Base_1.BaseService {
                 if (!vfs) {
                     reject('Cant find VFS for ' + mount);
                 }
-                _.each(selection, (_path) => {
+                selection.forEach((_path) => {
                     let parts = _path.split('/');
                     parts.shift();
                     _path = parts.join('/');
@@ -367,7 +324,7 @@ class DirectoryService extends Base_1.BaseService {
     getVFS(mount, request) {
         const resource = this.getResourceByTypeAndName(Resource_1.EResourceType.FILE_PROXY, mount);
         if (resource) {
-            const root = this.resolveAbsolute(resource, request);
+            let root = this._resolveUserMount(mount, request) || this.resolveAbsolute(resource);
             try {
                 if (fs.lstatSync(root)) {
                     return Local_1.create({
@@ -377,7 +334,8 @@ class DirectoryService extends Base_1.BaseService {
                 }
             }
             catch (e) {
-                console.warn('cant get VFS for ' + mount, e);
+                console.warn('cant get VFS for ' + mount + ' root : ' + root, e);
+                console.log('this', this.absoluteVariables);
             }
         }
         return null;
@@ -389,7 +347,7 @@ class DirectoryService extends Base_1.BaseService {
             if (request) {
                 abs = this._resolveUserMount(mount, request, abs);
             }
-            if (!abs || !path) {
+            if (!abs == null || path == null) {
                 console.error('error resolving path for mount ' + mount + '|' + path + '|' + abs, new Error().stack);
             }
             return _path.join(abs, path);
@@ -447,14 +405,25 @@ class DirectoryService extends Base_1.BaseService {
                     reject(`cant get VFS for mount '${mount}'`);
                 }
                 else {
-                    vfs.readdir(path, {}, (err, meta) => {
-                        if (err) {
-                            throw err;
-                        }
-                        let nodes = [];
-                        meta.stream.on('data', (data) => nodes.push(self.mapNode(data, mount)));
-                        meta.stream.on('end', () => resolve(nodes));
-                    });
+                    try {
+                        vfs.readdir(path, {}, (err, meta) => {
+                            if (err) {
+                                console.error('error reading directory ' + path);
+                                reject(err);
+                            }
+                            if (meta) {
+                                const nodes = [];
+                                meta.stream.on('data', (data) => nodes.push(self.mapNode(data, mount)));
+                                meta.stream.on('end', () => resolve(nodes));
+                            }
+                            else {
+                                reject('something wrong');
+                            }
+                        });
+                    }
+                    catch (e) {
+                        reject(e);
+                    }
                 }
             });
         });

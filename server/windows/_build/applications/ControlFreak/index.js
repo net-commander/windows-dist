@@ -9,6 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 const Base_1 = require("./../Base");
 const index_1 = require("../../interfaces/index");
+const Application_1 = require("../../interfaces/Application");
 const Service_1 = require("../../interfaces/Service");
 const app_1 = require("./route/app");
 const smd_1 = require("../../route/smd");
@@ -22,8 +23,9 @@ const JSONFile_1 = require("../../services/JSONFile");
 const Mounts_1 = require("../../services/Mounts");
 const Services_1 = require("../../services/Services");
 const Tracking_1 = require("../../services/Tracking");
-//import { Mongod } from '../../services/external/Mongod';
+const Mongod_1 = require("../../services/external/Mongod");
 const xideve_1 = require("../../components/xideve/xideve");
+const xfile_1 = require("../../components/xfile/xfile");
 const Logs_1 = require("../../services/Logs");
 const register_1 = require("../../services/register");
 const Koa = require("koa");
@@ -43,11 +45,173 @@ const util = require('util');
 const osTmpdir = require('os-tmpdir');
 const mkdirp = require('mkdirp');
 const console_1 = require("../../console");
-const io = {
-    serialize: JSON.stringify
-};
-var MODULE_ROOT = "../../";
+const io_1 = require("../../interfaces/io");
+const MODULE_ROOT = "../../";
+const COMPONENT_ROOT = "../../components/";
 const index_2 = require("../../server/index");
+const interfaces_1 = require("../../fs/interfaces");
+const progress = function (path, current, total, item) {
+    return true;
+};
+const conflictCallback = function (path, item, err) {
+    if (path.indexOf('write.ts') !== -1) {
+        let abort = false;
+        if (abort) {
+            return new Promise((resolve, reject) => {
+                setTimeout(function () {
+                    resolve({ overwrite: interfaces_1.EResolveMode.SKIP, mode: interfaces_1.EResolve.THIS });
+                }, 5000);
+            });
+        }
+        if (err === 'EACCES') {
+            return Promise.resolve({ overwrite: interfaces_1.EResolveMode.SKIP, mode: interfaces_1.EResolve.THIS });
+        }
+        if (err === 'ENOENT') {
+            return Promise.resolve({ overwrite: interfaces_1.EResolveMode.THROW, mode: interfaces_1.EResolve.THIS });
+        }
+    }
+    let start = 100;
+    return new Promise((resolve, reject) => {
+        setTimeout(function () {
+            resolve({ overwrite: interfaces_1.EResolveMode.SKIP, mode: interfaces_1.EResolve.THIS });
+        }, start);
+    });
+};
+const conflictCallbackDelete = function (path, item, err) {
+    let start = 100;
+    if (path.indexOf('write.ts') !== -1) {
+        return Promise.resolve({ overwrite: interfaces_1.EResolveMode.ABORT, mode: interfaces_1.EResolve.THIS });
+    }
+    return new Promise((resolve, reject) => {
+        setTimeout(function () {
+            resolve({ overwrite: interfaces_1.EResolveMode.SKIP, mode: interfaces_1.EResolve.THIS });
+        }, start);
+    });
+};
+let options = {
+    progress: progress,
+    conflictCallback: conflictCallback,
+    // overwrite: true,
+    matching: ['**/*.ts'],
+    debug: false,
+    flags: interfaces_1.ECopyFlags.FOLLOW_SYMLINKS | interfaces_1.ECopyFlags.REPORT,
+    writeProgress: (path, current, total) => {
+    }
+};
+let deleteOptions = {
+    progress: progress,
+    conflictCallback: conflictCallbackDelete,
+    // overwrite: true,
+    matching: ['**/*.ts'],
+    debug: false,
+    trash: false
+};
+let src = path.resolve('./src/fs/');
+let dst = '/tmp/node_modules_fs/';
+/*
+this.running = copyAsync(src, dst, options).then(function (res) {
+    console.log('done');
+    //removeAsync(dst, deleteOptions);
+}).catch(function (e) {
+    console.error('error copyAsync', e);
+});
+*/
+//removeAsync(dst, deleteOptions).then(function () {
+//	console.log('remove async done');
+//})
+const startTimer = function (startMessage) {
+    let start = Date.now();
+    process.stdout.write(startMessage + ' ... ');
+    return function stop() {
+        let time = Date.now() - start;
+        console_1.console.log(time + 'ms');
+        return time;
+    };
+};
+//let now = startTimer('start walk');
+/*
+lock('./src/fs/write.ts', function (e) {
+    console.error('lock : ', e);
+});
+*/
+/*
+this.running = copyAsync(src, dst, options).then(function (res) {
+    console.log('done');
+
+}).catch(function (e) {
+    console.error('error copyAsync', e);
+});
+*/
+/*
+var emitter = walk('/home/mc007/Desktop');
+
+emitter.on('file', function (filename, stat) {
+    //console.log('file from emitter: ', filename);
+});
+emitter.on('end', function (filename, stat) {
+    console.log('end');
+    now();
+});
+*/
+/*
+var data = [];
+let b = tree('/home/mc007/Desktop', {
+    inspectOptions: {
+
+    }
+}, function (path, item) {
+    //console.log('-');
+    data.push({ path: path, item: item });
+});
+console.log('b',data.length);
+*/
+// now();
+/*
+IteratorAsync('/home/mc007/Desktop', {
+    //matching: ['**'],
+    //flags: EInspectFlags.MIME
+}).then((nodes: IProcessingNodes[]) => {
+    console.log('nodes ' + nodes.length, nodes[140]);
+    now();
+});
+*/
+// const matcherOptions: IMatcherOptions = {
+// 	dot: false,
+// 	matchBase: true,
+// 	nocomment: true
+// };
+// const _matcher = matcher('/a/', ['b.txt', 'c.txt'], matcherOptions);
+// const _matcher2 = matcher('/a/', ['b.txt', 'c.txt'], matcherOptions);
+// const _matcher3 = matcher('/a/b/', ['*.txt'], matcherOptions);
+// console.log('_m', _matcher('a/b.txt'));
+// console.log('_m 2', _matcher('**/b.txt'));
+// console.log('_m 3', _matcher('b.txt'));
+// console.log('_m 4', _matcher2('/b.*'));
+// console.log('_m 5', _matcher2('./*.txt'));
+// console.log('_m 5', _matcher2('/a/*.txt'));
+// console.log('_m 5', _matcher2('**/*.txt'));
+// console.log('_m 5', _matcher2('a/b.*'));
+// console.log('_m 5', _matcher3('/a/b/b.txt'));
+// let multimatch = require('multimatch');
+// console.log(multimatch(['a.txt', 'c.txt'], '*.txt'));
+//////////////////////////////////////////////
+//
+//
+//
+const iterator_1 = require("../../fs/iterator");
+let devices = iterator_1.async('/PMaster/projects/x4mm/user/devices', {
+    matching: ['**/*.meta.json']
+}).then((it) => {
+    let node = null;
+    let nodes = [];
+    while (node = it.next()) {
+        nodes.push({
+            path: node.path,
+            item: node.item
+        });
+    }
+    //console.log(' nodes ,', nodes);
+});
 // tslint:disable-next-line:interface-name
 class ControlFreak extends Base_1.ApplicationBase {
     constructor(options) {
@@ -55,6 +219,7 @@ class ControlFreak extends Base_1.ApplicationBase {
         this.uuid = 'ide';
         this.deviceServer = null;
         this.profile = null;
+        this.running = {};
         this.options = options;
         this.root = options.root;
         this.uuid = options.uuid;
@@ -63,17 +228,19 @@ class ControlFreak extends Base_1.ApplicationBase {
         const NODE_ROOT = options.release ? process.cwd() : path.join(APP_ROOT, 'server/nodejs/');
         const USER_DIRECTORY = path.join(APP_ROOT, '/user');
         const DATA_ROOT = path.join(APP_ROOT, '/data/');
-        /*
-        const TMP_PATH = osTmpdir();
-        if (argv.mqtt !== 'false') {
-            try {
-                mkdirp.sync(TMP_PATH + path.sep + '_MONGO' + '_' + this.uuid);
-            } catch (e) {
-                console.error('error creating MONGO Database path ' + TMP_PATH + path.sep + '_MONGO' + '_' + this.uuid);
+        let DB_ROOT = null;
+        if (this.options.persistence === Application_1.EPersistence.MONGO) {
+            const TMP_PATH = osTmpdir();
+            if (argv.mqtt !== 'false') {
+                try {
+                    mkdirp.sync(TMP_PATH + path.sep + '_MONGO' + '_' + this.uuid);
+                }
+                catch (e) {
+                    console_1.console.error('error creating MONGO Database path ' + TMP_PATH + path.sep + '_MONGO' + '_' + this.uuid);
+                }
             }
+            DB_ROOT = path.resolve(TMP_PATH + path.sep + '_MONGO_' + this.uuid);
         }
-        */
-        //const DB_ROOT = path.resolve(TMP_PATH + path.sep + '_MONGO_' + this.uuid);
         const SYSTEM_ROOT = path.join(DATA_ROOT, '/system/');
         const VFS_CONFIG = {
             'workspace': path.join(USER_DIRECTORY, 'workspace'),
@@ -88,7 +255,7 @@ class ControlFreak extends Base_1.ApplicationBase {
         };
         let params = {
             APP_ROOT: APP_ROOT,
-            //DB_ROOT: DB_ROOT,
+            DB_ROOT: DB_ROOT,
             USER_DIRECTORY: USER_DIRECTORY,
             DATA_ROOT: DATA_ROOT,
             SYSTEM_ROOT: SYSTEM_ROOT,
@@ -119,11 +286,11 @@ class ControlFreak extends Base_1.ApplicationBase {
                 },
                 VFS_CONFIG: VFS_CONFIG,
                 USER_DIRECTORY: USER_DIRECTORY,
-                //back compat
+                // back compat
                 VFS_GET_URL: '../../files/',
-                //required by export
+                // required by export
                 PLATFORM: os.platform(),
-                ARCH: os.arch() === 'x64' ? index_1.EArch.x64 : index_1.EArch.x32,
+                ARCH: os.arch() === 'x64' ? index_1.EArch.x64 : index_1.EArch.x32
             },
             absoluteVariables: {
                 'XASWEB': path.join(CLIENT_ROOT)
@@ -131,7 +298,6 @@ class ControlFreak extends Base_1.ApplicationBase {
         };
         this.config = params;
         this.config[Base_1.EEKey.NODE_ROOT] = NODE_ROOT;
-        //console.log('read profile: ',this._getProfile(argv.profile));
         this.profile = this._getProfile(argv.profile);
         if (argv.print === 'true') {
             console_1.console.log("Config", util.inspect(params));
@@ -158,9 +324,6 @@ class ControlFreak extends Base_1.ApplicationBase {
             }
         };
     }
-    /**
-     * runClass is a back - compat port for nxapp,
-     */
     runClass(data, deviceServerContext) {
         const _class = data['class'];
         const _args = data['args'];
@@ -210,25 +373,199 @@ class ControlFreak extends Base_1.ApplicationBase {
             deviceServerContext.broadCastMessage(null, data);
         }
     }
-    externalServices() {
-        let searchPaths = [];
-        return [];
-        /*
-        if (this.options.type === ELayout.OFFLINE_RELEASE) {
-            searchPaths.push(path.resolve(
-                path.join(this.path(EEKey.APP_ROOT), 'mongo'))
-            );
+    runClassMethod(data, deviceServerContext, client) {
+        const _class = data['class'];
+        const _args = data['args'];
+        const _method = data['method'];
+        let _module = null;
+        const delegate = {
+            data: data,
+            clear: function () {
+                this.data.progress = null;
+                this.data.finish = null;
+                this.data.error = null;
+                this.data.data = null;
+            },
+            onProgress: function (progress, data) {
+                this.clear();
+                this.data.progress = progress;
+                this.data.data = data;
+                deviceServerContext.broadCastMessage(null, this.data);
+            },
+            onFinish: function (finish, data) {
+                this.clear();
+                this.data.finish = finish;
+                this.data.data = data;
+                deviceServerContext.broadCastMessage(null, this.data);
+            },
+            onError: function (error, data) {
+                this.clear();
+                this.data.error = error;
+                this.data.data = data;
+                deviceServerContext.broadCastMessage(null, this.data);
+            }
+        };
+        try {
+            _module = require(MODULE_ROOT + _class);
         }
-        if (argv['mqtt'] !== 'false') {
-            const mongod: Mongod = new Mongod({
-                db: this.path(EEKey.DB_ROOT),
+        catch (e) {
+            console_1.console.error('runClass# Error : cant find class ' + _class);
+            data['error'] = e.message;
+            deviceServerContext.broadCastMessage(null, data);
+            return;
+        }
+        _args['app'] = this;
+        try {
+            let instance = new _module.default(_args, delegate);
+            instance[_method]();
+        }
+        catch (e) {
+            data['error'] = e.message;
+            deviceServerContext.broadCastMessage(null, data);
+        }
+    }
+    getComponent(name) {
+        if (name === 'xfile') {
+            return xfile_1.XFILE;
+        }
+    }
+    cancelComponentMethod(data, deviceServerContext, client) {
+        const _id = data['id'];
+        if (this.running[_id]) {
+            this.running[_id].cancel();
+            delete this.running[_id];
+        }
+        else {
+            console_1.console.error('cant cancel component method: no instance for id ' + _id);
+        }
+    }
+    answerAppServerComponentMethodInterrupt(data, deviceServerContext, client) {
+        const _id = data['id'];
+        if (this.running[_id]) {
+            this.running[_id].answer(data['answer']);
+        }
+        else {
+            console_1.console.error('cant answer component method interrupt: no instance for id ' + _id, this.running);
+        }
+    }
+    /**
+     * runClass is a back - compat port for nxapp,
+     */
+    runComponentMethod(data, deviceServerContext, client) {
+        const componentClass = data['component'];
+        const _args = [].concat(data['args']);
+        const _options = data['options'];
+        const _id = _options['id'];
+        const _method = data['method'];
+        let instance = null;
+        const delegate = {
+            data: data,
+            clear: function () {
+                this.data.progress = null;
+                this.data.finish = null;
+                this.data.error = null;
+                this.data.data = null;
+                this.data.interrupt = null;
+            },
+            onProgress: function (progress, data) {
+                this.clear();
+                this.data.progress = progress;
+                this.data.data = data;
+                deviceServerContext.deviceServer.sendClientMessage(client, null, 'onRunClassEvent', JSON.parse(json_1.safe(this.data)));
+            },
+            onFinish: function (finish, data) {
+                this.clear();
+                this.data.finish = finish;
+                this.data.data = data;
+                deviceServerContext.deviceServer.sendClientMessage(client, null, 'onRunClassEvent', JSON.parse(json_1.safe(this.data)));
+            },
+            onError: function (error, data) {
+                this.clear();
+                this.data.error = error;
+                this.data.data = data;
+                deviceServerContext.deviceServer.sendClientMessage(client, null, 'onRunClassEvent', JSON.parse(json_1.safe(this.data)));
+                self.running[_id].destroy();
+                delete self.running[_id];
+            },
+            onInterrupt: function (interrupt, data) {
+                this.clear();
+                this.data.data = data;
+                this.data.interrupt = interrupt;
+                deviceServerContext.deviceServer.sendClientMessage(client, null, 'onRunClassEvent', JSON.parse(json_1.safe(this.data)));
+            },
+            end: function () {
+                self.running[_id].destroy();
+                delete self.running[_id];
+            }
+        };
+        _options.delegate = delegate;
+        // let _module: Component = this.getComponent(component);
+        let _module = null;
+        try {
+            _module = this.getComponent(componentClass);
+        }
+        catch (e) {
+            console_1.console.error('runComponentMethod# Error : cant find component ' + componentClass + ' at ' + path.resolve(COMPONENT_ROOT + componentClass), data);
+            data['error'] = e.message;
+            deviceServerContext.deviceServer.sendClientMessage(client, null, 'onRunClassEvent', JSON.parse(json_1.safe(data)));
+            return;
+        }
+        try {
+            instance = new _module(this, this.serviceConfig(), _options);
+        }
+        catch (e) {
+            data['error'] = e.message;
+            deviceServerContext.deviceServer.sendClientMessage(client, null, 'onRunClassEvent', JSON.parse(json_1.safe(data)));
+            return;
+        }
+        let abort = false;
+        let self = this;
+        if (abort) {
+            return;
+        }
+        if (!_module) {
+            console_1.console.error('runComponentMethod# Error : cant find component' + componentClass);
+            data['error'] = 'runComponentMethod# Error : cant find component';
+            deviceServerContext.broadCastMessage(null, JSON.parse(json_1.safe(data)));
+            return;
+        }
+        if (!instance[_method]) {
+            let msg = 'runComponent# Error : component ' + componentClass + ' has no such method : ' + _method;
+            console_1.console.error(msg);
+            data['error'] = msg;
+            deviceServerContext.broadCastMessage(null, JSON.parse(json_1.safe(data)));
+            return;
+        }
+        try {
+            instance[_method].apply(instance, _args);
+            this.running[_id] = instance;
+        }
+        catch (e) {
+            data['error'] = e.message;
+            console_1.console.error('error running component method :' + componentClass + '#' + _method, e);
+            deviceServerContext.broadCastMessage(null, JSON.parse(json_1.safe(data)));
+        }
+        client.on('close', function () {
+            self.running[_id].cancel();
+            self.running[_id].destroy();
+            delete self.running[_id];
+        });
+    }
+    externalServices() {
+        if (this.options.persistence === Application_1.EPersistence.MONGO) {
+            let searchPaths = [];
+            if (this.options.type === Base_1.ELayout.OFFLINE_RELEASE) {
+                searchPaths.push(path.resolve(path.join(this.path(Base_1.EEKey.APP_ROOT), 'mongo')));
+            }
+            const mongod = new Mongod_1.Mongod({
+                db: this.path(Base_1.EEKey.DB_ROOT),
                 port: this.profile.mongo.port
             }, searchPaths, this.options.print);
             return [mongod];
-        } else {
+        }
+        else {
             return [];
         }
-        */
     }
     vfsConfig() {
         return {
@@ -242,7 +579,8 @@ class ControlFreak extends Base_1.ApplicationBase {
     }
     components() {
         if (!this._components) {
-            this._components = [new xideve_1.XIDEVE(this)];
+            const serviceConfig = this.serviceConfig();
+            this._components = [new xideve_1.XIDEVE(this, serviceConfig)];
         }
         return this._components;
     }
@@ -253,11 +591,11 @@ class ControlFreak extends Base_1.ApplicationBase {
         const serviceConfig = this.serviceConfig();
         const settingsService = this.settingsService = new JSONFile_1.JSONFileService(path.join(this.path('USER_DIRECTORY'), 'settings.json'));
         const directoryService = this.directoryService = new Directory_1.DirectoryService(this.vfsConfig());
-        const mountService = new Mounts_1.MountService(path.join(this.path('DATA_ROOT'), 'system/vfs.json'));
+        const mountService = new Mounts_1.MountService(path.join(this.path(Base_1.EEKey.DATA_ROOT), 'system/vfs.json'));
         const driverService = new Drivers_1.DriverService(serviceConfig);
         const devicesService = new Devices_1.DeviceService(serviceConfig);
         const logsService = new Logs_1.LogsService(serviceConfig);
-        const nodeService = new Services_1.NodeService(path.join(this.path('DATA_ROOT'), 'system/services-debug.json'));
+        const nodeService = new Services_1.NodeService(path.join(this.path(Base_1.EEKey.DATA_ROOT), 'system/services-debug.json'));
         nodeService.setDeviceServerPort(this.profile.socket_server.port);
         const trackingService = new Tracking_1.TrackingService(path.join(this.path('USER_DIRECTORY'), 'meta.json'));
         const components = this.components();
@@ -294,11 +632,11 @@ class ControlFreak extends Base_1.ApplicationBase {
             VFS_CONF[Base_1.EEKey.USER_DRIVERS] = path.join(USER_DIRECTORY, Base_1.EEKey.DRIVERS);
             VFS_CONF[Base_1.EEKey.USER_DEVICES] = path.join(USER_DIRECTORY, Base_1.EEKey.DEVICES);
             VFS_CONF[Base_1.EEKey.WORKSPACE] = path.join(USER_DIRECTORY, Base_1.EEKey.WORKSPACE);
-            VFS_CONF['workspace_user'] = path.join(USER_DIRECTORY, 'workspace');
+            VFS_CONF['workspace_user'] = path.join(USER_DIRECTORY, Base_1.EEKey.WORKSPACE);
             dst[Base_1.EEKey.VFS_CONFIG] = VFS_CONF;
         }
-        dst[Base_1.EEKey.DOJOPACKAGES] = io.serialize(this.packages(origin + '/files/', baseUrl(origin)));
-        dst[Base_1.EEKey.RESOURCE_VARIABLES] = io.serialize(dst);
+        dst[Base_1.EEKey.DOJOPACKAGES] = io_1.io.serialize(this.packages(origin + '/files/', baseUrl(origin)));
+        dst[Base_1.EEKey.RESOURCE_VARIABLES] = io_1.io.serialize(dst);
         const settingsService = this[Base_1.ESKey.SettingsService];
         if (settingsService) {
             const theme = _.find(settingsService.get('settings', '.')['settings'], { id: 'theme' })['value'] || ctx.params.theme || 'white';
@@ -328,7 +666,7 @@ class ControlFreak extends Base_1.ApplicationBase {
         const rpcApp = new Koa();
         rpcApp.use(convert(this.rpc2.app()));
         this.use(convert(mount('/api', rpcApp)));
-        //pretty index browser, must be 'used' no later than at this point
+        // pretty index browser, must be 'used' no later than at this point
         this.use(index_2.serveIndex(this.path(Base_1.EEKey.APP_ROOT), {
             icons: true,
             view: 'details'
@@ -387,8 +725,7 @@ class ControlFreak extends Base_1.ApplicationBase {
         });
     }
     dConfig(clientRoot, serverRoot, base, packages) {
-        //path.join(this.path(EEKey.CLIENT_ROOT), '/lib'), this.path('NODE_ROOT'));
-        var dojoConfig = {
+        let dojoConfig = {
             libRoot: clientRoot,
             clientRoot: clientRoot,
             cwd: serverRoot,
@@ -510,7 +847,7 @@ class ControlFreak extends Base_1.ApplicationBase {
                 this.setup();
                 _super("run").call(this);
                 console_1.console.info('ControlFreak#run : serve www at : ' + this.path(Base_1.EEKey.APP_ROOT));
-                this.use(convert(serve(this.path(Base_1.EEKey.APP_ROOT))));
+                this.use(convert(serve(this.path(Base_1.EEKey.APP_ROOT), { maxage: 1 })));
                 const port = this.profile.http.port || this.options.port || process.env.PORT || 5555;
                 console_1.console.info('ControlFreak#run : create HTTP server at 0.0.0.0:' + port);
                 this.server.listen(port, '0.0.0.0');
@@ -522,8 +859,8 @@ class ControlFreak extends Base_1.ApplicationBase {
                 const nodeRoot:string = this.path('NODE_ROOT');
                 const dConfig = this.dConfig(clientRoot, nodeRoot,null,null);
                 dojoRequire.config(dConfig);*/
-                //console.log('dconfig ',dConfig);
-                //return;
+                // console.log('dconfig ',dConfig);
+                // return;
                 const amdRequire = require(path.join(process.cwd(), !this.options.release ? '../dojo/dojo-require' : '/dojo/dojo-require'));
                 const dojoRequire = amdRequire(path.join(this.path(Base_1.EEKey.CLIENT_ROOT), '/lib'), this.path('NODE_ROOT'));
                 const loader = this.options.release ? 'nxappmain/main_server_ts_build' : 'nxappmain/main_server_ts';
@@ -560,9 +897,9 @@ class ControlFreak extends Base_1.ApplicationBase {
     packages(offset = '', baseUrl) {
         baseUrl = baseUrl || '';
         const result = [
-            this._package('system_drivers', offset, 'system_drivers'),
-            this._package('user_drivers', offset, 'user_drivers'),
-            this._package('workspace', offset, 'workspace'),
+            this._package(Base_1.EEKey.SYSTEM_DRIVERS, offset, Base_1.EEKey.SYSTEM_DRIVERS),
+            this._package(Base_1.EEKey.USER_DRIVERS, offset, Base_1.EEKey.USER_DRIVERS),
+            this._package(Base_1.EEKey.WORKSPACE, offset, Base_1.EEKey.WORKSPACE),
             this._package('maq-metadata-dojo', baseUrl, '/xideve/metadata/dojo/1.8/'),
             this._package('maq-metadata-html', baseUrl, '/xideve/metadata/html/0.8/'),
             this._package('maq-metadata-delite', baseUrl, '/xideve/metadata/delite/0.8/')

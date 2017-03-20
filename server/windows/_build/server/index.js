@@ -31,7 +31,7 @@ const co = require('co');
  * Module exports.
  * @public
  */
-//module.exports = serveIndex;
+// module.exports = serveIndex;
 /*!
  * Icon cache.
  */

@@ -3237,18 +3237,18 @@ define('xfile/types',[
     };
 
     types.EResolveMode = {
-        "SKIP": "SKIP",
-        "OVERWRITE": "OVERWRITE",
-        "IF_NEWER": "IF_NEWER",
-        "IF_SIZE_DIFFERS": "IF_SIZE_DIFFERS",
-        "APPEND": "APPEND",
-        "THROW": "THROW",
-        "ABORT": "ABORT"
+        "SKIP": 0,
+        "OVERWRITE": 1,
+        "IF_NEWER": 2,
+        "IF_SIZE_DIFFERS": 3,
+        "APPEND": 4,
+        "THROW": 5,
+        "ABORT": 6
     }
     
     types.EResolve = {
-        ALWAYS: "ALWAYS",
-        THIS: "THIS"
+        ALWAYS: 0,
+        THIS: 1
     }
     
     types.EError = {
@@ -20966,6 +20966,8 @@ define('xide/views/_Panel',[
                         self.add(widget, null, false);
                     });
                     ready(result);
+                } else if (!result) {
+                    ready();
                 }
             }
             return head;
@@ -21031,10 +21033,16 @@ define('xide/views/_PanelDialog',[
 
     var Module = dcl(_Panel,{
         containerClass:'CIDialog',
+        getContentSize: function () {
+            return {
+                width: '600px',
+                height: '500px'
+            }
+        },
         getDefaultOptions:function(mixin){
             var self = this;
             var options = {
-                "contentSize": this.contentSize,
+                "contentSize": this.getContentSize(),
                 footerToolbar:[
                     {
                         item:     "<button style='margin-left:5px;' type='button'><span class='...'></span></button>",
@@ -34110,7 +34118,7 @@ define('xfile/FileActions',[
     "xide/views/_Dialog",
     "xide/views/_PanelDialog",
     'xfile/views/FilePicker'
-], function (dcl, declare, has,Deferred, utils, types, factory, Path, DefaultActions, Registry, Default, aspect, FileOperationDialog, FilePreview, _CIDialog, _Dialog, _PanelDialog,FilePicker) {
+], function (dcl, declare, has, Deferred, utils, types, factory, Path, DefaultActions, Registry, Default, aspect, FileOperationDialog, FilePreview, _CIDialog, _Dialog, _PanelDialog, FilePicker) {
 
     var ACTION = types.ACTION;
     var _debug = false;
@@ -34121,34 +34129,34 @@ define('xfile/FileActions',[
          * gather options
          */
         var result = {
-                includes: ['*', '.*'],
-                excludes: [],
-                mode: 1501
-            },
+            includes: ['*', '.*'],
+            excludes: [],
+            mode: 1501
+        },
             flags = 4;
 
         switch (flags) {
 
             case 1 << 2:
-            {
-                result.mode = 1502;//all
-                break;
-            }
+                {
+                    result.mode = 1502;//all
+                    break;
+                }
             case 1 << 4:
-            {
-                result.mode = 1501;//none
-                break;
-            }
+                {
+                    result.mode = 1501;//none
+                    break;
+                }
             case 1 << 8:
-            {
-                result.mode = 1504;//newer
-                break;
-            }
+                {
+                    result.mode = 1504;//newer
+                    break;
+                }
             case 1 << 16:
-            {
-                result.mode = 1503;//size
-                break;
-            }
+                {
+                    result.mode = 1503;//size
+                    break;
+                }
         }
 
         return result;
@@ -34166,9 +34174,15 @@ define('xfile/FileActions',[
      * @param Module
      * @returns {*}
      */
-    function createFilePicker(owner,inValue,callback,title,permissions,pickerOptions,dfd,Module){
+    function createFilePicker(owner, inValue, callback, title, permissions, pickerOptions, dfd, Module) {
         var dlg = new _PanelDialog({
             size: types.DIALOG_SIZE.SIZE_NORMAL,
+            getContentSize: function () {
+                return {
+                    width: '600px',
+                    height: '500px'
+                }
+            },
             bodyCSS: {
                 'height': 'auto',
                 'min-height': '500px',
@@ -34176,27 +34190,27 @@ define('xfile/FileActions',[
                 'margin-right': '16px'
             },
             picker: null,
-            title:title,
+            title: title,
             onOk: function () {
                 var selected = this.picker._selection;
                 if (selected && selected[0]) {
                     callback(selected[0]);
-                    dfd && dfd.resolve(selected[0],selected,this.picker);
+                    dfd && dfd.resolve(selected[0], selected, this.picker);
                 }
             },
-            onShow:function(panel,contentNode){
-                var picker = utils.addWidget(FilePicker,utils.mixin({
+            onShow: function (panel, contentNode) {
+                var picker = utils.addWidget(FilePicker, utils.mixin({
                     ctx: owner.ctx,
                     owner: owner,
-                    selection: inValue || './AA/xfile_last/data/su.jpg',
+                    selection: inValue || '.',
                     resizeToParent: true,
                     storeOptionsMixin: {
                         "includeList": "*,.*",
                         "excludeList": ""
                     },
                     Module: Module,
-                    permissions: permissions||utils.clone(types.DEFAULT_FILE_GRID_PERMISSIONS)
-                },pickerOptions),this,contentNode,true);
+                    permissions: permissions || utils.clone(types.DEFAULT_FILE_GRID_PERMISSIONS)
+                }, pickerOptions), this, contentNode, true);
 
                 this.picker = picker;
                 this.add(picker);
@@ -34208,15 +34222,21 @@ define('xfile/FileActions',[
         dlg.show();
         return dfd;
     }
-    
+
     function openFilePicker(dlg, fileWidget) {
 
-        var inValue = fileWidget.userData.value || './AA/xfile_last/data/su.jpg';
+        var inValue = fileWidget.userData.value || '.';
         var dfd = new Deferred(),
             self = this;
 
         var result = new _PanelDialog({
             size: types.DIALOG_SIZE.SIZE_NORMAL,
+            getContentSize: function () {
+                return {
+                    width: '600px',
+                    height: '500px'
+                }
+            },
             bodyCSS: {
                 'height': 'auto',
                 'min-height': '500px',
@@ -34224,7 +34244,7 @@ define('xfile/FileActions',[
                 'margin-right': '16px'
             },
             picker: null,
-            title:fileWidget.title,
+            title: fileWidget.title,
             onOk: function () {
                 var selected = this.picker._selection;
                 if (selected && selected[0]) {
@@ -34234,23 +34254,23 @@ define('xfile/FileActions',[
                 }
 
             },
-            onShow:function(panel,contentNode){
-                var picker = utils.addWidget(FilePicker,{
+            onShow: function (panel, contentNode) {
+                var picker = utils.addWidget(FilePicker, {
                     ctx: self.ctx,
                     owner: self,
-                    selection: inValue || './AA/xfile_last/data/su.jpg',
+                    selection: inValue || '.',
                     resizeToParent: true,
-                    mount:self.collection.mount,
+                    mount: self.collection.mount,
                     storeOptionsMixin: {
                         "includeList": "*,.*",
                         "excludeList": ""
                     },
                     Module: self.Module,
                     permissions: utils.clone(self.Module.DEFAULT_PERMISSIONS)
-                },this,contentNode,true);
+                }, this, contentNode, true);
 
                 this.picker = picker;
-                this.add(picker,null,false);
+                this.add(picker, null, false);
                 this.startDfd.resolve();
                 return [this.picker];
 
@@ -34267,7 +34287,7 @@ define('xfile/FileActions',[
      * @augments module:xfile/views/FileGrid
      */
     var Implementation = {
-        __loading:true,
+        __loading: true,
         /**
          * mkdir version:
          *
@@ -34276,7 +34296,6 @@ define('xfile/FileActions',[
          * @TODO : remove leaks
          */
         touch: function () {
-            
             var dfd = new Deferred();
             try {
                 var self = this,
@@ -34286,22 +34305,22 @@ define('xfile/FileActions',[
                     collection = this.collection;
 
                 var CIS = {
-                        inputs: [
-                            utils.createCI('Name', 13, startValue, {
-                                widget: {
-                                    instant: true,
-                                    validator: function (value) {
-                                        if(currentFolder) {
-                                            return collection.getSync(currentFolder.path + '/' + value) == null &&
-                                                value.length > 0;
-                                        }else{
-                                            return true;
-                                        }
+                    inputs: [
+                        utils.createCI('Name', 13, startValue, {
+                            widget: {
+                                instant: true,
+                                validator: function (value) {
+                                    if (currentFolder) {
+                                        return collection.getSync(currentFolder.path + '/' + value) == null &&
+                                            value.length > 0;
+                                    } else {
+                                        return true;
                                     }
                                 }
-                            })
-                        ]
-                    },
+                            }
+                        })
+                    ]
+                },
                     defaultDfdArgs = {
                         select: currentItem,
                         focus: true,
@@ -34338,7 +34357,7 @@ define('xfile/FileActions',[
                             dfd.resolve(defaultDfdArgs);
                             return;
                         }
-                        var currentFolder = self.getCurrentFolder() || {path:'.'},
+                        var currentFolder = self.getCurrentFolder() || { path: '.' },
                             newFolder = currentFolder.path + '/' + val;
 
                         var fileDfd = self.ctx.getFileManager().mkfile(collection.mount, newFolder, {
@@ -34369,20 +34388,20 @@ define('xfile/FileActions',[
 
         },
         newTabArgs: null,
-        openInOS:function(item){
+        openInOS: function (item) {
             var thiz = this,
                 ctx = thiz.ctx,
                 resourceManager = ctx.getResourceManager(),
                 vfsConfig = resourceManager.getVariable('VFS_CONFIG') || {};
 
-            var mount = item.mount.replace('/','');
-            if(!vfsConfig[mount]){
+            var mount = item.mount.replace('/', '');
+            if (!vfsConfig[mount]) {
                 console.error('open in os failed: have no VFS config for ' + mount);
                 return;
             }
 
             var _require = window['eRequire'];
-            if(!_require){
+            if (!_require) {
                 console.error('have no electron');
             }
 
@@ -34392,19 +34411,19 @@ define('xfile/FileActions',[
             var path = _require("path");
 
             mount = vfsConfig[mount];
-            mount = utils.replaceAll(' ','',mount);
+            mount = utils.replaceAll(' ', '', mount);
 
-            var itemPath = item.path.replace('./','/');
-            itemPath = utils.replaceAll('/',path.sep,itemPath);
+            var itemPath = item.path.replace('./', '/');
+            itemPath = utils.replaceAll('/', path.sep, itemPath);
             var realPath = path.resolve(mount + path.sep + itemPath);
-            realPath = utils.replaceAll(' ','',realPath);
-            if(os.platform()!=='win32') {
+            realPath = utils.replaceAll(' ', '', realPath);
+            if (os.platform() !== 'win32') {
                 shell.openItem(realPath);
-            }else{
+            } else {
                 shell.openItem('file:///' + realPath);
             }
 
-            console.log('open in system ' + mount +':'+ itemPath + ' = ' + realPath,vfsConfig);
+            console.log('open in system ' + mount + ':' + itemPath + ' = ' + realPath, vfsConfig);
 
         },
         getFileActions: function (permissions) {
@@ -34432,8 +34451,8 @@ define('xfile/FileActions',[
                 tab: 'Home',
                 group: 'Navigation',
                 keycombo: ['backspace'],
-                mixin:{
-                    quick:true
+                mixin: {
+                    quick: true
                 }
             }));
 
@@ -34470,7 +34489,7 @@ define('xfile/FileActions',[
                 }
             }));
 
-            if( (location.href.indexOf('electron=true')!==-1 || has('electronx') && has('electron')) && vfsConfig){
+            if ((location.href.indexOf('electron=true') !== -1 || has('electronx') && has('electron')) && vfsConfig) {
                 result.push(thiz.createAction({
                     label: 'Open with System',
                     command: 'File/OpenInOS',
@@ -34480,11 +34499,11 @@ define('xfile/FileActions',[
                     keycombo: ['shift f4'],
                     mixin: {
                         addPermission: true,
-                        quick:true
+                        quick: true
                     },
                     shouldDisable: function () {
                         var item = thiz.getSelectedItem();
-                        if(!item){
+                        if (!item) {
                             return;
                         }
                         return false;
@@ -34492,13 +34511,13 @@ define('xfile/FileActions',[
                 }));
             }
 
-            result.push(this.createAction('Open In New Tab', 'File/OpenInNewTab', 'fa-share', ['alt enter'], 'Home', 'Open', 'item', null, null, {quick:true}, null, function () {
-                    var item = thiz.getSelectedItem();
-                    if (item && item.isDir) {
-                        return false;
-                    }
-                    return true;
-                }, permissions, container, thiz
+            result.push(this.createAction('Open In New Tab', 'File/OpenInNewTab', 'fa-share', ['alt enter'], 'Home', 'Open', 'item', null, null, { quick: true }, null, function () {
+                var item = thiz.getSelectedItem();
+                if (item && item.isDir) {
+                    return false;
+                }
+                return true;
+            }, permissions, container, thiz
             ));
 
 
@@ -34517,13 +34536,13 @@ define('xfile/FileActions',[
                         keyCombo: ['ctrl f1'],
                         tab: 'Home',
                         group: 'Navigation',
-                        mixin:{
-                            data:mountData,
-                            addPermission:true,
-                            quick:true
+                        mixin: {
+                            data: mountData,
+                            addPermission: true,
+                            quick: true
                         },
-                        onCreate:function(action){
-                            action.set('value',currentValue);
+                        onCreate: function (action) {
+                            action.set('value', currentValue);
                         }
                     }));
 
@@ -34537,14 +34556,14 @@ define('xfile/FileActions',[
                             keyCombo: ['alt f' + i],
                             tab: 'Home',
                             group: 'Navigation',
-                            mixin:{
-                                data:mountData,
+                            mixin: {
+                                data: mountData,
                                 item: item,
-                                closeOnClick:false,
-                                quick:true
+                                closeOnClick: false,
+                                quick: true
                             },
-                            onCreate:function(action){
-                                action.set('value',item.name);
+                            onCreate: function (action) {
+                                action.set('value', item.name);
                                 action._oldIcon = this.icon;
                                 action.actionType = types.ACTION_TYPE.SINGLE_TOGGLE;
                             }
@@ -34594,8 +34613,8 @@ define('xfile/FileActions',[
                 bodyCSS: {
                     'height': 'auto',
                     'min-height': '80px',
-                    'width':'100%',
-                     'min-width':'400px'
+                    'width': '100%',
+                    'min-width': '400px'
                 },
                 onCancel: function () {
                     dfd.resolve(defaultDfdArgs);
@@ -34632,7 +34651,6 @@ define('xfile/FileActions',[
 
         },
         move: function (items) {
-
             var dfd = new Deferred();
             var self = this,
                 currentItem = this.getSelectedItem(),
@@ -34724,7 +34742,6 @@ define('xfile/FileActions',[
             return dfd;
         },
         copy: function (items) {
-
             var dfd = new Deferred();
             var self = this,
                 currentItem = this.getSelectedItem(),
@@ -34770,36 +34787,35 @@ define('xfile/FileActions',[
                 bodyCSS: {
                     'height': 'auto',
                     'min-height': '80px',
-                    'width':'100%',
-                    'min-width':'400px'
+                    'width': '100%',
+                    'min-width': '400px'
                 },
                 onCancel: function () {
                     dfd.resolve(defaultDfdArgs);
                 },
                 onOk: function () {
-
-                    var val= this.getField('name');
-                    if(val==null){
+                    var val = this.getField('name');
+                    if (val == null) {
                         dfd.resolve(defaultDfdArgs);
                         return;
                     }
                     var msg = this.showMessage(),
                         thiz = this,
                         serverArgs = self._buildServerSelection(selection),
-                        dstPathItem  = self.collection.getSync(val),
+                        dstPathItem = self.collection.getSync(val),
                         dstPath = dstPathItem ? utils.normalizePath(dstPathItem.mount + '/' + dstPathItem.path) : '';
 
-                    if(dstPathItem) {
+                    if (dstPathItem) {
                         serverArgs.dstPath = dstPath;
-                    }else{
+                    } else {
                         serverArgs.dstPath = utils.normalizePath(currentItem.mount + '/' + val);
                     }
 
                     var currentFolder = self.getCurrentFolder(),
                         newFolder = val,
-                        fileDfd = self.ctx.getFileManager().copyItem(serverArgs.selection,serverArgs.dstPath,defaultCopyOptions(),{
-                            checkErrors:true,
-                            returnProm:false
+                        fileDfd = self.ctx.getFileManager().copyItem(serverArgs.selection, serverArgs.dstPath, defaultCopyOptions(), {
+                            checkErrors: true,
+                            returnProm: false
                         });
 
                     fileDfd.then(function (result) {
@@ -34808,13 +34824,13 @@ define('xfile/FileActions',[
                         thiz._onError();
                     });
 
-                    fileDfd.then(function(data){
-                        self.runAction(ACTION.RELOAD).then(function(){
+                    fileDfd.then(function (data) {
+                        self.runAction(ACTION.RELOAD).then(function () {
                             dfd.resolve(defaultDfdArgs);
                         });
 
-                    },function(e){
-                        logError(e,'__error creating file!');
+                    }, function (e) {
+                        logError(e, '__error creating file!');
                         dfd.resolve(defaultDfdArgs);
                     })
                 }
@@ -34879,22 +34895,22 @@ define('xfile/FileActions',[
                     collection = this.collection;
 
                 var CIS = {
-                        inputs: [
-                            utils.createCI('Name', 13, startValue, {
-                                widget: {
-                                    instant: true,
-                                    validator: function (value) {
-                                        if(currentFolder) {
-                                            return collection.getSync(currentFolder.path + '/' + value) == null &&
-                                                value.length > 0;
-                                        }else{
-                                            return true;
-                                        }
+                    inputs: [
+                        utils.createCI('Name', 13, startValue, {
+                            widget: {
+                                instant: true,
+                                validator: function (value) {
+                                    if (currentFolder) {
+                                        return collection.getSync(currentFolder.path + '/' + value) == null &&
+                                            value.length > 0;
+                                    } else {
+                                        return true;
                                     }
                                 }
-                            })
-                        ]
-                    },
+                            }
+                        })
+                    ]
+                },
                     defaultDfdArgs = {
                         select: currentItem,
                         focus: true,
@@ -34909,8 +34925,8 @@ define('xfile/FileActions',[
                     bodyCSS: {
                         'height': 'auto',
                         'min-height': '80px',
-                        'width':'100%',
-                        'min-width':'400px'
+                        'width': '100%',
+                        'min-width': '400px'
                     },
                     _onError: function (title, suffix, message) {
                         title = title || this.title;
@@ -34934,7 +34950,7 @@ define('xfile/FileActions',[
                             return;
                         }
 
-                        var currentFolder = self.getCurrentFolder() || {path:'.'},
+                        var currentFolder = self.getCurrentFolder() || { path: '.' },
                             newFolder = currentFolder.path + '/' + val;
 
                         var fileDfd = self.ctx.getFileManager().mkdir(collection.mount, newFolder, {
@@ -35013,7 +35029,7 @@ define('xfile/FileActions',[
             if (this._preview) {
                 this._preview.item = item;
                 var _dfd = this._preview.open().then(function () {
-                    self._preview.preview.trigger($.Event('update', {file: item}));
+                    self._preview.preview.trigger($.Event('update', { file: item }));
                 });
 
                 return _dfd;
@@ -35039,7 +35055,7 @@ define('xfile/FileActions',[
                 if (_item) {
 
                     _prev.item = _item;
-                    _prev.preview.trigger($.Event('update', {file: _item}));
+                    _prev.preview.trigger($.Event('update', { file: _item }));
                 }
             });
 
@@ -35082,12 +35098,12 @@ define('xfile/FileActions',[
                     return this.ctx.getFileManager().deleteItems(serverParams.selection, {
                         hints: [1]
                     }, {
-                        checkErrors: false,
-                        returnProm: false,
-                        onError: function (err) {
-                            thiz._onError(null, err.message);
-                        }
-                    });
+                            checkErrors: false,
+                            returnProm: false,
+                            onError: function (err) {
+                                thiz._onError(null, err.message);
+                            }
+                        });
                 },
                 onCancel: function () {
                     dfd.resolve({
@@ -35191,10 +35207,10 @@ define('xfile/FileActions',[
             item = item || this.getRows()[0];
 
             //item could be a non-store item:
-            var cwd = /*item.getParent ? item.getParent() : */this.getCurrentFolder() || {path:'.'},
+            var cwd = /*item.getParent ? item.getParent() : */this.getCurrentFolder() || { path: '.' },
                 self = this;
 
-            if(cwd.isBack){
+            if (cwd.isBack) {
                 cwd = this.collection.getSync(cwd.rPath);
             }
             var expanded = false;
@@ -35248,13 +35264,13 @@ define('xfile/FileActions',[
             var root = this.collection.rootSegment;
             //var _last = addDot ? '.' : "";
             var _last = root;
-            if(segs && segs[0]==='.'){
+            if (segs && segs[0] === '.') {
                 segs[0] = root;
             }
             var out = [];
 
             _.each(segs, function (seg) {
-                var segPath = seg!==_last ? _last + (_last.endsWith("/") ? "" : "/" ) + seg : seg;
+                var segPath = seg !== _last ? _last + (_last.endsWith("/") ? "" : "/") + seg : seg;
                 out.push(segPath);
                 _last = segPath;
             });
@@ -35325,7 +35341,7 @@ define('xfile/FileActions',[
                     iconNode.removeClass('fa-spinner fa-spin');
                 }
                 head.resolve({
-                    select: select !== false ? ( isBack ? item : self.getRows()[0]) : null,
+                    select: select !== false ? (isBack ? item : self.getRows()[0]) : null,
                     focus: true,
                     append: false,
                     delay: 1
@@ -35344,7 +35360,7 @@ define('xfile/FileActions',[
                 thiz = this,
                 ctx = thiz.ctx || ctx,
                 fileManager = ctx.getFileManager(),
-                store = factory.createFileStore(mountData.name, null, fileManager.config,null,ctx),
+                store = factory.createFileStore(mountData.name, null, fileManager.config, null, ctx),
                 oldStore = this.collection,
                 sourceAction = this.getAction(ACTION.SOURCE),
                 label = mountData.label || mountData.name,
@@ -35355,19 +35371,19 @@ define('xfile/FileActions',[
             silent !== true && this._emit('changeSource', mountData);
             this.set('loading', true);
             this.set('collection', store.getDefaultCollection());
-            sourceAction.set('value',mountData.name);
-            thiz.set('title','Files ('+mountData.label+')');
+            sourceAction.set('value', mountData.name);
+            thiz.set('title', 'Files (' + mountData.label + ')');
             var sourceActions = sourceAction.getChildren();
             _.each(sourceActions, function (child) {
                 child.set('icon', child._oldIcon);
             });
 
-            sourceAction.set('label',label);
-            mountAction && mountAction.set('icon','fa-spinner fa-spin');
+            sourceAction.set('label', label);
+            mountAction && mountAction.set('icon', 'fa-spinner fa-spin');
             this.refresh().then(function () {
                 thiz.set('loading', false);
                 thiz.set('collection', store.getDefaultCollection());
-                mountAction && mountAction.set('icon','fa-check');
+                mountAction && mountAction.set('icon', 'fa-check');
                 silent !== true && thiz._emit('changedSource', mountData);
                 thiz.select([0], null, true, {
                     append: false,
@@ -35390,52 +35406,52 @@ define('xfile/FileActions',[
                 tab = this.newTarget({
                     title: item.name,
                     icon: 'fa-folder',
-                    target:thiz._parent,
-                    location:null,
-                    tabOrientation:null
+                    target: thiz._parent,
+                    location: null,
+                    tabOrientation: null
                 });
 
             } else {
                 tab = wManager.createTab(item.name, 'fa-folder', this.newTarget || this);
             }
             var _store = this.collection;
-            if(!item.isDir){
+            if (!item.isDir) {
                 item = this.getCurrentFolder();
             }
-            var store = factory.createFileStore(_store.mount,_store.options,_store.config,null,ctx);
+            var store = factory.createFileStore(_store.mount, _store.options, _store.config, null, ctx);
             var args = utils.mixin({
-                    showToolbar: this.showToolbar,
-                    collection: store,
-                    selectedRenderer: this.selectedRenderer,
-                    showHeader: this.showHeader,
-                    newTarget: this.newTarget,
-                    style: this.style,
-                    options: utils.clone(this.options),
-                    permissions: this.permissions,
-                    _columns: this._columns,
-                    attachDirect: true,
-                    registerEditors: this.registerEditors
-                }, this.newTabArgs || {}),
+                showToolbar: this.showToolbar,
+                collection: store,
+                selectedRenderer: this.selectedRenderer,
+                showHeader: this.showHeader,
+                newTarget: this.newTarget,
+                style: this.style,
+                options: utils.clone(this.options),
+                permissions: this.permissions,
+                _columns: this._columns,
+                attachDirect: true,
+                registerEditors: this.registerEditors
+            }, this.newTabArgs || {}),
 
                 grid = utils.addWidget(this.getClass(), args, null, tab, false);
 
             dfd.resolve();
-            grid.set('loading',true);
-            store.initRoot().then(function(d){
+            grid.set('loading', true);
+            store.initRoot().then(function (d) {
                 //console.profileEnd('0');
-                var _dfd = store.getItem(item.path,true);
-                _dfd && _dfd.then(function(){
-                        grid.startup();
-                        grid.openItem(item).then(function(){
-                            grid.set('loading',false);
-                            grid.select([0], null, true, {
-                                focus: true,
-                                append: false,
-                                delay:1
-                            });
-                            
+                var _dfd = store.getItem(item.path, true);
+                _dfd && _dfd.then(function () {
+                    grid.startup();
+                    grid.openItem(item).then(function () {
+                        grid.set('loading', false);
+                        grid.select([0], null, true, {
+                            focus: true,
+                            append: false,
+                            delay: 1
                         });
-                        wManager.registerView(grid, true);
+
+                    });
+                    wManager.registerView(grid, true);
                 });
             });
             return dfd;
@@ -35479,23 +35495,23 @@ define('xfile/FileActions',[
         openDefaultEditor: function (item) {
             return Default.Implementation.open(item);
         },
-        close:function(){
+        close: function () {
             var panel = this._parent;
-            if(panel){
-                var docker  = panel.docker();
-                if(docker){
+            if (panel) {
+                var docker = panel.docker();
+                if (docker) {
                     this.onAfterAction = null;
                     docker.removePanel(panel);
                 }
             }
             return false;
         },
-        compress:function(items){
+        compress: function (items) {
             items = items || this.getSelection();
             var thiz = this;
             var serverParams = this._buildServerSelection(items);
-            if (serverParams && serverParams.store && serverParams.selection){
-                thiz.ctx.getFileManager().compressItem(serverParams.firstItem.mount,serverParams.selection,'zip').then(function (args) {
+            if (serverParams && serverParams.store && serverParams.selection) {
+                thiz.ctx.getFileManager().compressItem(serverParams.firstItem.mount, serverParams.selection, 'zip').then(function (args) {
                     thiz.reload();
                 });
             }
@@ -35517,69 +35533,69 @@ define('xfile/FileActions',[
             switch (action.command) {
 
                 case 'File/Compress':
-                {
-                    return this.compress(sel);
-                }
+                    {
+                        return this.compress(sel);
+                    }
                 case ACTION_TYPE.PREVIEW:
-                {
-                    return this.openPreview(item);
-                }
+                    {
+                        return this.openPreview(item);
+                    }
                 case 'File/OpenInNewTab':
-                {
-                    return this.openInNewTab(item || this.collection.getRootItem());
-                }
+                    {
+                        return this.openInNewTab(item || this.collection.getRootItem());
+                    }
                 case ACTION_TYPE.EDIT:
-                {
-                    return this.openItem(item);
-                }
+                    {
+                        return this.openItem(item);
+                    }
                 case ACTION_TYPE.NEW_FILE:
-                {
-                    return this.touch(item);
-                }
+                    {
+                        return this.touch(item);
+                    }
                 case ACTION_TYPE.NEW_DIRECTORY:
-                {
-                    return this.mkdir(item);
-                }
+                    {
+                        return this.mkdir(item);
+                    }
                 case ACTION_TYPE.RELOAD:
-                {
-                    return this.reload(item);
-                }
+                    {
+                        return this.reload(item);
+                    }
                 case ACTION_TYPE.RENAME:
-                {
-                    return this.rename(item);
-                }
+                    {
+                        return this.rename(item);
+                    }
                 case ACTION_TYPE.GO_UP:
-                {
-                    return this.goUp(null);
-                }
+                    {
+                        return this.goUp(null);
+                    }
                 case ACTION_TYPE.COPY:
-                {
-                    return this.copy(null);
-                }
+                    {
+                        return this.copy(null);
+                    }
                 case ACTION_TYPE.MOVE:
-                {
-                    return this.move(null);
-                }
+                    {
+                        return this.move(null);
+                    }
                 case ACTION_TYPE.DELETE:
-                {
-                    return this.deleteSelection(null);
-                }
+                    {
+                        return this.deleteSelection(null);
+                    }
                 case ACTION_TYPE.OPEN_IN + '/Default Editor':
-                {
-                    return this.openDefaultEditor(item);
-                }
+                    {
+                        return this.openDefaultEditor(item);
+                    }
                 case ACTION_TYPE.DOWNLOAD:
-                {
-                    return this.ctx.getFileManager().download(item);
-                }
+                    {
+                        return this.ctx.getFileManager().download(item);
+                    }
                 case ACTION_TYPE.CLOSE:
-                {
-                    return this.close();
-                }
+                    {
+                        return this.close();
+                    }
                 case 'File/OpenInOS':
-                {
-                    return this.openInOS(item);
-                }
+                    {
+                        return this.openInOS(item);
+                    }
             }
 
             if (action.command.indexOf(ACTION_TYPE.OPEN_IN + '/') != -1) {
@@ -35590,131 +35606,131 @@ define('xfile/FileActions',[
         },
 
         getEditorActions: function (permissions) {
-                permissions = permissions || this.permissions;
-                var result = [],
-                    ACTION = types.ACTION,
+            permissions = permissions || this.permissions;
+            var result = [],
+                ACTION = types.ACTION,
+                ACTION_ICON = types.ACTION_ICON,
+                VISIBILITY = types.ACTION_VISIBILITY,
+                thiz = this,
+                ctx = thiz.ctx,
+                container = thiz.domNode,
+                actionStore = thiz.getActionStore(),
+                openInAction = null,
+                openInActionModel = null,
+                dirty = false,
+                selHandle = null;
+
+            function getItem() {
+                return thiz.getSelection()[0];
+            }
+
+            function selHandler(event) {
+
+                var selection = event.selection;
+                if (!selection || !selection[0]) {
+                    return;
+                }
+                var item = selection[0];
+                var permissions = this.permissions;
+                var ACTION = types.ACTION,
                     ACTION_ICON = types.ACTION_ICON,
                     VISIBILITY = types.ACTION_VISIBILITY,
                     thiz = this,
-                    ctx = thiz.ctx,
                     container = thiz.domNode,
                     actionStore = thiz.getActionStore(),
-                    openInAction = null,
-                    openInActionModel = null,
-                    dirty = false,
-                    selHandle = null;
+                    contextMenu = this.getContextMenu ? this.getContextMenu() : null;
 
-                function getItem() {
-                    return thiz.getSelection()[0];
+                function _wireEditor(editor, action) {
+                    action.handler = function () {
+                        editor.onEdit(thiz.getSelection()[0]);
+                    };
                 }
+                function getEditorActions(item) {
+                    var editors = Registry.getEditors(item) || [],
+                        result = [];
 
-                function selHandler(event){
-
-                    var selection = event.selection;
-                    if(!selection || !selection[0] ){
-                        return;
-                    }
-                    var item = selection[0];
-                    var permissions = this.permissions;
-                    var ACTION = types.ACTION,
-                        ACTION_ICON = types.ACTION_ICON,
-                        VISIBILITY = types.ACTION_VISIBILITY,
-                        thiz = this,
-                        container = thiz.domNode,
-                        actionStore = thiz.getActionStore(),
-                        contextMenu = this.getContextMenu ? this.getContextMenu() : null;
-
-                    function _wireEditor(editor, action) {
-                        action.handler = function () {
-                            editor.onEdit(thiz.getSelection()[0]);
-                        };
-                    }
-                    function getEditorActions(item){
-                        var editors = Registry.getEditors(item) || [],
-                            result = [];
-
-                        for (var i = 0; i < editors.length; i++) {
-                            var editor = editors[i];
-                            if(editor.name ==='Default Editor'){
-                                continue;
-                            }
-                            var editorAction = thiz.createAction(editor.name, ACTION.OPEN_IN + '/' + editor.name, editor.iconClass, null, 'Home', 'Open', 'item', null,
-                                function () {
-                                },
-                                {
-                                    addPermission: true,
-                                    tab: 'Home',
-                                    editor:editor,
-                                    custom:true,
-                                    quick:true
-                                }, null, null, permissions, container, thiz
-                            );
-                            _wireEditor(editor, editorAction);
-                            result.push(editorAction);
+                    for (var i = 0; i < editors.length; i++) {
+                        var editor = editors[i];
+                        if (editor.name === 'Default Editor') {
+                            continue;
                         }
-                        return result;
+                        var editorAction = thiz.createAction(editor.name, ACTION.OPEN_IN + '/' + editor.name, editor.iconClass, null, 'Home', 'Open', 'item', null,
+                            function () {
+                            },
+                            {
+                                addPermission: true,
+                                tab: 'Home',
+                                editor: editor,
+                                custom: true,
+                                quick: true
+                            }, null, null, permissions, container, thiz
+                        );
+                        _wireEditor(editor, editorAction);
+                        result.push(editorAction);
                     }
-                    if (event.why == 'deselect') {
-                        return;
-                    }
-                    var action = actionStore.getSync(types.ACTION.OPEN_IN);
-                    var editorActions = thiz.addActions(getEditorActions(item));
-
-                    if(this._lastEditorActions){
-                        _.each(this._lastEditorActions,function(action){
-                            actionStore.removeSync(action.command);
-                        });
-                        delete this._lastEditorActions;
-                    }
-
-                    contextMenu && contextMenu.removeCustomActions();
-
-                    if(editorActions.length>0) {
-                        var newStoredActions = this.addActions(editorActions);
-                        actionStore._emit('onActionsAdded', newStoredActions);
-                        this._lastEditorActions = newStoredActions;
-                    }else{
-
-                    }
+                    return result;
                 }
+                if (event.why == 'deselect') {
+                    return;
+                }
+                var action = actionStore.getSync(types.ACTION.OPEN_IN);
+                var editorActions = thiz.addActions(getEditorActions(item));
 
-                if (!this._selHandle) {
-                    this._selHandle = this._on('selectionChanged',function(evt){
-                        selHandler.apply(thiz,[evt]);
+                if (this._lastEditorActions) {
+                    _.each(this._lastEditorActions, function (action) {
+                        actionStore.removeSync(action.command);
                     });
+                    delete this._lastEditorActions;
                 }
-                openInAction = this.createAction('Open In', ACTION.OPEN_IN, ACTION_ICON.EDIT, null, 'Home', 'Open', 'item',
-                    null,
-                    function () {
-                    },
-                    {
-                        addPermission: true,
-                        tab: 'Home',
-                        quick:true
-                    }, null, DefaultActions.shouldDisableDefaultFileOnly, permissions, container, thiz
-                );
 
-                result.push(openInAction);
-                var e = thiz.createAction('Default Editor', ACTION.OPEN_IN + '/Default Editor', 'fa-code', null, 'Home', 'Open', 'item', null,
-                    function () {
-                    },
-                    {
-                        addPermission: true,
-                        tab: 'Home',
-                        forceSubs: true,
-                        quick:true
+                contextMenu && contextMenu.removeCustomActions();
 
-                    }, null, null, permissions, container, thiz
-                );
-                result.push(e);
-                return result;
+                if (editorActions.length > 0) {
+                    var newStoredActions = this.addActions(editorActions);
+                    actionStore._emit('onActionsAdded', newStoredActions);
+                    this._lastEditorActions = newStoredActions;
+                } else {
+
+                }
             }
+
+            if (!this._selHandle) {
+                this._selHandle = this._on('selectionChanged', function (evt) {
+                    selHandler.apply(thiz, [evt]);
+                });
+            }
+            openInAction = this.createAction('Open In', ACTION.OPEN_IN, ACTION_ICON.EDIT, null, 'Home', 'Open', 'item',
+                null,
+                function () {
+                },
+                {
+                    addPermission: true,
+                    tab: 'Home',
+                    quick: true
+                }, null, DefaultActions.shouldDisableDefaultFileOnly, permissions, container, thiz
+            );
+
+            result.push(openInAction);
+            var e = thiz.createAction('Default Editor', ACTION.OPEN_IN + '/Default Editor', 'fa-code', null, 'Home', 'Open', 'item', null,
+                function () {
+                },
+                {
+                    addPermission: true,
+                    tab: 'Home',
+                    forceSubs: true,
+                    quick: true
+
+                }, null, null, permissions, container, thiz
+            );
+            result.push(e);
+            return result;
+        }
     };
 
     //package via declare
     var _class = declare('xfile.FileActions', null, Implementation);
-    _class.Implementation = Implementation;    
-    _class.createFilePicker = createFilePicker;    
+    _class.Implementation = Implementation;
+    _class.createFilePicker = createFilePicker;
     return _class;
 
 });

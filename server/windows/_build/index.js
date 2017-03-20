@@ -2,6 +2,7 @@
 const Base_1 = require("./applications/Base");
 const index_1 = require("./applications/ControlFreak/index");
 const index_2 = require("./applications/xbox/index");
+const Application_1 = require("./interfaces/Application");
 const path = require("path");
 const yargs_parser = require("yargs-parser");
 /*
@@ -40,6 +41,7 @@ const CFOptions = {
     type: argv.type || Base_1.ELayout.SOURCE,
     print: argv.print === 'true',
     uuid: argv.uuid || 'ide',
+    persistence: argv.persistences ? argv.persistence : Application_1.EPersistence.MEMORY
 };
 function create(app) {
     let application;
