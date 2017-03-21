@@ -54129,13 +54129,13 @@ define('xcf/manager/BeanManager',[
     'xdojo/has!xcf-ui?xide/views/ActionDialog',
     'xdojo/has!xcf-ui?xide/views/CIActionDialog',
     'xdojo/has!xcf-ui?xide/views/CIGroupedSettingsView'
-], function (dcl,has,lang, types, utils, BeanManager, Deferred, noob,Track, ActionDialog, CIActionDialog, CIGroupedSettingsView) {
+], function (dcl, has, lang, types, utils, BeanManager, Deferred, noob, Track, ActionDialog, CIActionDialog, CIGroupedSettingsView) {
     /**
      * @class module:xcf/manager/BeanManager_Base
      * @extends {module:xide/manager/BeanManager}
      * @augments {module:xide/manager/ManagerBase}
      */
-    var Base = dcl(BeanManager,{
+    var Base = dcl(BeanManager, {
         /**
          * Return device model item by device id
          * @param path
@@ -54156,7 +54156,7 @@ define('xcf/manager/BeanManager',[
         setStore: function (scope, store) {
             var current = this.stores[scope];
             if (current) {
-                console.error('setting existing store '+scope);
+                console.error('setting existing store ' + scope);
                 current.destroy();
                 delete this.stores[scope];
             }
@@ -54179,7 +54179,7 @@ define('xcf/manager/BeanManager',[
         }
     });
 
-    if(has('xcf-ui')) {
+    if (has('xcf-ui')) {
         /**
          * @class module:xcf/manager/BeanManager
          * @extends {module:xcf/manager/BeanManager_Base}
@@ -54189,7 +54189,7 @@ define('xcf/manager/BeanManager',[
             /**
              * Bean protocol impl.
              */
-            getViewClass: function (trackImpl) {
+            getViewClass: function (trackImpl, ViewClass) {
                 trackImpl = trackImpl || {};
                 utils.mixin(trackImpl, {
                     startup: function () {
@@ -54207,7 +54207,7 @@ define('xcf/manager/BeanManager',[
                         }
                     }
                 })
-                return dcl([CIGroupedSettingsView, Track ? Track.dcl : noob.dcl], trackImpl);
+                return dcl([ViewClass || CIGroupedSettingsView, Track ? Track.dcl : noob.dcl], trackImpl);
             },
             /**
              *
@@ -54366,7 +54366,7 @@ define('xcf/manager/BeanManager',[
                 }.bind(this));
             }
         });
-    }else{
+    } else {
         return Base;
     }
 });
@@ -61954,11 +61954,12 @@ define('xcf/model/ModelBase',[
 });;
 /** @module xcf/model/Driver */
 define('xcf/model/Driver',[
-    'xdojo/declare',
-    "dcl/dcl",
-    "xide/data/Model",
-    "xide/utils"
-], function(declare,dcl,Model,utils){
+    'dcl/dcl',
+    'xide/data/Model',
+    'xide/data/Source',
+    'xide/mixins/EventedMixin',
+    'xide/utils'
+], function (dcl, Model, Source, EventedMixin, utils) {
     /**
      *
      * Model for a driver. It extends the base model class
@@ -61969,12 +61970,12 @@ define('xcf/model/Driver',[
      * @augments module:xide/data/Model
      * @augments module:xide/data/Source
      */
-    var Module = dcl(Model,{
-        itemMetaPath:'user.meta',
-        getStore:function(){
+    var Module = dcl([Model, Source.dcl, EventedMixin.dcl], {
+        itemMetaPath: 'user.meta',
+        getStore: function () {
             return this._store;
         },
-        getScope:function(){
+        getScope: function () {
             var store = this.getStore();
             return store ? store.scope : this.scope;
         },
@@ -61984,25 +61985,25 @@ define('xcf/model/Driver',[
          * @returns {string|int|boolean|null}
          */
         getMetaValue: function (title) {
-            return utils.getCIInputValueByName(this.user,title);
+            return utils.getCIInputValueByName(this.user, title);
         },
         /**
          * Set a value in the meta database
          * @param title {string} The name of the CI
          * @returns {void|null}
          */
-        setMetaValue: function (what,value,publish) {
+        setMetaValue: function (what, value, publish) {
             var item = this;
             var meta = this.user;
             var ci = utils.getCIByChainAndName(meta, 0, what);
-            if(!ci){
+            if (!ci) {
                 return;
             }
             var oldValue = this.getMetaValue(what);
             utils.setCIValueByField(ci, 'value', value);
             this[what] = value;
-            if(publish!==false){
-                this.publish(types.EVENTS.ON_CI_UPDATE,{
+            if (publish !== false) {
+                this.publish(types.EVENTS.ON_CI_UPDATE, {
                     owner: this.owner,
                     ci: ci,
                     newValue: value,
@@ -62014,7 +62015,7 @@ define('xcf/model/Driver',[
          * Return the parent folder
          * @returns {module:xcf/model/Driver}
          */
-        getParent:function(){
+        getParent: function () {
             return this._store.getSync(this.parentId);
         }
     });
@@ -62031,7 +62032,7 @@ define('xcf/model/Device',[
     'xide/utils',
     'xide/mixins/EventedMixin',
     "xcf/types/Types"
-], function(dcl,Model,Source,types,utils,EventedMixin){
+], function (dcl, Model, Source, types, utils, EventedMixin) {
     /**
      *
      * Model for a device. It extends the base model class
@@ -62042,75 +62043,75 @@ define('xcf/model/Device',[
      * @augments module:xide/data/Model
      * @augments module:xide/data/Source
      */
-    var Module = dcl([Model,Source.dcl,EventedMixin.dcl],{
-        declaredClass:'xcf.model.Device',
-        _userStopped:false,
+    var Module = dcl([Model, Source.dcl, EventedMixin.dcl], {
+        declaredClass: 'xcf.model.Device',
+        _userStopped: false,
         /**
          * @type {module:xide/types~DEVICE_STATE}
          * @link module:xide/types/DEVICE_STATE
          * @see module:xide/types/DEVICE_STATE
          */
-        state:types.DEVICE_STATE.DISCONNECTED,
+        state: types.DEVICE_STATE.DISCONNECTED,
         /**
          * The driver instance
          * @private
          */
-        driverInstance:null,
+        driverInstance: null,
         /**
          * The block scope of the driver instance (if the device is connected and ready)
          * @private
          */
-        blockScope:null,
-        getParent:function(){
+        blockScope: null,
+        getParent: function () {
             return this.getStore().getSync(this.parentId);
         },
-        isServerSide:function(){
+        isServerSide: function () {
             var driverOptions = this.getMetaValue(types.DEVICE_PROPERTY.CF_DEVICE_DRIVER_OPTIONS);
             return (1 << types.DRIVER_FLAGS.RUNS_ON_SERVER & driverOptions) ? true : false;
         },
-        isServer:function(){
+        isServer: function () {
             var driverOptions = this.getMetaValue(types.DEVICE_PROPERTY.CF_DEVICE_DRIVER_OPTIONS);
             return (1 << types.DRIVER_FLAGS.SERVER & driverOptions) ? true : false;
         },
-        setServer:function(isServer){
+        setServer: function (isServer) {
             var driverOptions = this.getMetaValue(types.DEVICE_PROPERTY.CF_DEVICE_DRIVER_OPTIONS);
             driverOptions.value = driverOptions.value | (1 << types.DRIVER_FLAGS.SERVER);
-            this.setMetaValue(types.DEVICE_PROPERTY.CF_DEVICE_DRIVER_OPTIONS,driverOptions.value);
+            this.setMetaValue(types.DEVICE_PROPERTY.CF_DEVICE_DRIVER_OPTIONS, driverOptions.value);
         },
-        setServerSide:function(isServer){
+        setServerSide: function (isServer) {
             var driverOptions = this.getMetaValue(types.DEVICE_PROPERTY.CF_DEVICE_DRIVER_OPTIONS);
-            driverOptions= driverOptions | (1 << types.DRIVER_FLAGS.RUNS_ON_SERVER);
-            this.setMetaValue(types.DEVICE_PROPERTY.CF_DEVICE_DRIVER_OPTIONS,driverOptions);
+            driverOptions = driverOptions | (1 << types.DRIVER_FLAGS.RUNS_ON_SERVER);
+            this.setMetaValue(types.DEVICE_PROPERTY.CF_DEVICE_DRIVER_OPTIONS, driverOptions);
         },
-        isDebug:function(){
+        isDebug: function () {
             var driverOptions = this.getMetaValue(types.DEVICE_PROPERTY.CF_DEVICE_DRIVER_OPTIONS);
             return (1 << types.DRIVER_FLAGS.DEBUG & driverOptions) ? true : false;
         },
-        check:function(){
-            if(this._startDfd && this._userStopped===true){
+        check: function () {
+            if (this._startDfd && this._userStopped === true) {
                 this.reset();
             }
         },
-        getStore:function(){
+        getStore: function () {
             return this._store;
         },
-        getScope:function(){
+        getScope: function () {
             var store = this.getStore();
             return store ? store.scope : this.scope;
         },
-        isEnabled:function(){
+        isEnabled: function () {
             return this.getMetaValue(types.DEVICE_PROPERTY.CF_DEVICE_ENABLED) === true;
         },
-        setEnabled:function(enabled){
-            return this.setMetaValue(types.DEVICE_PROPERTY.CF_DEVICE_ENABLED,enabled);
+        setEnabled: function (enabled) {
+            return this.setMetaValue(types.DEVICE_PROPERTY.CF_DEVICE_ENABLED, enabled);
         },
-        shouldReconnect:function(){
+        shouldReconnect: function () {
             if (this._userStopped) {
                 return false;
             }
             return this.isEnabled();
         },
-        reset:function(){
+        reset: function () {
             delete this._startDfd;
             this._startDfd = null;
             delete this['blockScope'];
@@ -62129,12 +62130,12 @@ define('xcf/model/Device',[
          * @constructor
          * @alias module:xcf/model/Device
          */
-        constructor:function(){},
+        constructor: function () { },
         /**
          * Returns the block scope of the a driver's instance
          * @returns {module:xblox/model/Scope}
          */
-        getBlockScope:function(){
+        getBlockScope: function () {
             //return this.blockScope;
             return this.driverInstance && this.driverInstance.blockScope ? this.driverInstance.blockScope : this.blockScope;
         },
@@ -62142,16 +62143,16 @@ define('xcf/model/Device',[
          * Returns the driver instance
          * @returns {model:xcf/driver/DriverBase}
          */
-        getDriverInstance:function(){
+        getDriverInstance: function () {
             return this.driverInstance;
         },
         /**
          * Return the driver model item
          * @returns {module:xcf/model/Driver|null}
          */
-        getDriver:function(){
+        getDriver: function () {
             var scope = this.getBlockScope();
-            if(scope){
+            if (scope) {
                 return scope.driver;
             }
             return null;
@@ -62162,24 +62163,24 @@ define('xcf/model/Device',[
          * @returns {string|int|boolean|null}
          */
         getMetaValue: function (title) {
-            return utils.getCIInputValueByName(this.user,title);
+            return utils.getCIInputValueByName(this.user, title);
         },
         /**
          * Set a value in the meta database
          * @param title {string} The name of the CI
          * @returns {void|null}
          */
-        setMetaValue: function (what,value,publish) {
+        setMetaValue: function (what, value, publish) {
             var item = this;
             var meta = this.user;
             var ci = utils.getCIByChainAndName(meta, 0, what);
-            if(!ci){
+            if (!ci) {
                 return null;
             }
             var oldValue = this.getMetaValue(what);
             utils.setCIValueByField(ci, 'value', value);
             this[what] = value;
-            if(publish!==false && oldValue!=value){
+            if (publish !== false && oldValue != value) {
                 var eventArgs = {
                     owner: this.owner,
                     ci: ci,
@@ -62194,27 +62195,27 @@ define('xcf/model/Device',[
          * @param state
          * @returns {string|null}
          */
-        getStateIcon:function(state ){
+        getStateIcon: function (state) {
             state = state || this.state;
             switch (state) {
                 case types.DEVICE_STATE.DISCONNECTED:
-                {
-                    return 'fa-unlink iconStatusOff'
-                }
+                    {
+                        return 'fa-unlink iconStatusOff';
+                    }
                 case types.DEVICE_STATE.READY:
                 case types.DEVICE_STATE.CONNECTED:
-                {
-                    return 'fa-link iconStatusOn'
-                }
+                    {
+                        return 'fa-link iconStatusOn';
+                    }
                 case types.DEVICE_STATE.SYNCHRONIZING:
                 case types.DEVICE_STATE.CONNECTING:
-                {
-                    return 'fa-spinner fa-spin'
-                }
+                    {
+                        return 'fa-spinner fa-spin';
+                    }
                 case types.DEVICE_STATE.LOST_DEVICE_SERVER:
-                {
-                    return 'fa-spinner fa-spin'
-                }
+                    {
+                        return 'fa-spinner fa-spin';
+                    }
             }
             return 'fa-unlink iconStatusOff';
         },
@@ -62223,20 +62224,20 @@ define('xcf/model/Device',[
          * @param state
          * @param silent
          */
-        setState:function(state,silent){
-            if(state===this.state){
+        setState: function (state, silent) {
+            if (state === this.state) {
                 return;
             }
             var oldState = this.state,
                 icon = this.getStateIcon(state);
             this.state = state;
-            this.set('iconClass',icon);
-            this.set('state',state);
-            this._emit(types.EVENTS.ON_DEVICE_STATE_CHANGED,{
-                old:oldState,
-                state:state,
-                icon:icon,
-                "public":true
+            this.set('iconClass', icon);
+            this.set('state', state);
+            this._emit(types.EVENTS.ON_DEVICE_STATE_CHANGED, {
+                old: oldState,
+                state: state,
+                icon: icon,
+                "public": true
             });
             this.refresh('state');
         }
