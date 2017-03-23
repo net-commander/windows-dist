@@ -103,7 +103,7 @@ class URI {
             }
             else if (URI._driveLetterPath.test(this._path)) {
                 // windows drive letter: file:///c:/far/boo
-                value = this._path[1].toLowerCase() + this._path.substr(2);
+                value = this._path[1] + this._path.substr(2);
             }
             else {
                 // other path

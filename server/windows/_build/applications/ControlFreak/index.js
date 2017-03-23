@@ -203,9 +203,10 @@ let devs = devices('/PMaster/projects/x4mm/data/system/devices', 'system_devices
     console.log('nodes', nodes);
 });
 */
-let _drivers = Drivers_1.drivers('/PMaster/projects/x4mm/data/system/drivers', 'system_drivers').then((nodes) => {
-    console_1.console.log('nodes', nodes);
-});
+/*
+let _drivers = drivers('/PMaster/projects/x4mm/data/system/drivers', 'system_drivers').then((nodes) => {
+    console.log('nodes', nodes);
+});*/
 //console.log('devs : ', devs);
 /*
 import { async as fsIterator } from '../../fs/iterator';

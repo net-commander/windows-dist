@@ -75,13 +75,13 @@ function devices(where, scope, serverSide = false) {
                         path: item.parentId
                     })) {
                         const _parent = uri_1.parentURI(uri_1.URI.file(path.dirname(node.path)));
-                        if (_parent.path.indexOf(where) !== -1) {
+                        if (_parent.fsPath.indexOf(where) !== -1) {
                             nodes.push({
                                 name: item.parentId,
                                 path: item.parentId,
                                 scope: scope,
                                 isDir: true,
-                                parentId: _parent.path.replace(where, '')
+                                parentId: _parent.fsPath.replace(where, '')
                             });
                         }
                     }
