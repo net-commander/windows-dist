@@ -45868,7 +45868,6 @@ define('xcf/manager/DriverManager',[
             },
             onStoreReady: function (store) {
                 has('xcf-ui') && types.registerEnumeration('Driver', this.getDriversAsEnumeration(store));
-                console.log('driver store: ', store);
             },
             /***
              * Init the store with the driver data

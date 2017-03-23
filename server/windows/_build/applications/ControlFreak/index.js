@@ -198,12 +198,26 @@ IteratorAsync('/home/mc007/Desktop', {
 //
 //
 //
-const iterator_1 = require("../../fs/iterator");
-let devices = iterator_1.async('/PMaster/projects/x4mm/user/devices', {
-    matching: ['**/*.meta.json']
-}).then((it) => {
-    let node = null;
-    let nodes = [];
+/*
+let devs = devices('/PMaster/projects/x4mm/data/system/devices', 'system_devices').then((nodes) => {
+    console.log('nodes', nodes);
+});
+*/
+let _drivers = Drivers_1.drivers('/PMaster/projects/x4mm/data/system/drivers', 'system_drivers').then((nodes) => {
+    console_1.console.log('nodes', nodes);
+});
+//console.log('devs : ', devs);
+/*
+import { async as fsIterator } from '../../fs/iterator';
+import { ArrayIterator } from '@xblox/core/iterator';
+import { IProcessingNode } from '../../fs/interfaces';
+
+
+let devices = fsIterator('/PMaster/projects/x4mm/user/devices', {
+    matching: ['* * /*.meta.json']
+}).then((it: ArrayIterator<IProcessingNode>) => {
+    let node: IProcessingNode = null;
+    let nodes: IProcessingNode[] = [];
     while (node = it.next()) {
         nodes.push({
             path: node.path,
@@ -211,7 +225,7 @@ let devices = iterator_1.async('/PMaster/projects/x4mm/user/devices', {
         });
     }
     //console.log(' nodes ,', nodes);
-});
+})*/
 // tslint:disable-next-line:interface-name
 class ControlFreak extends Base_1.ApplicationBase {
     constructor(options) {

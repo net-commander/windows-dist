@@ -21,9 +21,82 @@ const Driver_1 = require("../types/Driver");
 const CIUtils_1 = require("../utils/CIUtils");
 const Base_1 = require("./Base");
 const Bean_1 = require("./Bean");
-const fs = require("fs");
 const _ = require("lodash");
+const pathUtil = require("path");
 const path = require("path");
+const iterator_1 = require("../fs/iterator");
+const uri_1 = require("../fs/uri");
+const json_1 = require("../io/json");
+const META_FILE_EXT = '.meta.json';
+function drivers(where, scope, serverSide = false) {
+    return __awaiter(this, void 0, void 0, function* () {
+        return new Promise((resolve, reject) => {
+            iterator_1.async(where, {
+                matching: ['**/*' + META_FILE_EXT]
+            }).then((it) => {
+                let node = null;
+                let nodes = [];
+                while (node = it.next()) {
+                    let parent = path.dirname(node.path).replace(where, '');
+                    if (parent.startsWith(path.sep)) {
+                        parent = parent.replace(path.sep, '');
+                    }
+                    const name = path.basename(node.path).replace(META_FILE_EXT, '');
+                    let _path = parent + path.sep + path.basename(node.path);
+                    if (_path.startsWith(path.sep)) {
+                        _path = _path.replace(path.sep, '');
+                    }
+                    const item = {
+                        name: name,
+                        parentId: parent,
+                        isDir: node.item.type === 'directory',
+                        scope: scope,
+                        path: _path
+                    };
+                    const meta = json_1.deserialize(json_1.read(node.path));
+                    if (!meta) {
+                        return;
+                    }
+                    item['user'] = meta;
+                    item['id'] = CIUtils_1.getCIInputValueByName(meta, Driver_1.DRIVER_PROPERTY.CF_DRIVER_ID);
+                    let bloxFile = node.path.replace('.meta.json', '.xblox');
+                    if (bloxFile.indexOf('Default.xblox') !== -1) {
+                        continue;
+                    }
+                    try {
+                        let blox = json_1.deserialize(json_1.read(bloxFile));
+                        if (!blox) {
+                            console.warn('invalid blocks file for driver ' + name + ' at ' + bloxFile);
+                        }
+                        item['blox'] = blox;
+                        item['blockPath'] = bloxFile;
+                    }
+                    catch (e) {
+                        console.error('error reading blox file ' + bloxFile, e);
+                    }
+                    nodes.push(item);
+                    // add parent if not already
+                    if (!_.find(nodes, {
+                        path: item.parentId
+                    })) {
+                        const _parent = uri_1.parentURI(uri_1.URI.file(path.dirname(node.path)));
+                        if (_parent.path.indexOf(where) !== -1) {
+                            nodes.push({
+                                name: item.parentId,
+                                path: item.parentId,
+                                scope: scope,
+                                isDir: true,
+                                parentId: _parent.path.replace(where, '')
+                            });
+                        }
+                    }
+                }
+                resolve(nodes);
+            });
+        });
+    });
+}
+exports.drivers = drivers;
 class DriverService extends Bean_1.BeanService {
     constructor() {
         super(...arguments);
@@ -31,84 +104,7 @@ class DriverService extends Bean_1.BeanService {
     }
     getDrivers(driverPath, scope, options) {
         return __awaiter(this, void 0, void 0, function* () {
-            return new Promise((resolve, reject) => {
-                let items = [];
-                let self = this;
-                function parseDirectory(_path, name) {
-                    let dirItems = fs.readdirSync(_path);
-                    if (dirItems.length) {
-                        _.each(dirItems, function (file) {
-                            if (file.indexOf('.meta.json') !== -1) {
-                                let meta = self.readConfig(_path + path.sep + file);
-                                if (!meta) {
-                                    console.error('cant get driver meta ' + _path + path.sep + file);
-                                }
-                                else {
-                                    let id = CIUtils_1.getCIInputValueByName(meta, Driver_1.DRIVER_PROPERTY.CF_DRIVER_ID);
-                                    let bloxFile = _path + '/' + file.replace('.meta.json', '.xblox');
-                                    let blox = self.readConfig(bloxFile);
-                                    if (!blox) {
-                                        console.warn('invalid blocks file for driver ' + name + '/' + file + ' blox path = ' + bloxFile);
-                                    }
-                                    let item = {
-                                        isDir: false,
-                                        path: name + '/' + file,
-                                        parentId: name,
-                                        scope: scope,
-                                        user: meta,
-                                        id: id,
-                                        blox: blox || {},
-                                        blockPath: bloxFile
-                                    };
-                                    items.push(item);
-                                }
-                            }
-                        });
-                    }
-                }
-                function _walk(dir) {
-                    let results = [];
-                    if (fs.existsSync(dir)) {
-                        let list = fs.readdirSync(dir);
-                        list.forEach(function (file) {
-                            file = dir + '/' + file;
-                            let stat = fs.statSync(file);
-                            if (stat) {
-                                let root = file.replace(driverPath + '/', '');
-                                if (stat.isDirectory()) {
-                                    if (~file.indexOf('node_modules')) {
-                                        return;
-                                    }
-                                    let dirItem = {
-                                        isDir: true,
-                                        parent: root,
-                                        name: root,
-                                        path: root
-                                    };
-                                    items.push(dirItem);
-                                    parseDirectory(file, root);
-                                    results.push(file.replace(driverPath + '/', ''));
-                                    results = results.concat(_walk(file));
-                                }
-                            }
-                        });
-                    }
-                    else {
-                        console.error('driver path ' + dir + ' doesnt exists');
-                    }
-                    return results;
-                }
-                _walk(driverPath);
-                // @TODO: fixme
-                _.each(items, function (node) {
-                    if (node.parent === node.path) {
-                        node.parent = '';
-                        node.parentId = '';
-                        node.scope = scope;
-                    }
-                });
-                resolve(items);
-            });
+            return drivers(driverPath, scope);
         });
     }
     ls(mount, _path, options, recursive = false, req) {
@@ -117,7 +113,7 @@ class DriverService extends Bean_1.BeanService {
                 const resource = this.getResourceByTypeAndName(Resource_1.EResourceType.FILE_PROXY, mount);
                 if (resource) {
                     let root = this._resolveUserMount(mount, this._getRequest(arguments)) || this.resolveAbsolute(resource);
-                    const nodes = yield this.getDrivers(root, mount, {});
+                    const nodes = yield drivers(root, mount);
                     return { items: nodes };
                 }
                 else {
@@ -130,8 +126,9 @@ class DriverService extends Bean_1.BeanService {
         });
     }
     removeItem(mount, _path) {
+        const args = arguments;
         return new Promise((resolve, reject) => {
-            const vfs = this.getVFS(mount);
+            const vfs = this.getVFS(mount, this._getRequest(args));
             if (vfs) {
                 vfs.rm(this.resolvePath(mount, _path), {}, resolve, reject);
                 vfs.rm(this.resolvePath(mount, _path.replace('.meta.json', '.js')), {}, resolve, reject);
@@ -145,30 +142,32 @@ class DriverService extends Bean_1.BeanService {
     }
     // implement IBean#create & IDirectoryService#@touch
     createItem(mount, _path, title, meta, driverCode) {
-        return __awaiter(this, void 0, void 0, function* () {
+        return __awaiter(this, arguments, void 0, function* () {
+            const args = arguments;
             return new Promise((resolve, reject) => {
                 try {
-                    const vfs = this.getVFS(mount);
+                    const vfs = this.getVFS(mount, this._getRequest(args));
                     if (vfs) {
-                        this.mkfile(mount, _path + path.sep + title + '.meta.json', meta);
-                        this.mkfile(mount, _path + path.sep + title + '.js', driverCode);
-                        this.mkfile(mount, _path + path.sep + title + '.xblox', '{}');
-                        resolve(true);
+                        this.mkfile(mount, _path + pathUtil.sep + title + '.meta.json', meta);
+                        this.mkfile(mount, _path + pathUtil.sep + title + '.js', driverCode);
+                        this.mkfile(mount, _path + pathUtil.sep + title + '.xblox', '{}');
+                        resolve(meta);
                     }
                     else {
                         reject('Cant find VFS for ' + mount);
                     }
                 }
                 catch (e) {
-                    console.error(e);
+                    console.error('Error creating driver', e);
                 }
             });
         });
     }
     // implement IBean#createGroup & IDirectoryService#@mkdir
     createGroup(mount, _path) {
+        const args = arguments;
         return new Promise((resolve, reject) => {
-            const vfs = this.getVFS(mount);
+            const vfs = this.getVFS(mount, this._getRequest(args));
             if (vfs) {
                 vfs.mkdir(_path, {}, (err, data) => {
                     err ? reject(err) : resolve(true);
@@ -181,8 +180,9 @@ class DriverService extends Bean_1.BeanService {
     }
     // implement IBean#removeGroup & IDirectoryService#@rm
     removeGroup(mount, _path) {
+        const args = arguments;
         return new Promise((resolve, reject) => {
-            const vfs = this.getVFS(mount);
+            const vfs = this.getVFS(mount, this._getRequest(args));
             if (vfs) {
                 Promise.resolve(vfs.rmdir(this.resolvePath(mount, _path), {}, resolve, reject));
             }

@@ -30,6 +30,68 @@ const path = require("path");
 const MKCI = CIUtils_1.getCIByChainAndName;
 const DProp = Device_1.DEVICE_PROPERTY, LFLAGS = DProp.CF_DEVICE_LOGGING_FLAGS;
 const META_FILE_EXT = '.meta.json';
+const iterator_1 = require("../fs/iterator");
+const uri_1 = require("../fs/uri");
+const json_2 = require("../io/json");
+function devices(where, scope, serverSide = false) {
+    return __awaiter(this, void 0, void 0, function* () {
+        return new Promise((resolve, reject) => {
+            iterator_1.async(where, {
+                matching: ['**/*' + META_FILE_EXT]
+            }).then((it) => {
+                let node = null;
+                let nodes = [];
+                while (node = it.next()) {
+                    let parent = path.dirname(node.path).replace(where, '');
+                    if (parent.startsWith(path.sep)) {
+                        parent = parent.replace(path.sep, '');
+                    }
+                    const name = path.basename(node.path).replace(META_FILE_EXT, '');
+                    let _path = parent + path.sep + path.basename(node.path);
+                    if (_path.startsWith(path.sep)) {
+                        _path = _path.replace(path.sep, '');
+                    }
+                    const item = {
+                        name: name,
+                        parentId: parent,
+                        isDir: node.item.type === 'directory',
+                        scope: scope,
+                        path: _path
+                    };
+                    const meta = json_2.deserialize(json_2.read(node.path));
+                    if (!meta) {
+                        return;
+                    }
+                    if (serverSide) {
+                        const driverOptions = CIUtils_1.getCIByChainAndName(meta, 0, Device_1.DEVICE_PROPERTY.CF_DEVICE_DRIVER_OPTIONS);
+                        if (driverOptions && !(driverOptions.value & (1 << Driver_1.DRIVER_FLAGS.RUNS_ON_SERVER))) {
+                            driverOptions.value = driverOptions.value | (1 << Driver_1.DRIVER_FLAGS.RUNS_ON_SERVER);
+                        }
+                    }
+                    item['user'] = meta;
+                    nodes.push(item);
+                    // add parent if not already
+                    if (!_.find(nodes, {
+                        path: item.parentId
+                    })) {
+                        const _parent = uri_1.parentURI(uri_1.URI.file(path.dirname(node.path)));
+                        if (_parent.path.indexOf(where) !== -1) {
+                            nodes.push({
+                                name: item.parentId,
+                                path: item.parentId,
+                                scope: scope,
+                                isDir: true,
+                                parentId: _parent.path.replace(where, '')
+                            });
+                        }
+                    }
+                }
+                resolve(nodes);
+            });
+        });
+    });
+}
+exports.devices = devices;
 exports.MK_DEVICE_CIS = (cis) => {
     return [
         MKCI(cis, 0, DProp.CF_DEVICE_TITLE),
@@ -86,89 +148,9 @@ class DeviceService extends Bean_1.BeanService {
     }
     getItems(directory, scope, options) {
         return __awaiter(this, void 0, void 0, function* () {
-            const self = this;
-            return new Promise((resolve, reject) => {
-                const items = [];
-                options = options || {};
-                const serverSide = options.serverSide;
-                function parseDirectory(_path, name) {
-                    const dirItems = fs.readdirSync(_path);
-                    if (dirItems.length) {
-                        _.each(dirItems, function (file) {
-                            if (file.indexOf(META_FILE_EXT) !== -1) {
-                                const metaPath = _path + path.sep + file;
-                                const meta = self.readConfig(metaPath);
-                                if (!meta) {
-                                    console.error('cant get device meta for ' + file + ' path = ' + _path + path.sep + file);
-                                    return;
-                                }
-                                if (serverSide) {
-                                    const driverOptions = CIUtils_1.getCIByChainAndName(meta, 0, Device_1.DEVICE_PROPERTY.CF_DEVICE_DRIVER_OPTIONS);
-                                    if (driverOptions && !(driverOptions.value & (1 << Driver_1.DRIVER_FLAGS.RUNS_ON_SERVER))) {
-                                        driverOptions.value = driverOptions.value | (1 << Driver_1.DRIVER_FLAGS.RUNS_ON_SERVER);
-                                    }
-                                }
-                                if (!meta) {
-                                    console.warn('device has no meta ' + _path + path.sep + file);
-                                }
-                                else {
-                                    const item = {
-                                        isDir: false,
-                                        path: name + '/' + file,
-                                        parentId: name,
-                                        scope: scope,
-                                        user: meta,
-                                        id: CIUtils_1.getCIInputValueByName(meta, Device_1.DEVICE_PROPERTY.CF_DEVICE_ID),
-                                        name: CIUtils_1.getCIInputValueByName(meta, Device_1.DEVICE_PROPERTY.CF_DEVICE_TITLE)
-                                    };
-                                    items.push(item);
-                                }
-                            }
-                        });
-                    }
-                }
-                function _walk(dir) {
-                    let results = [];
-                    if (fs.existsSync(dir)) {
-                        let list = fs.readdirSync(dir);
-                        list.forEach(function (file) {
-                            file = dir + '/' + file; // its '/' because client wants it
-                            let stat = fs.statSync(file);
-                            if (stat) {
-                                let root = file.replace(directory + '/', '');
-                                if (stat.isDirectory()) {
-                                    const dirItem = {
-                                        isDir: true,
-                                        parent: root,
-                                        name: root,
-                                        path: root
-                                    };
-                                    items.push(dirItem);
-                                    parseDirectory(file, root);
-                                    results.push(file.replace(directory + '/', ''));
-                                    results = results.concat(_walk(file));
-                                }
-                            }
-                            else {
-                                console.error('cant get stat for ' + file);
-                            }
-                        });
-                    }
-                    else {
-                        console.error('device path ' + dir + ' doesnt exists');
-                    }
-                    return results;
-                }
-                _walk(directory);
-                _.each(items, function (node) {
-                    if (node.parent === node.path) {
-                        node.parent = '';
-                        node.parentId = '';
-                    }
-                    node.scope = scope;
-                });
-                resolve(items);
-            });
+            options = options || {};
+            const serverSide = options.serverSide;
+            return devices(directory, scope, serverSide);
         });
     }
     removeGroup(mount, _path) {
