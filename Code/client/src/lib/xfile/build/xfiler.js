@@ -41839,7 +41839,7 @@ define('xfile/manager/FileManager',[
             selection.push(src.path);
 
             if(has('nserver')){
-                window.open('../files/'+src.mount+'/'+src.path);
+                window.open('/files/'+src.mount+'/'+src.path +'?userDirectory='+ encodeURIComponent( this.ctx.getUserDirectory()));
                 return;
             }
 
@@ -41888,7 +41888,7 @@ define('xfile/manager/FileManager',[
         //////////////////////////////////////////////////////////////////////////////////////////////////////
         getImageUrl: function (src, preventCache, extraParams) {
             if(has('nserver')){
-                return ('../files/'+src.mount+'/'+src.path);
+                return ('/files/'+src.mount+'/'+src.path + '?userDirectory='+ encodeURIComponent( this.ctx.getUserDirectory()));
             }
             preventCache = location.href.indexOf('noImageCache') != -1 || preventCache === true || src.dirty === true;
             var downloadUrl = decodeURIComponent(this.serviceUrl);
