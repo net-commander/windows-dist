@@ -30,6 +30,7 @@ const File_1 = require("../../acl/data/File");
 const mount = require('koa-mount');
 const serveStatic = require('koa-static');
 const yargs = require("yargs-parser");
+const index_1 = require("../../server/index");
 let argv = yargs(process.argv.slice(2));
 // tslint:disable-next-line:interface-name
 // tslint:disable-next-line:class-name
@@ -113,7 +114,7 @@ class xbox extends Base_1.ApplicationBase {
     }
     vfsConfig() {
         return {
-            configPath: path.join(this.path('SYSTEM_ROOT'), 'vfs.json'),
+            configPath: path.join(this.path(Base_1.EEKey.SYSTEM_ROOT), 'vfs_xbox.json'),
             relativeVariables: {},
             absoluteVariables: this.vfsMounts()
         };
@@ -127,7 +128,7 @@ class xbox extends Base_1.ApplicationBase {
         }
         const settingsService = this.settingsService = new JSONFile_1.JSONFileService(path.join(this.path('USER_DIRECTORY'), 'settings.json'));
         const directoryService = this.directoryService = new Directory_1.DirectoryService(this.vfsConfig());
-        const mountService = new Mounts_1.MountService(path.join(this.path(Base_1.EEKey.DATA_ROOT), 'system/vfs.json'));
+        const mountService = new Mounts_1.MountService(path.join(this.path(Base_1.EEKey.DATA_ROOT), 'system/vfs_xbox.json'));
         this._services = [directoryService, mountService, settingsService];
         return this._services;
     }
@@ -148,6 +149,11 @@ class xbox extends Base_1.ApplicationBase {
         rpcApp.use(convert(this.rpc.app()));
         this.use(convert(mount('/api', rpcApp)));
         //this.setupAcl2();
+        // pretty index browser, must be 'used' no later than at this point
+        this.use(index_1.serveIndex(this.path(Base_1.EEKey.APP_ROOT), {
+            icons: true,
+            view: 'details'
+        }));
         // RPC services
         const services = this.rpcServices();
         _.each(services, service => {

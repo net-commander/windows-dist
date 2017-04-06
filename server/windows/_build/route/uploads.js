@@ -32,7 +32,8 @@ function create(directoryService, prefix = '/upload', app) {
         if (!ctx.req.url.startsWith(prefix)) {
             return next();
         }
-        const files = yield busboy(ctx.req);
+        const data = yield busboy(ctx.req);
+        const files = data.files;
         files.forEach((file) => {
             file.pipe(fs.createWriteStream(filesRouter.directoryService.resolve(mount, dstDir + path.sep + file.filename)));
         });

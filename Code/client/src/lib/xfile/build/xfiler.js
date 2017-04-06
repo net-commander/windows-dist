@@ -35362,7 +35362,7 @@ define('xfile/FileActions',[
 
             silent !== true && this._emit('changeSource', mountData);
             this.set('loading', true);
-            this.set('collection', store.getDefaultCollection());
+            this.set('collection', store.getDefaultCollection('./'));
             sourceAction.set('value', mountData.name);
             thiz.set('title', 'Files (' + mountData.label + ')');
             var sourceActions = sourceAction.getChildren();
@@ -35374,7 +35374,7 @@ define('xfile/FileActions',[
             mountAction && mountAction.set('icon', 'fa-spinner fa-spin');
             this.refresh().then(function () {
                 thiz.set('loading', false);
-                thiz.set('collection', store.getDefaultCollection());
+                thiz.set('collection', store.getDefaultCollection('./'));
                 mountAction && mountAction.set('icon', 'fa-check');
                 silent !== true && thiz._emit('changedSource', mountData);
                 thiz.select([0], null, true, {
@@ -40457,7 +40457,9 @@ define('xfile/data/Store',[
                 item._S = this;
                 if (!_.isEmpty(item.children)) {
                     _.each(item.children, function (_item) {
-                        _item.parent = item.path;
+                        if (!_item.parent) {
+                            _item.parent = item.path;
+                        }
                         this._parse(_item);
                     }, this);
 
@@ -40631,6 +40633,9 @@ define('xfile/data/Store',[
                 return [{ property: 'name', descending: false, ignoreCase: true }];
             },
             filter: function (data) {
+                if (data && typeof data === 'function') {
+                    return this.inherited(arguments);
+                }
                 if (data.parent) {
                     this._state.path = data.parent;
                 }
@@ -40769,11 +40774,17 @@ define('xfile/data/Store',[
             },
             getDefaultCollection: function (path) {
                 var _sort = this.getDefaultSort();
-                if (!path) {
+                if (path == null) {
                     return this.sort(_sort);
                 } else {
+                    /*
                     return this.filter({
                         parent: path
+                    }).sort(_sort);
+                    */
+                    return this.filter(function (item) {
+                        return item.parent === path;
+                        return res;
                     }).sort(_sort);
                 }
             },

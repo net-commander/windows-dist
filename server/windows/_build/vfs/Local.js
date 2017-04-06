@@ -76,6 +76,7 @@ function create(fsOptions) {
         resolve: resolve,
         stat: stat,
         readfile: readfile,
+        get: get,
         writefile: writeFile,
         readdir: readdir,
         mkfile: mkfile,
@@ -177,7 +178,8 @@ function create(fsOptions) {
                 mime: null,
                 mtime: null,
                 size: null,
-                parent: fullpath.replace(root, '').replace(file, '')
+                parent: fullpath.replace(root, '').replace(file, ''),
+                type: ''
             };
             if (err) {
                 entry['err'] = err;
@@ -303,6 +305,39 @@ function create(fsOptions) {
                     }
                     callback(null, {});
                 });
+            });
+        });
+    }
+    function get(path, options, callback) {
+        return new Promise((resolve, reject) => {
+            readfile(path, {}, (err, meta) => {
+                let data = "";
+                if (err || !meta || !meta.stream || !meta.stream.on) {
+                    reject("error reading file : " + path + err);
+                }
+                if (meta && meta.stream && meta.stream.on) {
+                    meta.stream.on("data", (d) => {
+                        data += d;
+                    });
+                    let done;
+                    meta.stream.on("error", (e) => {
+                        if (done) {
+                            return;
+                        }
+                        done = true;
+                        resolve(data);
+                    });
+                    meta.stream.on("end", () => {
+                        if (done) {
+                            return;
+                        }
+                        done = true;
+                        resolve(data);
+                    });
+                }
+                else {
+                    resolve('error : ' + path);
+                }
             });
         });
     }

@@ -24,10 +24,15 @@ const Local_1 = require("../vfs/Local");
 const fs = require("fs");
 const mime = require("mime");
 const _path = require("path");
-const _fs = require('node-fs-extra');
 const _ = require("lodash");
 const Base_2 = require("./Base");
+const Path_1 = require("../model/Path");
+const Github_1 = require("../vfs/github/Github");
+const sftp_1 = require("../vfs/ssh/sftp");
+const sftp_2 = require("../vfs/ssh/sftp");
+sftp_1.test();
 let posix = null;
+const _fs = require('node-fs-extra');
 try {
     posix = require('posix');
 }
@@ -80,36 +85,9 @@ class DirectoryService extends Base_1.BaseService {
                 if (!vfs) {
                     reject('Cant find VFS for ' + mount);
                 }
-                let data = "";
                 try {
-                    vfs.readfile(path, {}, (err, meta) => {
-                        if (err || !meta || !meta.stream || !meta.stream.on) {
-                            reject("error reading file : " + path + err);
-                        }
-                        if (meta && meta.stream && meta.stream.on) {
-                            meta.stream.on("data", (d) => {
-                                data += d;
-                            });
-                            let done;
-                            meta.stream.on("error", (e) => {
-                                if (done) {
-                                    return;
-                                }
-                                done = true;
-                                resolve(data);
-                            });
-                            meta.stream.on("end", () => {
-                                if (done) {
-                                    return;
-                                }
-                                done = true;
-                                resolve(data);
-                            });
-                        }
-                        else {
-                            resolve('error : ' + path);
-                        }
-                    });
+                    vfs.get(path).then(resolve, reject);
+                    return;
                 }
                 catch (e) {
                     reject(e);
@@ -134,6 +112,12 @@ class DirectoryService extends Base_1.BaseService {
             return new Promise((resolve, reject) => {
                 const vfs = this.getVFS(mount, this._getRequest(args));
                 if (vfs) {
+                    // IVFS - 2.0
+                    if (typeof vfs['set'] === 'function') {
+                        vfs.set(path, content).then(() => resolve(true));
+                        return;
+                    }
+                    // IVFS 1.0
                     vfs.writefile(this.resolvePath(mount, path, this._getRequest(args)), content, this.WRITE_MODE);
                     resolve(true);
                 }
@@ -313,6 +297,14 @@ class DirectoryService extends Base_1.BaseService {
             });
         });
     }
+    createVFSClass(resource) {
+        if (resource.vfs === 'github') {
+            return new Github_1.VFS(resource);
+        }
+        if (resource.vfs === 'sftp') {
+            return new sftp_2.VFS(resource);
+        }
+    }
     /**
      *
      * @param {string} mount
@@ -326,11 +318,19 @@ class DirectoryService extends Base_1.BaseService {
         if (resource) {
             let root = this._resolveUserMount(mount, request) || this.resolveAbsolute(resource);
             try {
+                const vfsClass = resource.vfs;
+                // custom VFS class
+                if (vfsClass) {
+                    return this.createVFSClass(resource);
+                }
                 if (fs.lstatSync(root)) {
                     return Local_1.create({
                         root: root,
                         nopty: true
                     });
+                }
+                else {
+                    console.error('Cant create VFS for mount ' + mount + ': vfs root doesnt exists');
                 }
             }
             catch (e) {
@@ -369,14 +369,13 @@ class DirectoryService extends Base_1.BaseService {
             return { name: "unknown" };
         }
     }
-    mapNode(node, mount) {
+    mapNode(node, mount, root) {
         const fsNodeStat = fs.statSync(node.path);
         const isDirectory = fsNodeStat.isDirectory();
-        const parent = node.parent || "";
-        // const _size = isDirectory ? await size(node.path) : false;
-        // console.log('size: ' + node.path, _size);
+        const nodePath = node.path.replace(root, '');
+        const parent2 = new Path_1.Path(nodePath, false, false).getParentPath();
         const result = {
-            path: './' + _path.join(parent, node.name),
+            path: '.' + new Path_1.Path(nodePath, false, false).segments.join('/'),
             sizeBytes: fsNodeStat.size,
             size: isDirectory ? 'Folder' : FileSizeToString(fsNodeStat.size),
             owner: {
@@ -391,7 +390,7 @@ class DirectoryService extends Base_1.BaseService {
             fileType: isDirectory ? 'folder' : 'file',
             modified: fsNodeStat.mtime.getTime() / 1000,
             mount: mount,
-            parent: parent
+            parent: "./" + parent2.segments.join('/')
         };
         isDirectory && (result['_EX'] = false);
         return result;
@@ -404,26 +403,36 @@ class DirectoryService extends Base_1.BaseService {
                 if (!vfs) {
                     reject(`cant get VFS for mount '${mount}'`);
                 }
-                else {
+                // try v2 VFS
+                if (typeof vfs.ls === 'function') {
                     try {
-                        vfs.readdir(path, {}, (err, meta) => {
-                            if (err) {
-                                console.error('error reading directory ' + path);
-                                reject(err);
-                            }
-                            if (meta) {
-                                const nodes = [];
-                                meta.stream.on('data', (data) => nodes.push(self.mapNode(data, mount)));
-                                meta.stream.on('end', () => resolve(nodes));
-                            }
-                            else {
-                                reject('something wrong');
-                            }
-                        });
+                        vfs.ls(path, mount, options).then((nodes) => { resolve(nodes); });
+                        return;
                     }
                     catch (e) {
                         reject(e);
                     }
+                }
+                // v1 VFS
+                try {
+                    const root = this.resolvePath(mount, '', this._getRequest(args));
+                    vfs.readdir(path, {}, (err, meta) => {
+                        if (err) {
+                            console.error('error reading directory ' + path);
+                            reject(err);
+                        }
+                        if (!meta) {
+                            reject('something wrong');
+                        }
+                        const nodes = [];
+                        meta.stream.on('data', (data) => nodes.push(self.mapNode(data, mount, root)));
+                        meta.stream.on('end', () => {
+                            resolve(nodes);
+                        });
+                    });
+                }
+                catch (e) {
+                    reject(e);
                 }
             });
         });

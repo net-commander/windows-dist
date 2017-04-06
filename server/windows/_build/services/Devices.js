@@ -54,7 +54,7 @@ function devices(where, scope, serverSide = false) {
                     const item = {
                         name: name,
                         parentId: parent,
-                        isDir: node.item.type === 'directory',
+                        isDir: node.item.type === 'directory' ? true : false,
                         scope: scope,
                         path: _path
                     };
@@ -68,7 +68,7 @@ function devices(where, scope, serverSide = false) {
                             driverOptions.value = driverOptions.value | (1 << Driver_1.DRIVER_FLAGS.RUNS_ON_SERVER);
                         }
                     }
-                    item['user'] = meta;
+                    item.user = meta;
                     nodes.push(item);
                     // add parent if not already
                     if (!_.find(nodes, {

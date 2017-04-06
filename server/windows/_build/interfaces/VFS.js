@@ -1,5 +1,34 @@
 "use strict";
 /**
+ * Node types
+ *
+ * @export
+ * @enum {string}
+ */
+var ENodeType;
+(function (ENodeType) {
+    ENodeType[ENodeType["FILE"] = 'file'] = "FILE";
+    ENodeType[ENodeType["DIR"] = 'dir'] = "DIR";
+    ENodeType[ENodeType["SYMLINK"] = 'symlink'] = "SYMLINK";
+    ENodeType[ENodeType["OTHER"] = 'other'] = "OTHER";
+    ENodeType[ENodeType["BLOCK"] = 'block'] = "BLOCK";
+})(ENodeType = exports.ENodeType || (exports.ENodeType = {}));
+/**
+ * General features of a VFS
+ *
+ * @export
+ * @enum {number}
+ */
+var EVFSCapabilties;
+(function (EVFSCapabilties) {
+    EVFSCapabilties[EVFSCapabilties["VERSIONED"] = 0] = "VERSIONED";
+    EVFSCapabilties[EVFSCapabilties["CHANGE_MESSAGE"] = 1] = "CHANGE_MESSAGE";
+    EVFSCapabilties[EVFSCapabilties["META"] = 2] = "META";
+    EVFSCapabilties[EVFSCapabilties["MIME"] = 3] = "MIME";
+    EVFSCapabilties[EVFSCapabilties["AUTHORS"] = 4] = "AUTHORS";
+    EVFSCapabilties[EVFSCapabilties["META_TREE"] = 5] = "META_TREE"; // VFS has non INode tree nodes (VCS branches, tags, commits,..)
+})(EVFSCapabilties = exports.EVFSCapabilties || (exports.EVFSCapabilties = {}));
+/**
  *
  * These flags are used to build the result, adaptive.
  * @TODO: sync with dgrid#configureColumn

@@ -65187,7 +65187,9 @@ define('xfile/data/Store',[
                 item._S = this;
                 if (!_.isEmpty(item.children)) {
                     _.each(item.children, function (_item) {
-                        _item.parent = item.path;
+                        if (!_item.parent) {
+                            _item.parent = item.path;
+                        }
                         this._parse(_item);
                     }, this);
 
@@ -65361,6 +65363,9 @@ define('xfile/data/Store',[
                 return [{ property: 'name', descending: false, ignoreCase: true }];
             },
             filter: function (data) {
+                if (data && typeof data === 'function') {
+                    return this.inherited(arguments);
+                }
                 if (data.parent) {
                     this._state.path = data.parent;
                 }
@@ -65499,11 +65504,17 @@ define('xfile/data/Store',[
             },
             getDefaultCollection: function (path) {
                 var _sort = this.getDefaultSort();
-                if (!path) {
+                if (path == null) {
                     return this.sort(_sort);
                 } else {
+                    /*
                     return this.filter({
                         parent: path
+                    }).sort(_sort);
+                    */
+                    return this.filter(function (item) {
+                        return item.parent === path;
+                        return res;
                     }).sort(_sort);
                 }
             },
