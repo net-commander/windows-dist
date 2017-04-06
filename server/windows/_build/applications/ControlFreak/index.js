@@ -654,7 +654,7 @@ class ControlFreak extends Base_1.ApplicationBase {
         dst[Base_1.EEKey.RESOURCE_VARIABLES] = io_1.io.serialize(dst);
         const settingsService = this[Base_1.ESKey.SettingsService];
         if (settingsService) {
-            const theme = _.find(settingsService.get('settings', '.')['settings'], { id: 'theme' })['value'] || ctx.params.theme || 'white';
+            const theme = _.find(settingsService.get('settings', '.', null, ctx.request)['settings'], { id: 'theme' })['value'] || ctx.params.theme || 'white';
             dst[Base_1.EEKey.THEME] = theme;
         }
         return dst;
