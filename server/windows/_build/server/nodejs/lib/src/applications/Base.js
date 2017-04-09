@@ -8,6 +8,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 const Koa = require("koa");
+const _ = require("lodash");
 const http = require('http');
 const compress = require('koa-compress');
 const SRC_DIR = '/Code/client/src/';
@@ -16,7 +17,6 @@ const destroyable = require('server-destroy');
 const io = {
     serialize: JSON.stringify
 };
-const _ = require("lodash");
 exports.ENV = {
     VARIABLES: {
         SRC_DIR: SRC_DIR,
@@ -51,14 +51,29 @@ exports.EEKey = {
     'APP_ROOT': 'APP_ROOT',
     'DATA_ROOT': 'DATA_ROOT',
     'DB_ROOT': 'DB_ROOT',
+    'BASE_URL': 'BASE_URL',
     'CLIENT_ROOT': 'CLIENT_ROOT',
     'LIB_DIR': exports.ENV.VARIABLES.LIB_DIR,
-    'RELEASE': 'RELEASE'
+    'RELEASE': 'RELEASE',
+    'NODE_ROOT': 'NODE_ROOT',
+    'ROOT': 'ROOT',
+    'VFS_URL': 'VFS_URL',
+    'VFS_CONFIG': 'VFS_CONFIG',
+    'SYSTEM_ROOT': 'SYSTEM_ROOT',
+    'USER_DIRECTORY': 'USER_DIRECTORY',
+    'DEVICES': 'devices',
+    'DRIVERS': 'drivers',
+    'WORKSPACE': 'workspace',
+    'USER_DEVICES': 'user_devices',
+    'USER_DRIVERS': 'user_drivers',
+    'SYSTEM_DRIVERS': 'system_drivers',
+    'SYSTEM_DEVICES': 'SYSTEM_DEVICES'
 };
 var ELayout;
 (function (ELayout) {
     ELayout[ELayout["NODE_JS"] = 'NODE_JS'] = "NODE_JS";
     ELayout[ELayout["SOURCE"] = 'SOURCE'] = "SOURCE";
+    ELayout[ELayout["OFFLINE_RELEASE"] = 'OFFLINE_RELEASE'] = "OFFLINE_RELEASE";
 })(ELayout = exports.ELayout || (exports.ELayout = {}));
 ;
 exports.ESKey = {
@@ -69,6 +84,10 @@ function ENV_VAR(key) {
 }
 exports.ENV_VAR = ENV_VAR;
 class ApplicationBase extends Koa {
+    constructor(root) {
+        super();
+        this.uuid = 'no uuid';
+    }
     externalServices() {
         return [];
     }
@@ -76,7 +95,7 @@ class ApplicationBase extends Koa {
         return this.config[key];
     }
     relativeVariable(key, value) {
-        if (value) {
+        if (value != null) {
             this.config['relativeVariables'][key] = value;
         }
         return this.config['relativeVariables'][key];
@@ -108,14 +127,24 @@ class ApplicationBase extends Koa {
         const baseUrl = this._env(origin, exports.EEKey.XAS_WEB);
         dst['BASE_URL'] = baseUrl(origin);
         dst['APP_URL'] = this._env(origin, exports.EEKey.APP_URL)(origin);
+        dst[exports.EEKey.XAS_WEB] = this._env(origin, exports.EEKey.APP_URL)(origin);
         dst['RPC_URL'] = this._env(origin, exports.EEKey.RPC_URL)(origin);
+        dst['VFS_URL'] = origin + '/files/';
+        dst[exports.EEKey.ROOT] = origin + '/';
         dst[exports.EEKey.DOJOPACKAGES] = io.serialize(this.packages(origin + '/files/', baseUrl(origin)));
         dst[exports.EEKey.RESOURCE_VARIABLES] = io.serialize(dst);
-        dst[exports.EEKey.THEME] = _.find(this[exports.ESKey.SettingsService].get('settings', '.')['settings'])['value'] || ctx.params.theme || 'white';
+        const settingsService = this[exports.ESKey.SettingsService];
+        if (settingsService) {
+            try {
+                const theme = _.find(settingsService.get('settings', '.')['settings'], { id: 'theme' })['value'] || ctx.params.theme || 'white';
+                dst[exports.EEKey.THEME] = theme;
+            }
+            catch (e) {
+                console.error('error reading user settings file');
+                dst[exports.EEKey.THEME] = 'white';
+            }
+        }
         return dst;
-    }
-    constructor(root) {
-        super();
     }
     rpcServices() {
         return [];

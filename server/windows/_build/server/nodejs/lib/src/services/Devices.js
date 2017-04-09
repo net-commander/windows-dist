@@ -24,156 +24,143 @@ const Driver_1 = require("../types/Driver");
 const CIUtils_1 = require("../utils/CIUtils");
 const Base_2 = require("./Base");
 const Bean_1 = require("./Bean");
-const AnyPromise = require("any-promise");
 const fs = require("fs");
 const _ = require("lodash");
 const path = require("path");
+const MKCI = CIUtils_1.getCIByChainAndName;
+const DProp = Device_1.DEVICE_PROPERTY, LFLAGS = DProp.CF_DEVICE_LOGGING_FLAGS;
+const META_FILE_EXT = '.meta.json';
+const iterator_1 = require("../fs/iterator");
+const uri_1 = require("../fs/uri");
+const json_2 = require("../io/json");
+function devices(where, scope, serverSide = false) {
+    return __awaiter(this, void 0, void 0, function* () {
+        return new Promise((resolve, reject) => {
+            iterator_1.async(where, {
+                matching: ['**/*' + META_FILE_EXT]
+            }).then((it) => {
+                let node = null;
+                let nodes = [];
+                while (node = it.next()) {
+                    let parent = path.dirname(node.path).replace(where, '');
+                    if (parent.startsWith(path.sep)) {
+                        parent = parent.replace(path.sep, '');
+                    }
+                    const name = path.basename(node.path).replace(META_FILE_EXT, '');
+                    let _path = parent + path.sep + path.basename(node.path);
+                    if (_path.startsWith(path.sep)) {
+                        _path = _path.replace(path.sep, '');
+                    }
+                    const item = {
+                        name: name,
+                        parentId: parent,
+                        isDir: node.item.type === 'directory' ? true : false,
+                        scope: scope,
+                        path: _path
+                    };
+                    const meta = json_2.deserialize(json_2.read(node.path));
+                    if (!meta) {
+                        return;
+                    }
+                    if (serverSide) {
+                        const driverOptions = CIUtils_1.getCIByChainAndName(meta, 0, Device_1.DEVICE_PROPERTY.CF_DEVICE_DRIVER_OPTIONS);
+                        if (driverOptions && !(driverOptions.value & (1 << Driver_1.DRIVER_FLAGS.RUNS_ON_SERVER))) {
+                            driverOptions.value = driverOptions.value | (1 << Driver_1.DRIVER_FLAGS.RUNS_ON_SERVER);
+                        }
+                    }
+                    item.user = meta;
+                    nodes.push(item);
+                    // add parent if not already
+                    if (!_.find(nodes, {
+                        path: item.parentId
+                    })) {
+                        const _parent = uri_1.parentURI(uri_1.URI.file(path.dirname(node.path)));
+                        if (_parent.fsPath.indexOf(where) !== -1) {
+                            nodes.push({
+                                name: item.parentId,
+                                path: item.parentId,
+                                scope: scope,
+                                isDir: true,
+                                parentId: _parent.fsPath.replace(where, '')
+                            });
+                        }
+                    }
+                }
+                resolve(nodes);
+            });
+        });
+    });
+}
+exports.devices = devices;
+exports.MK_DEVICE_CIS = (cis) => {
+    return [
+        MKCI(cis, 0, DProp.CF_DEVICE_TITLE),
+        MKCI(cis, 0, DProp.CF_DEVICE_HOST),
+        MKCI(cis, 0, DProp.CF_DEVICE_ENABLED),
+        MKCI(cis, 0, DProp.CF_DEVICE_DRIVER),
+        MKCI(cis, 0, DProp.CF_DEVICE_PROTOCOL),
+        MKCI(cis, 0, DProp.CF_DEVICE_PORT),
+        MKCI(cis, 0, DProp.CF_DEVICE_ID),
+        MKCI(cis, 0, DProp.CF_DEVICE_OPTIONS),
+        MKCI(cis, 0, DProp.CF_DEVICE_DRIVER_OPTIONS),
+        {
+            "id": LFLAGS,
+            "name": LFLAGS,
+            "parentId": -1,
+            "title": LFLAGS,
+            "type": LFLAGS,
+            "value": "{\n  \"Device Connected\": 47,\n  \"Response\": 35,\n  \"Send Command\": 51,\n  \"Device Disonnected\": 39,\n  \"Device Error\": 1\n}",
+            "visible": true
+        }
+    ];
+};
 class DeviceService extends Bean_1.BeanService {
     constructor() {
         super(...arguments);
         this.method = 'XCF_Device_Service';
     }
-    createItem(ciList, req) {
-        return __awaiter(this, void 0, void 0, function* () {
-            return new AnyPromise((resolve, reject) => {
-                const cis = {
-                    inputs: ciList
-                };
+    createItem(ciList) {
+        return __awaiter(this, arguments, void 0, function* () {
+            const args = arguments;
+            return new Promise((resolve, reject) => {
+                const cis = { inputs: ciList };
+                // 3 mand. fields to satisfy by client:  -> mount/folder/title (.meta.json)
                 const scope = CIUtils_1.getCIInputValueByName(cis, 'Scope');
                 const title = CIUtils_1.getCIInputValueByName(cis, 'Title');
                 const group = CIUtils_1.getCIInputValueByName(cis, 'In Group');
-                const vfs = this.getVFS(scope);
+                const vfs = this.getVFS(scope, this._getRequest(args));
                 if (!vfs) {
                     reject('Cant find VFS for mount :' + scope);
                 }
+                const _CIS = exports.MK_DEVICE_CIS(cis);
                 const device = {
-                    inputs: [
-                        CIUtils_1.getCIByChainAndName(cis, 0, Device_1.DEVICE_PROPERTY.CF_DEVICE_TITLE),
-                        CIUtils_1.getCIByChainAndName(cis, 0, Device_1.DEVICE_PROPERTY.CF_DEVICE_HOST),
-                        CIUtils_1.getCIByChainAndName(cis, 0, Device_1.DEVICE_PROPERTY.CF_DEVICE_ENABLED),
-                        CIUtils_1.getCIByChainAndName(cis, 0, Device_1.DEVICE_PROPERTY.CF_DEVICE_DRIVER),
-                        CIUtils_1.getCIByChainAndName(cis, 0, Device_1.DEVICE_PROPERTY.CF_DEVICE_PROTOCOL),
-                        CIUtils_1.getCIByChainAndName(cis, 0, Device_1.DEVICE_PROPERTY.CF_DEVICE_PORT),
-                        CIUtils_1.getCIByChainAndName(cis, 0, Device_1.DEVICE_PROPERTY.CF_DEVICE_ID),
-                        CIUtils_1.getCIByChainAndName(cis, 0, Device_1.DEVICE_PROPERTY.CF_DEVICE_OPTIONS),
-                        CIUtils_1.getCIByChainAndName(cis, 0, Device_1.DEVICE_PROPERTY.CF_DEVICE_DRIVER_OPTIONS),
-                        {
-                            "id": Device_1.DEVICE_PROPERTY.CF_DEVICE_LOGGING_FLAGS,
-                            "name": Device_1.DEVICE_PROPERTY.CF_DEVICE_LOGGING_FLAGS,
-                            "order": -1,
-                            "params": null,
-                            "parentId": -1,
-                            "platform": null,
-                            "storeDestination": null,
-                            "title": "Logging Flags",
-                            "type": "Logging Flags",
-                            "uid": -1,
-                            "value": "{\n  \"Device Connected\": 47,\n  \"Response\": 35,\n  \"Send Command\": 51,\n  \"Device Disonnected\": 39,\n  \"Device Error\": 1\n}",
-                            "visible": true
-                        }
-                    ]
+                    inputs: _CIS
                 };
                 try {
-                    vfs.writefile(this.resolvePath(scope, path.sep + group + path.sep + title + '.meta.json'), JSON.stringify(device, null, 4), this.WRITE_MODE);
+                    vfs.writefile(this.resolvePath(scope, path.sep + group + path.sep + title + META_FILE_EXT, this._getRequest(args)), JSON.stringify(device, null, 4), this.WRITE_MODE);
                 }
                 catch (e) {
                     reject(e);
                 }
-                resolve(device.inputs);
+                resolve(_CIS);
             });
         });
     }
     getItems(directory, scope, options) {
         return __awaiter(this, void 0, void 0, function* () {
-            const self = this;
-            return new AnyPromise((resolve, reject) => {
-                const items = [];
-                options = options || {};
-                const serverSide = options.serverSide;
-                function parseDirectory(_path, name) {
-                    const dirItems = fs.readdirSync(_path);
-                    if (dirItems.length) {
-                        _.each(dirItems, function (file) {
-                            if (file.indexOf('.meta.json') !== -1) {
-                                const meta = self.readConfig(_path + path.sep + file);
-                                if (!meta) {
-                                    console.error('cant get device meta for ' + file + ' path = ' + _path + path.sep + file);
-                                    return;
-                                }
-                                if (serverSide) {
-                                    const driverOptions = CIUtils_1.getCIByChainAndName(meta, 0, Device_1.DEVICE_PROPERTY.CF_DEVICE_DRIVER_OPTIONS);
-                                    if (driverOptions && !(driverOptions.value & (1 << Driver_1.DRIVER_FLAGS.RUNS_ON_SERVER))) {
-                                        driverOptions.value = driverOptions.value | (1 << Driver_1.DRIVER_FLAGS.RUNS_ON_SERVER);
-                                    }
-                                }
-                                if (!meta) {
-                                    console.error('device has no meta ' + _path + path.sep + file);
-                                }
-                                else {
-                                    const item = {
-                                        isDir: false,
-                                        path: name + '/' + file,
-                                        parentId: name,
-                                        scope: scope,
-                                        user: meta,
-                                        id: CIUtils_1.getCIInputValueByName(meta, Device_1.DEVICE_PROPERTY.CF_DEVICE_ID),
-                                        name: CIUtils_1.getCIInputValueByName(meta, Device_1.DEVICE_PROPERTY.CF_DEVICE_TITLE)
-                                    };
-                                    items.push(item);
-                                }
-                            }
-                        });
-                    }
-                }
-                function _walk(dir) {
-                    let results = [];
-                    if (fs.existsSync(dir)) {
-                        let list = fs.readdirSync(dir);
-                        list.forEach(function (file) {
-                            file = dir + '/' + file;
-                            let stat = fs.statSync(file);
-                            if (stat) {
-                                let root = file.replace(directory + '/', '');
-                                if (stat.isDirectory()) {
-                                    const dirItem = {
-                                        isDir: true,
-                                        parent: root,
-                                        name: root,
-                                        path: root
-                                    };
-                                    items.push(dirItem);
-                                    parseDirectory(file, root);
-                                    results.push(file.replace(directory + '/', ''));
-                                    results = results.concat(_walk(file));
-                                }
-                            }
-                            else {
-                                console.error('cant get stat for ' + file);
-                            }
-                        });
-                    }
-                    else {
-                        console.error('device path ' + dir + ' doesnt exists');
-                    }
-                    return results;
-                }
-                _walk(directory);
-                _.each(items, function (node) {
-                    if (node.parent === node.path) {
-                        node.parent = '';
-                        node.parentId = '';
-                    }
-                    node.scope = scope;
-                });
-                resolve(items);
-            });
+            options = options || {};
+            const serverSide = options.serverSide;
+            return devices(directory, scope, serverSide);
         });
     }
     removeGroup(mount, _path) {
-        return new AnyPromise((resolve, reject) => {
-            const vfs = this.getVFS(mount);
+        const args = arguments;
+        return new Promise((resolve, reject) => {
+            const vfs = this.getVFS(mount, this._getRequest(args));
             if (vfs) {
-                vfs.rmdir(this.resolvePath(mount, _path), {}, resolve, reject);
+                const path = this.resolvePath(mount, _path, this._getRequest(args));
+                vfs.rmdir(path, {}, resolve, reject);
+                resolve(!fs.existsSync(path));
             }
             else {
                 reject('Cant find VFS for ' + mount);
@@ -181,11 +168,13 @@ class DeviceService extends Bean_1.BeanService {
         });
     }
     removeItem(mount, _path) {
-        return new AnyPromise((resolve, reject) => {
-            const vfs = this.getVFS(mount);
+        const args = arguments;
+        return new Promise((resolve, reject) => {
+            const vfs = this.getVFS(mount, this._getRequest(args));
             if (vfs) {
-                vfs.rm(this.resolvePath(mount, _path), {}, resolve, reject);
-                resolve(true);
+                const path = this.resolvePath(mount, _path, this._getRequest(args));
+                vfs.rm(this.resolvePath(mount, _path, this._getRequest(args)), {}, resolve, reject);
+                resolve(!fs.existsSync(path));
             }
             else {
                 reject('Cant find VFS for ' + mount);
@@ -193,19 +182,21 @@ class DeviceService extends Bean_1.BeanService {
         });
     }
     createGroup(mount, path) {
-        return new AnyPromise((resolve, reject) => {
-            const vfs = this.getVFS(mount);
+        const args = arguments;
+        return new Promise((resolve, reject) => {
+            const vfs = this.getVFS(mount, this._getRequest(args));
             if (vfs) {
                 vfs.mkdir(path, {}, (err, data) => {
                     err ? reject(err) : resolve(true);
                 });
+                resolve(fs.existsSync(path));
             }
             else {
                 reject('Cant find VFS for ' + mount);
             }
         });
     }
-    ls(path, mount, options, recursive = false) {
+    ls(mount, path, options, recursive = false) {
         return __awaiter(this, arguments, void 0, function* () {
             return this._ls.apply(this, arguments);
         });
@@ -229,26 +220,26 @@ __decorate([
     Base_2.RpcMethod,
     AspectDecorator_1.before((context, args) => Base_1.decodeArgs(args, "$['0']", json_1.to)),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, Object]),
+    __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], DeviceService.prototype, "createItem", null);
 __decorate([
     Base_2.RpcMethod,
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String, String]),
-    __metadata("design:returntype", void 0)
+    __metadata("design:returntype", Promise)
 ], DeviceService.prototype, "removeGroup", null);
 __decorate([
     Base_2.RpcMethod,
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String, String]),
-    __metadata("design:returntype", void 0)
+    __metadata("design:returntype", Promise)
 ], DeviceService.prototype, "removeItem", null);
 __decorate([
     Base_2.RpcMethod,
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String, String]),
-    __metadata("design:returntype", void 0)
+    __metadata("design:returntype", Promise)
 ], DeviceService.prototype, "createGroup", null);
 __decorate([
     Base_2.RpcMethod,
@@ -263,4 +254,9 @@ __decorate([
     __metadata("design:returntype", Promise)
 ], DeviceService.prototype, "updateItemMetaData", null);
 exports.DeviceService = DeviceService;
+function getDevices(directory, scope, options) {
+    const service = new DeviceService(null);
+    return service.getItems(directory, scope, options);
+}
+exports.getDevices = getDevices;
 //# sourceMappingURL=Devices.js.map

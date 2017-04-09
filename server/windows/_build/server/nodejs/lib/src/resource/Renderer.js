@@ -4,6 +4,7 @@ const io = require("../io/json");
 const Resolver_1 = require("../resource/Resolver");
 const utils = require("../utils/StringUtils");
 const _ = require("lodash");
+const base64 = require("base-64");
 // @TODO: escape & id
 class ResourceRenderer extends Resolver_1.ResourceResolver {
     render(item) {
@@ -26,7 +27,7 @@ class ResourceRenderer extends Resolver_1.ResourceResolver {
             case Resource_1.EResourceType.CSS: {
                 const rel = 'stylesheet';
                 // tslint:disable-next-line:quotemark
-                result = "<link rel='" + rel + "' id='css_" + '_' + "' href='" + utils.replace(item.url, null, this.relativeVariables, delimitter) + "'  type='text/css' />\n";
+                result = "<link rel='" + rel + "' id='css_" + base64.encode(item.url) + "' href='" + utils.replace(item.url, null, this.relativeVariables, delimitter) + "'  type='text/css' />\n";
                 break;
             }
         }

@@ -11,7 +11,7 @@ const Router = require("koa-router");
 const services = require("./services");
 const smd = new Router({ prefix: '/smd' });
 smd.get('/', (ctx) => __awaiter(this, void 0, void 0, function* () {
-    ctx.body = services.default('../api');
+    ctx.body = services.default(ctx.origin + '/api');
 }));
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = smd;

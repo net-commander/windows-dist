@@ -2,14 +2,28 @@
 const Resource_1 = require("../interfaces/Resource");
 const Resolver_1 = require("../resource/Resolver");
 const utils = require("../utils/StringUtils");
+const json_1 = require("../io/json");
 const fs = require("fs");
 const _ = require("lodash");
 const mkdirp = require("mkdirp");
 const _path = require("path");
-const writeFileAtomic = require('write-file-atomic');
+const write = require('write-file-atomic');
+const qs = require('qs').parse;
+const url = require('url');
 const permissionError = 'You don\'t have access to this file.';
 const defaultPathMode = parseInt('0700', 8);
 const writeFileOptions = { mode: parseInt('0600', 8) };
+const io = {
+    parse: json_1.deserialize,
+    serialize: json_1.serialize
+};
+/**
+ * Decorator to mark a method as RPC method (in this.rpcMethods), collected during service registratation.
+ *
+ * @param {Object} target
+ * @param {string} propName
+ * @param {*} propertyDescriptor
+ */
 exports.RpcMethod = (target, propName, propertyDescriptor) => {
     const desc = Object.getOwnPropertyDescriptor(target, "getRpcMethods");
     if (desc && desc.configurable) {
@@ -26,6 +40,30 @@ class BaseService extends Resolver_1.ResourceResolver {
     }
     init() { }
     ;
+    _getUser(request) {
+        if (request) {
+            // pick userDirectory from referrer (xide RPC calls don't have it has it as url parameter )
+            let urlArgs = qs(request.get('referrer'));
+            let user = urlArgs['userDirectory'];
+            if (user) {
+                return user;
+            }
+            // try to pick userDirectory from url
+            urlArgs = qs(url.parse(request.url).query);
+            user = urlArgs['userDirectory'];
+            if (user) {
+                return user;
+            }
+        }
+    }
+    _getRequest(args) {
+        for (let i = 0; i < args.length; i++) {
+            if (args[i] && args[i]['get'] && args[i]['socket']) {
+                return args[i];
+            }
+        }
+        return null;
+    }
     getRpcMethods() {
         throw new Error("Should be implemented by decorator");
     }
@@ -33,15 +71,16 @@ class BaseService extends Resolver_1.ResourceResolver {
         const methods = this.getRpcMethods();
         return this.toMethods(methods);
     }
-    readConfig(path) {
+    readConfig(path, _default) {
         path = path || this.configPath;
         try {
-            return JSON.parse(fs.readFileSync(path, 'utf8'));
+            return io.parse(fs.readFileSync(path, 'utf8'));
         }
         catch (err) {
             // create dir if it doesn't exist
             if (err.code === 'ENOENT') {
                 mkdirp.sync(_path.dirname(path), defaultPathMode);
+                write.sync(path, _default || '', writeFileOptions);
                 return {};
             }
             // improve the message of permission errors
@@ -50,7 +89,7 @@ class BaseService extends Resolver_1.ResourceResolver {
             }
             // empty the file if it encounters invalid JSON
             if (err.name === 'SyntaxError') {
-                writeFileAtomic.sync(path, '', writeFileOptions);
+                write.sync(path, '', writeFileOptions);
                 return {};
             }
             throw err;
@@ -58,12 +97,12 @@ class BaseService extends Resolver_1.ResourceResolver {
     }
     writeConfig(path, val) {
         path = path || this.configPath;
-        val = val || this.readConfig();
+        val = val || this.readConfig(path);
         try {
             // make sure the folder exists as it
             // could have been deleted in the meantime
-            mkdirp.sync(_path.dirname(this.configPath), defaultPathMode);
-            writeFileAtomic.sync(this.configPath, JSON.stringify(val, null, 4), writeFileOptions);
+            mkdirp.sync(_path.dirname(path), defaultPathMode);
+            write.sync(path, json_1.serialize(val, null, 4), writeFileOptions);
         }
         catch (err) {
             // improve the message of permission errors
@@ -98,10 +137,17 @@ class BaseService extends Resolver_1.ResourceResolver {
         }
         return utils.replace(resource[property], null, this.absoluteVariables, Resource_1.DefaultDelimitter());
     }
-    resolve(mount, path) {
+    _resolveUserMount(mount, request, _default) {
+        return _default;
+    }
+    resolve(mount, path, request) {
         const resource = this.getResourceByTypeAndName(Resource_1.EResourceType.FILE_PROXY, mount);
         if (resource) {
-            return _path.join(this.resolveAbsolute(resource), path);
+            let userRoot = this.resolveAbsolute(resource);
+            if (request) {
+                userRoot = this._resolveUserMount(mount, request, userRoot);
+            }
+            return _path.join(userRoot, path);
         }
         return null;
     }
@@ -129,7 +175,7 @@ function decodeArgs(args, path, decoder) {
         decoder(args, path);
     }
     catch (e) {
-        console.error('Decoding args  failed ' + path, e);
+        throw new Error('Decoding args  failed ' + path);
     }
     return args;
 }

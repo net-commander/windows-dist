@@ -9,15 +9,25 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 const External_1 = require("../External");
 const mkdirp = require("mkdirp");
+const console_1 = require("../../console");
 const os = require('os');
-var arch = os.arch();
-const util = require('util');
+const arch = os.arch();
 const path = require('path');
 const fs = require('fs');
 const jet = require('fs-jetpack');
 const childprocess = require('child_process');
-const PromiseQueue = require('promise-queue');
-var Registry = require('winreg');
+let Registry = require('winreg');
+function isOSWin64() {
+    return process.arch === 'x64' || process.env.hasOwnProperty('PROCESSOR_ARCHITEW6432');
+}
+function exists(_path) {
+    try {
+        return fs.statSync(_path);
+    }
+    catch (e) {
+    }
+    return null;
+}
 var EError;
 (function (EError) {
     EError[EError["WAITING"] = 1] = "WAITING";
@@ -39,21 +49,24 @@ const MessageRegEx = {
     newline: /\r?\n/
 };
 class Mongod extends External_1.ExternalService {
-    constructor(config) {
+    constructor(config, searchPaths, debug = false) {
         super(null);
         this.promiseQueue = null;
         this.openPromise = null;
+        this.debug = false;
         this.isRunning = false;
         this.isClosing = false;
         this.isOpening = false;
         this.flags = External_1.EFlags.REQUIRED | External_1.EFlags.SHARED;
         this.mongoConfig = config;
+        this.debug = debug;
+        this.searchPaths = searchPaths || [];
     }
     //
     // ─── IMPLEMENT EXTERNAL SERVICE ──────────────────────────────────────────────────
     //
     filename() {
-        return 'mongod';
+        return 'mongod' + (os.platform() === 'win32' ? '.exe' : '');
     }
     label() {
         return 'MongoDB';
@@ -80,7 +93,6 @@ class Mongod extends External_1.ExternalService {
         return __awaiter(this, void 0, void 0, function* () {
             const exe = this.find();
             if (!exe) {
-                console.error('Cant find mongod binary!');
                 Promise.reject("Cant find mongod binary!");
                 return false;
             }
@@ -145,6 +157,7 @@ class Mongod extends External_1.ExternalService {
                  * @return {Function}
                  */
                 const getDataPropagator = (event) => Mongod.getTextLineAggregator((line) => function (event, data) { });
+                console_1.console.info('start Mongo ' + this.mongoConfig.path + ' at port ' + this.mongoConfig.port + ' and data at ' + this.mongoConfig.db);
                 this.process = childprocess.spawn(this.mongoConfig.path, Mongod.parseFlags(this.mongoConfig));
                 this.process.stderr.on('data', dataListener);
                 this.process.stderr.on('data', getDataPropagator('stdout'));
@@ -169,7 +182,7 @@ class Mongod extends External_1.ExternalService {
                         reject(err);
                         return;
                     }
-                    fs.access(targetPath, fs.W_OK | fs.R_OK, (err) => {
+                    fs.access(targetPath, fs.W_OK | fs.R_OK | fs.R_OK, (err) => {
                         if (err) {
                             const dir = path.dirname(targetPath);
                             fs.access(dir, fs.W_OK | fs.R_OK, (err) => {
@@ -191,15 +204,51 @@ class Mongod extends External_1.ExternalService {
             label: this.label()
         };
     }
+    _tryProgramFiles() {
+        return __awaiter(this, void 0, void 0, function* () {
+            const programFiles = yield this._getProgramFilesDirectory();
+            const mongoInProgramFiles = programFiles + path.sep + 'MongoDB' + path.sep + 'Server';
+            return new Promise((resolve, reject) => {
+                if (exists(mongoInProgramFiles)) {
+                    // we should have mongoInProgramFiles now at C:\Program Files\MongoDB\Server
+                    // next step is to find the highest version possible :
+                    let list = fs.readdirSync(mongoInProgramFiles);
+                    let last = 0;
+                    list.forEach(function (file) {
+                        const v = parseFloat(file);
+                        if (v > last) {
+                            last = v;
+                        }
+                    });
+                    if (last) {
+                        const bin = mongoInProgramFiles + path.sep + last + path.sep + 'bin' + path.sep + 'mongod.exe';
+                        if (exists(bin)) {
+                            resolve(bin);
+                        }
+                        else {
+                            reject('Cant find ' + bin);
+                        }
+                    }
+                    else {
+                        reject('Cant find ' + mongoInProgramFiles);
+                    }
+                }
+                else {
+                    reject('false');
+                }
+            });
+        });
+    }
     _getProgramFilesDirectory() {
         return __awaiter(this, void 0, void 0, function* () {
-            const is64 = ~os.arch().indexOf('64');
+            const is64 = isOSWin64();
             const key = new Registry({
                 hive: Registry.HKLM,
                 key: '\\Software\\Microsoft\\Windows\\CurrentVersion\\'
             });
+            const loc = is64 ? 'ProgramW6432Dir' : 'ProgramFiles';
             return new Promise((resolve, reject) => {
-                key.get('ProgramFilesDir' + (!is64 ? ' (x86)' : ''), function (err, item) {
+                key.get(loc, function (err, item) {
                     if (err) {
                         reject(err);
                     }
@@ -215,8 +264,26 @@ class Mongod extends External_1.ExternalService {
         return __awaiter(this, void 0, void 0, function* () {
             switch (os.platform()) {
                 case 'win32': {
+                    try {
+                        const mongoInProgramFiles = yield this._tryProgramFiles();
+                        if (mongoInProgramFiles) {
+                            this.searchPaths = this.searchPaths.concat([mongoInProgramFiles]);
+                        }
+                    }
+                    catch (e) {
+                    }
+                    //in export scenario, mongod exists in root/mongo/mongod-[platform].exe
+                    const found = [];
+                    this.searchPaths.forEach(_path => {
+                        const bin = _path + path.sep + 'mongod-windows.exe';
+                        if (exists(bin)) {
+                            found.push(bin);
+                        }
+                    });
+                    this.searchPaths.push(...found);
                     break;
                 }
+                case 'darwin':
                 case 'linux': {
                     this.searchPaths = this.searchPaths.concat(['/usr/bin/', '/usr/local/bin/']);
                     break;
@@ -224,13 +291,14 @@ class Mongod extends External_1.ExternalService {
             }
             const config = this.mongoConfig;
             this.mongoConfig = Mongod.parseConfig(config, {
-                path: config && config.path ? config.path : this.find(),
+                path: config.path ? config.path : this.find(),
                 config: null,
                 port: 27017,
                 db: null,
                 engine: 'mmapv1',
                 nojournal: true,
-                smallFiles: true
+                smallFiles: true,
+                quite: true
             });
             yield this.canReadAndWrite(this.mongoConfig.db);
             mkdirp(this.mongoConfig.db, (err, made) => {
@@ -276,6 +344,9 @@ class Mongod extends External_1.ExternalService {
         if (config.port != null) {
             flags.push('--port', config.port);
         }
+        if (config.quite === true) {
+            flags.push('--quiet');
+        }
         return flags;
     }
     /*
@@ -318,6 +389,9 @@ class Mongod extends External_1.ExternalService {
         if (source.port != null) {
             target.port = source.port;
         }
+        if (source.quite != null) {
+            target.quite = source.quite;
+        }
         return target;
     }
     /*
@@ -342,6 +416,9 @@ class Mongod extends External_1.ExternalService {
             result.err = new Error('Address already in use');
             result.err.code = EError.ALREADY_IN_USE;
             return result;
+        }
+        if (~str.indexOf('initialize Performance Counters for FTDC')) {
+            return null;
         }
         switch (result.key) {
             case 'waitingforconnections':

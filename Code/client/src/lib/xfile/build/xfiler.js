@@ -4510,13 +4510,12 @@ define('dgrid/Tree',[
 				row = target.element ? target : this.row(target),
 				isExpanded = !!this._expanded[row.id],
 				hasTransitionend = has('transitionend'),
-				promise;
-
+				promise, collection = this.collection;
 
 			target = row.element;
-            if(!target){
-                return;
-            }
+			if (!target) {
+				return;
+			}
 			target = target.className.indexOf('dgrid-expando-icon') > -1 ? target :
 				querySelector('.dgrid-expando-icon', target)[0];
 
@@ -4526,11 +4525,17 @@ define('dgrid/Tree',[
 				// toggle or set expand/collapsed state based on optional 2nd argument
 				var expanded = expand === undefined ? !this._expanded[row.id] : expand;
 
-				// update the expando display
-				domClass.replace(target, 'ui-icon-triangle-1-' + (expanded ? 'se' : 'e'),
-					'ui-icon-triangle-1-' + (expanded ? 'e' : 'se'));
-				domClass.toggle(row.element, 'dgrid-row-expanded', expanded);
+				if (collection.spin === true && expand) {
+					domClass.remove(target, 'ui-icon-triangle-1-e');
+					domClass.remove(target, 'ui-icon-triangle-1-se');
+					domClass.add(target, 'fa fa-spinner fa-spin dgrid-cell-loading');
+				} else {
+					domClass.replace(target, 'ui-icon-triangle-1-' + (expanded ? 'se' : 'e'),
+						'ui-icon-triangle-1-' + (expanded ? 'e' : 'se'));
+				}
 
+
+				domClass.toggle(row.element, 'dgrid-row-expanded', expanded);
 				var rowElement = row.element,
 					container = rowElement.connected,
 					containerStyle,
@@ -4542,9 +4547,10 @@ define('dgrid/Tree',[
 					// query for the children
 					container = options.container = rowElement.connected =
 						domConstruct.create('div', { className: 'dgrid-tree-container' }, rowElement, 'after');
+
 					var query = function (options) {
 						var childCollection = grid._renderedCollection.getChildren(row.data),
-								results;
+							results;
 						if (grid.sort) {
 							childCollection = childCollection.sort(grid.sort);
 						}
@@ -4643,6 +4649,20 @@ define('dgrid/Tree',[
 					delete this._expanded[row.id];
 				}
 			}
+			function clear(target) {
+				if (collection.spin === true && target.mayHaveChildren) {
+					domClass.remove(target, 'fa-spin fa-spinner dgrid-cell-loading');
+					domClass.replace(target, 'ui-icon-triangle-1-' + (expanded ? 'se' : 'e'),
+						'ui-icon-triangle-1-' + (expanded ? 'e' : 'se'));
+				}
+			}
+			if (promise && promise.then) {
+				promise.then(function () {
+					clear(target);
+				});
+			} else {
+				clear(target);
+			}
 
 			// Always return a promise
 			return when(promise);
@@ -4719,7 +4739,7 @@ define('dgrid/Tree',[
 				return this.inherited(arguments);
 			}
 
-			this.inherited(arguments, [ cell, item, {
+			this.inherited(arguments, [cell, item, {
 				queryLevel: querySelector('.dgrid-expando-icon', cell.element)[0].level - 1
 			}]);
 		},
@@ -4770,18 +4790,18 @@ define('dgrid/Tree',[
 					// summary:
 					//		Renders a cell that can be expanded, creating more rows
 
-					if(!collection){
+					if (!collection) {
 						return;
 					}
 
 					var level = Number(options && options.queryLevel) + 1,
-							mayHaveChildren = !collection.mayHaveChildren || collection.mayHaveChildren(object),
-							expando, node;
+						mayHaveChildren = !collection.mayHaveChildren || collection.mayHaveChildren(object),
+						expando, node;
 
 					level = grid._currentLevel = isNaN(level) ? 0 : level;
 
 					expando = column.renderExpando(level, mayHaveChildren,
-							grid._expanded[collection.getIdentity(object)], object);
+						grid._expanded[collection.getIdentity(object)], object);
 
 					expando.level = level;
 					expando.mayHaveChildren = mayHaveChildren;
@@ -4805,38 +4825,38 @@ define('dgrid/Tree',[
 			if (treeColumnListeners.length === 0) {
 				// Set up the event listener once and use event delegation for better memory use.
 				treeColumnListeners.push(this.on(column.expandOn ||
-						'.dgrid-expando-icon:click,' + colSelector + ':dblclick,' + colSelector + ':keydown',
-						function (event) {
-							var row = grid.row(event);
-							if ((!grid.collection.mayHaveChildren || grid.collection.mayHaveChildren(row.data)) &&
-									(event.type !== 'keydown' || event.keyCode === 32) && !(event.type === 'dblclick' &&
-									clicked && clicked.count > 1 && row.id === clicked.id &&
-									event.target.className.indexOf('dgrid-expando-icon') > -1)) {
-								grid.expand(row);
-							}
+					'.dgrid-expando-icon:click,' + colSelector + ':dblclick,' + colSelector + ':keydown',
+					function (event) {
+						var row = grid.row(event);
+						if ((!grid.collection.mayHaveChildren || grid.collection.mayHaveChildren(row.data)) &&
+							(event.type !== 'keydown' || event.keyCode === 32) && !(event.type === 'dblclick' &&
+								clicked && clicked.count > 1 && row.id === clicked.id &&
+								event.target.className.indexOf('dgrid-expando-icon') > -1)) {
+							grid.expand(row);
+						}
 
-							// If the expando icon was clicked, update clicked object to prevent
-							// potential over-triggering on dblclick (all tested browsers but IE < 9).
-							if (event.target.className.indexOf('dgrid-expando-icon') > -1) {
-								if (clicked && clicked.id === grid.row(event).id) {
-									clicked.count++;
-								}
-								else {
-									clicked = {
-										id: grid.row(event).id,
-										count: 1
-									};
-								}
+						// If the expando icon was clicked, update clicked object to prevent
+						// potential over-triggering on dblclick (all tested browsers but IE < 9).
+						if (event.target.className.indexOf('dgrid-expando-icon') > -1) {
+							if (clicked && clicked.id === grid.row(event).id) {
+								clicked.count++;
 							}
-						})
+							else {
+								clicked = {
+									id: grid.row(event).id,
+									count: 1
+								};
+							}
+						}
+					})
 				);
 
 				if (has('touch')) {
 					// Also listen on double-taps of the cell.
 					treeColumnListeners.push(this.on(touchUtil.selector(colSelector, touchUtil.dbltap),
-							function () {
-								grid.expand(this);
-							}));
+						function () {
+							grid.expand(this);
+						}));
 				}
 			}
 
@@ -4866,34 +4886,34 @@ define('dgrid/Tree',[
 			 }
 			 };
 			 *//*
-			if (!column.originalRenderCell)
-			{
-				column.originalRenderCell = column.renderCell || this._defaultRenderCell;
-				column.renderCell = function (object, value, td, options) {
-					// summary:
-					//              Renders a cell that can be expanded, creating more rows
-					var grid = column.grid,
-							level = Number(options && options.queryLevel) + 1,
-							mayHaveChildren = !grid.collection.mayHaveChildren || grid.collection.mayHaveChildren(object),
-							expando,
-							node;
+   if (!column.originalRenderCell)
+   {
+	   column.originalRenderCell = column.renderCell || this._defaultRenderCell;
+	   column.renderCell = function (object, value, td, options) {
+		   // summary:
+		   //              Renders a cell that can be expanded, creating more rows
+		   var grid = column.grid,
+				   level = Number(options && options.queryLevel) + 1,
+				   mayHaveChildren = !grid.collection.mayHaveChildren || grid.collection.mayHaveChildren(object),
+				   expando,
+				   node;
 
-					level = grid._currentLevel = isNaN(level) ? 0 : level;
-					expando = column.renderExpando(level, mayHaveChildren,
-							grid._expanded[grid.collection.getIdentity(object)], object);
-					expando.level = level;
-					expando.mayHaveChildren = mayHaveChildren;
-					node = column.originalRenderCell(object, value, td, options);
-					if (node && node.nodeType) {
-						td.appendChild(expando);
-						td.appendChild(node);
-					}
-					else {
-						td.insertBefore(expando, td.firstChild);
-					}
-				};
-			}
-			*/
+		   level = grid._currentLevel = isNaN(level) ? 0 : level;
+		   expando = column.renderExpando(level, mayHaveChildren,
+				   grid._expanded[grid.collection.getIdentity(object)], object);
+		   expando.level = level;
+		   expando.mayHaveChildren = mayHaveChildren;
+		   node = column.originalRenderCell(object, value, td, options);
+		   if (node && node.nodeType) {
+			   td.appendChild(expando);
+			   td.appendChild(node);
+		   }
+		   else {
+			   td.insertBefore(expando, td.firstChild);
+		   }
+	   };
+   }
+   */
 		},
 
 		_defaultRenderExpando: function (level, hasChildren, expanded) {
@@ -34935,13 +34955,11 @@ define('xfile/FileActions',[
                         dfd.resolve();
                     },
                     onOk: function () {
-
                         var val = this.getField('name');
                         if (val == null) {
                             dfd.resolve(defaultDfdArgs);
                             return;
                         }
-
                         var currentFolder = self.getCurrentFolder() || { path: '.' },
                             newFolder = currentFolder.path + '/' + val;
 
@@ -35203,7 +35221,7 @@ define('xfile/FileActions',[
                 self = this;
 
             if (cwd.isBack) {
-                cwd = this.collection.getSync(cwd.rPath);
+                cwd = this.collection.getSync(cwd.rPath) || {path:'.'};
             }
             var expanded = false;
             if (this.isExpanded && this.expand && item) {
@@ -35214,11 +35232,9 @@ define('xfile/FileActions',[
             }
             self.collection.resetQueryLog();
             this.collection.loadItem(cwd, true).then(function (what) {
-
-                if (cwd === '.') {
+                if (cwd.path === '.') {
                     self.collection.resetQueryLog();
                 }
-
                 self.refresh().then(function () {
                     var _dfd = self.openItem(cwd, false, false);
                     if (_dfd && _dfd.then) {
@@ -35241,7 +35257,6 @@ define('xfile/FileActions',[
                     });
                 });
             });
-
             return dfd;
         },
         /**
@@ -35347,7 +35362,6 @@ define('xfile/FileActions',[
             return head;
         },
         changeSource: function (mountData, silent) {
-
             var dfd = new Deferred(),
                 thiz = this,
                 ctx = thiz.ctx || ctx,
@@ -37793,7 +37807,6 @@ define('xide/utils/StringUtils',[
         }
         str = utils.cleanString(str);//control characters
         str = str.replace('./', '');//file store specifics
-        str = str.replace('/.', '');//file store specifics
         str = str.replace(/([^:]\/)\/+/g, "$1");//double slashes
         return str;
     };
@@ -40393,7 +40406,7 @@ define('xfile/data/Store',[
                     virtual: true,
                     _S: this,
                     getPath: function () {
-                        return this.path;
+                        return this.path + '/';
                     }
                 };
             },
@@ -40795,7 +40808,8 @@ define('xfile/data/Store',[
                 //		The parent object
                 // returns: dstore/Store.Collection
                 return this.root.filter({ parent: this.getIdentity(object) });
-            }
+            },
+            spin:true
         };
     }
     var Module = declare("xfile/data/Store", [TreeMemory, Cache, Trackable, ObservableStore, ServerActionBase.declare, ReloadMixin], Implementation());

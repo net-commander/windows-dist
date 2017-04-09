@@ -51,13 +51,14 @@ function JSON_RPC_2() {
                 if (_.isObject(registry[body.method])) {
                     const _method = body.method;
                     const service = registry[_method];
-                    const args = _.values(body.params).concat([this.req]);
+                    const args = _.values(body.params).concat([this.request, this]);
                     try {
                         const result = yield service.handler.apply(service.owner, args) || {};
                         this.body = new JSON_RPC_2_Response_1.Response(body.id, null, result);
                         return;
                     }
                     catch (err) {
+                        console.error('JSON-RPC Error : ', err);
                         this.body = new JSON_RPC_2_Response_1.Response(body.id || null, new JSON_RPC_2_Errors_1.JSON_RPC_ERROR(err, 1));
                         return;
                     }

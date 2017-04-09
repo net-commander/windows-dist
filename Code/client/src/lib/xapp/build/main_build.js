@@ -65123,7 +65123,7 @@ define('xfile/data/Store',[
                     virtual: true,
                     _S: this,
                     getPath: function () {
-                        return this.path;
+                        return this.path + '/';
                     }
                 };
             },
@@ -65525,7 +65525,8 @@ define('xfile/data/Store',[
                 //		The parent object
                 // returns: dstore/Store.Collection
                 return this.root.filter({ parent: this.getIdentity(object) });
-            }
+            },
+            spin:true
         };
     }
     var Module = declare("xfile/data/Store", [TreeMemory, Cache, Trackable, ObservableStore, ServerActionBase.declare, ReloadMixin], Implementation());
@@ -80614,7 +80615,6 @@ define('xide/utils/StringUtils',[
         }
         str = utils.cleanString(str);//control characters
         str = str.replace('./', '');//file store specifics
-        str = str.replace('/.', '');//file store specifics
         str = str.replace(/([^:]\/)\/+/g, "$1");//double slashes
         return str;
     };

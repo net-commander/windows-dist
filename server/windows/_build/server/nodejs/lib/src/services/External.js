@@ -7,22 +7,27 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-//
-// ─── Base class to express an external service binary
-//
 const Base_1 = require("../services/Base");
+const _ = require("lodash");
 const os = require('os');
 const path = require('path');
 const fs = require('fs');
-const _ = require("lodash");
+const NOIMPL = function (fn) {
+    throw new Error(fn + " not implemented in sub class ");
+};
+// @TODO: vfs-ext#exists
 function exists(_path) {
     try {
-        return fs.statSync(path.resolve(_path));
+        const stat = fs.statSync(_path);
+        if (stat.isFile() === true) {
+            return true;
+        }
     }
     catch (e) {
     }
     return null;
 }
+// @TODO:@-> TS aspect signal extension?
 var EStatus;
 (function (EStatus) {
     EStatus[EStatus["INACTIVE"] = 0] = "INACTIVE";
@@ -38,10 +43,14 @@ var EFlags;
     EFlags[EFlags["None"] = 0] = "None";
     // This service is needed to run the application, otherwise allow failed
     EFlags[EFlags["REQUIRED"] = 1] = "REQUIRED";
-    // This service can be retrieved from a system daemon or an existing instance
+    // This service can be retrieved existing instance
     EFlags[EFlags["SHARED"] = 2] = "SHARED";
+    // This service can be retrieved from a system daemon
+    EFlags[EFlags["SYSTEM_SHARED"] = 0] = "SYSTEM_SHARED";
 })(EFlags = exports.EFlags || (exports.EFlags = {}));
+// ─── Base class to express an external service binary
 class ExternalService extends Base_1.BaseService {
+    // @TODO:decorator on Ctor ?
     constructor(config) {
         super(config, null, null);
         this.process = null;
@@ -86,9 +95,9 @@ class ExternalService extends Base_1.BaseService {
         return this.find(this.filename());
     }
     /**
-     * Return a list of depending services, using unique 'label'
+     * Return a list of depending services, using unique service['label']
      *
-     * @returns {List<string>}
+     * @returns {string[]}
      *
      * @memberOf ExternalService
      */
@@ -98,39 +107,35 @@ class ExternalService extends Base_1.BaseService {
     //
     // ─── API ────────────────────────────────────────────────────────────────
     //
+    // TODO: macros?
     start() {
         return __awaiter(this, void 0, void 0, function* () {
-            throw new Error("Start not implemented in sub class " + this.label());
+            NOIMPL('start');
         });
     }
     stop() {
         return __awaiter(this, void 0, void 0, function* () {
-            throw new Error("Stop not implemented in sub class " + this.label());
+            NOIMPL('stop');
         });
     }
     pause() {
         return __awaiter(this, void 0, void 0, function* () {
-            throw new Error("Pause not implemented in sub class " + this.label());
+            NOIMPL('pause');
         });
     }
     resume() {
         return __awaiter(this, void 0, void 0, function* () {
-            throw new Error("Resume not implemented in sub class " + this.label());
+            NOIMPL('resume');
         });
     }
     validate() {
         return __awaiter(this, void 0, void 0, function* () {
-            return new Promise((resolve, reject) => {
-                resolve(true);
-            });
+            return Promise.resolve(true);
         });
     }
     init() {
         return __awaiter(this, void 0, void 0, function* () {
-            return new Promise((resolve, reject) => {
-                console.log('init ' + this.label());
-                resolve(true);
-            });
+            Promise.resolve(true);
         });
     }
     run() {
@@ -151,14 +156,7 @@ class ExternalService extends Base_1.BaseService {
     //
     // ─── UTILS ──────────────────────────────────────────────────────────────────────
     //
-    _findInWindowsByPath(filename) {
-    }
-    _findInWindowsByRegistry(filename) {
-    }
-    _findInWindows(filename) {
-        return '';
-    }
-    _findInLinux(filename) {
+    _find(filename) {
         // 1. try search paths
         let result = null;
         for (let index = 0; index < this.searchPaths.length; index++) {
@@ -170,15 +168,27 @@ class ExternalService extends Base_1.BaseService {
             }
             // try with file Name
             if (exists(path.join(test, filename))) {
-                result = test;
+                result = path.join(test, filename);
                 break;
             }
         }
-        // 2. try via which
+        return result;
+    }
+    _findInWindows(filename) {
+        return this._find(filename);
+    }
+    _findInLinux(filename) {
+        let result = this._find(filename);
         const which = require('which');
-        const whichResult = which.sync(filename);
-        if (whichResult) {
-            result = whichResult;
+        if (!result && which) {
+            try {
+                const whichResult = which.sync(filename);
+                if (whichResult) {
+                    result = whichResult;
+                }
+            }
+            catch (e) {
+            }
         }
         return result;
     }
@@ -187,6 +197,7 @@ class ExternalService extends Base_1.BaseService {
             case 'win32': {
                 return this._findInWindows(filename);
             }
+            case 'darwin':
             case 'linux': {
                 return this._findInLinux(filename);
             }

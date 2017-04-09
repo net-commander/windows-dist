@@ -13,10 +13,10 @@ const getMime = require("simple-mime")("application/octet-stream");
 const vm = require("vm");
 const exists = fs.exists || require("path").exists;
 const crypto = require("crypto");
-const writeFileAtomic = require('write-file-atomic');
+const write = require('write-file-atomic');
 const _fs = require('node-fs-extra');
 const _path = require("path");
-function create(fsOptions) {
+function create(fsOptions, resource) {
     let pty;
     if (!fsOptions.nopty) {
         try {
@@ -61,7 +61,6 @@ function create(fsOptions) {
     }
     const umask = fsOptions.umask || parseInt('0750', 8);
     if (fsOptions.hasOwnProperty('defaultEnv')) {
-        fsOptions.defaultEnv.__proto__ = process.env;
     }
     else {
         fsOptions.defaultEnv = process.env;
@@ -76,6 +75,7 @@ function create(fsOptions) {
         resolve: resolve,
         stat: stat,
         readfile: readfile,
+        get: get,
         writefile: writeFile,
         readdir: readdir,
         mkfile: mkfile,
@@ -177,7 +177,8 @@ function create(fsOptions) {
                 mime: null,
                 mtime: null,
                 size: null,
-                parent: fullpath.replace(root, '').replace(file, '')
+                parent: fullpath.replace(root, '').replace(file, ''),
+                type: ''
             };
             if (err) {
                 entry['err'] = err;
@@ -306,6 +307,39 @@ function create(fsOptions) {
             });
         });
     }
+    function get(path, options, callback) {
+        return new Promise((resolve, reject) => {
+            readfile(path, {}, (err, meta) => {
+                let data = "";
+                if (err || !meta || !meta.stream || !meta.stream.on) {
+                    reject("error reading file : " + path + err);
+                }
+                if (meta && meta.stream && meta.stream.on) {
+                    meta.stream.on("data", (d) => {
+                        data += d;
+                    });
+                    let done;
+                    meta.stream.on("error", (e) => {
+                        if (done) {
+                            return;
+                        }
+                        done = true;
+                        resolve(data);
+                    });
+                    meta.stream.on("end", () => {
+                        if (done) {
+                            return;
+                        }
+                        done = true;
+                        resolve(data);
+                    });
+                }
+                else {
+                    resolve('error : ' + path);
+                }
+            });
+        });
+    }
     function readfile(path, options, callback) {
         let meta = {};
         open(path, "r", umask & parseInt('0666', 0), function (err, path, fd, stat) {
@@ -375,7 +409,7 @@ function create(fsOptions) {
         });
     }
     function writeFile(path, content, options) {
-        return writeFileAtomic.sync(path, content, options);
+        return write.sync(path, content, options);
     }
     function readdir(path, options, callback) {
         const meta = {};
@@ -886,7 +920,7 @@ function create(fsOptions) {
                         watch();
                     }
                     catch (e) { }
-                });
+                }, 0);
             }
         }
         this.close = function () {

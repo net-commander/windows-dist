@@ -1,4 +1,10 @@
 "use strict";
+/**
+ * CI names to define logging outputs per device or view
+ *
+ * @enum {int} LOGGING_FLAGS
+ * @global
+ */
 var DEVICE_PROPERTY;
 (function (DEVICE_PROPERTY) {
     DEVICE_PROPERTY[DEVICE_PROPERTY["CF_DEVICE_DRIVER"] = 'Driver'] = "CF_DEVICE_DRIVER";

@@ -236,9 +236,9 @@ class ACL {
             .params('string').end();
         let _this = this;
         // Note that this is not fully transactional.
-        return this.backend.getAsync(this.options.buckets.resources, role).then(function (resources) {
+        return this.backend.getAsync(this.options.buckets.resources, role).then((resources) => {
             let transaction = _this.backend.begin();
-            resources.forEach(function (resource) {
+            resources.forEach((resource) => {
                 let bucket = allowsBucket(resource);
                 _this.backend.del(transaction, bucket, role);
             });
@@ -268,7 +268,7 @@ class ACL {
         return this.backend.getAsync(this.options.buckets.meta, 'roles').then(function (roles) {
             let transaction = _this.backend.begin();
             _this.backend.del(transaction, allowsBucket(resource), roles);
-            roles.forEach(function (role) {
+            roles.forEach((role) => {
                 _this.backend.remove(transaction, _this.options.buckets.resources, role, resource);
             });
             return _this.backend.endAsync(transaction);

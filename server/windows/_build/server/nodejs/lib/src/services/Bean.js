@@ -7,72 +7,35 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+const Directory_1 = require("../applications/ControlFreak/services/Directory");
 const Resource_1 = require("../interfaces/Resource");
 const Query_1 = require("../resource/Query");
-const Directory_1 = require("./Directory");
-const writeFileAtomic = require('write-file-atomic');
+const write = require('write-file-atomic');
+const io = {
+    parse: JSON.parse,
+    serialize: JSON.stringify
+};
 class BeanService extends Directory_1.DirectoryService {
     constructor(config) {
-        super(config.resourceConfiguration);
+        super(config ? config.resourceConfiguration : {});
         this.config = config;
     }
-    getMetaData(scope, path) {
+    getMetaData(scope, path, request) {
         return __awaiter(this, void 0, void 0, function* () {
-            return JSON.parse(yield this.get(scope + '://' + path, false, false, false, null));
+            if (!request) {
+                console.error('----no request');
+            }
+            return io.parse(yield this.get(scope + '://' + path, false, false, false, request));
         });
     }
-    removeGroup($scope, $path) {
-        // let $fullPath = this.resolveAbsolute($scope, $path);
-        // let errors = [];
-        // let success = [];
-        /*
-        if (is_dir($fullPath)) {
-            XApp_File_Utils::deleteDirectoryEx(XApp_Path_Utils::securePath($fullPath), null, null, null, $errors, $success);
-        }
-        return $errors;
-        */
-    }
-    setContent($scopeName, $path, $content) {
-        /*
-        xapp_import('xapp.Directory.Utils');
-        xapp_import('xapp.Path.Utils');
-        xapp_import('xapp.VFS.Local');
-        xapp_import('xapp.Commons.Exceptions');
-        $scope = $this ->getScope($scopeName);
-        if ($scope == null) {
-            return false;
-        }
-        $return = null;
-        $fullPath = XApp_Path_Utils::normalizePath($this ->resolvePath($scopeName, DIRECTORY_SEPARATOR.$path, null, true, false), true, false);
-        if (!file_exists($fullPath)) {
-            XApp_File_Utils::createEmptyFile($fullPath);
-        }
-        $content = xapp_prettyPrint($content);
-        if (file_exists($fullPath)) {
-
-            if (!is_writeable($fullPath)) {
-                throw new Xapp_Util_Exception_Storage(vsprintf('File: %s is not writable', array(basename($fullPath))), 1640102);
-            } else {
-
-                //write out
-                $fp = fopen($fullPath, "w");
-                fputs($fp, $content);
-                fclose($fp);
-                clearstatcache(true, $fullPath);
-                $return = true;
-            }
-
-        } else {
-            throw new Xapp_Util_Exception_Storage('unable to write storage to file  :  '.$path. ' at : ' .$fullPath, 1640104);
-        }
-        return $return;
-        */
-    }
+    removeGroup($scope, $path) { }
+    setContent($scopeName, $path, $content) { }
     _updateItemMetaData(scope = 'user_devices', path = 'House/WebCam.meta.json', dataPath = '/inputs', query = {}, value = {}) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const resource = new Query_1.ResourceQuery(yield this.getMetaData(scope, path));
+        return __awaiter(this, arguments, void 0, function* () {
+            const resource = new Query_1.ResourceQuery(yield this.getMetaData(scope, path, this._getRequest(arguments)));
             const data = resource.set('', dataPath.replace('/', ''), query, value);
-            writeFileAtomic.sync(this.resolvePath(scope, path), JSON.stringify(data, null, 4), this.WRITE_MODE);
+            const dst = this.resolvePath(scope, path, this._getRequest(arguments));
+            write.sync(dst, io.serialize(data, null, 4), this.WRITE_MODE);
             return data;
         });
     }
@@ -81,18 +44,22 @@ class BeanService extends Directory_1.DirectoryService {
             return null;
         });
     }
-    _ls(path, mount, options, recursive = false) {
-        return __awaiter(this, void 0, void 0, function* () {
+    _ls(mount, _path, options, recursive = false) {
+        return __awaiter(this, arguments, void 0, function* () {
             try {
-                const resource = this.getResourceByTypeAndName(Resource_1.EResourceType.FILE_PROXY, path);
+                const resource = this.getResourceByTypeAndName(Resource_1.EResourceType.FILE_PROXY, mount);
                 if (resource) {
-                    const root = this.resolveAbsolute(resource);
-                    const nodes = yield this.getItems(root, path, {});
+                    let root = this.resolveAbsolute(resource);
+                    root = this._resolveUserMount(mount, this._getRequest(arguments), root);
+                    const nodes = yield this.getItems(root, mount, {});
                     return { items: nodes };
+                }
+                else {
+                    console.warn('cant find resource for ' + mount);
                 }
             }
             catch (e) {
-                console.error(e);
+                console.error('ls error ', e);
             }
         });
     }

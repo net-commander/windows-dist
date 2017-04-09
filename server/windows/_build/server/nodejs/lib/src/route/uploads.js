@@ -10,7 +10,6 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 const busboy = require("async-busboy");
 const fs = require("fs");
 const Router = require("koa-router");
-const _ = require("lodash");
 const path = require("path");
 const qs = require("qs");
 class UploadRouter extends Router {
@@ -27,17 +26,16 @@ function create(directoryService, prefix = '/upload', app) {
         const mount = params.mount;
         const dstDir = params.dstDir;
         if (!mount || !dstDir) {
-            console.log('invalid upload params');
             return next();
         }
         // @TODO: files router doesnt catch right
         if (!ctx.req.url.startsWith(prefix)) {
             return next();
         }
-        const { files } = yield busboy(ctx.req);
-        _.each(files, (file) => {
-            const stream = fs.createWriteStream(filesRouter.directoryService.resolve(mount, dstDir + path.sep + file.filename));
-            file.pipe(stream);
+        const data = yield busboy(ctx.req);
+        const files = data.files;
+        files.forEach((file) => {
+            file.pipe(fs.createWriteStream(filesRouter.directoryService.resolve(mount, dstDir + path.sep + file.filename)));
         });
         ctx.body = '{"jsonrpc":"2.0","result":[],"id":0}';
         ctx.status = 200;

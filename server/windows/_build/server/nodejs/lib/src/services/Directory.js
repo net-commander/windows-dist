@@ -21,78 +21,24 @@ const base64_1 = require("../io/base64");
 const AspectDecorator_1 = require("../lang/AspectDecorator");
 const Base_1 = require("../services/Base");
 const Local_1 = require("../vfs/Local");
-const AnyPromise = require("any-promise");
 const fs = require("fs");
 const mime = require("mime");
 const _path = require("path");
-const _fs = require('node-fs-extra');
 const _ = require("lodash");
 const Base_2 = require("./Base");
+const Path_1 = require("../model/Path");
+const Github_1 = require("../vfs/github/Github");
+const sftp_1 = require("../vfs/ssh/sftp");
+const sftp_2 = require("../vfs/ssh/sftp");
+sftp_1.test();
 let posix = null;
+const _fs = require('node-fs-extra');
 try {
     posix = require('posix');
 }
 catch (e) { }
 const DEBUG = false;
 const posixCache = {};
-const async = require('async');
-function size(item, ignoreRegEx, callback) {
-    return __awaiter(this, void 0, void 0, function* () {
-        return new AnyPromise((resolve, reject) => {
-            let cb;
-            let ignoreRegExp;
-            if (!callback) {
-                cb = ignoreRegEx;
-                ignoreRegExp = null;
-            }
-            else {
-                cb = callback;
-                ignoreRegExp = ignoreRegEx;
-            }
-            fs.lstat(item, function lstat(e, stats) {
-                let total = !e ? (stats.size || 0) : 0;
-                if (!e && stats.isDirectory()) {
-                    fs.readdir(item, function readdir(err, list) {
-                        if (err) {
-                            reject(err);
-                        }
-                        async.forEach(list, function iterate(dirItem, next) {
-                            size(_path.join(item, dirItem), ignoreRegExp, function readSize(error, size) {
-                                if (!error) {
-                                    total += size;
-                                }
-                                next(error);
-                            });
-                        }, function done(finalErr) {
-                            // cb(finalErr, total);
-                            resolve({ error: finalErr, total: total });
-                        });
-                    });
-                }
-                else {
-                    if (ignoreRegExp && ignoreRegExp.test(item)) {
-                        total = 0;
-                    }
-                    resolve({ error: e, total: total });
-                }
-            });
-        });
-    });
-}
-exports.size = size;
-var NODE_FIELDS;
-(function (NODE_FIELDS) {
-    NODE_FIELDS[NODE_FIELDS["SHOW_ISDIR"] = 1602] = "SHOW_ISDIR";
-    NODE_FIELDS[NODE_FIELDS["SHOW_OWNER"] = 1604] = "SHOW_OWNER";
-    NODE_FIELDS[NODE_FIELDS["SHOW_MIME"] = 1608] = "SHOW_MIME";
-    NODE_FIELDS[NODE_FIELDS["SHOW_SIZE"] = 1616] = "SHOW_SIZE";
-    NODE_FIELDS[NODE_FIELDS["SHOW_PERMISSIONS"] = 1632] = "SHOW_PERMISSIONS";
-    NODE_FIELDS[NODE_FIELDS["SHOW_TIME"] = 1633] = "SHOW_TIME";
-    NODE_FIELDS[NODE_FIELDS["SHOW_FOLDER_SIZE"] = 1634] = "SHOW_FOLDER_SIZE";
-    NODE_FIELDS[NODE_FIELDS["SHOW_FOLDER_HIDDEN"] = 1635] = "SHOW_FOLDER_HIDDEN";
-    NODE_FIELDS[NODE_FIELDS["SHOW_TYPE"] = 1636] = "SHOW_TYPE";
-    NODE_FIELDS[NODE_FIELDS["SHOW_MEDIA_INFO"] = 1637] = "SHOW_MEDIA_INFO";
-})(NODE_FIELDS = exports.NODE_FIELDS || (exports.NODE_FIELDS = {}));
 function FileSizeToString(size) {
     const isNumber = typeof size === 'number', l1KB = 1024, l1MB = l1KB * l1KB, l1GB = l1MB * l1KB, l1TB = l1GB * l1KB, l1PB = l1TB * l1KB;
     if (isNumber) {
@@ -121,64 +67,58 @@ exports.FileSizeToString = FileSizeToString;
 class DirectoryService extends Base_1.BaseService {
     constructor(config) {
         super(config.configPath, config.relativeVariables, config.absoluteVariables);
-        // implement Base#method
+        // implement Base#method for JSON_RPC2: method = XCOM_Directory_Service.fn
         this.method = 'XCOM_Directory_Service';
     }
+    // implement BaseService#init
     init() {
     }
     // implement IVFS#get for non sending mode
-    _get(path, attachment, send) {
-        return __awaiter(this, void 0, void 0, function* () {
-            return new AnyPromise((resolve, reject) => {
+    _get(path, attachment, send, request) {
+        return __awaiter(this, arguments, void 0, function* () {
+            const args = arguments;
+            return new Promise((resolve, reject) => {
                 const split = path.split('://');
                 const mount = split[0];
-                const vfs = this.getVFS(mount);
+                const vfs = this.getVFS(mount, this._getRequest(args));
                 path = split[1];
                 if (!vfs) {
                     reject('Cant find VFS for ' + mount);
                 }
-                vfs.readfile(path, {}, (err, meta) => {
-                    let data = "";
-                    if (err) {
-                        reject("error reading file : " + err);
-                    }
-                    meta.stream.on("data", (d) => {
-                        data += d;
-                    });
-                    let done;
-                    meta.stream.on("error", (e) => {
-                        if (done) {
-                            return;
-                        }
-                        done = true;
-                        resolve(data);
-                    });
-                    meta.stream.on("end", () => {
-                        if (done) {
-                            return;
-                        }
-                        done = true;
-                        resolve(data);
-                    });
-                });
+                try {
+                    vfs.get(path).then(resolve, reject);
+                    return;
+                }
+                catch (e) {
+                    reject(e);
+                }
             });
         });
     }
     // implement IVFS#get
     // @before((context, args) => validateArgs(args)
+    // @TODO: remove back-compat for xfile
     get(path, attachment, send, dummy = false, reqest = null) {
         return __awaiter(this, void 0, void 0, function* () {
             if (!attachment && !send) {
-                return yield this._get(path, attachment, send);
+                return yield this._get(path, attachment, send, reqest);
             }
         });
     }
+    // implement IVFS#set
     set(mount, path, content, reqest = null) {
-        return __awaiter(this, void 0, void 0, function* () {
-            return new AnyPromise((resolve, reject) => {
-                const vfs = this.getVFS(mount);
+        return __awaiter(this, arguments, void 0, function* () {
+            const args = arguments;
+            return new Promise((resolve, reject) => {
+                const vfs = this.getVFS(mount, this._getRequest(args));
                 if (vfs) {
-                    vfs.writefile(this.resolvePath(mount, path), content, this.WRITE_MODE);
+                    // IVFS - 2.0
+                    if (typeof vfs['set'] === 'function') {
+                        vfs.set(path, content).then(() => resolve(true));
+                        return;
+                    }
+                    // IVFS 1.0
+                    vfs.writefile(this.resolvePath(mount, path, this._getRequest(args)), content, this.WRITE_MODE);
                     resolve(true);
                 }
                 else {
@@ -187,10 +127,12 @@ class DirectoryService extends Base_1.BaseService {
             });
         });
     }
-    rename(mount, path, newFileName, dummy, reqest = null) {
-        return __awaiter(this, void 0, void 0, function* () {
-            return new AnyPromise((resolve, reject) => {
-                const vfs = this.getVFS(mount);
+    // implement IVFS#rename
+    rename(mount, path, newFileName, dummy) {
+        return __awaiter(this, arguments, void 0, function* () {
+            const args = arguments;
+            return new Promise((resolve, reject) => {
+                const vfs = this.getVFS(mount, this._getRequest(args));
                 if (vfs) {
                     vfs.rename(path, { to: newFileName }, (err, meta) => {
                         err ? reject(err) : resolve(true);
@@ -202,10 +144,12 @@ class DirectoryService extends Base_1.BaseService {
             });
         });
     }
+    // implement IVFS#mkdir
     mkdir(mount, path, reqest = null) {
-        return __awaiter(this, void 0, void 0, function* () {
-            return new AnyPromise((resolve, reject) => {
-                const vfs = this.getVFS(mount);
+        return __awaiter(this, arguments, void 0, function* () {
+            const args = arguments;
+            return new Promise((resolve, reject) => {
+                const vfs = this.getVFS(mount, this._getRequest(args));
                 if (vfs) {
                     vfs.mkdir(path, {}, (err, data) => {
                         if (err) {
@@ -223,11 +167,13 @@ class DirectoryService extends Base_1.BaseService {
             });
         });
     }
-    mkfile(mount, _path, content, reqest = null) {
-        return __awaiter(this, void 0, void 0, function* () {
-            return new AnyPromise((resolve, reject) => {
-                const vfs = this.getVFS(mount);
-                const resolved = this.resolvePath(mount, _path);
+    // implement IVFS#@touch
+    mkfile(mount, _path, content) {
+        return __awaiter(this, arguments, void 0, function* () {
+            const args = arguments;
+            return new Promise((resolve, reject) => {
+                const vfs = this.getVFS(mount, this._getRequest(args));
+                const resolved = this.resolvePath(mount, _path, this._getRequest(args));
                 if (vfs) {
                     if (fs.existsSync(resolved)) {
                         resolve(true);
@@ -255,7 +201,6 @@ class DirectoryService extends Base_1.BaseService {
         const mount = _path.split('/')[0];
         let parts = _path.split('/');
         parts.shift();
-        console.log('resolve : ', _path);
         return {
             mount: mount,
             path: parts.join('/')
@@ -269,31 +214,21 @@ class DirectoryService extends Base_1.BaseService {
         }
         return result;
     }
+    // implement IVFS#@cp
     copy(selection, dst, options, dummy = true, reqest = null) {
-        return __awaiter(this, void 0, void 0, function* () {
-            /*
-                    let b = {
-                        "params": {
-                            "selection": ["workspace_user/Tutorials/index.css"],
-                            "dst": "/workspace_user/Tutorials/",
-                            "options": {
-                                "include": ["*", ".*"],
-                                "exclude": [], "mode": 1502
-                            }, "singleton": true
-                        }
-                    };
-            */
-            return new AnyPromise((resolve, reject) => {
+        return __awaiter(this, arguments, void 0, function* () {
+            const args = arguments;
+            return new Promise((resolve, reject) => {
                 let destParts = this.resolveShort(dst);
-                const dstVFS = this.getVFS(destParts['mount']);
+                const dstVFS = this.getVFS(destParts.mount, this._getRequest(args));
                 if (!dstVFS) {
-                    reject('Cant find target VFS for ' + destParts['mount']);
+                    reject('Cant find target VFS for ' + destParts.mount);
                 }
-                const targetDirectory = this.resolvePath(destParts['mount'], destParts['path']);
+                const targetDirectory = this.resolvePath(destParts.mount, destParts['path'], this._getRequest(args));
                 let errors = [];
                 // let success: Array<string> = [];
                 let others = this.getFiles(targetDirectory);
-                function newName(name) {
+                const newName = (name) => {
                     let ext = _path.extname(name);
                     let fileName = _path.basename(name, ext);
                     let found = false;
@@ -312,16 +247,18 @@ class DirectoryService extends Base_1.BaseService {
                         }
                     }
                     return newName;
-                }
+                };
                 _.each(selection, (path) => {
                     let srcParts = this.resolveShort(path);
-                    const srcVFS = this.getVFS(srcParts['mount']);
+                    let srcPath = this.resolvePath(srcParts.mount, srcParts.path, this._getRequest(args));
+                    const srcVFS = this.getVFS(srcParts.mount, reqest);
                     if (!srcVFS) {
-                        reject('Cant find VFS for ' + srcParts['mount']);
+                        reject('Cant find VFS for ' + srcParts.mount);
                     }
-                    let srcPath = this.resolvePath(srcParts['mount'], srcParts['path']);
                     const exists = others.indexOf(_path.basename(srcPath)) !== -1;
-                    const newPath = exists ? (_path.dirname(srcPath) + _path.sep + newName(_path.basename(srcPath))) : (_path.dirname(targetDirectory) + _path.sep + _path.basename(srcPath));
+                    const newPath = exists ?
+                        (_path.dirname(srcPath) + _path.sep + newName(_path.basename(srcPath))) :
+                        (_path.dirname(targetDirectory) + _path.sep + _path.basename(srcPath));
                     _fs.copy(srcPath, newPath, function (err) {
                         if (err) {
                             errors.push(err);
@@ -332,23 +269,37 @@ class DirectoryService extends Base_1.BaseService {
             });
         });
     }
+    // implement IVFS#rm
     // @TODO: ugly back compat for xphp in here!
     delete(selection, options, reqest = null) {
-        return __awaiter(this, void 0, void 0, function* () {
-            return new AnyPromise((resolve, reject) => {
+        return __awaiter(this, arguments, void 0, function* () {
+            const args = arguments;
+            return new Promise((resolve, reject) => {
                 const first = selection[0];
                 const mount = first.split('/')[0];
-                const vfs = this.getVFS(mount);
+                const vfs = this.getVFS(mount, this._getRequest(args));
                 let error = null;
                 if (!vfs) {
                     reject('Cant find VFS for ' + mount);
                 }
-                _.each(selection, (_path) => {
+                // VFS 2.0
+                if (typeof vfs['remove'] === 'function') {
+                    let paths = selection.map((_path) => {
+                        let parts = _path.split('/');
+                        parts.shift();
+                        return parts.join('/');
+                    });
+                    const ops = [];
+                    paths.forEach((path) => { ops.push(vfs.remove(path)); });
+                    Promise.all(ops).then(() => { resolve(true); }).catch(reject);
+                    return;
+                }
+                selection.forEach((_path) => {
                     let parts = _path.split('/');
                     parts.shift();
                     _path = parts.join('/');
                     try {
-                        vfs.rm(this.resolvePath(mount, _path), {}, resolve, reject);
+                        vfs.rm(this.resolvePath(mount, _path, this._getRequest(args)), {}, resolve, reject);
                     }
                     catch (e) {
                         reject(e);
@@ -358,27 +309,63 @@ class DirectoryService extends Base_1.BaseService {
             });
         });
     }
-    getVFS(mount) {
+    createVFSClass(resource) {
+        if (resource.vfs === 'github') {
+            return new Github_1.VFS(resource);
+        }
+        if (resource.vfs === 'sftp') {
+            return new sftp_2.VFS(resource);
+        }
+    }
+    /**
+     *
+     * @param {string} mount
+     * @param {*} [request]
+     * @returns
+     *
+     * @memberOf DirectoryService
+     */
+    getVFS(mount, request) {
         const resource = this.getResourceByTypeAndName(Resource_1.EResourceType.FILE_PROXY, mount);
         if (resource) {
-            const root = this.resolveAbsolute(resource);
+            let root = this._resolveUserMount(mount, request) || this.resolveAbsolute(resource);
             try {
+                const vfsClass = resource.vfs;
+                // custom VFS class
+                if (vfsClass) {
+                    return this.createVFSClass(resource);
+                }
                 if (fs.lstatSync(root)) {
                     return Local_1.create({
                         root: root,
                         nopty: true
-                    });
+                    }, resource);
+                }
+                else {
+                    console.error('Cant create VFS for mount ' + mount + ': vfs root doesnt exists');
                 }
             }
             catch (e) {
+                console.warn('cant get VFS for ' + mount + ' root : ' + root, e);
+                console.log('this', this.absoluteVariables);
             }
         }
         return null;
     }
-    resolvePath(mount, path) {
+    resolvePath(mount, path, request) {
         const resource = this.getResourceByTypeAndName(Resource_1.EResourceType.FILE_PROXY, mount);
         if (resource) {
-            return _path.join(this.resolveAbsolute(resource), path);
+            let abs = this.resolveAbsolute(resource);
+            if (request) {
+                abs = this._resolveUserMount(mount, request, abs);
+            }
+            if (!abs == null || path == null) {
+                console.error('error resolving path for mount ' + mount + '|' + path + '|' + abs, new Error().stack);
+            }
+            return _path.join(abs, path);
+        }
+        else {
+            console.error('error resolving path, cant find resource for ' + mount + '/' + path);
         }
         return null;
     }
@@ -394,14 +381,13 @@ class DirectoryService extends Base_1.BaseService {
             return { name: "unknown" };
         }
     }
-    mapNode(node, mount) {
+    mapNode(node, mount, root) {
         const fsNodeStat = fs.statSync(node.path);
         const isDirectory = fsNodeStat.isDirectory();
-        const parent = node.parent || "";
-        // const _size = isDirectory ? await size(node.path) : false;
-        // console.log('size: ' + node.path, _size);
+        const nodePath = node.path.replace(root, '');
+        const parent2 = new Path_1.Path(nodePath, false, false).getParentPath();
         const result = {
-            path: './' + _path.join(parent, node.name),
+            path: '.' + new Path_1.Path(nodePath, false, false).segments.join('/'),
             sizeBytes: fsNodeStat.size,
             size: isDirectory ? 'Folder' : FileSizeToString(fsNodeStat.size),
             owner: {
@@ -416,36 +402,57 @@ class DirectoryService extends Base_1.BaseService {
             fileType: isDirectory ? 'folder' : 'file',
             modified: fsNodeStat.mtime.getTime() / 1000,
             mount: mount,
-            parent: parent
+            parent: Path_1.Path.normalize("./" + parent2.segments.join('/'))
         };
         isDirectory && (result['_EX'] = false);
         return result;
     }
     _ls(path, mount, options, recursive = false) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const self = this;
-            return new AnyPromise((resolve, reject) => {
-                const vfs = this.getVFS(mount);
-                if (vfs) {
+        return __awaiter(this, arguments, void 0, function* () {
+            const self = this, args = arguments;
+            return new Promise((resolve, reject) => {
+                const vfs = this.getVFS(mount, this._getRequest(args));
+                if (!vfs) {
+                    reject(`cant get VFS for mount '${mount}'`);
+                }
+                // try v2 VFS
+                if (typeof vfs.ls === 'function') {
+                    try {
+                        vfs.ls(path, mount, options).then((nodes) => { resolve(nodes); });
+                        return;
+                    }
+                    catch (e) {
+                        reject(e);
+                    }
+                }
+                // v1 VFS
+                try {
+                    const root = this.resolvePath(mount, '', this._getRequest(args));
                     vfs.readdir(path, {}, (err, meta) => {
                         if (err) {
-                            throw err;
+                            console.error('error reading directory ' + path);
+                            reject(err);
                         }
-                        let nodes = [];
-                        meta.stream.on('data', (data) => nodes.push(self.mapNode(data, mount)));
-                        meta.stream.on('end', () => resolve(nodes));
+                        if (!meta) {
+                            reject('something wrong');
+                        }
+                        const nodes = [];
+                        meta.stream.on('data', (data) => nodes.push(self.mapNode(data, mount, root)));
+                        meta.stream.on('end', () => {
+                            resolve(nodes);
+                        });
                     });
                 }
-                else {
-                    reject(`cant get VFS for mount '${mount}'`);
+                catch (e) {
+                    reject(e);
                 }
             });
         });
     }
-    // implement VFS#ls
-    ls(path, mount, options, recursive = false) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const nodes = yield this._ls(path, mount, options, recursive);
+    // implement IVFS#ls
+    ls(path, mount, options, recursive = false, req) {
+        return __awaiter(this, arguments, void 0, function* () {
+            const nodes = yield this._ls.apply(this, arguments);
             const root = {
                 items: [{
                         _EX: true,
@@ -461,6 +468,9 @@ class DirectoryService extends Base_1.BaseService {
             return root;
         });
     }
+    //
+    // ─── DECORATOR OVERHEAD ─────────────────────────────────────────────────────────
+    //
     getRpcMethods() {
         throw new Error("Should be implemented by decorator");
     }
@@ -485,7 +495,7 @@ __decorate([
 __decorate([
     Base_2.RpcMethod,
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String, String, Boolean, Object]),
+    __metadata("design:paramtypes", [String, String, String, Boolean]),
     __metadata("design:returntype", Promise)
 ], DirectoryService.prototype, "rename", null);
 __decorate([
@@ -497,7 +507,7 @@ __decorate([
 __decorate([
     Base_2.RpcMethod,
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String, String, Object]),
+    __metadata("design:paramtypes", [String, String, String]),
     __metadata("design:returntype", Promise)
 ], DirectoryService.prototype, "mkfile", null);
 __decorate([
@@ -515,7 +525,7 @@ __decorate([
 __decorate([
     Base_2.RpcMethod,
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String, Object, Boolean]),
+    __metadata("design:paramtypes", [String, String, Object, Boolean, Object]),
     __metadata("design:returntype", Promise)
 ], DirectoryService.prototype, "ls", null);
 exports.DirectoryService = DirectoryService;

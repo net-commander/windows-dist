@@ -19,7 +19,7 @@ class ResourceQuery {
         return data;
     }
     update(section, path = '.', searchQuery = null, value = null, decodeValue = true) {
-        return this.set(section, path, searchQuery, value, decodeValue);
+        this.set(section, path, searchQuery, value, decodeValue);
     }
 }
 exports.ResourceQuery = ResourceQuery;

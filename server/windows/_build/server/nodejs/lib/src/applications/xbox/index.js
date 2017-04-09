@@ -12,7 +12,6 @@ const Base_1 = require("./../Base");
 const Service_1 = require("../../interfaces/Service");
 const app_1 = require("./route/app");
 const smd_1 = require("../../route/smd");
-const routes_1 = require("../../routes");
 const files_1 = require("../../route/files");
 const uploads_1 = require("../../route/uploads");
 const JSON_RPC_2_1 = require("../../rpc/JSON-RPC-2");
@@ -31,6 +30,7 @@ const File_1 = require("../../acl/data/File");
 const mount = require('koa-mount');
 const serveStatic = require('koa-static');
 const yargs = require("yargs-parser");
+const index_1 = require("../../server/index");
 let argv = yargs(process.argv.slice(2));
 // tslint:disable-next-line:interface-name
 // tslint:disable-next-line:class-name
@@ -67,7 +67,7 @@ class xbox extends Base_1.ApplicationBase {
         this.root = options.root;
         const APP_ROOT = this.root;
         let CLIENT_ROOT = options.clientRoot || path.join(APP_ROOT, 'Code/client/src/');
-        const NODE_ROOT = options.release ? process.cwd() : path.join(APP_ROOT, 'server/nodejs/');
+        const NODE_ROOT = options.release === true ? process.cwd() : path.join(APP_ROOT, 'server/nodejs/');
         const DATA_ROOT = path.join(APP_ROOT, '/data/');
         const SYSTEM_ROOT = path.join(DATA_ROOT, '/system/');
         const USER_DIRECTORY = path.join(APP_ROOT, '/user');
@@ -109,17 +109,12 @@ class xbox extends Base_1.ApplicationBase {
                 'XASWEB': path.join(CLIENT_ROOT)
             }
         };
-        let packages = this.packages('../../../../../');
-        let relativeVariables = params['relativeVariables'];
-        // console.log('sdfdf',util.inspect(relativeVariables));
-        relativeVariables['DOJOPACKAGES'] = JSON.stringify(packages);
-        relativeVariables['RESOURCE_VARIABLES'] = JSON.stringify(relativeVariables);
         this.config = params;
         this.config['NODE_ROOT'] = NODE_ROOT;
     }
     vfsConfig() {
         return {
-            configPath: path.join(this.path('SYSTEM_ROOT'), 'vfs.json'),
+            configPath: path.join(this.path(Base_1.EEKey.SYSTEM_ROOT), 'vfs_xbox.json'),
             relativeVariables: {},
             absoluteVariables: this.vfsMounts()
         };
@@ -133,7 +128,7 @@ class xbox extends Base_1.ApplicationBase {
         }
         const settingsService = this.settingsService = new JSONFile_1.JSONFileService(path.join(this.path('USER_DIRECTORY'), 'settings.json'));
         const directoryService = this.directoryService = new Directory_1.DirectoryService(this.vfsConfig());
-        const mountService = new Mounts_1.MountService(path.join(this.path('DATA_ROOT'), 'system/vfs.json'));
+        const mountService = new Mounts_1.MountService(path.join(this.path(Base_1.EEKey.DATA_ROOT), 'system/vfs_xbox.json'));
         this._services = [directoryService, mountService, settingsService];
         return this._services;
     }
@@ -143,7 +138,7 @@ class xbox extends Base_1.ApplicationBase {
         }
         const filesRoute = files_1.create(this.directoryService, '/files', this);
         const uploadRoute = uploads_1.create(this.directoryService, '/upload', this);
-        this._routes = [routes_1.default, filesRoute, app_1.default, smd_1.default, uploadRoute];
+        this._routes = [filesRoute, app_1.default, smd_1.default, uploadRoute];
         return this._routes;
     }
     setup() {
@@ -154,6 +149,11 @@ class xbox extends Base_1.ApplicationBase {
         rpcApp.use(convert(this.rpc.app()));
         this.use(convert(mount('/api', rpcApp)));
         //this.setupAcl2();
+        // pretty index browser, must be 'used' no later than at this point
+        this.use(index_1.serveIndex(this.path(Base_1.EEKey.APP_ROOT), {
+            icons: true,
+            view: 'details'
+        }));
         // RPC services
         const services = this.rpcServices();
         _.each(services, service => {

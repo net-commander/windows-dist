@@ -23,32 +23,16 @@ function create(directoryService, prefix = '/files', app) {
         if (!ctx.req.url.startsWith(prefix)) {
             return next();
         }
-        yield send(ctx, ctx.params['0'], {
-            root: filesRouter.directoryService.resolve(ctx.params.mount, '')
-        });
+        const filePath = ctx.params['0'];
+        if (filePath) {
+            yield send(ctx, filePath, {
+                root: filesRouter.directoryService.resolve(ctx.params.mount, '', ctx.request)
+            });
+        }
+        else {
+            ctx.body = "";
+        }
     }));
-    /*
-        app.use(function* (next) {
-            // ignore non-POSTs
-            if ('POST' !== this.method) {
-                return yield next;
-            }
-
-            console.log('upload', this.ctx.params);
-
-            // multipart upload
-            const parts = parse(this);
-            let part;
-
-            while ((part = yield parts)) {
-                const stream = fs.createWriteStream(path.join(os.tmpdir(), Math.random().toString()));
-                part.pipe(stream);
-                console.log('uploading %s -> %s', part.filename, stream.path);
-            }
-
-            this.redirect('/');
-        });
-        */
     return filesRouter;
 }
 exports.create = create;

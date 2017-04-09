@@ -388,23 +388,35 @@ function default_1(target) {
                         'optional': false
                     }, { 'name': 'driverCode', 'optional': false }]
             },
-            'XCF_Driver_Service.getDriverContent': {
+            'XCF_Driver_Service.get': {
                 'transport': 'POST',
                 'target': null,
-                'parameters': [{ 'name': 'scope', 'optional': false }, {
+                'parameters': [
+                    {
                         'name': 'path',
                         'optional': false
-                    }]
+                    },
+                    {
+                        'name': 'send',
+                        'optional': false
+                    },
+                    {
+                        'name': 'attachment',
+                        'optional': false
+                    }
+                ]
             },
-            'XCF_Driver_Service.setDriverContent': {
+            'XCF_Driver_Service.set': {
                 'transport': 'POST',
                 'target': null,
                 'returns': 'mixed',
-                'parameters': [{ 'name': 'scope', 'optional': false, 'type': 'mixed' }, {
+                'parameters': [
+                    { 'name': 'scope', 'optional': false, 'type': 'mixed' }, {
                         'name': 'path',
                         'optional': false,
                         'type': 'mixed'
-                    }, { 'name': 'content', 'optional': false, 'type': 'mixed' }]
+                    }, { 'name': 'content', 'optional': false, 'type': 'mixed' }
+                ]
             },
             'XCF_Driver_Service.createGroup': {
                 'transport': 'POST',

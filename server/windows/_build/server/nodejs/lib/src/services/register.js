@@ -6,8 +6,7 @@ function registerMethod(rpc, method, handler) {
 exports.registerMethod = registerMethod;
 function registerService(rpc, service, application) {
     let methods = service.methods();
-    _.each(methods, function (method, name, other) {
-        // console.log(':register ',service.method + '.' + name);
+    _.each(methods, (method, name, other) => {
         rpc.use(service.method + '.' + name, method, service);
     });
     service.rpc = rpc;

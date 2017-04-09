@@ -10,7 +10,7 @@ var DRIVER_PROPERTY;
     DRIVER_PROPERTY[DRIVER_PROPERTY["CF_DRIVER_RESPONSES"] = 'CF_DRIVER_RESPONSES'] = "CF_DRIVER_RESPONSES";
 })(DRIVER_PROPERTY = exports.DRIVER_PROPERTY || (exports.DRIVER_PROPERTY = {}));
 /**
- * Bitmask or flags for device about its driver
+ * Bitmask or flags for device about its driver setup
  * @enum {int} DRIVER_FLAGS
  * @global
  */
@@ -25,7 +25,7 @@ var DRIVER_FLAGS;
      */
     DRIVER_FLAGS[DRIVER_FLAGS["DEBUG"] = 4] = "DEBUG";
     /**
-     * Enable protocol's debug message on console
+     * Run as server: implemented for UDP & TCP. Null-Modem driver under linux for Serial.
      */
     DRIVER_FLAGS[DRIVER_FLAGS["SERVER"] = 16] = "SERVER";
 })(DRIVER_FLAGS = exports.DRIVER_FLAGS || (exports.DRIVER_FLAGS = {}));
