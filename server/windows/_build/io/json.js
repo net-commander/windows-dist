@@ -102,6 +102,51 @@ function getJsonProperty(target, propertyKey) {
     return Reflect.getMetadata(jsonMetadataKey, target, propertyKey);
 }
 exports.getJsonProperty = getJsonProperty;
+/**
+* @example
+// Example - JSON-Mapping
+class Address {
+    @JsonProperty('first-line')
+    firstLine: string;
+    @JsonProperty('second-line')
+    secondLine: string;
+    city: string;
+
+    // Default constructor will be called by mapper
+    constructor() {
+        this.firstLine = undefined;
+        this.secondLine = undefined;
+        this.city = undefined;
+    }
+}
+
+class Person {
+    name: string;
+    surname: string;
+    age: number;
+    @JsonProperty('address')
+    address: Address;
+
+    // Default constructor will be called by mapper
+    constructor() {Array.
+        this.name = undefined;
+        this.surname = undefined;
+        this.age = undefined;
+        this.address = undefined;
+    }
+}
+let example = {
+    "name": "Mark",
+    "surname": "Galea",
+    "age": 30,
+    "address": {
+        "first-line": "Some where",
+        "second-line": "Over Here",
+        "city": "In This City"
+    }
+};
+const Person2 = Map.deserialize(Person, example);
+*/
 class Map {
     static isPrimitive(obj) {
         switch (typeof obj) {
@@ -170,49 +215,4 @@ class Map {
     }
 }
 exports.Map = Map;
-/*
-// Example - JSON-Mapping
-class Address {
-    @JsonProperty('first-line')
-    firstLine: string;
-    @JsonProperty('second-line')
-    secondLine: string;
-    city: string;
-
-    // Default constructor will be called by mapper
-    constructor() {
-        this.firstLine = undefined;
-        this.secondLine = undefined;
-        this.city = undefined;
-    }
-}
-
-class Person {
-    name: string;
-    surname: string;
-    age: number;
-    @JsonProperty('address')
-    address: Address;
-
-    // Default constructor will be called by mapper
-    constructor() {Array.
-        this.name = undefined;
-        this.surname = undefined;
-        this.age = undefined;
-        this.address = undefined;
-    }
-}
-let example = {
-    "name": "Mark",
-    "surname": "Galea",
-    "age": 30,
-    "address": {
-        "first-line": "Some where",
-        "second-line": "Over Here",
-        "city": "In This City"
-    }
-};
-const Person2 = Map.deserialize(Person, example);
-console.log(Person2);
-*/
 //# sourceMappingURL=json.js.map

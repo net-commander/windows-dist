@@ -19,15 +19,33 @@ var ENodeType;
  * @export
  * @enum {number}
  */
-var EVFSCapabilties;
-(function (EVFSCapabilties) {
-    EVFSCapabilties[EVFSCapabilties["VERSIONED"] = 0] = "VERSIONED";
-    EVFSCapabilties[EVFSCapabilties["CHANGE_MESSAGE"] = 1] = "CHANGE_MESSAGE";
-    EVFSCapabilties[EVFSCapabilties["META"] = 2] = "META";
-    EVFSCapabilties[EVFSCapabilties["MIME"] = 3] = "MIME";
-    EVFSCapabilties[EVFSCapabilties["AUTHORS"] = 4] = "AUTHORS";
-    EVFSCapabilties[EVFSCapabilties["META_TREE"] = 5] = "META_TREE"; // VFS has non INode tree nodes (VCS branches, tags, commits,..)
-})(EVFSCapabilties = exports.EVFSCapabilties || (exports.EVFSCapabilties = {}));
+var ECapabilties;
+(function (ECapabilties) {
+    ECapabilties[ECapabilties["VERSIONED"] = 0] = "VERSIONED";
+    ECapabilties[ECapabilties["CHANGE_MESSAGE"] = 1] = "CHANGE_MESSAGE";
+    ECapabilties[ECapabilties["META"] = 2] = "META";
+    ECapabilties[ECapabilties["MIME"] = 3] = "MIME";
+    ECapabilties[ECapabilties["AUTHORS"] = 4] = "AUTHORS";
+    ECapabilties[ECapabilties["META_TREE"] = 5] = "META_TREE";
+    ECapabilties[ECapabilties["ROOT"] = 6] = "ROOT";
+    ECapabilties[ECapabilties["REMOTE_CONNECTION"] = 7] = "REMOTE_CONNECTION"; // VFS has a remote connection
+})(ECapabilties = exports.ECapabilties || (exports.ECapabilties = {}));
+/**
+ * Supported file operations
+ *
+ * @export
+ * @enum {number}
+ */
+var EOperations;
+(function (EOperations) {
+    EOperations[EOperations["LS"] = 0] = "LS";
+    EOperations[EOperations["RENAME"] = 1] = "RENAME";
+    EOperations[EOperations["COPY"] = 2] = "COPY";
+    EOperations[EOperations["DELETE"] = 3] = "DELETE";
+    EOperations[EOperations["MOVE"] = 4] = "MOVE";
+    EOperations[EOperations["GET"] = 5] = "GET";
+    EOperations[EOperations["SET"] = 6] = "SET";
+})(EOperations = exports.EOperations || (exports.EOperations = {}));
 /**
  *
  * These flags are used to build the result, adaptive.

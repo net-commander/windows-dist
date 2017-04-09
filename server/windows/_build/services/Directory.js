@@ -282,6 +282,18 @@ class DirectoryService extends Base_1.BaseService {
                 if (!vfs) {
                     reject('Cant find VFS for ' + mount);
                 }
+                // VFS 2.0
+                if (typeof vfs['remove'] === 'function') {
+                    let paths = selection.map((_path) => {
+                        let parts = _path.split('/');
+                        parts.shift();
+                        return parts.join('/');
+                    });
+                    const ops = [];
+                    paths.forEach((path) => { ops.push(vfs.remove(path)); });
+                    Promise.all(ops).then(() => { resolve(true); }).catch(reject);
+                    return;
+                }
                 selection.forEach((_path) => {
                     let parts = _path.split('/');
                     parts.shift();
@@ -327,7 +339,7 @@ class DirectoryService extends Base_1.BaseService {
                     return Local_1.create({
                         root: root,
                         nopty: true
-                    });
+                    }, resource);
                 }
                 else {
                     console.error('Cant create VFS for mount ' + mount + ': vfs root doesnt exists');
@@ -372,10 +384,10 @@ class DirectoryService extends Base_1.BaseService {
     mapNode(node, mount, root) {
         const fsNodeStat = fs.statSync(node.path);
         const isDirectory = fsNodeStat.isDirectory();
-        const nodePath = node.path.replace(root, '');
+        const nodePath = Path_1.Path.normalize(node.path.replace(root, ''));
         const parent2 = new Path_1.Path(nodePath, false, false).getParentPath();
         const result = {
-            path: '.' + new Path_1.Path(nodePath, false, false).segments.join('/'),
+            path: Path_1.Path.normalize('.' + new Path_1.Path(nodePath, false, false).segments.join('/')),
             sizeBytes: fsNodeStat.size,
             size: isDirectory ? 'Folder' : FileSizeToString(fsNodeStat.size),
             owner: {
@@ -390,7 +402,7 @@ class DirectoryService extends Base_1.BaseService {
             fileType: isDirectory ? 'folder' : 'file',
             modified: fsNodeStat.mtime.getTime() / 1000,
             mount: mount,
-            parent: "./" + parent2.segments.join('/')
+            parent: Path_1.Path.normalize("./" + parent2.segments.join('/'))
         };
         isDirectory && (result['_EX'] = false);
         return result;

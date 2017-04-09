@@ -127,16 +127,22 @@ class ApplicationBase extends Koa {
         const baseUrl = this._env(origin, exports.EEKey.XAS_WEB);
         dst['BASE_URL'] = baseUrl(origin);
         dst['APP_URL'] = this._env(origin, exports.EEKey.APP_URL)(origin);
-        dst['XASWEB'] = this._env(origin, exports.EEKey.APP_URL)(origin);
+        dst[exports.EEKey.XAS_WEB] = this._env(origin, exports.EEKey.APP_URL)(origin);
         dst['RPC_URL'] = this._env(origin, exports.EEKey.RPC_URL)(origin);
         dst['VFS_URL'] = origin + '/files/';
-        dst['ROOT'] = origin + '/';
+        dst[exports.EEKey.ROOT] = origin + '/';
         dst[exports.EEKey.DOJOPACKAGES] = io.serialize(this.packages(origin + '/files/', baseUrl(origin)));
         dst[exports.EEKey.RESOURCE_VARIABLES] = io.serialize(dst);
         const settingsService = this[exports.ESKey.SettingsService];
         if (settingsService) {
-            const theme = _.find(settingsService.get('settings', '.')['settings'], { id: 'theme' })['value'] || ctx.params.theme || 'white';
-            dst[exports.EEKey.THEME] = theme;
+            try {
+                const theme = _.find(settingsService.get('settings', '.')['settings'], { id: 'theme' })['value'] || ctx.params.theme || 'white';
+                dst[exports.EEKey.THEME] = theme;
+            }
+            catch (e) {
+                console.error('error reading user settings file');
+                dst[exports.EEKey.THEME] = 'white';
+            }
         }
         return dst;
     }

@@ -1,6 +1,14 @@
 "use strict";
 const objects_1 = require("@xblox/core/objects");
 const primitives_1 = require("@xblox/core/primitives");
+exports.slash = (str) => {
+    let isExtendedLengthPath = /^\\\\\?\\/.test(str);
+    let hasNonAscii = /[^\x00-\x80]+/.test(str);
+    if (isExtendedLengthPath || hasNonAscii) {
+        return str;
+    }
+    return str.replace(/\\/g, '/');
+};
 class Path {
     constructor(path = '.', hasLeading = false, hasTrailing = false) {
         if (primitives_1.isString(path)) {
@@ -14,7 +22,7 @@ class Path {
         }
     }
     static normalize(path) {
-        return path.replace(/\/+/g, '\/');
+        return exports.slash(path).replace(/\/+/g, '\/');
     }
     endsWith(tail) {
         let segments = objects_1.clone(this.segments);

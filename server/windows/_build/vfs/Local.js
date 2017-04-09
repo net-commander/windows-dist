@@ -16,7 +16,7 @@ const crypto = require("crypto");
 const write = require('write-file-atomic');
 const _fs = require('node-fs-extra');
 const _path = require("path");
-function create(fsOptions) {
+function create(fsOptions, resource) {
     let pty;
     if (!fsOptions.nopty) {
         try {
@@ -61,7 +61,6 @@ function create(fsOptions) {
     }
     const umask = fsOptions.umask || parseInt('0750', 8);
     if (fsOptions.hasOwnProperty('defaultEnv')) {
-        fsOptions.defaultEnv.__proto__ = process.env;
     }
     else {
         fsOptions.defaultEnv = process.env;

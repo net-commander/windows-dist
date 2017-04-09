@@ -52,62 +52,177 @@ class VFS {
             type: ''
         };
     }
+    list(path) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return new Promise((resolve, reject) => {
+                let sftp = this.sftp;
+                if (sftp) {
+                    sftp.readdir(path, (err, list) => {
+                        if (err) {
+                            reject(err);
+                            return false;
+                        }
+                        // reset file info
+                        list.forEach((item, i) => {
+                            const _item = list[i];
+                            _item['name'] = item.filename;
+                            _item['type'] = item.longname.substr(0, 1);
+                        });
+                        resolve(list);
+                    });
+                }
+                else {
+                    reject('sftp connect error');
+                }
+            });
+        });
+    }
+    _delete(path) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return new Promise((resolve, reject) => {
+                let sftp = this.sftp;
+                if (sftp) {
+                    sftp.unlink(path, (err) => {
+                        if (err) {
+                            reject(err);
+                            return false;
+                        }
+                        resolve();
+                    });
+                }
+                else {
+                    reject('sftp connect error');
+                }
+            });
+        });
+    }
+    ;
+    remove(path, options) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return new Promise((resolve, reject) => {
+                this.init().then(() => {
+                    path = this.resolve(path);
+                    this.sftp.stat(path, (err, stats) => {
+                        if (stats.isDirectory()) {
+                            /*
+                            this.sftp.rmdir(path, (err) => {
+                                err ? reject(err) : resolve(true);
+                            });
+                            */
+                            let rmdir = (p) => {
+                                return this.list(p).then((list) => {
+                                    if (list.length > 0) {
+                                        let promises = [];
+                                        list.forEach((item) => {
+                                            let name = item.name;
+                                            let promise;
+                                            let subPath;
+                                            if (name[0] === '/') {
+                                                subPath = name;
+                                            }
+                                            else {
+                                                if (p[p.length - 1] === '/') {
+                                                    subPath = p + name;
+                                                }
+                                                else {
+                                                    subPath = p + '/' + name;
+                                                }
+                                            }
+                                            if (item.type === 'd') {
+                                                if (name !== '.' || name !== '..') {
+                                                    promise = rmdir(subPath);
+                                                }
+                                            }
+                                            else {
+                                                promise = this._delete(subPath);
+                                            }
+                                            promises.push(promise);
+                                        });
+                                        if (promises.length) {
+                                            return Promise.all(promises).then(() => {
+                                                return rmdir(p);
+                                            });
+                                        }
+                                    }
+                                    else {
+                                        return new Promise((resolve, reject) => {
+                                            return this.sftp.rmdir(p, (err) => {
+                                                if (err) {
+                                                    reject(err);
+                                                }
+                                                else {
+                                                    resolve();
+                                                }
+                                            });
+                                        });
+                                    }
+                                });
+                            };
+                            return rmdir(path).then(() => { resolve(); });
+                        }
+                        else {
+                            this.sftp.unlink(path, (err) => {
+                                err ? reject(err) : resolve(true);
+                            });
+                        }
+                    });
+                });
+            });
+        });
+    }
+    resolve(path) {
+        path = new Path_1.Path(path, true, false).toString();
+        if (path === '.') {
+            path = '';
+        }
+        if (!path.startsWith('/')) {
+            path = '/' + path;
+        }
+        return Path_1.Path.normalize(this.options.root + '/' + path);
+    }
     ls(path = '/', mount) {
         return __awaiter(this, void 0, void 0, function* () {
-            path = new Path_1.Path(path, true, false).toString();
-            if (path === '.') {
-                path = '';
-            }
-            if (!path.startsWith('/')) {
-                path = '/' + path;
-            }
-            path = Path_1.Path.normalize(this.options.root + '/' + path);
-            console.log(':ls ' + path);
+            path = this.resolve(path);
             return new Promise((resolve, reject) => {
                 this.init().then(() => {
                     const ret = [];
                     let nodes = [];
-                    this.client.sftp((err, sftp) => {
+                    const proceed = () => {
+                        if (!nodes.length) {
+                            resolve(ret);
+                            return;
+                        }
+                        const next = nodes[0];
+                        this.sftp.stat(path + '/' + next.filename, (err, stats) => {
+                            if (err) {
+                                console.error('err', err);
+                                nodes.shift();
+                                proceed();
+                                return;
+                            }
+                            if (!stats) {
+                                console.error('cant get stats for ' + next.filename + ' with path query ' + path);
+                                nodes.shift();
+                                proceed();
+                                return;
+                            }
+                            ret.push(this.mapNode(path, next, stats, mount));
+                            nodes.shift();
+                            proceed();
+                        });
+                    };
+                    this.sftp.readdir(path, (err, files) => {
                         if (err) {
                             reject(err);
                         }
-                        const proceed = () => {
-                            if (!nodes.length) {
-                                resolve(ret);
-                                return;
-                            }
-                            const next = nodes[0];
-                            sftp.stat(path + '/' + next.filename, (err, stats) => {
-                                if (err) {
-                                    console.error('err', err);
-                                    nodes.shift();
-                                    proceed();
-                                    return;
-                                }
-                                if (!stats) {
-                                    console.error('cant get stats for ' + next.filename + ' with path query ' + path);
-                                    nodes.shift();
-                                    proceed();
-                                    return;
-                                }
-                                ret.push(this.mapNode(path, next, stats, mount));
-                                nodes.shift();
-                                proceed();
-                            });
-                        };
-                        sftp.readdir(path, (err, files) => {
-                            if (err) {
-                                reject(err);
-                            }
-                            if (files) {
-                                nodes = files;
-                            }
-                            else {
-                                console.error('have no files at ' + path, err);
-                                reject(err);
-                            }
-                            proceed();
-                        });
+                        if (files) {
+                            nodes = files;
+                        }
+                        else {
+                            console.error('have no files at ' + path, err);
+                            reject(err);
+                        }
+                        proceed();
                     });
                 });
             });
@@ -119,7 +234,10 @@ class VFS {
             return new Promise((resolve, reject) => {
                 this.client.on('error', reject);
                 this.client.on('ready', () => {
-                    resolve(true);
+                    this.client.sftp((err, sftp) => {
+                        this.sftp = sftp;
+                        resolve(true);
+                    });
                 }).connect({
                     host: this.options.host,
                     port: this.options.port,
