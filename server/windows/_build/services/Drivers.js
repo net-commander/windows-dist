@@ -170,12 +170,20 @@ class DriverService extends Bean_1.BeanService {
         return new Promise((resolve, reject) => {
             const vfs = this.getVFS(mount, this._getRequest(args));
             if (vfs) {
-                vfs.mkdir(_path, {}, (err, data) => {
-                    err ? reject(err) : resolve(true);
+                vfs.exists(_path).then((exists) => {
+                    if (exists) {
+                        return resolve(true);
+                    }
+                    else {
+                        vfs.mkdir(_path, {}, (err, data) => {
+                            err ? reject(err) : resolve(true);
+                        });
+                    }
+                    ;
                 });
             }
             else {
-                reject('Cant find VFS for ' + mount);
+                reject('Cant find VFS for ----' + mount);
             }
         });
     }

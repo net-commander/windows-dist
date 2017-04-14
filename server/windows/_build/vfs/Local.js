@@ -103,7 +103,8 @@ function create(fsOptions, resource) {
         // Extending the API
         extend: extend,
         unextend: unextend,
-        use: use
+        use: use,
+        exists: _exists
     };
     ////////////////////////////////////////////////////////////////////////////////
     // Realpath a file and check for access
@@ -668,6 +669,15 @@ function create(fsOptions, resource) {
                     else {
                         callback(null, {});
                     }
+                });
+            });
+        });
+    }
+    function _exists(path) {
+        return new Promise((resolve, reject) => {
+            resolvePath(path, { checkSymlinks: false }, function (err, dir) {
+                exists(dir, (pexists) => {
+                    resolve(pexists);
                 });
             });
         });
