@@ -108,6 +108,11 @@ class DriverService extends Bean_1.BeanService {
             return drivers(driverPath, scope);
         });
     }
+    updateItemMetaData(path, mount, options, recursive = false) {
+        return __awaiter(this, arguments, void 0, function* () {
+            return this._updateItemMetaData.apply(this, arguments);
+        });
+    }
     ls(mount, _path, options, recursive = false, req) {
         return __awaiter(this, arguments, void 0, function* () {
             try {
@@ -210,6 +215,12 @@ class DriverService extends Bean_1.BeanService {
         return this.toMethods(this.getRpcMethods().concat(['get', 'set']));
     }
 }
+__decorate([
+    Base_1.RpcMethod,
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, Object, Boolean]),
+    __metadata("design:returntype", Promise)
+], DriverService.prototype, "updateItemMetaData", null);
 __decorate([
     Base_1.RpcMethod,
     __metadata("design:type", Function),

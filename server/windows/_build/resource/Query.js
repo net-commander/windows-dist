@@ -1,5 +1,6 @@
 "use strict";
 const dotProp = require("dot-prop");
+const objects_1 = require("@xblox/core/objects");
 const _ = require("lodash");
 class ResourceQuery {
     constructor(data) {
@@ -15,7 +16,8 @@ class ResourceQuery {
     set(section, path = '.', searchQuery = null, value, decodeValue = true) {
         let data = this.data;
         const dataAt = dotProp.get(data, this.root + path + section);
-        dataAt && _.extend(_.find(dataAt, searchQuery), value);
+        const chunk = _.find(dataAt, searchQuery);
+        objects_1.mixin(chunk, value);
         return data;
     }
     update(section, path = '.', searchQuery = null, value = null, decodeValue = true) {

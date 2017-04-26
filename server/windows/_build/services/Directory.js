@@ -29,8 +29,7 @@ const Base_2 = require("./Base");
 const Path_1 = require("../model/Path");
 const Github_1 = require("../vfs/github/Github");
 const sftp_1 = require("../vfs/ssh/sftp");
-const sftp_2 = require("../vfs/ssh/sftp");
-sftp_1.test();
+//testSFTP();
 let posix = null;
 const _fs = require('node-fs-extra');
 try {
@@ -314,7 +313,7 @@ class DirectoryService extends Base_1.BaseService {
             return new Github_1.VFS(resource);
         }
         if (resource.vfs === 'sftp') {
-            return new sftp_2.VFS(resource);
+            return new sftp_1.VFS(resource);
         }
     }
     /**
