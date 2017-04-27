@@ -42203,7 +42203,7 @@ define('xfile/manager/FileManager',[
                 }
             }
             if(has('php')) {
-                var _path = this.serviceObject.base64_encode(utils.buildPath(mount, path, true));
+                var _path = utils.buildPath(mount, path, false);
                 return this.callMethod(types.OPERATION.GET_CONTENT, [_path, false, false], readyCB, false);
             }else{
                 return this._getText(require.toUrl(mount).replace('main.js','') + '/' + path,{
@@ -42466,13 +42466,14 @@ define('xide/manager/ResourceManager',[
 define('xfile/manager/MountManager',[
     'dcl/dcl',
     "dojo/_base/lang",
+    "xdojo/has",
     "xide/manager/ResourceManager",
     "xide/mixins/ReloadMixin",
     "xide/mixins/EventedMixin",
     "xide/types",
     'xide/utils',
     'dojo/Deferred'
-], function (dcl, lang, ResourceManager, ReloadMixin, EventedMixin, types, utils,Deferred) {
+], function (dcl, lang, has, ResourceManager, ReloadMixin, EventedMixin, types, utils, Deferred) {
     return dcl([ResourceManager, EventedMixin.dcl, ReloadMixin.dcl], {
         declaredClass: "xfile.manager.MountManager",
         serviceClass: "XApp_Resource_Service",
@@ -42606,133 +42607,133 @@ define('xfile/manager/MountManager',[
 
         },
         registerLocalMount: function (mount) {
-/*
-            var name = mount ? mount.name : '';
-            var path = mount ? mount.path : '';
-            if (mount && mount.config && mount.config.path) {
-                path = mount.config.path;
-            }
-            var thiz = this;
-            var actionDialog = new CIActionDialog({
-                title: name ? 'Edit Mount ' + name : 'New Local Mount',
-                style: 'max-width:400px;min-height:300px',
-                delegate: {
-                    onOk: function (dlg, data) {
-                        thiz._onDialogOk(dlg, data, mount);
-                    }
-                },
-                cis: [
-                    utils.createCI('label', 13, '', {
-                        group: 'Common',
-                        title: 'Name',
-                        value: name
-                    }),
-                    utils.createCI('path', 13, '', {
-                        group: 'Common',
-                        title: 'Path',
-                        value: path
-                    }),
-                    utils.createCI('type', 13, '', {
-                        visible: false,
-                        value: "FILE_PROXY"
-                    })
-                ]
-            });
-            actionDialog.show();
-            */
+            /*
+                        var name = mount ? mount.name : '';
+                        var path = mount ? mount.path : '';
+                        if (mount && mount.config && mount.config.path) {
+                            path = mount.config.path;
+                        }
+                        var thiz = this;
+                        var actionDialog = new CIActionDialog({
+                            title: name ? 'Edit Mount ' + name : 'New Local Mount',
+                            style: 'max-width:400px;min-height:300px',
+                            delegate: {
+                                onOk: function (dlg, data) {
+                                    thiz._onDialogOk(dlg, data, mount);
+                                }
+                            },
+                            cis: [
+                                utils.createCI('label', 13, '', {
+                                    group: 'Common',
+                                    title: 'Name',
+                                    value: name
+                                }),
+                                utils.createCI('path', 13, '', {
+                                    group: 'Common',
+                                    title: 'Path',
+                                    value: path
+                                }),
+                                utils.createCI('type', 13, '', {
+                                    visible: false,
+                                    value: "FILE_PROXY"
+                                })
+                            ]
+                        });
+                        actionDialog.show();
+                        */
         },
         registerFTP: function (mount) {
-/*
-            mount = mount || {};
-            var config = mount.config || {};
-
-
-            var thiz = this;
-            var actionDialog = new CIActionDialog({
-                title: mount.name ? 'Edit Ftp ' + mount.name : 'New Ftp',
-                style: 'max-width:400px',
-                delegate: {
-                    onOk: function (dlg, data) {
-                        thiz._onDialogOk(dlg, data, mount);
-                    }
-                },
-                cis: [
-                    xide.utils.createCI('label', 13, '', {
-                        group: 'Common',
-                        title: 'Name',
-                        value: mount.name
-
-                    }),
-                    xide.utils.createCI('root', 13, '', {
-                        group: 'Ftp',
-                        title: 'Start Path',
-                        value: config.root,
-                        user: {
-                            config: true
-                        }
-
-                    }),
-                    xide.utils.createCI('adapter', 13, '', {
-                        visible: false,
-                        value: 'Ftp'
-                    }),
-                    xide.utils.createCI('host', 13, '', {
-                        group: 'Ftp',
-                        title: 'Host',
-                        user: {
-                            config: true
-                        },
-                        value: config.host
-                    }),
-                    xide.utils.createCI('username', 13, '', {
-                        group: 'Ftp',
-                        title: 'User',
-                        user: {
-                            config: true
-                        },
-                        value: config.username
-                    }),
-                    xide.utils.createCI('password', 13, '', {
-                        group: 'Ftp',
-                        title: 'Password',
-                        user: {
-                            config: true
-                        },
-                        value: config.password
-                    }),
-                    xide.utils.createCI('passive', 0, '', {
-                        group: 'Ftp',
-                        title: 'Passive',
-                        user: {
-                            config: true
-                        },
-                        value: config.passive
-                    }),
-                    xide.utils.createCI('ssl', 0, '', {
-                        group: 'Ftp',
-                        title: 'SSL',
-                        user: {
-                            config: true
-                        },
-                        value: config.ssl != null ? config.ssl : false
-                    }),
-                    xide.utils.createCI('port', 13, '', {
-                        group: 'Ftp',
-                        title: 'Port',
-                        user: {
-                            config: true
-                        },
-                        value: config.port != null ? config.port : 21
-                    }),
-                    xide.utils.createCI('type', 13, '', {
-                        visible: false,
-                        value: "REMOTE_FILE_PROXY"
-                    })
-
-                ]
-            });
-            actionDialog.show();
-            */
+            /*
+                        mount = mount || {};
+                        var config = mount.config || {};
+            
+            
+                        var thiz = this;
+                        var actionDialog = new CIActionDialog({
+                            title: mount.name ? 'Edit Ftp ' + mount.name : 'New Ftp',
+                            style: 'max-width:400px',
+                            delegate: {
+                                onOk: function (dlg, data) {
+                                    thiz._onDialogOk(dlg, data, mount);
+                                }
+                            },
+                            cis: [
+                                xide.utils.createCI('label', 13, '', {
+                                    group: 'Common',
+                                    title: 'Name',
+                                    value: mount.name
+            
+                                }),
+                                xide.utils.createCI('root', 13, '', {
+                                    group: 'Ftp',
+                                    title: 'Start Path',
+                                    value: config.root,
+                                    user: {
+                                        config: true
+                                    }
+            
+                                }),
+                                xide.utils.createCI('adapter', 13, '', {
+                                    visible: false,
+                                    value: 'Ftp'
+                                }),
+                                xide.utils.createCI('host', 13, '', {
+                                    group: 'Ftp',
+                                    title: 'Host',
+                                    user: {
+                                        config: true
+                                    },
+                                    value: config.host
+                                }),
+                                xide.utils.createCI('username', 13, '', {
+                                    group: 'Ftp',
+                                    title: 'User',
+                                    user: {
+                                        config: true
+                                    },
+                                    value: config.username
+                                }),
+                                xide.utils.createCI('password', 13, '', {
+                                    group: 'Ftp',
+                                    title: 'Password',
+                                    user: {
+                                        config: true
+                                    },
+                                    value: config.password
+                                }),
+                                xide.utils.createCI('passive', 0, '', {
+                                    group: 'Ftp',
+                                    title: 'Passive',
+                                    user: {
+                                        config: true
+                                    },
+                                    value: config.passive
+                                }),
+                                xide.utils.createCI('ssl', 0, '', {
+                                    group: 'Ftp',
+                                    title: 'SSL',
+                                    user: {
+                                        config: true
+                                    },
+                                    value: config.ssl != null ? config.ssl : false
+                                }),
+                                xide.utils.createCI('port', 13, '', {
+                                    group: 'Ftp',
+                                    title: 'Port',
+                                    user: {
+                                        config: true
+                                    },
+                                    value: config.port != null ? config.port : 21
+                                }),
+                                xide.utils.createCI('type', 13, '', {
+                                    visible: false,
+                                    value: "REMOTE_FILE_PROXY"
+                                })
+            
+                            ]
+                        });
+                        actionDialog.show();
+                        */
         },
         registerSFTP: function (mount) {
             /*
@@ -42918,10 +42919,10 @@ define('xfile/manager/MountManager',[
         },
         onMountDataReady: function (data) {
             this.mountData = data;
-            this.publish(types.EVENTS.ON_MOUNT_DATA_READY, {data: data});
+            this.publish(types.EVENTS.ON_MOUNT_DATA_READY, { data: data });
             var thiz = this;
             setTimeout(function () {
-                thiz.publish(types.EVENTS.ON_MOUNT_DATA_READY, {data: data});
+                thiz.publish(types.EVENTS.ON_MOUNT_DATA_READY, { data: data });
             }, 4000);
         },
         check: function () {
@@ -42952,17 +42953,20 @@ define('xfile/manager/MountManager',[
         },
 
         ls: function (readyCB) {
-            function data(_data){
+            function data(_data) {
+                if (!has('debug')) {
+                    _data = _data[0];
+                }
                 this.mountData = _data;
                 this.onMountDataReady(_data);
                 if (readyCB) {
                     readyCB(_data);
                 }
             }
-            if(!_.isEmpty(this.prefetch)){
+            if (!_.isEmpty(this.prefetch)) {
                 var dfd = new Deferred();
                 dfd.resolve(this.prefetch);
-                data.apply(this,[this.prefetch]);
+                data.apply(this, [this.prefetch]);
                 delete this.prefetch;
                 return dfd;
             }

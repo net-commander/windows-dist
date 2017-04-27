@@ -64356,7 +64356,7 @@ define('xfile/manager/FileManager',[
                 }
             }
             if(has('php')) {
-                var _path = this.serviceObject.base64_encode(utils.buildPath(mount, path, true));
+                var _path = utils.buildPath(mount, path, false);
                 return this.callMethod(types.OPERATION.GET_CONTENT, [_path, false, false], readyCB, false);
             }else{
                 return this._getText(require.toUrl(mount).replace('main.js','') + '/' + path,{
