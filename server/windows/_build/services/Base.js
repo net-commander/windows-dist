@@ -49,7 +49,7 @@ class BaseService extends Resolver_1.ResourceResolver {
                 return user;
             }
             // try to pick userDirectory from url
-            urlArgs = qs(url.parse(request.url).query);
+            urlArgs = request.query;
             user = urlArgs['userDirectory'];
             if (user) {
                 return user;

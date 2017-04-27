@@ -1,6 +1,6 @@
 {
-  "name": "xcf-server",
-  "version": "0.1.5",
+  "name": "control-freak",
+  "version": "1.0.3",
   "contributors": [
     {
       "name": "Günter Baumgart",
@@ -10,7 +10,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git://github.com/net-commander/web-server-dist.git"
+    "url": "https://github.com/xblox/control-freak.git"
   },
   "dependencies": {
     "@xblox/core": "0.0.17",
@@ -88,7 +88,12 @@
     "player": "git+https://github.com/xblox/player.git",
     "johnny-five": "^0.10.6"
   },
-  "scripts": {},
+  "scripts": {
+	  "start":"node _build/index.js --type=OFFLINE_RELEASE --release=true --root='./'"
+  },
+  "bin":{
+    "control-freak":"bin/control-freak.js"
+  },
   "licenses": [
     {
       "type": "BSD",

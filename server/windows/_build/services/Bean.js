@@ -10,7 +10,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 const Directory_1 = require("../applications/ControlFreak/services/Directory");
 const Resource_1 = require("../interfaces/Resource");
 const Query_1 = require("../resource/Query");
-const write = require('write-file-atomic');
+const file_1 = require("../io/file");
 const io = {
     parse: JSON.parse,
     serialize: JSON.stringify
@@ -35,7 +35,7 @@ class BeanService extends Directory_1.DirectoryService {
             const resource = new Query_1.ResourceQuery(yield this.getMetaData(scope, path, this._getRequest(arguments)));
             const data = resource.set('', dataPath.replace('/', ''), query, value);
             const dst = this.resolvePath(scope, path, this._getRequest(arguments));
-            write.sync(dst, io.serialize(data, null, 4), this.WRITE_MODE);
+            file_1.write(dst, io.serialize(data, null, 4), this.WRITE_MODE);
             return data;
         });
     }

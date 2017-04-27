@@ -30,7 +30,11 @@ if (_argv.h || _argv.help) {
 */
 let argv = yargs_parser(process.argv.slice(2));
 let app = argv.app ? yargs_parser.app : "ControlFreak";
-const root = argv.root ? path.resolve(argv.root) : path.resolve('../../../');
+let root = argv.root ? path.resolve(argv.root) : path.resolve('../../../');
+if (argv.nodejs && !argv.root) {
+    root = path.resolve(path.join(__dirname, '..'));
+    process.chdir(root);
+}
 if (argv.file) {
 }
 const CFOptions = {
@@ -41,6 +45,7 @@ const CFOptions = {
     type: argv.type || Base_1.ELayout.SOURCE,
     print: argv.print === 'true',
     uuid: argv.uuid || 'ide',
+    user: argv.user ? path.resolve(argv.user) : null,
     persistence: argv.persistences ? argv.persistence : Application_1.EPersistence.MEMORY
 };
 function create(app) {

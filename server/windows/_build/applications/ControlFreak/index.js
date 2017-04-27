@@ -241,7 +241,8 @@ class ControlFreak extends Base_1.ApplicationBase {
         const APP_ROOT = this.root;
         const CLIENT_ROOT = path.join(APP_ROOT, 'Code/client/src/');
         const NODE_ROOT = options.release ? process.cwd() : path.join(APP_ROOT, 'server/nodejs/');
-        const USER_DIRECTORY = path.join(APP_ROOT, '/user');
+        const USER_DIRECTORY = options.user || path.join(APP_ROOT, '/user');
+        console_1.console.log('at : ', options.user);
         const DATA_ROOT = path.join(APP_ROOT, '/data/');
         let DB_ROOT = null;
         if (this.options.persistence === Application_1.EPersistence.MONGO) {
@@ -639,7 +640,7 @@ class ControlFreak extends Base_1.ApplicationBase {
         dst[Base_1.EEKey.RPC_URL] = this._env(origin, Base_1.EEKey.RPC_URL)(origin);
         dst['VFS_URL'] = origin + '/files/';
         dst[Base_1.EEKey.ROOT] = origin + '/';
-        const urlArgs = qs(ctx.request.req.url);
+        const urlArgs = ctx.request.query;
         let USER_DIRECTORY = urlArgs['userDirectory'];
         if (USER_DIRECTORY) {
             dst[Base_1.EEKey.USER_DIRECTORY] = USER_DIRECTORY;
@@ -654,8 +655,17 @@ class ControlFreak extends Base_1.ApplicationBase {
         dst[Base_1.EEKey.RESOURCE_VARIABLES] = io_1.io.serialize(dst);
         const settingsService = this[Base_1.ESKey.SettingsService];
         if (settingsService) {
-            const theme = _.find(settingsService.get('settings', '.', null, ctx.request)['settings'], { id: 'theme' })['value'] || ctx.params.theme || 'white';
-            dst[Base_1.EEKey.THEME] = theme;
+            try {
+                let theme = ctx.params.theme || 'white';
+                const t = _.find(settingsService.get('settings', '.', null, ctx.request)['settings'], { id: 'theme' });
+                if (t && t['value']) {
+                    theme = t['value'];
+                }
+                dst[Base_1.EEKey.THEME] = theme;
+            }
+            catch (e) {
+                console_1.console.error('Cant read settings file, user = ' + USER_DIRECTORY, e);
+            }
         }
         return dst;
     }
@@ -880,13 +890,14 @@ class ControlFreak extends Base_1.ApplicationBase {
                 const dojoRequire = amdRequire(path.join(this.path(Base_1.EEKey.CLIENT_ROOT), '/lib'), this.path('NODE_ROOT'));
                 const loader = this.options.release ? 'nxappmain/main_server_ts_build' : 'nxappmain/main_server_ts';
                 console_1.console.info('ControlFreak#run : load device server application');
+                console_1.console.info('ControlFreak#run : User workspace : ' + this.path(Base_1.EEKey.USER_DIRECTORY));
                 // as we don't really consume/mix AMD modules, we get the data over the xide/Context
                 global.process.on('device-server-ready', (context) => {
                     // @TODO: v1 context in v2 app?
                     this.deviceServer = context;
                     context.setAppServer(this);
                     console_1.console.info('ControlFreak#run : device server ready');
-                    console_1.console.info('ControlFreak	can be accessed at http://0.0.0.0:' + port + '/app/xcf');
+                    console_1.console.info('ControlFreak	can be accessed at http://0.0.0.0:' + port + '/app/xcf?userDirectory=' + encodeURIComponent(this.path(Base_1.EEKey.USER_DIRECTORY)));
                     resolve(context);
                 });
                 try {
