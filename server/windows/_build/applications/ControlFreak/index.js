@@ -38,18 +38,23 @@ const os = require("os");
 const file_1 = require("../../io/file");
 const json_1 = require("../../io/json");
 const yargs_parser = require("yargs-parser");
+const console_1 = require("../../console");
+const io_1 = require("../../interfaces/io");
+const cli_1 = require("./cli");
+cli_1.create();
 const mount = require('koa-mount');
-const qs = require('qs').parse;
 const argv = yargs_parser(process.argv.slice(2));
 const util = require('util');
 const osTmpdir = require('os-tmpdir');
 const mkdirp = require('mkdirp');
-const console_1 = require("../../console");
-const io_1 = require("../../interfaces/io");
 const MODULE_ROOT = "../../";
 const COMPONENT_ROOT = "../../components/";
 const index_2 = require("../../server/index");
 const interfaces_1 = require("../../fs/interfaces");
+//import { test } from '../../vfs/github/Github';
+//test();
+//import { async as copyAsync } from '../../fs/copy';
+//import { async as removeAsync } from '../../fs/remove';
 const progress = function (path, current, total, item) {
     return true;
 };
@@ -242,7 +247,6 @@ class ControlFreak extends Base_1.ApplicationBase {
         const CLIENT_ROOT = path.join(APP_ROOT, 'Code/client/src/');
         const NODE_ROOT = options.release ? process.cwd() : path.join(APP_ROOT, 'server/nodejs/');
         const USER_DIRECTORY = options.user || path.join(APP_ROOT, '/user');
-        console_1.console.log('at : ', options.user);
         const DATA_ROOT = path.join(APP_ROOT, '/data/');
         let DB_ROOT = null;
         if (this.options.persistence === Application_1.EPersistence.MONGO) {
@@ -315,6 +319,12 @@ class ControlFreak extends Base_1.ApplicationBase {
         this.config = params;
         this.config[Base_1.EEKey.NODE_ROOT] = NODE_ROOT;
         this.profile = this._getProfile(argv.profile);
+        if (argv.port) {
+            this.profile.http.port = argv.port;
+        }
+        if (argv.host) {
+            this.profile.http.host = argv.host;
+        }
         if (argv.print === 'true') {
             console_1.console.log("Config", util.inspect(params));
             console_1.console.log('\n\n');
@@ -325,7 +335,7 @@ class ControlFreak extends Base_1.ApplicationBase {
         let data = null;
         try {
             _path = _path ? path.resolve(_path) : path.join(this.path(Base_1.EEKey.NODE_ROOT), 'nxappmain/profile_device_server.json');
-            console_1.console.info('ControlFreak: use server profile from ' + _path);
+            console_1.console.info('ControlFreak#init : use server profile from ' + _path);
             data = json_1.deserialize(file_1.read(_path));
         }
         catch (e) {
@@ -336,7 +346,8 @@ class ControlFreak extends Base_1.ApplicationBase {
                 port: 27017
             },
             http: {
-                port: 5555
+                port: 5555,
+                host: "0.0.0.0"
             }
         };
     }
@@ -860,6 +871,34 @@ class ControlFreak extends Base_1.ApplicationBase {
         };
         return dojoConfig;
     }
+    getIps() {
+        const ifaces = os.networkInterfaces();
+        const ips = [];
+        Object.keys(ifaces).forEach(function (ifname) {
+            let alias = 0;
+            ifaces[ifname].forEach(function (iface) {
+                if ('IPv4' !== iface.family || iface.internal !== false) {
+                    // skip over internal (i.e. 127.0.0.1) and non-ipv4 addresses
+                    return;
+                }
+                if (alias >= 1) {
+                    // this single interface has multiple ipv4 addresses
+                    ips.push({
+                        face: ifname + alias,
+                        ip: iface.address
+                    });
+                }
+                else {
+                    ips.push({
+                        face: ifname,
+                        ip: iface.address
+                    });
+                }
+                ++alias;
+            });
+        });
+        return ips;
+    }
     run(deviceServer = true) {
         const _super = name => super[name];
         return __awaiter(this, void 0, void 0, function* () {
@@ -874,8 +913,9 @@ class ControlFreak extends Base_1.ApplicationBase {
                 console_1.console.info('ControlFreak#run : serve www at : ' + this.path(Base_1.EEKey.APP_ROOT));
                 this.use(convert(serve(this.path(Base_1.EEKey.APP_ROOT), { maxage: 1 })));
                 const port = this.profile.http.port || this.options.port || process.env.PORT || 5555;
-                console_1.console.info('ControlFreak#run : create HTTP server at 0.0.0.0:' + port);
-                this.server.listen(port, '0.0.0.0');
+                const host = this.profile.http.host || this.options.host || process.env.HOST || '0.0.0.0';
+                console_1.console.info('ControlFreak#run : create HTTP server at ' + host + ':' + port);
+                this.server.listen(port, host);
                 if (!deviceServer) {
                     return Promise.resolve(true);
                 }
@@ -897,7 +937,13 @@ class ControlFreak extends Base_1.ApplicationBase {
                     this.deviceServer = context;
                     context.setAppServer(this);
                     console_1.console.info('ControlFreak#run : device server ready');
-                    console_1.console.info('ControlFreak	can be accessed at http://0.0.0.0:' + port + '/app/xcf?userDirectory=' + encodeURIComponent(this.path(Base_1.EEKey.USER_DIRECTORY)));
+                    console_1.console.info('ControlFreak	can be accessed at http://' + host + ':' + port + '/app/xcf?userDirectory=' + encodeURIComponent(this.path(Base_1.EEKey.USER_DIRECTORY)));
+                    if (host === '0.0.0.0') {
+                        const ips = this.getIps();
+                        ips.forEach((ip) => {
+                            console_1.console.info('\t Found iface ' + ip.face + ' \t with IP = ' + ip.ip);
+                        });
+                    }
                     resolve(context);
                 });
                 try {
