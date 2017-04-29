@@ -77,8 +77,8 @@
     "winston": "^2.3.1",
     "write-file-atomic": "^1.3.1",
     "xcf-server-misc": "^0.3.0",
-    "yargs": "^6.6.0",
-    "yargs-parser": "^5.0.0"
+    "yargs-parser": "^5.0.0",
+	"yargs": "^6.6.0"
   },
   "devDependencies": {},
   "optionalDependencies": {
@@ -90,10 +90,10 @@
     "johnny-five": "^0.10.6"
   },
   "scripts": {
-    "start": "node _build/index.js --type=OFFLINE_RELEASE --release=true --root='./'"
+	  "start":"node _build/index.js --type=OFFLINE_RELEASE --release=true --root='./'"
   },
-  "bin": {
-    "control-freak": "bin/control-freak.js"
+  "bin":{
+    "control-freak":"bin/control-freak.js"
   },
   "licenses": [
     {
