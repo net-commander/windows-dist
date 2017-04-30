@@ -74,24 +74,22 @@ class DirectoryService extends Base_1.BaseService {
     }
     // implement IVFS#get for non sending mode
     _get(path, attachment, send, request) {
-        return __awaiter(this, arguments, void 0, function* () {
-            const args = arguments;
-            return new Promise((resolve, reject) => {
-                const split = path.split('://');
-                const mount = split[0];
-                const vfs = this.getVFS(mount, this._getRequest(args));
-                path = split[1];
-                if (!vfs) {
-                    reject('Cant find VFS for ' + mount);
-                }
-                try {
-                    vfs.get(path).then(resolve, reject);
-                    return;
-                }
-                catch (e) {
-                    reject(e);
-                }
-            });
+        const args = arguments;
+        return new Promise((resolve, reject) => {
+            const split = path.split('://');
+            const mount = split[0];
+            const vfs = this.getVFS(mount, this._getRequest(args));
+            path = split[1];
+            if (!vfs) {
+                reject('Cant find VFS for ' + mount);
+            }
+            try {
+                vfs.get(path).then(resolve, reject);
+                return;
+            }
+            catch (e) {
+                reject(e);
+            }
         });
     }
     // implement IVFS#get
@@ -106,24 +104,22 @@ class DirectoryService extends Base_1.BaseService {
     }
     // implement IVFS#set
     set(mount, path, content, reqest = null) {
-        return __awaiter(this, arguments, void 0, function* () {
-            const args = arguments;
-            return new Promise((resolve, reject) => {
-                const vfs = this.getVFS(mount, this._getRequest(args));
-                if (vfs) {
-                    // IVFS - 2.0
-                    if (typeof vfs['set'] === 'function') {
-                        vfs.set(path, content).then(() => resolve(true));
-                        return;
-                    }
-                    // IVFS 1.0
-                    vfs.writefile(this.resolvePath(mount, path, this._getRequest(args)), content, this.WRITE_MODE);
-                    resolve(true);
+        const args = arguments;
+        return new Promise((resolve, reject) => {
+            const vfs = this.getVFS(mount, this._getRequest(args));
+            if (vfs) {
+                // IVFS - 2.0
+                if (typeof vfs['set'] === 'function') {
+                    vfs.set(path, content).then(() => resolve(true));
+                    return;
                 }
-                else {
-                    reject('Cant find VFS for ' + mount);
-                }
-            });
+                // IVFS 1.0
+                vfs.writefile(this.resolvePath(mount, path, this._getRequest(args)), content, this.WRITE_MODE);
+                resolve(true);
+            }
+            else {
+                reject('Cant find VFS for ' + mount);
+            }
         });
     }
     // implement IVFS#rename
@@ -271,41 +267,39 @@ class DirectoryService extends Base_1.BaseService {
     // implement IVFS#rm
     // @TODO: ugly back compat for xphp in here!
     delete(selection, options, reqest = null) {
-        return __awaiter(this, arguments, void 0, function* () {
-            const args = arguments;
-            return new Promise((resolve, reject) => {
-                const first = selection[0];
-                const mount = first.split('/')[0];
-                const vfs = this.getVFS(mount, this._getRequest(args));
-                let error = null;
-                if (!vfs) {
-                    reject('Cant find VFS for ' + mount);
-                }
-                // VFS 2.0
-                if (typeof vfs['remove'] === 'function') {
-                    let paths = selection.map((_path) => {
-                        let parts = _path.split('/');
-                        parts.shift();
-                        return parts.join('/');
-                    });
-                    const ops = [];
-                    paths.forEach((path) => { ops.push(vfs.remove(path)); });
-                    Promise.all(ops).then(() => { resolve(true); }).catch(reject);
-                    return;
-                }
-                selection.forEach((_path) => {
+        const args = arguments;
+        return new Promise((resolve, reject) => {
+            const first = selection[0];
+            const mount = first.split('/')[0];
+            const vfs = this.getVFS(mount, this._getRequest(args));
+            let error = null;
+            if (!vfs) {
+                reject('Cant find VFS for ' + mount);
+            }
+            // VFS 2.0
+            if (typeof vfs['remove'] === 'function') {
+                let paths = selection.map((_path) => {
                     let parts = _path.split('/');
                     parts.shift();
-                    _path = parts.join('/');
-                    try {
-                        vfs.rm(this.resolvePath(mount, _path, this._getRequest(args)), {}, resolve, reject);
-                    }
-                    catch (e) {
-                        reject(e);
-                    }
+                    return parts.join('/');
                 });
-                error ? reject(error) : resolve(true);
+                const ops = [];
+                paths.forEach((path) => { ops.push(vfs.remove(path)); });
+                Promise.all(ops).then(() => { resolve(true); }).catch(reject);
+                return;
+            }
+            selection.forEach((_path) => {
+                let parts = _path.split('/');
+                parts.shift();
+                _path = parts.join('/');
+                try {
+                    vfs.rm(this.resolvePath(mount, _path, this._getRequest(args)), {}, resolve, reject);
+                }
+                catch (e) {
+                    reject(e);
+                }
             });
+            error ? reject(error) : resolve(true);
         });
     }
     createVFSClass(resource) {
@@ -407,45 +401,43 @@ class DirectoryService extends Base_1.BaseService {
         return result;
     }
     _ls(path, mount, options, recursive = false) {
-        return __awaiter(this, arguments, void 0, function* () {
-            const self = this, args = arguments;
-            return new Promise((resolve, reject) => {
-                const vfs = this.getVFS(mount, this._getRequest(args));
-                if (!vfs) {
-                    reject(`cant get VFS for mount '${mount}'`);
-                }
-                // try v2 VFS
-                if (typeof vfs.ls === 'function') {
-                    try {
-                        vfs.ls(path, mount, options).then((nodes) => { resolve(nodes); });
-                        return;
-                    }
-                    catch (e) {
-                        reject(e);
-                    }
-                }
-                // v1 VFS
+        const self = this, args = arguments;
+        return new Promise((resolve, reject) => {
+            const vfs = this.getVFS(mount, this._getRequest(args));
+            if (!vfs) {
+                reject(`cant get VFS for mount '${mount}'`);
+            }
+            // try v2 VFS
+            if (typeof vfs.ls === 'function') {
                 try {
-                    const root = this.resolvePath(mount, '', this._getRequest(args));
-                    vfs.readdir(path, {}, (err, meta) => {
-                        if (err) {
-                            console.error('error reading directory ' + path);
-                            reject(err);
-                        }
-                        if (!meta) {
-                            reject('something wrong');
-                        }
-                        const nodes = [];
-                        meta.stream.on('data', (data) => nodes.push(self.mapNode(data, mount, root)));
-                        meta.stream.on('end', () => {
-                            resolve(nodes);
-                        });
-                    });
+                    vfs.ls(path, mount, options).then((nodes) => { resolve(nodes); });
+                    return;
                 }
                 catch (e) {
                     reject(e);
                 }
-            });
+            }
+            // v1 VFS
+            try {
+                const root = this.resolvePath(mount, '', this._getRequest(args));
+                vfs.readdir(path, {}, (err, meta) => {
+                    if (err) {
+                        console.error('error reading directory ' + path);
+                        reject(err);
+                    }
+                    if (!meta) {
+                        reject('something wrong');
+                    }
+                    const nodes = [];
+                    meta.stream.on('data', (data) => nodes.push(self.mapNode(data, mount, root)));
+                    meta.stream.on('end', () => {
+                        resolve(nodes);
+                    });
+                });
+            }
+            catch (e) {
+                reject(e);
+            }
         });
     }
     // implement IVFS#ls

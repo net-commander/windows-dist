@@ -120,30 +120,28 @@ class DeviceService extends Bean_1.BeanService {
         this.method = 'XCF_Device_Service';
     }
     createItem(ciList) {
-        return __awaiter(this, arguments, void 0, function* () {
-            const args = arguments;
-            return new Promise((resolve, reject) => {
-                const cis = { inputs: ciList };
-                // 3 mand. fields to satisfy by client:  -> mount/folder/title (.meta.json)
-                const scope = CIUtils_1.getCIInputValueByName(cis, 'Scope');
-                const title = CIUtils_1.getCIInputValueByName(cis, 'Title');
-                const group = CIUtils_1.getCIInputValueByName(cis, 'In Group');
-                const vfs = this.getVFS(scope, this._getRequest(args));
-                if (!vfs) {
-                    reject('Cant find VFS for mount :' + scope);
-                }
-                const _CIS = exports.MK_DEVICE_CIS(cis);
-                const device = {
-                    inputs: _CIS
-                };
-                try {
-                    vfs.writefile(this.resolvePath(scope, path.sep + group + path.sep + title + META_FILE_EXT, this._getRequest(args)), JSON.stringify(device, null, 4), this.WRITE_MODE);
-                }
-                catch (e) {
-                    reject(e);
-                }
-                resolve(_CIS);
-            });
+        const args = arguments;
+        return new Promise((resolve, reject) => {
+            const cis = { inputs: ciList };
+            // 3 mand. fields to satisfy by client:  -> mount/folder/title (.meta.json)
+            const scope = CIUtils_1.getCIInputValueByName(cis, 'Scope');
+            const title = CIUtils_1.getCIInputValueByName(cis, 'Title');
+            const group = CIUtils_1.getCIInputValueByName(cis, 'In Group');
+            const vfs = this.getVFS(scope, this._getRequest(args));
+            if (!vfs) {
+                reject('Cant find VFS for mount :' + scope);
+            }
+            const _CIS = exports.MK_DEVICE_CIS(cis);
+            const device = {
+                inputs: _CIS
+            };
+            try {
+                vfs.writefile(this.resolvePath(scope, path.sep + group + path.sep + title + META_FILE_EXT, this._getRequest(args)), JSON.stringify(device, null, 4), this.WRITE_MODE);
+            }
+            catch (e) {
+                reject(e);
+            }
+            resolve(_CIS);
         });
     }
     getItems(directory, scope, options) {
@@ -197,14 +195,10 @@ class DeviceService extends Bean_1.BeanService {
         });
     }
     ls(mount, path, options, recursive = false) {
-        return __awaiter(this, arguments, void 0, function* () {
-            return this._ls.apply(this, arguments);
-        });
+        return this._ls.apply(this, arguments);
     }
     updateItemMetaData(path, mount, options, recursive = false) {
-        return __awaiter(this, arguments, void 0, function* () {
-            return this._updateItemMetaData.apply(this, arguments);
-        });
+        return this._updateItemMetaData.apply(this, arguments);
     }
     //
     // ─── DECORATOR OVERHEAD ─────────────────────────────────────────────────────────
@@ -245,13 +239,13 @@ __decorate([
     Base_2.RpcMethod,
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String, String, Object, Boolean]),
-    __metadata("design:returntype", Promise)
+    __metadata("design:returntype", void 0)
 ], DeviceService.prototype, "ls", null);
 __decorate([
     Base_2.RpcMethod,
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String, String, Object, Boolean]),
-    __metadata("design:returntype", Promise)
+    __metadata("design:returntype", void 0)
 ], DeviceService.prototype, "updateItemMetaData", null);
 exports.DeviceService = DeviceService;
 function getDevices(directory, scope, options) {

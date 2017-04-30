@@ -1,6 +1,7 @@
 "use strict";
 const cli = require("yargs");
-const pathUtil = require("path");
+const path = require("path");
+//import * as global from '../../global';
 function create() {
     const argv = cli.argv;
     const cwd = process.cwd();
@@ -21,7 +22,6 @@ function create() {
         description: 'Specify control-freak root directory'
     });
     cli.options('port', {
-        alias: 'p',
         description: 'Specify http server port',
         default: "5555"
     });
@@ -29,6 +29,10 @@ function create() {
         alias: 'h',
         description: 'Specify http host',
         default: "0.0.0.0"
+    });
+    cli.options('print', {
+        description: 'verbose',
+        default: false
     });
     cli.options('info', {
         alias: 'i',
@@ -39,18 +43,10 @@ function create() {
         process.exit();
     }
     else if (argv.v || argv.version) {
-        const pkginfo = require(pathUtil.join(cwd, './package.json'));
+        const pkginfo = require(path.join(cwd, './package.json'));
         console.log(pkginfo.version);
         process.exit();
     }
 }
 exports.create = create;
-/*
-const defaultArgs = (yargs) => {
-    return yargs.option('target', {
-        alias: 'target',
-        "default": process.cwd()
-    });
-}
-*/
 //# sourceMappingURL=cli.js.map

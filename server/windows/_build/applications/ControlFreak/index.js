@@ -42,6 +42,7 @@ const console_1 = require("../../console");
 const io_1 = require("../../interfaces/io");
 const cli_1 = require("./cli");
 cli_1.create();
+//import {} from './desktop/app';
 const mount = require('koa-mount');
 const argv = yargs_parser(process.argv.slice(2));
 const util = require('util');
@@ -709,9 +710,7 @@ class ControlFreak extends Base_1.ApplicationBase {
         }));
         // RPC services
         const services = this.rpcServices();
-        _.each(services, service => {
-            register_1.registerService(this.rpc2, service, this);
-        });
+        _.each(services, (service) => register_1.registerService(this.rpc2, service, this));
         // Generics
         this.use(convert(bodyParser({
             formLimit: null
@@ -739,7 +738,7 @@ class ControlFreak extends Base_1.ApplicationBase {
                     last = service;
                     res.push(yield service.stop());
                 }
-                return Promise.resolve(res);
+                return Promise.all(res);
             }
             catch (e) {
                 console_1.console.error('Error stopping ' + last.label(), e);

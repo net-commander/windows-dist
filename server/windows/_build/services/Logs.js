@@ -78,25 +78,23 @@ class LogsService extends Bean_1.BeanService {
         });
     }
     clearAbs(path) {
-        return __awaiter(this, arguments, void 0, function* () {
-            const args = arguments;
-            const request = this._getRequest(args);
-            if (!request) {
-                console.error('no request');
+        const args = arguments;
+        const request = this._getRequest(args);
+        if (!request) {
+            console.error('no request');
+        }
+        return new Promise((resolve, reject) => {
+            const first = path;
+            const mount = first.split('/')[0];
+            const vfs = this.getVFS(mount, request);
+            if (!vfs) {
+                reject('Cant find VFS for ' + mount);
             }
-            return new Promise((resolve, reject) => {
-                const first = path;
-                const mount = first.split('/')[0];
-                const vfs = this.getVFS(mount, request);
-                if (!vfs) {
-                    reject('Cant find VFS for ' + mount);
-                }
-                let parts = path.split('/');
-                parts.shift();
-                path = parts.join('/');
-                const pathAbs = this.resolvePath(mount, path, request);
-                write.sync(pathAbs, "", {});
-            });
+            let parts = path.split('/');
+            parts.shift();
+            path = parts.join('/');
+            const pathAbs = this.resolvePath(mount, path, request);
+            write.sync(pathAbs, "", {});
         });
     }
     //
@@ -126,7 +124,7 @@ __decorate([
     Base_1.RpcMethod,
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
-    __metadata("design:returntype", Promise)
+    __metadata("design:returntype", void 0)
 ], LogsService.prototype, "clearAbs", null);
 exports.LogsService = LogsService;
 //# sourceMappingURL=Logs.js.map
