@@ -1,4 +1,5 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 function promisify(f, thisContext) {
     return function () {
         let args = Array.prototype.slice.call(arguments);

@@ -7,6 +7,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+Object.defineProperty(exports, "__esModule", { value: true });
 const Base_1 = require("./../Base");
 const index_1 = require("../../interfaces/index");
 const Application_1 = require("../../interfaces/Application");
@@ -42,7 +43,7 @@ const console_1 = require("../../console");
 const io_1 = require("../../interfaces/io");
 const cli_1 = require("./cli");
 cli_1.create();
-//import {} from './desktop/app';
+const app_2 = require("./desktop/app");
 const mount = require('koa-mount');
 const argv = yargs_parser(process.argv.slice(2));
 const util = require('util');
@@ -50,7 +51,6 @@ const osTmpdir = require('os-tmpdir');
 const mkdirp = require('mkdirp');
 const MODULE_ROOT = "../../";
 const COMPONENT_ROOT = "../../components/";
-const index_2 = require("../../server/index");
 const interfaces_1 = require("../../fs/interfaces");
 //import { test } from '../../vfs/github/Github';
 //test();
@@ -683,7 +683,7 @@ class ControlFreak extends Base_1.ApplicationBase {
     }
     routes() {
         if (this._routes) {
-            return this._routes;
+            //return this._routes;
         }
         const filesRoute = files_1.create(this.directoryService, '/files', this);
         const uploadRoute = uploads_1.create(this.directoryService, '/upload', this);
@@ -692,7 +692,7 @@ class ControlFreak extends Base_1.ApplicationBase {
         _.each(components, component => {
             componentRoutes.push(...component.routes());
         });
-        this._routes = [filesRoute, app_1.default, smd_1.default, uploadRoute];
+        this._routes = [uploadRoute, app_1.default, smd_1.default, filesRoute];
         this._routes.push(...componentRoutes);
         return this._routes;
     }
@@ -704,10 +704,11 @@ class ControlFreak extends Base_1.ApplicationBase {
         rpcApp.use(convert(this.rpc2.app()));
         this.use(convert(mount('/api', rpcApp)));
         // pretty index browser, must be 'used' no later than at this point
-        this.use(index_2.serveIndex(this.path(Base_1.EEKey.APP_ROOT), {
+        /*
+        this.use(serveIndex(this.path(EEKey.APP_ROOT), {
             icons: true,
             view: 'details'
-        }));
+        }));*/
         // RPC services
         const services = this.rpcServices();
         _.each(services, (service) => register_1.registerService(this.rpc2, service, this));
@@ -719,7 +720,12 @@ class ControlFreak extends Base_1.ApplicationBase {
         const routes = this.routes();
         _.each(routes, route => {
             this.use(route.routes());
-            this.use(route.allowedMethods());
+            this.use(route.allowedMethods({
+                throw: true,
+                methodNotAllowed: () => {
+                    console_1.console.log('e', arguments);
+                }
+            }));
         });
         // Extras
         this.use(serve(this.path(Base_1.EEKey.APP_ROOT)));
@@ -867,6 +873,7 @@ class ControlFreak extends Base_1.ApplicationBase {
                     location: clientRoot + path.sep + 'xdojo'
                 }
             ]
+            // deps: ['dojo/moduleFetcher']
         };
         return dojoConfig;
     }
@@ -897,6 +904,19 @@ class ControlFreak extends Base_1.ApplicationBase {
             });
         });
         return ips;
+    }
+    isDev() {
+        return __filename.indexOf('.ts') !== -1;
+    }
+    ready() {
+        if (this.options.interface === Base_1.IInterface.ELECTRON) {
+            let appPath = null;
+            if (this.isDev()) {
+                appPath = path.resolve(path.join(process.cwd(), 'build/applications/ControlFreak/desktop'));
+                console_1.console.log('ControlFreak#run : start desktop application' + appPath);
+                app_2.runElectron(process.cwd(), appPath, this.path(Base_1.EEKey.USER_DIRECTORY));
+            }
+        }
     }
     run(deviceServer = true) {
         const _super = name => super[name];
@@ -944,6 +964,7 @@ class ControlFreak extends Base_1.ApplicationBase {
                         });
                     }
                     resolve(context);
+                    this.ready();
                 });
                 try {
                     dojoRequire([loader], (_module) => { });

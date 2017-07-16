@@ -1,4 +1,5 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 const Resource_1 = require("../interfaces/Resource");
 const io = require("../io/json");
 const Resolver_1 = require("../resource/Resolver");

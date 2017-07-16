@@ -1,3 +1,4 @@
+"use strict";
 /*!
  * serve-index
  * Copyright(c) 2011 Sencha Inc.
@@ -6,7 +7,7 @@
  * Copyright(c) 2016 Shilong Jiang
  * MIT Licensed
  */
-"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 /**
  * Module dependencies.
  * @private

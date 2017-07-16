@@ -1,4 +1,5 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 const app = require('electron').app;
 const Menu = require('electron').Menu;
 const BrowserWindow = require('electron').BrowserWindow;
@@ -82,7 +83,6 @@ let setDevMenu = function () {
     ]);
     Menu.setApplicationMenu(devMenu);
 };
-Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = {
     setDevMenu: setDevMenu
 };

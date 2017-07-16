@@ -1,3 +1,4 @@
+"use strict";
 // - Tools for CI(s) the "Configurable Information".
 // - The CI presents the value wrapper for most of internal types and has
 //   various reference and platform implementations like iOS native.
@@ -5,7 +6,7 @@
 // - The widget class is mapped in CI['type'] which points to xide/types/ECIType, an
 //   int enumeration from -1 = Unknown to at least 32 more values, after xide.types.ECIType.END begins
 //   the user land
-"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 // - Urgent: the reason for value[0] in the code below is back-compate to pre Dojo - 2.0 stores. To be removed soon.
 const _ = require("lodash");
 const primitives_1 = require("../std/primitives");

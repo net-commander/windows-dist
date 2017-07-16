@@ -1,4 +1,5 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 const interfaces_1 = require("./interfaces");
 const errno = require('errno');
 Object.keys(errno.code).forEach(function (code) {

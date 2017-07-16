@@ -1,4 +1,5 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 const stream_1 = require("stream");
 const pathUtil = require("path");
 const inspect_1 = require("../inspect");

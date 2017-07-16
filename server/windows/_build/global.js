@@ -1,4 +1,5 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 const globalObject = (function () {
     if (typeof window !== 'undefined') {
         // Browsers
@@ -14,6 +15,5 @@ const globalObject = (function () {
     }
     return {};
 })();
-Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = globalObject;
 //# sourceMappingURL=global.js.map

@@ -1,4 +1,5 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 var Platform;
 (function (Platform) {
     Platform[Platform["Web"] = 0] = "Web";

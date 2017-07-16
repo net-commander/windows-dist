@@ -1,4 +1,5 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 const Directory_1 = require("../../../services/Directory");
 const Resource_1 = require("../../../interfaces/Resource");
 const Local_1 = require("../../../vfs/Local");

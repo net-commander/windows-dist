@@ -1,4 +1,5 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 var EPATH_PARTS;
 (function (EPATH_PARTS) {
     EPATH_PARTS[EPATH_PARTS["DIRNAME"] = 1] = "DIRNAME";

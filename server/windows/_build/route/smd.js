@@ -7,12 +7,12 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+Object.defineProperty(exports, "__esModule", { value: true });
 const Router = require("koa-router");
 const services = require("./services");
 const smd = new Router({ prefix: '/smd' });
 smd.get('/', (ctx) => __awaiter(this, void 0, void 0, function* () {
     ctx.body = services.default(ctx.origin + '/api');
 }));
-Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = smd;
 //# sourceMappingURL=smd.js.map

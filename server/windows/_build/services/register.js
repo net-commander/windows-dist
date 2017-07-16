@@ -1,4 +1,5 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 const _ = require("lodash");
 function registerMethod(rpc, method, handler) {
     return rpc.use(method, method);

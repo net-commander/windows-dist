@@ -1,4 +1,5 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 const minimatch_1 = require("minimatch");
 const patternToAbsolutePath = (basePath, pattern) => {
     // All patterns without slash are left as they are, if pattern contain

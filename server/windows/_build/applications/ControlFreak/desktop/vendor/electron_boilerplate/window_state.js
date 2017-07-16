@@ -1,4 +1,5 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 const app = require('electron').app;
 const jetpack = require('fs-jetpack');
 function default_1(name, defaults) {
@@ -15,6 +16,8 @@ function default_1(name, defaults) {
         }
     }
     catch (err) {
+        // For some reason json can't be read.
+        // No worries, we have defaults.
     }
     let saveState = function (win) {
         if (!win.isMaximized() && !win.isMinimized()) {
@@ -37,6 +40,5 @@ function default_1(name, defaults) {
         saveState: saveState
     };
 }
-Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = default_1;
 //# sourceMappingURL=window_state.js.map

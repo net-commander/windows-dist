@@ -1,4 +1,5 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 // fancy ES7 - Aspect - decorator
 var SIGNALS;
 (function (SIGNALS) {
@@ -66,7 +67,6 @@ function around(advice) { return aspect({ type: SIGNALS.AROUND, advice }); }
 exports.around = around;
 function error(advice) { return aspect({ type: SIGNALS.ERROR, advice }); }
 exports.error = error;
-Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = {
     before, after, around, error
 };

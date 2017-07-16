@@ -1,4 +1,5 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 const Component_1 = require("../Component");
 const interfaces_1 = require("../../fs/interfaces");
 const copy_1 = require("../../fs/copy");

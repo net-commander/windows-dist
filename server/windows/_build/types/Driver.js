@@ -1,4 +1,5 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 var DRIVER_PROPERTY;
 (function (DRIVER_PROPERTY) {
     DRIVER_PROPERTY[DRIVER_PROPERTY["CF_DRIVER_NAME"] = 'CF_DRIVER_NAME'] = "CF_DRIVER_NAME";

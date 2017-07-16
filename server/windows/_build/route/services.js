@@ -1,4 +1,5 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 function default_1(target) {
     return {
         'SMDVersion': '2.0',
@@ -721,6 +722,5 @@ function default_1(target) {
         }
     };
 }
-Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = default_1;
 //# sourceMappingURL=services.js.map

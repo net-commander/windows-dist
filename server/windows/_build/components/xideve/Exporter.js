@@ -7,6 +7,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+Object.defineProperty(exports, "__esModule", { value: true });
 const file_1 = require("../../io/file");
 const json_1 = require("../../io/json");
 const Devices_1 = require("../../services/Devices");
@@ -113,6 +114,13 @@ class Exporter {
         }
         options.serverSide = true;
         if (!options.client) {
+            /*
+            if (has('debug')) {
+                this.client = xutils.resolve(this.root + '/dist/windows/Code/client/');
+            } else {
+                this.client = xutils.resolve(this.root + '/Code/client/');
+            }
+            */
         }
         try {
             if (!options.serverTemplates) {
@@ -581,6 +589,5 @@ class Exporter {
         });
     }
 }
-Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = Exporter;
 //# sourceMappingURL=Exporter.js.map

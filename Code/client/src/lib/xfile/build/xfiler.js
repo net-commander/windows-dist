@@ -42008,7 +42008,9 @@ define('xfile/manager/FileManager',[
             var xhr = new XMLHttpRequest();
             var uploadUrl = this.getUploadUrl();
             var uri = '' + uploadUrl;
-            uri += '&mount=' + encodeURIComponent(mount);
+            //uri += '' + encodeURIComponent(mount);
+            //uri += '/' + encodeURIComponent(dstDir);
+            uri += 'mount=' + encodeURIComponent(mount);
             uri += '&dstDir=' + encodeURIComponent(dstDir);
             var thiz = this;
             var upload = xhr.upload;

@@ -1,4 +1,5 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 const inherits = require('inherits');
 // PRE-DEFINED ERROR CODES
 /** An error occurred on the server while parsing the JSON text. */

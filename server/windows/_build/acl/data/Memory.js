@@ -1,4 +1,5 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 /*
   Memory Backend.
   In-memory implementation of the storage.

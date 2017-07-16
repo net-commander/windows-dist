@@ -1,4 +1,5 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 var fs = require('fs'), path = require('path'), net = require('net'), os = require('os'), child_process = require('child_process');
 function checkPort(port, host, callback) {
     var status = null;
@@ -50,7 +51,6 @@ function checkPort(port, host, callback) {
 }
 function isDeviceServerRunning() {
 }
-Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = {
     isDeviceServerRunning: isDeviceServerRunning,
     checkPort: checkPort,

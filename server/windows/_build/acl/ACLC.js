@@ -1,4 +1,5 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 /*
   ACL System inspired on Zend_ACL.
   All functions accept strings, objects or arrays unless specified otherwise.

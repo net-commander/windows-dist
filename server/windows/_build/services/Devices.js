@@ -16,6 +16,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+Object.defineProperty(exports, "__esModule", { value: true });
 const json_1 = require("../io/json");
 const AspectDecorator_1 = require("../lang/AspectDecorator");
 const Base_1 = require("../services/Base");
@@ -211,7 +212,9 @@ class DeviceService extends Bean_1.BeanService {
     }
 }
 __decorate([
-    Base_2.RpcMethod,
+    Base_2.RpcMethod
+    // eventually json string
+    ,
     AspectDecorator_1.before((context, args) => Base_1.decodeArgs(args, "$['0']", json_1.to)),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),

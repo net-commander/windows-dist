@@ -7,6 +7,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+Object.defineProperty(exports, "__esModule", { value: true });
 const Koa = require("koa");
 const _ = require("lodash");
 const http = require('http');
@@ -17,6 +18,11 @@ const destroyable = require('server-destroy');
 const io = {
     serialize: JSON.stringify
 };
+var IInterface;
+(function (IInterface) {
+    IInterface[IInterface["CLI"] = 'cli'] = "CLI";
+    IInterface[IInterface["ELECTRON"] = 'electron'] = "ELECTRON";
+})(IInterface = exports.IInterface || (exports.IInterface = {}));
 exports.ENV = {
     VARIABLES: {
         SRC_DIR: SRC_DIR,

@@ -1,4 +1,5 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 const JSONFile_1 = require("./JSONFile");
 class MountService extends JSONFile_1.JSONFileService {
     constructor(path) {

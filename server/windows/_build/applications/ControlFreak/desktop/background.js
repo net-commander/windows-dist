@@ -1,18 +1,16 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 const app = require("electron").app;
 const BrowserWindow = require("electron").BrowserWindow;
 const dev_helper_1 = require("./vendor/electron_boilerplate/dev_helper");
 const window_state_1 = require("./vendor/electron_boilerplate/window_state");
-//import env from './env';
 let env = {
     name: "production",
     url: "http://127.0.0.1:5555/app/xcf/?debug=false&xtrack=true&electron=true"
 };
-// const {dialog} = require('electron');
 const utils_1 = require("./vendor/xapp/utils");
 app.commandLine.appendSwitch('disable-http-cache');
-// app.commandLine.appendSwitch('disable-http-cache');
-let child_process = require('child_process');
+let childProcess = require('child_process');
 let mainWindow;
 let shell;
 let exec = require('child_process').exec, path = require('path'), os = require('os'), fs = require('fs'), jet = require('fs-jetpack'), arch = os.arch(), 
@@ -79,7 +77,6 @@ let run = function (scriptFile, workingDirectory, environment, callback) {
         callback(error, stdout, stderr);
     });
 };
-function createWindow() { }
 function toArray(obj) {
     let result = [];
     for (let c in obj) {
@@ -221,13 +218,6 @@ function ensureUser(_path) {
     sourceDirectory = path.resolve(appDir.path() + '/data/user');
     sourceDirectory = path.resolve(appDir.path() + '/data/user');
 }
-function log(message, what) {
-    if (!BrowserWindow._log) {
-        BrowserWindow._log = [];
-    }
-    BrowserWindow._log.push({ message: message, what: what });
-    console.log.apply(null, [message, what]);
-}
 function main(url) {
     url = url || getUrl();
     let array = toArray(argv).filter(function (what) {
@@ -252,7 +242,7 @@ function main(url) {
         url += '&userDirectory=' + encodeURIComponent(argv.userDirectory);
     }
     if (argv.userDirectory) {
-        ensureUser(argv.userDirectory);
+        //ensureUser(argv.userDirectory);
     }
     console.log('start main with args ' + url, argv);
     BrowserWindow.env = JSON.stringify(env);
@@ -330,98 +320,14 @@ function main(url) {
         mainWindowState.saveState(mainWindow);
     });
 }
-function startServer() {
-    let path = require('path');
-    if (isWindows) {
-        // var cwd = isDebug ?  './tmpWindows/Control-Freak/server/nodejs/' : './';
-        ////var start_server_bat = path.resolve( cwd + '/start.bat');
-        //let cwd = './tmpWindows/Control-Freak/server/nodejs/';
-        //let start_server_bat = path.resolve(cwd + '/server.exe');
-        let cwd = './tmpWindows/Control-Freak/';
-        let start_server_bat = path.resolve(cwd + '/start.bat');
-        // var start_server_bat = 'cmd.exe';
-        console.error('-start server at ' + start_server_bat + ' in ' + path.resolve(cwd) + ' in env ' + env.name);
-        // run(path.resolve('./tmpWindows/Control-Freak/start_server.bat'),path.resolve('./tmpWindows/Control-Freak/'),{},runCB);
-        /*
-         var start = child_process.spawn('' + start_server_bat, ["noob","--file=start.js"], {
-         cwd: path.resolve(cwd),
-         env:createEnv({}),
-         //shell:'cmd.exe',
-         detached:true,
-         stdio: 'inherit'
-
-         });
-         */
-        /*
-         var start = child_process.exec('' + start_server_bat, ["noob","--file=start.js"], {
-         cwd: path.resolve(cwd),
-         env:createEnv({}),
-         shell:'cmd.exe',
-         detached:false,
-         stdio: 'inherit'
-         });
-         */
-        // ["noob","--file=start.js"]
-        let start = child_process.spawn('cmd.exe', ['/c', 'start.bat'], {
-            cwd: path.resolve(cwd),
-            detached: false
-        });
-        /*
-                bat.stdout.on('data', (data) => {
-                    console.log(data);
-            });
-
-                bat.stderr.on('data', (data) => {
-                    console.log(data);
-            });
-
-                bat.on('exit', (code) => {
-                    console.log(`Child exited with code ${code}`);
-            });
-                */
-        start.stdout.on('data', function (data) {
-            let str = data.toString();
-            console.log('data : ' + str);
-            if (str.indexOf('can start') !== -1) {
-                console.log('got server, start main');
-                setTimeout(function () {
-                    main();
-                }, 1000);
-            }
-        });
-        start.on('error', function (data) {
-            console.log('---error : data ', data);
-        });
-        start.on('close', function (code) {
-            console.log("Finished with code " + code);
-        });
-        serverStart = start;
-    }
-    if (OS === 'linux') {
-    }
-}
 app.on('ready', function () {
-    let _checkServerCB = function (error, status, host, port) {
-        console.log('check server : ', arguments);
-        // we dont' have a server yet
-        if (status === 'closed') {
-            console.error('server not running2');
-            main('file://' + __dirname + '/progress.html?off=true');
-            console.error('\t start server');
-            startServer();
-        }
-        else if (status === 'open') {
-            console.error('server running');
-            main();
-        }
-    };
-    // if(isWindows) {
-    //    utils.checkPort(8887, '0.0.0.0', _checkServerCB);
-    // }else {
-    //  main(argv.url);
-    // }
     let args = process.argv;
     try {
+        // console.error('args --- ' +env.name + ' ' + isProduction,args);
+        // if( args.length==2 && fs.lstatSync(path.resolve(args[2])).isDirectory()){
+        //    argv.userDirectory = args[2];
+        //    console.error('is directory ' + argv.userDirectory,args);
+        // }
     }
     catch (e) {
     }
@@ -433,15 +339,9 @@ app.on('ready', function () {
             }
         }
         catch (e) {
+            // console.error(e);
         }
     }
-    let port = 5555;
-    let pData = profile();
-    //if (pData && pData.http) {
-    //	port = pData.http.port;
-    //}
-    // console.log('ready: ' + root() + ' = ' + serverRoot() + ' @ ' + port);
-    // utils.checkPort(port, '0.0.0.0', _checkServerCB);
     main();
 });
 app.on('window-all-closed', function () {

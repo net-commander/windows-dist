@@ -1,4 +1,5 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 const JSON_RPC_2_Errors_1 = require("./JSON-RPC-2-Errors");
 const JSON_RPC_2_Response_1 = require("./JSON-RPC-2-Response");
 const _ = require("lodash");

@@ -1,4 +1,5 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 const JSONFile_1 = require("./JSONFile");
 const _ = require("lodash");
 class NodeService extends JSONFile_1.JSONFileService {

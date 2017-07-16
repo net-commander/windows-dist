@@ -1,4 +1,5 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 exports.canNormalize = typeof (''.normalize) === 'function';
 const nonAsciiCharactersPattern = /[^\u0000-\u0080]/;
 function normalizeNFC(str) {

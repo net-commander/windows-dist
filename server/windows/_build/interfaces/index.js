@@ -1,4 +1,5 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 var EPlatform;
 (function (EPlatform) {
     EPlatform[EPlatform["Linux"] = 'linux'] = "Linux";

@@ -1,4 +1,5 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 const tracer = require('tracer');
 const util = require('util');
 const global = require("./global");

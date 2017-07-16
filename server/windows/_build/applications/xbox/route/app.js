@@ -7,6 +7,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+Object.defineProperty(exports, "__esModule", { value: true });
 const Router = require("koa-router");
 const path = require("path");
 const views = require('co-views');
@@ -40,6 +41,5 @@ appRouter.get('/:name', (ctx) => __awaiter(this, void 0, void 0, function* () {
     };
     ctx.body = yield render(appName + '_' + rtConfig, tplParams);
 }));
-Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = appRouter;
 //# sourceMappingURL=app.js.map

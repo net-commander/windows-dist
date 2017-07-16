@@ -1,4 +1,5 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 const objects_1 = require("@xblox/core/objects");
 const primitives_1 = require("@xblox/core/primitives");
 exports.slash = (str) => {
@@ -292,6 +293,7 @@ class Path {
                             stack.pop();
                         }
                     }
+                    // collapse current references
                 }
                 else if (segments[i] !== "." || this.segments.length === 1) {
                     stack.push(segments[i]); // stack push

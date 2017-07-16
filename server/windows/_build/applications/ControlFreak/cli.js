@@ -1,4 +1,5 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 const cli = require("yargs");
 const path = require("path");
 //import * as global from '../../global';
@@ -35,8 +36,11 @@ function create() {
         default: false
     });
     cli.options('info', {
-        alias: 'i',
         description: 'show information'
+    });
+    cli.options('interface', {
+        alias: 'i',
+        description: 'Specify main interface: electron or cli'
     });
     if (argv.h || argv.help) {
         cli.showHelp();

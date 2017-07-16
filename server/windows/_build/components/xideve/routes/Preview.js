@@ -7,6 +7,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+Object.defineProperty(exports, "__esModule", { value: true });
 const Base_1 = require("../../../applications/Base");
 const json_1 = require("../../../io/json");
 const views = require("co-views");
@@ -94,6 +95,5 @@ PreviewRouter.get('/:preview/:mount/*', (ctx, next) => __awaiter(this, void 0, v
     const result = content.replace('<viewHeaderTemplate/>', templateResolved);
     ctx.body = result;
 }));
-Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = PreviewRouter;
 //# sourceMappingURL=Preview.js.map

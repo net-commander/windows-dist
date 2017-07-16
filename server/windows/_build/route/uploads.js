@@ -7,6 +7,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+Object.defineProperty(exports, "__esModule", { value: true });
 const busboy = require("async-busboy");
 const fs = require("fs");
 const Router = require("koa-router");
@@ -19,10 +20,10 @@ class UploadRouter extends Router {
 }
 exports.UploadRouter = UploadRouter;
 function create(directoryService, prefix = '/upload', app) {
-    const filesRouter = new UploadRouter({ prefix: prefix });
+    const filesRouter = new UploadRouter({ prefix: "" });
     filesRouter.directoryService = directoryService;
-    filesRouter.post('/*', (ctx, next) => __awaiter(this, void 0, void 0, function* () {
-        const params = qs.parse(ctx.req.url);
+    filesRouter.post('/upload/', (ctx, next) => __awaiter(this, void 0, void 0, function* () {
+        const params = qs.parse(ctx.request.querystring);
         const mount = params.mount;
         const dstDir = params.dstDir;
         if (!mount || !dstDir) {

@@ -1,4 +1,5 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 const fs = require('fs');
 const writeAtomic = require('write-file-atomic');
 const writeFileOptions = { mode: parseInt('0600', 8) };

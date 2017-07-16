@@ -1,4 +1,5 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 const primitives_1 = require("@xblox/core/primitives");
 const escapeRegExpPattern = /[[\]{}()|\/\\^$.*+?]/g;
 const escapeXmlPattern = /[&<]/g;

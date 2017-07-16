@@ -16,6 +16,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+Object.defineProperty(exports, "__esModule", { value: true });
 const Resource_1 = require("../interfaces/Resource");
 const Driver_1 = require("../types/Driver");
 const CIUtils_1 = require("../utils/CIUtils");

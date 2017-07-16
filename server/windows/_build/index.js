@@ -1,4 +1,5 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 const Base_1 = require("./applications/Base");
 const index_1 = require("./applications/ControlFreak/index");
 const index_2 = require("./applications/xbox/index");
@@ -36,6 +37,27 @@ if (argv.nodejs && !argv.root) {
     process.chdir(root);
 }
 if (argv.file) {
+    /*
+    if (commander.file) {
+        var file = path.resolve(commander.file);
+        if (fs.existsSync(file)) {
+            var context = new vm.createContext({
+                require: require.nodeRequire,
+                commander: commander,
+                console: console,
+                process: process,
+                setTimeout: setTimeout,
+                global: global
+            });
+            var content = FileUtils.readFile(file);
+            var script = new vm.Script(content);
+            script.runInContext(context);
+            return;
+        } else {
+            console.error('file specified but doesnt exists ' + commander.file);
+        }
+    }
+    */
 }
 const CFOptions = {
     root: root,
@@ -46,7 +68,8 @@ const CFOptions = {
     print: argv.print === 'true',
     uuid: argv.uuid || 'ide',
     user: argv.user ? path.resolve(argv.user) : null,
-    persistence: argv.persistences ? argv.persistence : Application_1.EPersistence.MEMORY
+    persistence: argv.persistences ? argv.persistence : Application_1.EPersistence.MEMORY,
+    interface: argv.interface ? argv.interface : null
 };
 function create(app) {
     let application;

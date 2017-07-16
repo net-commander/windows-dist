@@ -1,4 +1,5 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 const platform = require("./utils/platform");
 function _encode(ch) {
     return '%' + ch.charCodeAt(0).toString(16).toUpperCase();

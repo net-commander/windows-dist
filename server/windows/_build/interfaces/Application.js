@@ -1,4 +1,5 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 const koa = require("koa");
 exports.Application = koa;
 const rpcApp = require("../rpc/JSON-RPC-2");

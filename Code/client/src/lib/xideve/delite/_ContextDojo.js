@@ -29,6 +29,7 @@ define([
              metadata, Preferences,html,iframe) {
 
     var debugContent = true;
+    console.log('has debug : ',has('debug'));
     /**
      *
      * @mixin module:xideve/delite/_ContextDojo

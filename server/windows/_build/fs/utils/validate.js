@@ -1,4 +1,5 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 let prettyPrintTypes = function (types) {
     const addArticle = (str) => {
         let vowels = ['a', 'e', 'i', 'o', 'u'];

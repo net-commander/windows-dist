@@ -1,4 +1,5 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 const base64 = require("base-64");
 const jp = require("jsonpath");
 const qs_1 = require("qs");
@@ -14,6 +15,7 @@ function to(data, path) {
         }
     }
     catch (e) {
+        // we swollow this!
     }
     changed && path && jp.value(data, path, value);
     return data;

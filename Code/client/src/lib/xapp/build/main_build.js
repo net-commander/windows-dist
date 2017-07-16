@@ -64161,7 +64161,9 @@ define('xfile/manager/FileManager',[
             var xhr = new XMLHttpRequest();
             var uploadUrl = this.getUploadUrl();
             var uri = '' + uploadUrl;
-            uri += '&mount=' + encodeURIComponent(mount);
+            //uri += '' + encodeURIComponent(mount);
+            //uri += '/' + encodeURIComponent(dstDir);
+            uri += 'mount=' + encodeURIComponent(mount);
             uri += '&dstDir=' + encodeURIComponent(dstDir);
             var thiz = this;
             var upload = xhr.upload;
@@ -83169,6 +83171,7 @@ define('dojo/has',["require", "module"], function(require, module){
 		has.cache = cache;
 
 		has.add = function(name, test, now, force){
+			
 			// summary:
 			//	 	Register a new feature test for some named feature.
 			// name: String|Integer

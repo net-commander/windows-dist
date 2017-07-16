@@ -1,4 +1,5 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 const dotProp = require("dot-prop");
 const objects_1 = require("@xblox/core/objects");
 const _ = require("lodash");

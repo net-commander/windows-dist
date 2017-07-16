@@ -1,4 +1,5 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 /*
   Design by Contract module (c) OptimalBits 2011.
   Roadmap:

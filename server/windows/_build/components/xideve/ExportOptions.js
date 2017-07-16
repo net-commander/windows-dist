@@ -1,4 +1,5 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 const console_1 = require("../../console");
 //import * as views from 'co-views';
 const path = require("path");
@@ -60,6 +61,5 @@ class ExportOptions {
     run() {
     }
 }
-Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = ExportOptions;
 //# sourceMappingURL=ExportOptions.js.map

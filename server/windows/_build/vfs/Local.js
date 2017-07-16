@@ -1,4 +1,5 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 const fs = require("fs");
 const net = require("net");
 const childProcess = require("child_process");
@@ -61,6 +62,7 @@ function create(fsOptions, resource) {
     }
     const umask = fsOptions.umask || parseInt('0750', 8);
     if (fsOptions.hasOwnProperty('defaultEnv')) {
+        //fsOptions.defaultEnv.__proto__ = process.env;
     }
     else {
         fsOptions.defaultEnv = process.env;

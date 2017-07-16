@@ -1,4 +1,5 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 var EResourceType;
 (function (EResourceType) {
     EResourceType[EResourceType["JS_HEADER_INCLUDE"] = 'JS-HEADER-INCLUDE'] = "JS_HEADER_INCLUDE";

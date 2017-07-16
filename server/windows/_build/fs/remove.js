@@ -7,6 +7,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+Object.defineProperty(exports, "__esModule", { value: true });
 const validate_1 = require("./utils/validate");
 const inspect_1 = require("./inspect");
 const list_1 = require("./list");
@@ -59,6 +60,7 @@ const parseOptions = (options, path) => {
 function sync(path, options) {
     const inspectedFile = inspect_1.sync(path, { symlinks: true });
     if (inspectedFile === undefined) {
+        // The path already doesn't exits. Nothing to do here.
     }
     else if (inspectedFile.type === 'dir') {
         list_1.sync(path).forEach((filename) => {

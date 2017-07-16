@@ -1,4 +1,5 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 const fs = require("fs");
 const jp = require("jsonpath");
 const primitives_1 = require("../std/primitives");
