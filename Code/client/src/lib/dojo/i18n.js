@@ -16,14 +16,14 @@ define(["./_base/kernel", "require", "./has", "./_base/array", "./_base/config",
 
         var
             thisModule = dojo.i18n =
-            {
-                // summary:
-                //		This module implements the dojo/i18n! plugin and the v1.6- i18n API
-                // description:
-                //		We choose to include our own plugin to leverage functionality already contained in dojo
-                //		and thereby reduce the size of the plugin compared to various loader implementations. Also, this
-                //		allows foreign AMD loaders to be used without their plugins.
-            },
+                {
+                    // summary:
+                    //		This module implements the dojo/i18n! plugin and the v1.6- i18n API
+                    // description:
+                    //		We choose to include our own plugin to leverage functionality already contained in dojo
+                    //		and thereby reduce the size of the plugin compared to various loader implementations. Also, this
+                    //		allows foreign AMD loaders to be used without their plugins.
+                },
 
             nlsRe =
                 // regexp for reconstructing the master bundle name from parts of the regexp match
@@ -36,9 +36,9 @@ define(["./_base/kernel", "require", "./has", "./_base/array", "./_base/config",
                 /(^.*(^|\/)nls)(\/|$)([^\/]*)\/?([^\/]*)/,
 
             getAvailableLocales = function (root,
-                                            locale,
-                                            bundlePath,
-                                            bundleName) {
+                locale,
+                bundlePath,
+                bundleName) {
                 // summary:
                 //		return a vector of module ids containing all available locales with respect to the target locale
                 //		For example, assuming:
@@ -258,31 +258,36 @@ define(["./_base/kernel", "require", "./has", "./_base/array", "./_base/config",
                     }
                 }
 
-                var match = nlsRe.exec(id),
-                    bundlePath = match[1] + "/",
-                    bundleName = match[5] || match[4],
-                    bundlePathAndName = bundlePath + bundleName,
-                    localeSpecified = (match[5] && match[4]),
-                    targetLocale = localeSpecified || dojo.locale || "",
-                    loadTarget = bundlePathAndName + "/" + targetLocale,
-                    loadList = localeSpecified ? [targetLocale] : getLocalesToLoad(targetLocale),
-                    remaining = loadList.length,
-                    finish = function () {
-                        if (!--remaining) {
-                            load(lang.delegate(cache[loadTarget]));
+                try {
+                    var match = nlsRe.exec(id),
+                        bundlePath = match[1] + "/",
+                        bundleName = match[5] || match[4],
+                        bundlePathAndName = bundlePath + bundleName,
+                        localeSpecified = (match[5] && match[4]),
+                        targetLocale = localeSpecified || dojo.locale || "",
+                        loadTarget = bundlePathAndName + "/" + targetLocale,
+                        loadList = localeSpecified ? [targetLocale] : getLocalesToLoad(targetLocale),
+                        remaining = loadList.length,
+                        finish = function () {
+                            if (!--remaining) {
+                                load(lang.delegate(cache[loadTarget]));
+                            }
+                        };
+                    array.forEach(loadList, function (locale) {
+                        var target = bundlePathAndName + "/" + locale;
+                        if (has("dojo-preload-i18n-Api")) {
+                            checkForLegacyModules(target);
                         }
-                    };
-                array.forEach(loadList, function (locale) {
-                    var target = bundlePathAndName + "/" + locale;
-                    if (has("dojo-preload-i18n-Api")) {
-                        checkForLegacyModules(target);
-                    }
-                    if (!cache[target]) {
-                        doLoad(require, bundlePathAndName, bundlePath, bundleName, locale, finish);
-                    } else {
-                        finish();
-                    }
-                });
+                        if (!cache[target]) {
+                            doLoad(require, bundlePathAndName, bundlePath, bundleName, locale, finish);
+                        } else {
+                            finish();
+                        }
+                    });
+                } catch (e) {
+                    console.error('error loading i18n bundle ' + id, e);
+                }
+
             };
 
         if (has("dojo-unit-tests")) {
@@ -291,9 +296,10 @@ define(["./_base/kernel", "require", "./has", "./_base/array", "./_base/config",
 
         if (has("dojo-preload-i18n-Api") || has("dojo-v1x-i18n-Api")) {
             var normalizeLocale = thisModule.normalizeLocale = function (locale) {
-                    var result = locale ? locale.toLowerCase() : dojo.locale;
-                    return result == "root" ? "ROOT" : result;
-                },
+                dojo.local='en';
+                var result = locale ? locale.toLowerCase() : 'en';
+                return result == "root" ? "ROOT" : result;
+            },
 
                 isXd = function (mid, contextRequire) {
                     return (has("dojo-sync-loader") && has("dojo-v1x-i18n-Api")) ?
@@ -525,28 +531,28 @@ define(["./_base/kernel", "require", "./has", "./_base/array", "./_base/config",
                         var check;
 
                         check = evalBundle("{prop:1}", checkForLegacyModules, "nonsense", amdValue);
-                        t.is({prop: 1}, check);
+                        t.is({ prop: 1 }, check);
                         t.is(undefined, check[1]);
 
                         check = evalBundle("({prop:1})", checkForLegacyModules, "nonsense", amdValue);
-                        t.is({prop: 1}, check);
+                        t.is({ prop: 1 }, check);
                         t.is(undefined, check[1]);
 
                         check = evalBundle("{'prop-x':1}", checkForLegacyModules, "nonsense", amdValue);
-                        t.is({'prop-x': 1}, check);
+                        t.is({ 'prop-x': 1 }, check);
                         t.is(undefined, check[1]);
 
                         check = evalBundle("({'prop-x':1})", checkForLegacyModules, "nonsense", amdValue);
-                        t.is({'prop-x': 1}, check);
+                        t.is({ 'prop-x': 1 }, check);
                         t.is(undefined, check[1]);
 
                         check = evalBundle("define({'prop-x':1})", checkForLegacyModules, "nonsense", amdValue);
                         t.is(amdValue, check);
-                        t.is({'prop-x': 1}, amdValue.result);
+                        t.is({ 'prop-x': 1 }, amdValue.result);
 
                         check = evalBundle("define('some/module', {'prop-x':1})", checkForLegacyModules, "nonsense", amdValue);
                         t.is(amdValue, check);
-                        t.is({'prop-x': 1}, amdValue.result);
+                        t.is({ 'prop-x': 1 }, amdValue.result);
 
                         check = evalBundle("this is total nonsense and should throw an error", checkForLegacyModules, "nonsense", amdValue);
                         t.is(check instanceof Error, true);

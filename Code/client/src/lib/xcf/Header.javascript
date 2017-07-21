@@ -8,11 +8,8 @@ var rtConfig="debug";
 var dataHost ="";
 
 var dojoConfig ={
-        trace:{
-            'loader-finish-exec':0
-        },
         aliases:[['i18n', 'dojo/i18n']],
-		ioPublish:true,
+		ioPublish:false,
 		baseUrl: '%BASE_URL%',
 		deferredInstrumentation:false,
 		has: {
@@ -51,7 +48,7 @@ var dojoConfig ={
         packages:%DOJOPACKAGES%,
 		map:{
 		    '*':{
-		        'requirejs-dplugins/has':'requirejs-dplugins/ha3',
+		        'requirejs-dplugins/has':'requirejs-dplugins/has',
 		        'decor/Observable':'xide/Observable'
             }
         }
