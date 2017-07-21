@@ -51,6 +51,7 @@ const osTmpdir = require('os-tmpdir');
 const mkdirp = require('mkdirp');
 const MODULE_ROOT = "../../";
 const COMPONENT_ROOT = "../../components/";
+const index_2 = require("../../server/index");
 const interfaces_1 = require("../../fs/interfaces");
 //import { test } from '../../vfs/github/Github';
 //test();
@@ -704,11 +705,10 @@ class ControlFreak extends Base_1.ApplicationBase {
         rpcApp.use(convert(this.rpc2.app()));
         this.use(convert(mount('/api', rpcApp)));
         // pretty index browser, must be 'used' no later than at this point
-        /*
-        this.use(serveIndex(this.path(EEKey.APP_ROOT), {
+        this.use(index_2.serveIndex(this.path(Base_1.EEKey.APP_ROOT), {
             icons: true,
             view: 'details'
-        }));*/
+        }));
         // RPC services
         const services = this.rpcServices();
         _.each(services, (service) => register_1.registerService(this.rpc2, service, this));
