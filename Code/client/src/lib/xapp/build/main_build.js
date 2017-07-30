@@ -66527,7 +66527,7 @@ define('xide/manager/Context',[
         isBrowser = has('host-browser'),
         bases = isBrowser ? [ContextBase, Context_UI] : [ContextBase],
         debugFileChanges = false,
-        debugModuleReload = true;
+        debugModuleReload = false;
 
     /**
      * @class module:xide/manager/Context
@@ -66612,13 +66612,12 @@ define('xide/manager/Context',[
                     var modulePath = data.data.modulePath;
                     if (modulePath) {
                         modulePath = modulePath.replace('.js', '');
-                        var _re = _require;//hide from gcc
+                        var _re = _require; //hide from gcc
                         //try pre-amd module
                         var module = null;
                         try {
                             module = _re(modulePath);
-                        } catch (e) {
-                        }
+                        } catch (e) {}
 
 
                         //special: driver
@@ -66661,14 +66660,13 @@ define('xide/manager/Context',[
                 }
             }
         },
-        onNodeServiceStoreReady: function (evt) {
-        },
+        onNodeServiceStoreReady: function (evt) {},
         mergeFunctions: function (target, source, oldModule, newModule) {
             for (var i in source) {
                 var o = source[i];
                 if (_.isFunction(source[i])) {
                     if (source[i] && target) {
-                        target[i] = source[i];//swap
+                        target[i] = source[i];
                     }
                 }
             }
@@ -66687,6 +66685,7 @@ define('xide/manager/Context',[
                 pluginPromises = [],
                 newModules = [],
                 thiz = this;
+
             _require({
                 cacheBust: 'time=' + new Date().getTime()
             });
@@ -66722,6 +66721,7 @@ define('xide/manager/Context',[
 
             _module = _module.replace('0/8', '0.8');
             _module = _module.replace('/src/', '/');
+
             function handleError(error) {
                 debugModuleReload && console.log(error.src, error.id);
                 debugModuleReload && console.error('require error ' + _module, error);
@@ -66750,8 +66750,6 @@ define('xide/manager/Context',[
                         try {
                             oldModule = _require(utils.replaceAll('.', '/', _module));
                         } catch (e) {
-                            //logError(e,'error requiring '+_module);
-                            //dfd.reject(e);
                             debugModuleReload && console.log('couldnt require old module', _module);
                         }
                     }
@@ -66770,9 +66768,7 @@ define('xide/manager/Context',[
                     }
                 })
             }
-
             _require.undef(_module);
-
             var thiz = this;
             if (reload) {
                 setTimeout(function () {
@@ -66830,7 +66826,6 @@ define('xide/manager/Context',[
             if (isBrowser) {
                 var path = evt.path;
                 var _p = this.findVFSMount(path);
-                var _p2 = this.toVFSShort(path, _p);
                 path = utils.replaceAll('//', '/', path);
                 path = path.replace('/PMaster/', '');
                 var reloadFn = window['xappOnStyleSheetChanged'];
