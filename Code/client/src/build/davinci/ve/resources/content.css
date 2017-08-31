@@ -201,6 +201,7 @@ div.mblScrollablePane {
 }
 
 body {
+	border:1px solid black;
 	margin: 0;
 	-webkit-user-select: none;
 	-moz-user-select: none;
