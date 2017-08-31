@@ -91,7 +91,8 @@
 		"johnny-five": "^0.10.6"
 	},
 	"scripts": {
-		"start": "node _build/index.js --type=OFFLINE_RELEASE --release=true --root='./'"
+		"start": "node _build/index.js --type=OFFLINE_RELEASE --release=true --root='./'",
+		"start-demo": "node _build/index.js --type=OFFLINE_RELEASE --release=true --root='./' --user='./example_workspace'"
 	},
 	"bin": {
 		"control-freak": "bin/control-freak.js"
