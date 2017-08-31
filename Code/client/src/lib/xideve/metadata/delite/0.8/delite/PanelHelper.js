@@ -17,9 +17,7 @@ define([
          * Note: Maqetta's default processing returns (args.isAllowedChild && args.isAllowedParent)
          */
         isAllowed: function(args){
-
-            //console.log('isAllowed',args);
-
+            console.log('isAllowed',args);
             if(args.parentType ==='delite/ViewStack' || args.parentType ==='delite/Accordion'){
                 return true;
             }else if(args.parentType ==='delite/Panel'){

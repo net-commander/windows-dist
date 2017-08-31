@@ -15,7 +15,8 @@
     },
     "property": {
         "label": {
-            "datatype": "string"
+            "datatype": "string",
+            "defaultValue": "Defult"
         },
         "id": {
             "datatype": "string"
@@ -32,7 +33,7 @@
             "defaultValue": "this"
         }
     },
-    "content": "<button is='d-button' label='Default Label'></button>",
+    "content": "<button is='d-button' label=''></button>",
     "title": {
         "type": "text/html",
         "value": "<p>Non-templated BUTTON widget with a thin API wrapper for click \nevents and for setting the label.\n\n</p>\n<p>Buttons can display a label, an icon, or both.\nA label should always be specified (through innerHTML) or the label\nattribute.  It can be hidden via showLabel=false.</p>"

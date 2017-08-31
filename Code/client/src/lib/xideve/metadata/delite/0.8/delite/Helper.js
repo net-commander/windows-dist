@@ -1,10 +1,28 @@
-define(function() {
-var ButtonHelper = function() {};
-ButtonHelper.prototype = {
-        updateWidget: function(){
-          console.error('updateWidget',arguments);
+define(function () {
+    var ButtonHelper = function () {};
+    ButtonHelper.prototype = {
+        _isAllowed: function (args) {
+            console.log('isAllowed', args);
+            if (args.parentType === 'delite/ViewStack' || args.parentType === 'delite/Accordion') {
+                return true;
+            } else if (args.parentType === 'delite/Panel') {
+                return false;
+            } else {
+                return false;
+            }
+
+            if (args.absolute) {
+                // Don't allow View widgets to be positioned absolutely
+                // Doesn't work with dojox.mobile because dojox.mobile will always force top:0px
+                //return false;
+            } else {
+                return args.isAllowedChild && args.isAllowedParent;
+            }
         },
-        _getWidgetClassText: function(id, className){
+        updateWidget: function () {
+            console.error('updateWidget', arguments);
+        },
+        _getWidgetClassText: function (id, className) {
             return "";
             var text = "<span class='propertiesTitleClassName'>";
             //text += node.tagName;
@@ -12,14 +30,14 @@ ButtonHelper.prototype = {
                 text += "#" + id;
             }
             if (className) {
-                text += "." + className.replace(/\s+/g,".");
+                text += "." + className.replace(/\s+/g, ".");
             }
             text += "</span> ";
             return text;
         },
-        _remove_prefix: function(str){
+        _remove_prefix: function (str) {
             var returnstr = str;
-            var prefixes_to_remove=[
+            var prefixes_to_remove = [
                 'dijit/form/',
                 'dijit/layout/',
                 'dijit/',
@@ -27,56 +45,57 @@ ButtonHelper.prototype = {
                 'html.',
                 'html/',
                 'OpenAjax.',
-                'OpenAjax/'];
-            for(var i=0; i<prefixes_to_remove.length; i++){
-                if(str.indexOf(prefixes_to_remove[i])==0){ // use ===?
-                    returnstr=str.substr(prefixes_to_remove[i].length);
+                'OpenAjax/'
+            ];
+            for (var i = 0; i < prefixes_to_remove.length; i++) {
+                if (str.indexOf(prefixes_to_remove[i]) == 0) { // use ===?
+                    returnstr = str.substr(prefixes_to_remove[i].length);
                     //FIXME: Another hack. Need a better approach for this.
                     //Special case logic for HTML widgets
-                    if(prefixes_to_remove[i]=='html.'){
-                        returnstr='&lt;'+returnstr+'&gt;';
+                    if (prefixes_to_remove[i] == 'html.') {
+                        returnstr = '&lt;' + returnstr + '&gt;';
                     }
                     break;
                 }
             }
             return returnstr;
         },
-        getWidgetNameText:function(widget){
+        getWidgetNameText: function (widget) {
 
-            if(widget.domNode && widget.domNode.label){
+            if (widget.domNode && widget.domNode.label) {
                 var text = "<span class='propertiesTitleWidgetName'>";
                 //text+=this._remove_prefix(type);
-                text+="</span> ";
+                text += "</span> ";
                 return ""
             }
 
             var text = "<span class='propertiesTitleWidgetName'>";
-            text+=this._remove_prefix(widget.type);
-            text+="</span> ";
+            text += this._remove_prefix(widget.type);
+            text += "</span> ";
             return text;
         },
-        getWidgetText:function(widget){
-            if(widget.domNode){
+        getWidgetText: function (widget) {
+            if (widget.domNode) {
                 var _label = null;
-                if(widget.domNode.get){
+                if (widget.domNode.get) {
                     _label = widget.domNode.get('label');
-                }else{
+                } else {
                     _label = widget.domNode.label;
                 }
                 return _label;
             }
             return widget.type;
         },
-        __getData: function(/*Widget*/ widget, /*Object*/ options) {
-            if(!widget){
+        __getData: function ( /*Widget*/ widget, /*Object*/ options) {
+            if (!widget) {
                 return undefined;
             }
 
             var data = widget._getData(options);
-            var _uniqueId = dijit.getUniqueId(widget.type.replace(/\./g,"_"));
-            _uniqueId = _uniqueId.replace('delite/','d-').toLowerCase();
+            var _uniqueId = dijit.getUniqueId(widget.type.replace(/\./g, "_"));
+            _uniqueId = _uniqueId.replace('delite/', 'd-').toLowerCase();
             //delite/Slider_2
-            if(widget.id==='no_id') {
+            if (widget.id === 'no_id') {
                 widget.id = _uniqueId;
                 data.properties['id'] = _uniqueId;
                 data.properties.id = _uniqueId;
@@ -100,19 +119,20 @@ ButtonHelper.prototype = {
             */
             return widgetData;
         },
-        create: function(widget) {
-            widget._srcElement.setAttribute('id',widget.id);
+        create: function (widget) {
+            widget._srcElement.setAttribute('id', widget.id);
             //console.log('-create ',widget.id);
         },
-        _getChildren: function(widget, attach) {
+        _getChildren: function (widget, attach) {
 
             var dijitWidget = widget.dijitWidget;
             // First, get children from slider's containerNode.
-            var children = [];//widget._getChildren(attach);
+            var children = []; //widget._getChildren(attach);
 
             //console.log('-get children',children);
-            
+
             return children;
+
             function getWidget(node) {
                 if (attach) {
                     return davinci.ve.widget.getWidget(node);
@@ -126,35 +146,35 @@ ButtonHelper.prototype = {
 
             dojo.forEach(dijitWidget.domNode.children, function (node) {
                 var childWidget = getWidget(node);
-                if(childWidget){
-                    if(childWidget.type=='xblox/RunScript'){
+                if (childWidget) {
+                    if (childWidget.type == 'xblox/RunScript') {
                         debugger;
-                        console.log('enum ' , childWidget);
+                        console.log('enum ', childWidget);
                         children.push(childWidget);
                     }
 
                 }
             });
 
-            console.log('-get children',children);
+            console.log('-get children', children);
 
             return children;
 
         },
-		___getChildrenData: function(/*Widget*/ widget, /*Object*/ options){
-			// summary:
-			//		The child in the markup of a button tag is its text content, so return that.
-			//
+        ___getChildrenData: function ( /*Widget*/ widget, /*Object*/ options) {
+            // summary:
+            //		The child in the markup of a button tag is its text content, so return that.
+            //
 
             return undefined;
-			if (widget && widget.getTagName() == "BUTTON") {
-				return widget.dijitWidget.label;
-			}
-			
-			return undefined;
-		}
-	};
+            if (widget && widget.getTagName() == "BUTTON") {
+                return widget.dijitWidget.label;
+            }
 
-return ButtonHelper;
+            return undefined;
+        }
+    };
+
+    return ButtonHelper;
 
 });
