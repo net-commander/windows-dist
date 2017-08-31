@@ -238,7 +238,12 @@ function default_1(target) {
                 'parameters': [{ 'name': 'mount', 'optional': false }, {
                         'name': 'path',
                         'optional': false
-                    }]
+                    },
+                    {
+                        'content': 'content',
+                        'optional': false
+                    }
+                ]
             },
             'XCOM_Directory_Service.mkdir': {
                 'transport': 'POST',

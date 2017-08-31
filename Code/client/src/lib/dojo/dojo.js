@@ -793,7 +793,7 @@
 				if(module && module.executed){
 					return module.result;
 				}
-				console.error('cant get module '+a1);
+				a1.indexOf('/component') === -1 && console.error('cant get module ' + a1);
 				throw makeError("undefinedModule", a1);                
 			}
 			if(!isArray(a1)){

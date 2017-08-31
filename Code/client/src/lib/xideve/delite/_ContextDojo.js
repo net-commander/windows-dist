@@ -230,7 +230,6 @@ define([
                     subs.mount = item.mount;
                     subs['workspace_user'] =  VFS_URL + item.mount + '/';
                     subs.themeCssFiles = '';
-                    console.log('variables:',subs);
                     window["loading" + thiz._id] = function (parser, htmlUtil) {
                         var callbackData = thiz;
                         try {

@@ -251,7 +251,7 @@ const copyFileAsync = (from, to, mode, options, retriedAttempt) => {
                     // Make retry attempt only once to prevent vicious infinite loop
                     // (when for some obscure reason I/O will keep returning ENOENT error).
                     // Passing retriedAttempt = true.
-                    copyFileAsync(from, to, mode, true)
+                    copyFileAsync(from, to, mode, null, true)
                         .then(resolve)
                         .catch(reject);
                 });
@@ -320,14 +320,14 @@ function copySymlinkAsync(from, to) {
     return promisedReadlink(from)
         .then((symlinkPointsAt) => {
         return new Promise((resolve, reject) => {
-            promisedSymlink(symlinkPointsAt, to, null)
+            promisedSymlink(symlinkPointsAt, to, null, null)
                 .then(resolve)
                 .catch((err) => {
                 if (err.code === interfaces_1.EError.EXISTS) {
                     // There is already file/symlink with this name on destination location.
                     // Must erase it manually, otherwise system won't allow us to place symlink there.
-                    promisedUnlink(to)
-                        .then(() => { return promisedSymlink(symlinkPointsAt, to, null); })
+                    promisedUnlink(to, null)
+                        .then(() => { return promisedSymlink(symlinkPointsAt, to, null, null); })
                         .then(resolve, reject);
                 }
                 else {

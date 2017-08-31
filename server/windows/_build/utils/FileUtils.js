@@ -8,7 +8,7 @@ var EPATH_PARTS;
     EPATH_PARTS[EPATH_PARTS["FILENAME"] = 8] = "FILENAME";
     EPATH_PARTS[EPATH_PARTS["PATHINFO_ALL"] = 0] = "PATHINFO_ALL";
 })(EPATH_PARTS = exports.EPATH_PARTS || (exports.EPATH_PARTS = {}));
-/**
+/*
      * PHP.js version of basename
      * @param path {string}
      * @param suffix {string}

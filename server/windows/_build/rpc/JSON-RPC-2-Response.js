@@ -62,5 +62,4 @@ function Response_(id, error, result) {
     this.id = id;
 }
 exports.Response_ = Response_;
-;
 //# sourceMappingURL=JSON-RPC-2-Response.js.map

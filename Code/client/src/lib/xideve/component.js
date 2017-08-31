@@ -5,13 +5,14 @@ define([
     "dojo/has",
     "require",
     "xideve/delite/Template",
-    "dojo/Deferred"
-], function (dcl,Component,utils,has,require,deliteTemplate,Deferred) {
+    "dojo/Deferred",
+    "xaction/ActionProvider"
+], function (dcl, Component, utils, has, require, deliteTemplate, Deferred, ActionProvider) {
     /**
      * @class xideve.component
      * @extends module:xide/model/Component
      */
-    return dcl(Component, {
+    return dcl([Component, ActionProvider.dcl], {
         cmdOffset:'',
         userBaseUrl:'',
         /**

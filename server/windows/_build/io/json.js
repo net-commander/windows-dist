@@ -70,7 +70,7 @@ exports.safe = (obj) => {
 //
 // ─── JSON-MAPPING ────────────────────────────────────────────────────────────────
 //
-const jsonMetadataKey = "jsonProperty";
+const jsonMetadataKey = 'jsonProperty';
 /**
  * Decorator to map/support dashed property names
  *
@@ -80,7 +80,7 @@ const jsonMetadataKey = "jsonProperty";
  * @returns {*}
  */
 function JsonProperty(metadata) {
-    if (metadata instanceof String || typeof metadata === "string") {
+    if (metadata instanceof String || typeof metadata === 'string') {
         return Reflect.metadata(jsonMetadataKey, {
             name: metadata,
             clazz: undefined
@@ -96,7 +96,7 @@ function JsonProperty(metadata) {
 }
 exports.JsonProperty = JsonProperty;
 function getClazz(target, propertyKey) {
-    return Reflect.getMetadata("design:type", target, propertyKey);
+    return Reflect.getMetadata('design:type', target, propertyKey);
 }
 exports.getClazz = getClazz;
 function getJsonProperty(target, propertyKey) {
@@ -151,9 +151,9 @@ const Person2 = Map.deserialize(Person, example);
 class Map {
     static isPrimitive(obj) {
         switch (typeof obj) {
-            case "string":
-            case "number":
-            case "boolean":
+            case 'string':
+            case 'number':
+            case 'boolean':
                 return true;
         }
         return !!(obj instanceof String || obj === String ||
@@ -164,7 +164,7 @@ class Map {
         if (object === Array) {
             return true;
         }
-        else if (typeof Array.isArray === "function") {
+        else if (typeof Array.isArray === 'function') {
             return Array.isArray(object);
         }
         else {

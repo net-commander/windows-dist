@@ -125,7 +125,7 @@ class Path {
         return new Path(objects_1.clone(this.segments), this.hasLeading, this.hasTrailing);
     }
     append(tail) {
-        tail = tail || "";
+        tail = tail || '';
         if (typeof tail === 'string') {
             tail = new Path(tail);
         }
@@ -136,7 +136,7 @@ class Path {
         let tailSegments = tail.getSegments();
         let newSegments = mySegments.concat(tailSegments);
         let result = new Path(newSegments, this.hasLeading, tail.hasTrailing);
-        if (tailSegments[0] === ".." || tailSegments[0] === ".") {
+        if (tailSegments[0] === '..' || tailSegments[0] === '.') {
             result._canonicalize();
         }
         return result;
@@ -155,7 +155,7 @@ class Path {
         if (this.hasTrailing) {
             result.push('/');
         }
-        return result.join("").replace(/\/+/g, '\/');
+        return result.join('').replace(/\/+/g, '\/');
     }
     _toString() {
         let result = [];
@@ -171,11 +171,11 @@ class Path {
         if (this.hasTrailing) {
             result.push('/');
         }
-        return result.join("");
+        return result.join('');
     }
     removeRelative() {
         let segs = this.getSegments();
-        if (segs.length > 0 && segs[1] === ".") {
+        if (segs.length > 0 && segs[1] === '.') {
             return this.removeFirstSegments(1);
         }
         return this;
@@ -266,7 +266,7 @@ class Path {
         let doIt;
         let segments = this.segments;
         for (let i = 0; i < segments.length; i++) {
-            if (segments[i] === "." || segments[i] === "..") {
+            if (segments[i] === '.' || segments[i] === '..') {
                 doIt = true;
                 break;
             }
@@ -274,7 +274,7 @@ class Path {
         if (doIt) {
             let stack = [];
             for (let i = 0; i < segments.length; i++) {
-                if (segments[i] === "..") {
+                if (segments[i] === '..') {
                     if (stack.length === 0) {
                         // if the stack is empty we are going out of our scope
                         // so we need to accumulate segments.  But only if the original
@@ -286,8 +286,8 @@ class Path {
                     }
                     else {
                         // if the top is '..' then we are accumulating segments so don't pop
-                        if (".." === stack[stack.length - 1]) {
-                            stack.push("..");
+                        if ('..' === stack[stack.length - 1]) {
+                            stack.push('..');
                         }
                         else {
                             stack.pop();
@@ -295,7 +295,7 @@ class Path {
                     }
                     // collapse current references
                 }
-                else if (segments[i] !== "." || this.segments.length === 1) {
+                else if (segments[i] !== '.' || this.segments.length === 1) {
                     stack.push(segments[i]); // stack push
                 }
             }
@@ -306,9 +306,7 @@ class Path {
             this.segments = stack;
         }
     }
-    ;
 }
-Path.EMPTY = new Path("");
+Path.EMPTY = new Path('');
 exports.Path = Path;
-;
 //# sourceMappingURL=Path.js.map

@@ -28,9 +28,8 @@ const _path = require("path");
 const _ = require("lodash");
 const Base_2 = require("./Base");
 const Path_1 = require("../model/Path");
-const Github_1 = require("../vfs/github/Github");
 const sftp_1 = require("../vfs/ssh/sftp");
-//testSFTP();
+// testSFTP();
 let posix = null;
 const _fs = require('node-fs-extra');
 try {
@@ -304,9 +303,9 @@ class DirectoryService extends Base_1.BaseService {
         });
     }
     createVFSClass(resource) {
-        if (resource.vfs === 'github') {
-            return new Github_1.VFS(resource);
-        }
+        //if (resource.vfs === 'github') {
+        //	return new GithubVFS(resource as GithubResource);
+        //}
         if (resource.vfs === 'sftp') {
             return new sftp_1.VFS(resource);
         }
@@ -372,7 +371,7 @@ class DirectoryService extends Base_1.BaseService {
             return posixCache[uid] = entry;
         }
         else {
-            return { name: "unknown" };
+            return { name: 'unknown' };
         }
     }
     mapNode(node, mount, root) {
@@ -396,7 +395,7 @@ class DirectoryService extends Base_1.BaseService {
             fileType: isDirectory ? 'folder' : 'file',
             modified: fsNodeStat.mtime.getTime() / 1000,
             mount: mount,
-            parent: Path_1.Path.normalize("./" + parent2.segments.join('/'))
+            parent: Path_1.Path.normalize('./' + parent2.segments.join('/'))
         };
         isDirectory && (result['_EX'] = false);
         return result;
@@ -464,7 +463,7 @@ class DirectoryService extends Base_1.BaseService {
     // ─── DECORATOR OVERHEAD ─────────────────────────────────────────────────────────
     //
     getRpcMethods() {
-        throw new Error("Should be implemented by decorator");
+        throw new Error('Should be implemented by decorator');
     }
     methods() {
         const methods = this.getRpcMethods();
@@ -473,7 +472,7 @@ class DirectoryService extends Base_1.BaseService {
 }
 __decorate([
     Base_2.RpcMethod,
-    AspectDecorator_1.before((context, args) => Base_1.decodeArgs(args, "$['0']", base64_1.to)),
+    AspectDecorator_1.before((context, args) => Base_1.decodeArgs(args, '$[\'0\']', base64_1.to)),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String, Boolean, Boolean, Boolean, Object]),
     __metadata("design:returntype", Promise)

@@ -185,7 +185,6 @@ class DriverService extends Bean_1.BeanService {
                             err ? reject(err) : resolve(true);
                         });
                     }
-                    ;
                 });
             }
             else {

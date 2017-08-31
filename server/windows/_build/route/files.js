@@ -12,30 +12,28 @@ const Router = require("koa-router");
 const send = require("koa-send");
 class FileRouter extends Router {
     constructor(args) {
-        super(arguments);
+        super(args);
     }
 }
 exports.FileRouter = FileRouter;
 function create(directoryService, prefix = '/files', app) {
     const filesRouter = new FileRouter({ prefix: prefix });
     filesRouter.directoryService = directoryService;
-    filesRouter.get('/:prefix/:mount/*', (ctx, next) => __awaiter(this, void 0, void 0, function* () {
-        // @TODO: files router doesnt catch right
+    filesRouter.get('/:prefix/*', (ctx, next) => __awaiter(this, void 0, void 0, function* () {
         if (!ctx.req.url.startsWith(prefix)) {
             return next();
         }
         const filePath = ctx.params['0'];
         if (filePath) {
             yield send(ctx, filePath, {
-                root: filesRouter.directoryService.resolve(ctx.params.mount, '', ctx.request)
+                root: filesRouter.directoryService.resolve(ctx.params.prefix, '', ctx.request)
             });
         }
         else {
-            ctx.body = "";
+            ctx.body = '';
         }
     }));
     return filesRouter;
 }
 exports.create = create;
-;
 //# sourceMappingURL=files.js.map

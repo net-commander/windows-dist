@@ -56,7 +56,7 @@
             "title": "Enabled",
             "type": 0,
             "uid": -1,
-            "value": true,
+            "value": false,
             "visible": true,
             "enumType": "-1"
         },

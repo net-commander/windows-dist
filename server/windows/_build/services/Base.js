@@ -37,7 +37,7 @@ class BaseService extends Resolver_1.ResourceResolver {
     constructor(config, relativeVariables, absoluteVariables) {
         super(config, relativeVariables, absoluteVariables);
         this.WRITE_MODE = writeFileOptions;
-        this.method = "no_method";
+        this.method = 'no_method';
     }
     init() { }
     ;
@@ -66,7 +66,7 @@ class BaseService extends Resolver_1.ResourceResolver {
         return null;
     }
     getRpcMethods() {
-        throw new Error("Should be implemented by decorator");
+        throw new Error('Should be implemented by decorator');
     }
     methods() {
         const methods = this.getRpcMethods();
@@ -127,7 +127,7 @@ class BaseService extends Resolver_1.ResourceResolver {
                 case Resource_1.EResourceType.JS_HEADER_INCLUDE:
                 case Resource_1.EResourceType.JS_HEADER_SCRIPT_TAG:
                 case Resource_1.EResourceType.CSS: {
-                    property = "url";
+                    property = 'url';
                     break;
                 }
                 case Resource_1.EResourceType.FILE_PROXY: {

@@ -60,7 +60,6 @@ function toInt(data) {
     return resInt;
 }
 exports.toInt = toInt;
-;
 function arrayContains(array, element) {
     for (let i = 0; i < array.length; i++) {
         let _e = array[i];
@@ -71,7 +70,6 @@ function arrayContains(array, element) {
     return false;
 }
 exports.arrayContains = arrayContains;
-;
 function setStoreCIValueByField(data, field, value) {
     if (data[field] == null) {
         data[field] = [];
@@ -80,7 +78,6 @@ function setStoreCIValueByField(data, field, value) {
     return data;
 }
 exports.setStoreCIValueByField = setStoreCIValueByField;
-;
 function createOption(label, value, extra) {
     return _.mixin({
         label: label,
@@ -88,12 +85,10 @@ function createOption(label, value, extra) {
     }, extra);
 }
 exports.createOption = createOption;
-;
 function hasValue(data) {
-    return data.value && data.value[0] != null && data.value[0].length > 0 && data.value[0] !== "0" && data.value[0] !== "undefined" && data.value[0] !== "Unset";
+    return data.value && data.value[0] != null && data.value[0].length > 0 && data.value[0] !== '0' && data.value[0] !== "undefined" && data.value[0] !== 'Unset';
 }
 exports.hasValue = hasValue;
-;
 function getInputCIByName(data, name) {
     if (!data || !name) {
         return null;
@@ -115,7 +110,6 @@ function getInputCIByName(data, name) {
     return null;
 }
 exports.getInputCIByName = getInputCIByName;
-;
 function getInputCIById(data, name) {
     if (!data) {
         return null;
@@ -136,7 +130,6 @@ function getInputCIById(data, name) {
     return null;
 }
 exports.getInputCIById = getInputCIById;
-;
 function getCIByChainAndName(data, chain, name) {
     if (!data) {
         return null;
@@ -158,7 +151,6 @@ function getCIByChainAndName(data, chain, name) {
     return null;
 }
 exports.getCIByChainAndName = getCIByChainAndName;
-;
 function getCIById(data, chain, id) {
     let dstChain = chain === 0 ? data.inputs : chain === 1 ? data.outputs : null;
     if (dstChain != null) {
@@ -172,7 +164,6 @@ function getCIById(data, chain, id) {
     return null;
 }
 exports.getCIById = getCIById;
-;
 function getCIInputValueByName(data, name) {
     let ci = getCIByChainAndName(data, 0, name);
     if (ci) {
@@ -181,17 +172,14 @@ function getCIInputValueByName(data, name) {
     return null;
 }
 exports.getCIInputValueByName = getCIInputValueByName;
-;
 function getCIValue(data) {
-    return getCIValueByField(data, "value");
+    return getCIValueByField(data, 'value');
 }
 exports.getCIValue = getCIValue;
-;
 function getStringValue(d) {
     return toString(d);
 }
 exports.getStringValue = getStringValue;
-;
 function toString(d) {
     if (d != null) {
         if (!primitives_1.isArray(d)) {
@@ -205,7 +193,6 @@ function toString(d) {
     return null;
 }
 exports.toString = toString;
-;
 function setIntegerValue(data, value) {
     if (data != null) {
         if (primitives_1.isArray(data)) {
@@ -217,7 +204,6 @@ function setIntegerValue(data, value) {
     }
 }
 exports.setIntegerValue = setIntegerValue;
-;
 function getCIValueByField(data, field) {
     if (data[field] != null) {
         if (primitives_1.isArray(data[field])) {
@@ -230,7 +216,6 @@ function getCIValueByField(data, field) {
     return null;
 }
 exports.getCIValueByField = getCIValueByField;
-;
 function setCIValueByField(data, field, value) {
     if (!data) {
         return data;
@@ -242,7 +227,6 @@ function setCIValueByField(data, field, value) {
     return data;
 }
 exports.setCIValueByField = setCIValueByField;
-;
 function setCIValue(data, field, value) {
     let ci = getInputCIByName(data, field);
     if (ci) {
@@ -251,7 +235,6 @@ function setCIValue(data, field, value) {
     return ci;
 }
 exports.setCIValue = setCIValue;
-;
 function getCIInputValueByNameAndField(data, name, field) {
     let ci = getCIByChainAndName(data, 0, name);
     if (ci) {
@@ -260,7 +243,6 @@ function getCIInputValueByNameAndField(data, name, field) {
     return null;
 }
 exports.getCIInputValueByNameAndField = getCIInputValueByNameAndField;
-;
 function getCIInputValueByNameAndFieldStr(data, name, field) {
     const rawValue = getCIInputValueByNameAndField(data, name, field);
     if (rawValue) {
@@ -269,7 +251,6 @@ function getCIInputValueByNameAndFieldStr(data, name, field) {
     return null;
 }
 exports.getCIInputValueByNameAndFieldStr = getCIInputValueByNameAndFieldStr;
-;
 function toString2(val) {
     if (val != null) {
         if (!primitives_1.isArray(val)) {
@@ -283,7 +264,6 @@ function toString2(val) {
     return null;
 }
 exports.toString2 = toString2;
-;
 function toBoolean(data) {
     let result = false;
     if (data != null) {
@@ -295,7 +275,6 @@ function toBoolean(data) {
     return result;
 }
 exports.toBoolean = toBoolean;
-;
 function getCIInputValueByNameAndFieldBool(data, name, field) {
     let rawValue = getCIInputValueByNameAndField(data, name, field);
     if (rawValue) {
@@ -304,5 +283,4 @@ function getCIInputValueByNameAndFieldBool(data, name, field) {
     return null;
 }
 exports.getCIInputValueByNameAndFieldBool = getCIInputValueByNameAndFieldBool;
-;
 //# sourceMappingURL=CIUtils.js.map

@@ -33,6 +33,7 @@ const Koa = require("koa");
 const convert = require("koa-convert");
 const bodyParser = require("koa-bodyparser");
 const serve = require("koa-static");
+const cors = require('koa2-cors');
 const path = require("path");
 const _ = require("lodash");
 const os = require("os");
@@ -49,9 +50,8 @@ const argv = yargs_parser(process.argv.slice(2));
 const util = require('util');
 const osTmpdir = require('os-tmpdir');
 const mkdirp = require('mkdirp');
-const MODULE_ROOT = "../../";
-const COMPONENT_ROOT = "../../components/";
-const index_2 = require("../../server/index");
+const MODULE_ROOT = '../../';
+const COMPONENT_ROOT = '../../components/';
 const interfaces_1 = require("../../fs/interfaces");
 //import { test } from '../../vfs/github/Github';
 //test();
@@ -297,14 +297,14 @@ class ControlFreak extends Base_1.ApplicationBase {
                 'XCF_DEVICE_VFS_CONFIG': '{}',
                 'XAPP_PLUGIN_RESOURCES': '{}',
                 'THEME': 'white',
-                "COMPONENTS": {
-                    "xfile": true,
-                    "xnode": true,
-                    "xideve": { cmdOffset: '/' },
-                    "xblox": true,
-                    "x-markdown": true,
-                    "xtrack": true,
-                    "protocols": false
+                'COMPONENTS': {
+                    'xfile': true,
+                    'xnode': true,
+                    'xideve': { cmdOffset: '/' },
+                    'xblox': true,
+                    'x-markdown': true,
+                    'xtrack': true,
+                    'protocols': false
                 },
                 VFS_CONFIG: VFS_CONFIG,
                 USER_DIRECTORY: USER_DIRECTORY,
@@ -328,9 +328,9 @@ class ControlFreak extends Base_1.ApplicationBase {
             this.profile.http.host = argv.host;
         }
         if (argv.print === 'true') {
-            console_1.console.log("Config", util.inspect(params));
+            console_1.console.log('Config', util.inspect(params));
             console_1.console.log('\n\n');
-            console_1.console.log("Options", util.inspect(this.options));
+            console_1.console.log('Options', util.inspect(this.options));
         }
     }
     _getProfile(_path) {
@@ -683,9 +683,6 @@ class ControlFreak extends Base_1.ApplicationBase {
         return dst;
     }
     routes() {
-        if (this._routes) {
-            //return this._routes;
-        }
         const filesRoute = files_1.create(this.directoryService, '/files', this);
         const uploadRoute = uploads_1.create(this.directoryService, '/upload', this);
         const components = this.components();
@@ -699,16 +696,22 @@ class ControlFreak extends Base_1.ApplicationBase {
     }
     setup() {
         super.setup();
+        this.use(cors({
+            origin: function (ctx) {
+                return '*';
+            },
+            allowHeaders: ['Content-Type', 'Authorization', 'Accept', 'xapp_debug_data', 'X-Requested-With']
+        }));
         // RPC stack
         this.rpc2 = JSON_RPC_2_1.JSON_RPC_2();
         const rpcApp = new Koa();
         rpcApp.use(convert(this.rpc2.app()));
         this.use(convert(mount('/api', rpcApp)));
         // pretty index browser, must be 'used' no later than at this point
-        this.use(index_2.serveIndex(this.path(Base_1.EEKey.APP_ROOT), {
-            icons: true,
-            view: 'details'
-        }));
+        //this.use(serveIndex(this.path(EEKey.APP_ROOT), {
+        //	icons: true,
+        //	view: 'details'
+        //}));
         // RPC services
         const services = this.rpcServices();
         _.each(services, (service) => register_1.registerService(this.rpc2, service, this));
@@ -771,109 +774,108 @@ class ControlFreak extends Base_1.ApplicationBase {
             clientRoot: clientRoot,
             cwd: serverRoot,
             hasCache: {
-                "host-node": 1,
-                "host-browser": 0,
-                "dom": 0,
-                "dojo-amd-factory-scan": 0,
-                "dojo-has-api": 1,
-                "dojo-inject-api": 0,
-                "dojo-timeout-api": 0,
-                "dojo-trace-api": 1,
-                "dojo-log-api": 0,
-                "dojo-dom-ready-api": 0,
-                "dojo-publish-privates": 1,
-                "dojo-config-api": 1,
-                "dojo-sniff": 1,
-                "dojo-sync-loader": 0,
-                "dojo-test-sniff": 0,
-                "config-deferredInstrumentation": 1,
-                "config-useDeferredInstrumentation": "report-unhandled-rejections",
-                "config-tlmSiblingOfDojo": 1,
+                'host-node': 1,
+                'host-browser': 0,
+                'dom': 0,
+                'dojo-amd-factory-scan': 0,
+                'dojo-has-api': 1,
+                'dojo-inject-api': 0,
+                'dojo-timeout-api': 0,
+                'dojo-trace-api': 1,
+                'dojo-log-api': 0,
+                'dojo-dom-ready-api': 0,
+                'dojo-publish-privates': 1,
+                'dojo-config-api': 1,
+                'dojo-sniff': 1,
+                'dojo-sync-loader': 0,
+                'dojo-test-sniff': 0,
+                'config-deferredInstrumentation': 1,
+                'config-useDeferredInstrumentation': 'report-unhandled-rejections',
+                'config-tlmSiblingOfDojo': 1,
                 'xlog': true,
                 'xblox': true,
                 'dojo-undef-api': true,
-                "debug": true,
-                "dcl": false,
-                "dojo": true
+                'debug': true,
+                'dcl': false,
+                'dojo': true
             },
             trace: 0,
             async: 0,
             baseUrl: base || serverRoot || '.',
             packages: [
                 {
-                    name: "dojo",
-                    location: "dojo"
+                    name: 'dojo',
+                    location: 'dojo'
                 },
                 {
-                    name: "nxappmain",
-                    location: serverRoot + path.sep + "nxappmain"
+                    name: 'nxappmain',
+                    location: serverRoot + path.sep + 'nxappmain'
                 },
                 {
-                    name: "nxapp",
-                    location: serverRoot + path.sep + "nxapp"
+                    name: 'nxapp',
+                    location: serverRoot + path.sep + 'nxapp'
                 },
                 {
-                    name: "requirejs-dplugins2",
+                    name: 'requirejs-dplugins2',
                     location: clientRoot + path.sep + 'xibm/ibm/requirejs-dplugins'
                 },
                 {
-                    name: "xcf",
+                    name: 'xcf',
                     location: clientRoot + path.sep + 'xcf'
                 },
                 {
-                    name: "dstore",
+                    name: 'dstore',
                     location: clientRoot + path.sep + 'dstore'
                 },
                 {
-                    name: "xide",
+                    name: 'xide',
                     location: clientRoot + path.sep + 'xide'
                 },
                 {
-                    name: "xwire",
+                    name: 'xwire',
                     location: clientRoot + path.sep + 'xwire'
                 },
                 {
-                    name: "dcl",
+                    name: 'dcl',
                     location: clientRoot + path.sep + 'dcl'
                 },
                 {
-                    name: "xblox",
+                    name: 'xblox',
                     location: clientRoot + path.sep + 'xblox'
                 },
                 {
-                    name: "xlog",
+                    name: 'xlog',
                     location: clientRoot + path.sep + 'xlog'
                 },
                 {
-                    name: "xblox",
+                    name: 'xblox',
                     location: clientRoot + path.sep + 'xblox'
                 },
                 {
-                    name: "dstore",
+                    name: 'dstore',
                     location: clientRoot + path.sep + 'dstore'
                 },
                 {
-                    name: "dijit",
+                    name: 'dijit',
                     location: clientRoot + path.sep + 'dijit'
                 },
                 {
-                    name: "xlang",
+                    name: 'xlang',
                     location: clientRoot + path.sep + 'xlang'
                 },
                 {
-                    name: "xgrid",
+                    name: 'xgrid',
                     location: clientRoot + path.sep + 'xgrid'
                 },
                 {
-                    name: "xaction",
+                    name: 'xaction',
                     location: clientRoot + path.sep + 'xaction/src'
                 },
                 {
-                    name: "xdojo",
+                    name: 'xdojo',
                     location: clientRoot + path.sep + 'xdojo'
                 }
             ]
-            // deps: ['dojo/moduleFetcher']
         };
         return dojoConfig;
     }

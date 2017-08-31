@@ -752,7 +752,7 @@ define([
                 var parts = utils.parse_url(background);
                 if(parts.host && parts.scheme) {
                     var url = this.ctx.getFileManager().getImageUrl({
-                        path: parts.host + parts.path,
+                        path: parts.host + (parts.path || ''),
                         mount: parts.scheme
                     }, false);
                     //console.log('update background : ' + url,style);

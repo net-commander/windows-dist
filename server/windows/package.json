@@ -19,6 +19,7 @@
 		"any-promise": "^1.3.0",
 		"async-busboy": "^0.3.3",
 		"base-64": "^0.1.0",
+		"koa2-cors": "^2.0.3",
 		"cheerio": "^0.22.0",
 		"chokidar": "^1.6.1",
 		"co-body": "^4.2.0",

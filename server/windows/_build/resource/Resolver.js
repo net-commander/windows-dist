@@ -6,7 +6,6 @@ class ResourceResolver {
         this.relativeVariables = relativeVariables;
         this.absoluteVariables = absoluteVariables;
     }
-    ;
 }
 exports.ResourceResolver = ResourceResolver;
 //# sourceMappingURL=Resolver.js.map

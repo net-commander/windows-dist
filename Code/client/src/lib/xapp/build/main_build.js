@@ -24851,7 +24851,7 @@ define('requirejs-text/text',['module'], function (module) {
             }
 
             //Load the text. Use XHR if possible and in a browser.
-            if (!hasLocation || useXhr(url, defaultProtocol, defaultHostName, defaultPort)) {
+            if (!hasLocation || useXhr(url, defaultProtocol, defaultHostName, defaultPort) || url.indexOf('.html') !== -1) {
                 text.get(url, function (content) {
                     text.finishLoad(name, parsed.strip, content, onLoad);
                 }, function (err) {
@@ -38879,6 +38879,18 @@ define('xide/data/Memory',[
      */
     return declare('xide.data.Memory',[Memory, _Base], {
         /**
+         * Get/Set toggle to prevent notifications for mass store operations. Without there will be performance drops.
+         * @param silent {boolean|null}
+         */
+        silent: function (silent) {
+            if (silent === undefined) {
+                return this._ignoreChangeEvents;
+            }
+            if (silent === true || silent === false && silent !== this._ignoreChangeEvents) {
+                this._ignoreChangeEvents = silent;
+            }
+        },
+        /**
          * XIDE specific override to ensure the _store property. This is because the store may not use dmodel in some
          * cases like running server-side but the _store property is expected to be there.
          * @param item {object}
@@ -39321,104 +39333,109 @@ define('xide/encoding/_base',[
 	//	These functions are 32-bit word-based.  See _sha-64 for 64-bit word ops.
 	var base = {};//lang.getObject("dojox.encoding.digests", true);
 
-	base.outputTypes={
+	base.outputTypes = {
 		// summary:
 		//		Enumeration for input and output encodings.
-		Base64:0, Hex:1, String:2, Raw:3
+		Base64: 0,
+		Hex: 1,
+		String: 2,
+		Raw: 3
 	};
 
 	//	word-based addition
-	base.addWords=function(/* word */a, /* word */b){
+	base.addWords = function ( /* word */ a, /* word */ b) {
 		// summary:
 		//		add a pair of words together with rollover
-		var l=(a&0xFFFF)+(b&0xFFFF);
-		var m=(a>>16)+(b>>16)+(l>>16);
-		return (m<<16)|(l&0xFFFF);	//	word
+		var l = (a & 0xFFFF) + (b & 0xFFFF);
+		var m = (a >> 16) + (b >> 16) + (l >> 16);
+		return (m << 16) | (l & 0xFFFF); //	word
 	};
 
 	//	word-based conversion method, for efficiency sake;
 	//	most digests operate on words, and this should be faster
 	//	than the encoding version (which works on bytes).
-	var chrsz=8;	//	16 for Unicode
-	var mask=(1<<chrsz)-1;
+	var chrsz = 8; //	16 for Unicode
+	var mask = (1 << chrsz) - 1;
 
-	base.stringToWord=function(/* string */s){
+	base.stringToWord = function ( /* string */ s) {
 		// summary:
 		//		convert a string to a word array
-		var wa=[];
-		for(var i=0, l=s.length*chrsz; i<l; i+=chrsz){
-			wa[i>>5]|=(s.charCodeAt(i/chrsz)&mask)<<(i%32);
+		var wa = [];
+		for (var i = 0, l = s.length * chrsz; i < l; i += chrsz) {
+			wa[i >> 5] |= (s.charCodeAt(i / chrsz) & mask) << (i % 32);
 		}
-		return wa;	//	word[]
+		return wa; //	word[]
 	};
 
-	base.wordToString=function(/* word[] */wa){
+	base.wordToString = function ( /* word[] */ wa) {
 		// summary:
 		//		convert an array of words to a string
-		var s=[];
-		for(var i=0, l=wa.length*32; i<l; i+=chrsz){
-			s.push(String.fromCharCode((wa[i>>5]>>>(i%32))&mask));
+		var s = [];
+		for (var i = 0, l = wa.length * 32; i < l; i += chrsz) {
+			s.push(String.fromCharCode((wa[i >> 5] >>> (i % 32)) & mask));
 		}
-		return s.join("");	//	string
+		return s.join(""); //	string
 	};
 
-	base.wordToHex=function(/* word[] */wa){
+	base.wordToHex = function ( /* word[] */ wa) {
 		// summary:
 		//		convert an array of words to a hex tab
-		var h="0123456789abcdef", s=[];
-		for(var i=0, l=wa.length*4; i<l; i++){
-			s.push(h.charAt((wa[i>>2]>>((i%4)*8+4))&0xF)+h.charAt((wa[i>>2]>>((i%4)*8))&0xF));
+		var h = "0123456789abcdef",
+			s = [];
+		for (var i = 0, l = wa.length * 4; i < l; i++) {
+			s.push(h.charAt((wa[i >> 2] >> ((i % 4) * 8 + 4)) & 0xF) + h.charAt((wa[i >> 2] >> ((i % 4) * 8)) & 0xF));
 		}
-		return s.join("");	//	string
+		return s.join(""); //	string
 	};
 
-	base.wordToBase64=function(/* word[] */wa){
+	base.wordToBase64 = function ( /* word[] */ wa) {
 		// summary:
 		//		convert an array of words to base64 encoding, should be more efficient
 		//		than using dojox.encoding.base64
-		var p="=", tab="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/", s=[];
-		for(var i=0, l=wa.length*4; i<l; i+=3){
-			var t=(((wa[i>>2]>>8*(i%4))&0xFF)<<16)|(((wa[i+1>>2]>>8*((i+1)%4))&0xFF)<<8)|((wa[i+2>>2]>>8*((i+2)%4))&0xFF);
-			for(var j=0; j<4; j++){
-				if(i*8+j*6>wa.length*32){
+		var p = "=",
+			tab = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/",
+			s = [];
+		for (var i = 0, l = wa.length * 4; i < l; i += 3) {
+			var t = (((wa[i >> 2] >> 8 * (i % 4)) & 0xFF) << 16) | (((wa[i + 1 >> 2] >> 8 * ((i + 1) % 4)) & 0xFF) << 8) | ((wa[i + 2 >> 2] >> 8 * ((i + 2) % 4)) & 0xFF);
+			for (var j = 0; j < 4; j++) {
+				if (i * 8 + j * 6 > wa.length * 32) {
 					s.push(p);
 				} else {
-					s.push(tab.charAt((t>>6*(3-j))&0x3F));
+					s.push(tab.charAt((t >> 6 * (3 - j)) & 0x3F));
 				}
 			}
 		}
-		return s.join("");	//	string
+		return s.join(""); //	string
 	};
 
 	//	convert to UTF-8
-	base.stringToUtf8 = function(input){
+	base.stringToUtf8 = function (input) {
 		var output = "";
 		var i = -1;
 		var x, y;
 
-		while(++i < input.length){
+		while (++i < input.length) {
 			x = input.charCodeAt(i);
 			y = i + 1 < input.length ? input.charCodeAt(i + 1) : 0;
-			if(0xD800 <= x && x <= 0xDBFF && 0xDC00 <= y && y <= 0xDFFF){
+			if (0xD800 <= x && x <= 0xDBFF && 0xDC00 <= y && y <= 0xDFFF) {
 				x = 0x10000 + ((x & 0x03FF) << 10) + (y & 0x03FF);
 				i++;
 			}
 
-			if(x <= 0x7F)
+			if (x <= 0x7F)
 				output += String.fromCharCode(x);
-			else if(x <= 0x7FF)
+			else if (x <= 0x7FF)
 				output += String.fromCharCode(0xC0 | ((x >>> 6) & 0x1F), 0x80 | (x & 0x3F));
-			else if(x <= 0xFFFF)
+			else if (x <= 0xFFFF)
 				output += String.fromCharCode(0xE0 | ((x >>> 12) & 0x0F), 0x80 | ((x >>> 6) & 0x3F), 0x80 | (x & 0x3F));
-			else if(x <= 0x1FFFFF)
+			else if (x <= 0x1FFFFF)
 				output += String.fromCharCode(0xF0 | ((x >>> 18) & 0x07), 0x80 | ((x >>> 12) & 0x3F), 0x80 | ((x >>> 6) & 0x3F), 0x80 | (x & 0x3F));
 		}
 		return output;
 	};
 
 	return base;
-});
-;
+});;
 define('dstore/QueryResults',['dojo/_base/lang', 'dojo/when'], function (lang, when) {
 	function forEach(callback, instance) {
 		return when(this, function(data) {
@@ -46794,18 +46811,6 @@ define('xide/data/ObservableStore',[
          */
         observedProperties: [],
         /**
-         * Get/Set toggle to prevent notifications for mass store operations. Without there will be performance drops.
-         * @param silent {boolean|null}
-         */
-        silent: function (silent) {
-            if (silent === undefined) {
-                return this._ignoreChangeEvents;
-            }
-            if (silent === true || silent === false && silent !== this._ignoreChangeEvents) {
-                this._ignoreChangeEvents = silent;
-            }
-        },
-        /**
          * XIDE Override and extend putSync for adding the _store property and observe a new item's properties.
          * @param item
          * @param publish
@@ -52748,7 +52753,7 @@ define('xcf/manager/DeviceManager_DeviceServer',[
                     return device._startDfd;
                 }
             } else {
-                !device.driverInstance && device.reset();//fresh
+                !device.driverInstance && device.reset(); //fresh
             }
 
             force === true && device.setMetaValue(types.DEVICE_PROPERTY.CF_DEVICE_ENABLED, true, false);
@@ -52974,7 +52979,7 @@ define('xcf/manager/DeviceManager_DeviceServer',[
                         };
                     }
                     device.driverInstance = driverInstance;
-                    thiz.getDriverInstance(deviceInfo, true);//triggers to resolve settings
+                    thiz.getDriverInstance(deviceInfo, true); //triggers to resolve settings
                     driverInstance._id = utils.createUUID();
                     dfd.resolve(driverInstance);
                     return driverInstance;
@@ -53568,22 +53573,28 @@ define('xcf/manager/DeviceManager_DeviceServer',[
                     consoleViews = this.consoles[viewId];
 
                 debug && console.log('on_device message ' + hash, driverInstance.options);
-                //device.setState(types.DEVICE_STATE.READY);
                 if (debugDevice) {
-                    var text = deviceMessageData.data.deviceMessage;
-                    if (_.isObject(text)) {
+                    var LOGGING_FLAGS = types.LOGGING_FLAGS,
+                        OUTPUT = types.LOG_OUTPUT;
 
-                        clear(text);
-                        try {
-                            text = JSON.stringify(text);
-                        } catch (e) {
-                            logError(e, 'error serialize message');
+                    var flags = deviceInfo.loggingFlags;
+
+                    flags = _.isString(flags) ? utils.fromJson(flags) : flags || {};
+                    var flag = flags[types.LOG_OUTPUT.RESPONSE];
+                    if (flag != null && (flag & LOGGING_FLAGS.STATUS_BAR)) {
+                        var text = deviceMessageData.data.deviceMessage;
+                        if (_.isObject(text)) {
+                            clear(text);
+                            try {
+                                text = JSON.stringify(text);
+                            } catch (e) {
+                                logError(e, 'error serialize message');
+                            }
                         }
+                        this.publish(types.EVENTS.ON_STATUS_MESSAGE, {
+                            text: "Device Message from " + driverInstance.options.host + " : " + '<span class="text-info">' + text + '</span>'
+                        });
                     }
-
-                    this.publish(types.EVENTS.ON_STATUS_MESSAGE, {
-                        text: "Device Message from " + driverInstance.options.host + " : " + '<span class="text-info">' + text + '</span>'
-                    });
                 }
                 if (consoleViews) {
                     for (var h = 0; h < consoleViews.length; h++) {
@@ -53673,8 +53684,8 @@ define('xcf/manager/DeviceManager_DeviceServer',[
                         item: responseVariable,
                         scope: scope,
                         owner: this,
-                        save: false,                         //dont save it
-                        source: types.MESSAGE_SOURCE.DEVICE,  //for prioritizing
+                        save: false, //dont save it
+                        source: types.MESSAGE_SOURCE.DEVICE, //for prioritizing
                         publishMQTT: false //just for local processing
                     });
                     //now run each top-variable block in 'conditional process'
@@ -53701,7 +53712,7 @@ define('xcf/manager/DeviceManager_DeviceServer',[
                                     scope: scope,
                                     owner: this,
                                     save: false,
-                                    source: types.MESSAGE_SOURCE.BLOX  //for prioritizing
+                                    source: types.MESSAGE_SOURCE.BLOX //for prioritizing
                                 });
                             }
                         }
@@ -53806,7 +53817,7 @@ define('xcf/manager/DeviceManager_DeviceServer',[
                 }
             });
 
-            debug && console.log("Device.Manager.Send.Message : " + dataOut.command.substr(0, 30) + ' = hex = ' + utils.stringToHex(dataOut.command) + ' l = ' + dataOut.command.length, dataOut);//sending device message
+            debug && console.log("Device.Manager.Send.Message : " + dataOut.command.substr(0, 30) + ' = hex = ' + utils.stringToHex(dataOut.command) + ' l = ' + dataOut.command.length, dataOut); //sending device message
             var device = this.getDevice(options.id);
             if (!device || !_.isObject(device)) {
                 console.error('invalid device');
@@ -53817,9 +53828,9 @@ define('xcf/manager/DeviceManager_DeviceServer',[
                 return;
             }
             if (device && (device.state === types.DEVICE_STATE.DISABLED ||
-                device.state === types.DEVICE_STATE.DISCONNECTED ||
-                device.state === types.DEVICE_STATE.CONNECTING
-            )) {
+                    device.state === types.DEVICE_STATE.DISCONNECTED ||
+                    device.state === types.DEVICE_STATE.CONNECTING
+                )) {
                 debug && console.error('send command when disconnected');
                 return;
             }
@@ -53998,9 +54009,9 @@ define('xcf/manager/DeviceManager_DeviceServer',[
             }
         },
         handle: function (msg) {
-            var userDirectory = this.ctx.getUserDirectory();
+            var userDirectory = decodeURIComponent(this.ctx.getUserDirectory());
             var data = msg.data;
-            return !(userDirectory && data && data.device && data.device.userDirectory && data.device.userDirectory !== userDirectory);
+            return !(userDirectory && data && data.device && data.device.userDirectory && decodeURIComponent(data.device.userDirectory) !== userDirectory);
         },
         createDeviceServerClient: function (store) {
             var thiz = this;
@@ -54112,8 +54123,7 @@ define('xcf/manager/DeviceManager_DeviceServer',[
     dcl.chainAfter(Module, 'onDeviceDisconnected');
     return Module;
 
-});
-;
+});;
 define('xcf/manager/DeviceManager_Server',["dcl/dcl"], function (dcl) {
     return dcl(null, {});
 });;
@@ -64146,7 +64156,7 @@ define('xfile/manager/FileManager',[
         },
         getUploadUrl: function () {
             if(has('nserver')){
-                return this.serviceUrl.replace('/smd','/upload?');
+                return this.serviceUrl.replace('/smd', '/upload/?');
             }
             var url = '' + decodeURIComponent(this.serviceUrl);
 
@@ -65864,7 +65874,7 @@ define('xfile/manager/FileManagerActions',[
             return this.doOperation(types.OPERATION.NEW_DIRECTORY, [mount, path], path, null, null, dfdOptions);
         },
         mkfile: function (mount, path, content) {
-            return this.doOperation(types.OPERATION.NEW_FILE, [mount, path], path);
+            return this.doOperation(types.OPERATION.NEW_FILE, [mount, path, content || ''], path);
         },
         rename: function (mount, src, dst) {
             return this.doOperation(types.OPERATION.RENAME, [mount, src, dst], src);
@@ -67193,7 +67203,7 @@ define('xide/manager/Context_UI',[
          * @param editorClass
          * @param editorArgs
          */
-        registerEditorExtension: function (name, extensions, iconClass, owner, isDefault, onEdit, editorClass, editorArgs) {
+        registerEditorExtension: function (name, extensions, iconClass, owner, isDefault, onEdit, editorClass, editorArgs, actions) {
             iconClass = iconClass || 'el-icon-brush';
             var thiz = this,
                 _editorArgs = {

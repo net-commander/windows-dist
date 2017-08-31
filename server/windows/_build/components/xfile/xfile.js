@@ -41,10 +41,7 @@ class XFILE extends Component_1.Component {
         const selection = ['workspace_user/ClayCenter/init.css'];
         const srcMount = directoryService.resolveShort(selection[0]).mount;
         const srcVFS = directoryService.getVFS(srcMount);
-        //console.log('mount ' + srcMount, srcVFS != null);
-        //console.log('file ', directoryService.resolveShort(selection[0]).path);
         const root = directoryService.resolvePath(srcMount, '');
-        //console.log('src vfs root', root);
         const checkFilesInRoot = (dirService, srcMount, selection) => {
             let result = true;
             selection.forEach((item) => {
@@ -69,11 +66,6 @@ class XFILE extends Component_1.Component {
             });
         };
         // console.log('contains : ', checkFilesInRoot(directoryService, srcMount, ['workspace_user/A-VLC.css']));
-        const matcherOptions = {
-            dot: true,
-            matchBase: false,
-            nocomment: true
-        };
         // const _matcher = matcher('', relatives(directoryService, selection), matcherOptions);
         // console.log('as regex : ', pathToRegexp('./ClayCenter/init.css'));
         // console.log('as regex : ', pathToRegexp('ClayCenter/init.css'));

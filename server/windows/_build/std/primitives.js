@@ -157,7 +157,7 @@ function create(ctor, ...args) {
 }
 exports.create = create;
 function count(fromOrTo, toOrCallback, callback) {
-    var from, to;
+    let from, to;
     if (isNumber(toOrCallback)) {
         from = fromOrTo;
         to = toOrCallback;
@@ -167,16 +167,16 @@ function count(fromOrTo, toOrCallback, callback) {
         to = fromOrTo;
         callback = toOrCallback;
     }
-    var op = from <= to ? (i) => i + 1 : (i) => i - 1;
-    var cmp = from <= to ? (a, b) => a < b : (a, b) => a > b;
-    for (var i = from; cmp(i, to); i = op(i)) {
+    let op = from <= to ? (i) => i + 1 : (i) => i - 1;
+    let cmp = from <= to ? (a, b) => a < b : (a, b) => a > b;
+    for (let i = from; cmp(i, to); i = op(i)) {
         callback(i);
     }
 }
 exports.count = count;
 function countToArray(fromOrTo, to) {
-    var result = [];
-    var fn = (i) => result.push(i);
+    let result = [];
+    let fn = (i) => result.push(i);
     if (isUndefined(to)) {
         count(fromOrTo, fn);
     }

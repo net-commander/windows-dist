@@ -194,7 +194,6 @@ define([
                                                     var script = doc.createElement('script');
                                                     script.type = 'text/javascript';
                                                     script.src = url;
-                                                    console.log('add js : ',url);
                                                     //var head = this.getDocumentElement().getChildElement('head');
                                                     var headElem = doc.getElementsByTagName('head')[0];
                                                     headElem.appendChild(script);
