@@ -199,7 +199,18 @@ div.mblScrollablePane {
     outline-color:rgba(128,128,128,0.5);
     background-clip:content-box;
 }
+::-webkit-scrollbar {
+	width: 0.6em;
+	height: 0.8em;
+}
 
+::-webkit-scrollbar-thumb {
+	background: slategray;
+}
+
+ ::-webkit-scrollbar-track {
+	background: #b8c0c8;
+}
 body {
 	border:1px solid black;
 	margin: 0;
