@@ -53,10 +53,10 @@ const mkdirp = require('mkdirp');
 const MODULE_ROOT = '../../';
 const COMPONENT_ROOT = '../../components/';
 const interfaces_1 = require("../../fs/interfaces");
-//import { test } from '../../vfs/github/Github';
-//test();
-//import { async as copyAsync } from '../../fs/copy';
-//import { async as removeAsync } from '../../fs/remove';
+// import { test } from '../../vfs/github/Github';
+// test();
+// import { async as copyAsync } from '../../fs/copy';
+// import { async as removeAsync } from '../../fs/remove';
 const progress = function (path, current, total, item) {
     return true;
 };
@@ -123,9 +123,9 @@ this.running = copyAsync(src, dst, options).then(function (res) {
     console.error('error copyAsync', e);
 });
 */
-//removeAsync(dst, deleteOptions).then(function () {
-//	console.log('remove async done');
-//})
+// removeAsync(dst, deleteOptions).then(function () {
+// 	console.log('remove async done');
+// })
 const startTimer = function (startMessage) {
     let start = Date.now();
     process.stdout.write(startMessage + ' ... ');
@@ -135,7 +135,7 @@ const startTimer = function (startMessage) {
         return time;
     };
 };
-//let now = startTimer('start walk');
+// let now = startTimer('start walk');
 /*
 lock('./src/fs/write.ts', function (e) {
     console.error('lock : ', e);
@@ -214,12 +214,11 @@ let devs = devices('/PMaster/projects/x4mm/data/system/devices', 'system_devices
 let _drivers = drivers('/PMaster/projects/x4mm/data/system/drivers', 'system_drivers').then((nodes) => {
     console.log('nodes', nodes);
 });*/
-//console.log('devs : ', devs);
+// console.log('devs : ', devs);
 /*
 import { async as fsIterator } from '../../fs/iterator';
 import { ArrayIterator } from '@xblox/core/iterator';
 import { IProcessingNode } from '../../fs/interfaces';
-
 
 let devices = fsIterator('/PMaster/projects/x4mm/user/devices', {
     matching: ['* * /*.meta.json']
@@ -708,10 +707,10 @@ class ControlFreak extends Base_1.ApplicationBase {
         rpcApp.use(convert(this.rpc2.app()));
         this.use(convert(mount('/api', rpcApp)));
         // pretty index browser, must be 'used' no later than at this point
-        //this.use(serveIndex(this.path(EEKey.APP_ROOT), {
-        //	icons: true,
-        //	view: 'details'
-        //}));
+        // this.use(serveIndex(this.path(EEKey.APP_ROOT), {
+        // 	icons: true,
+        // 	view: 'details'
+        // }));
         // RPC services
         const services = this.rpcServices();
         _.each(services, (service) => register_1.registerService(this.rpc2, service, this));

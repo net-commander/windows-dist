@@ -28,8 +28,11 @@ const _path = require("path");
 const _ = require("lodash");
 const Base_2 = require("./Base");
 const Path_1 = require("../model/Path");
+// import { VFS as GithubVFS, GithubResource } from '../vfs/github/Github';
+// import { test as testSFTP } from '../vfs/ssh/sftp';
 const sftp_1 = require("../vfs/ssh/sftp");
-// testSFTP();
+const copy_1 = require("../fs/copy");
+const exists_1 = require("../fs/exists");
 let posix = null;
 const _fs = require('node-fs-extra');
 try {
@@ -231,17 +234,18 @@ class DirectoryService extends Base_1.BaseService {
                     let newName = null;
                     while (!found) {
                         newName = fileName + '-' + i + ext;
-                        const colliding = _.find(others, {
-                            name: newName
-                        });
-                        if (!colliding) {
-                            found = true;
+                        const colliding = others.indexOf(newName);
+                        if (colliding !== -1) {
+                            i++;
                         }
                         else {
-                            i++;
+                            found = true;
                         }
                     }
                     return newName;
+                };
+                let coptions = {
+                    overwrite: true
                 };
                 _.each(selection, (path) => {
                     let srcParts = this.resolveShort(path);
@@ -250,17 +254,23 @@ class DirectoryService extends Base_1.BaseService {
                     if (!srcVFS) {
                         reject('Cant find VFS for ' + srcParts.mount);
                     }
-                    const exists = others.indexOf(_path.basename(srcPath)) !== -1;
-                    const newPath = exists ?
-                        (_path.dirname(srcPath) + _path.sep + newName(_path.basename(srcPath))) :
-                        (_path.dirname(targetDirectory) + _path.sep + _path.basename(srcPath));
-                    _fs.copy(srcPath, newPath, function (err) {
-                        if (err) {
-                            errors.push(err);
+                    const _exists = others.indexOf(_path.basename(srcPath)) !== -1;
+                    const newPath = _exists ?
+                        (targetDirectory + _path.sep + newName(_path.basename(srcPath))) :
+                        (targetDirectory + _path.sep + _path.basename(srcPath));
+                    try {
+                        if (exists_1.sync(srcPath)) {
+                            copy_1.sync(srcPath, newPath, coptions);
                         }
-                    });
+                        else {
+                            errors.push("cp : doesnt exists " + _path.basename(srcPath));
+                        }
+                    }
+                    catch (e) {
+                        console.error('cp error');
+                    }
                 });
-                _.isEmpty(errors) ? resolve(true) : reject(errors);
+                _.isEmpty(errors) ? resolve(true) : reject(errors.join('\\'));
             });
         });
     }
@@ -303,9 +313,9 @@ class DirectoryService extends Base_1.BaseService {
         });
     }
     createVFSClass(resource) {
-        //if (resource.vfs === 'github') {
-        //	return new GithubVFS(resource as GithubResource);
-        //}
+        // if (resource.vfs === 'github') {
+        // return new GithubVFS(resource as GithubResource);
+        // }
         if (resource.vfs === 'sftp') {
             return new sftp_1.VFS(resource);
         }
