@@ -41113,21 +41113,20 @@ define('xide/manager/ServerActionBase',[
             return (r ? enc.slice(0, r - 3) : enc) + '==='.slice(r || 3);
 
         },
-        runDeferred: function (serviceClassIn, method, args, options) {
-            var self = this;
+        runDeferred: function (serviceClassIn, method, args, options, onError) {
             if (this.serviceObject.__init) {
                 if (this.serviceObject.__init.isResolved()) {
-                    return self._runDeferred(serviceClassIn, method, args, options);
+                    return this._runDeferred(serviceClassIn, method, args, options, onError);
                 }
                 var dfd = new Deferred();
-                this.serviceObject.__init.then(function () {
-                    self._runDeferred(serviceClassIn, method, args, options).then(function () {
+                this.serviceObject.__init.then(() => {
+                    this._runDeferred(serviceClassIn, method, args, options, onError).then(() => {
                         dfd.resolve(arguments);
                     });
                 });
                 return dfd;
             }
-            return self._runDeferred(serviceClassIn, method, args, options);
+            return this._runDeferred(serviceClassIn, method, args, options);
         },
         /**
          * Public main entry, all others below are deprecated
@@ -41137,7 +41136,7 @@ define('xide/manager/ServerActionBase',[
          * @param options
          * @returns {Deferred}
          */
-        _runDeferred: function (serviceClassIn, method, args, options) {
+        _runDeferred: function (serviceClassIn, method, args, options, onError) {
             var deferred = new Deferred(),
                 promise;
             options = options || this.defaultOptions;
@@ -41157,7 +41156,7 @@ define('xide/manager/ServerActionBase',[
                 serviceClass = this.getServiceClass(serviceClassIn),
                 thiz = this;
 
-            var resolve = function (data, error) {
+            const resolve = function (data, error) {
                 var dfd = deferred;
                 if (options.returnProm) {
                     dfd = promise;
@@ -41170,7 +41169,6 @@ define('xide/manager/ServerActionBase',[
                 }
                 dfd.resolve(data);
             };
-
             promise = service[serviceClass][method](args);
             promise.then(function (res) {
                 res = res || {};
@@ -41206,9 +41204,12 @@ define('xide/manager/ServerActionBase',[
                 }
                 resolve(res);
             }, function (err) {
-                thiz.onError(err);
+                onError && onError(err);
+                thiz.onError({
+                    code: 1,
+                    message: 'Rest Error for ' + method
+                });
             });
-
             if (options.returnProm) {
                 return promise;
             }
@@ -41281,8 +41282,7 @@ define('xide/manager/ServerActionBase',[
                     }
                     if (this.config) {
                         obj.serviceObject.config = this.config;
-                    }
-                    !this.ctx.serviceObject && (this.ctx.serviceObject = this.serviceObject);
+                    }!this.ctx.serviceObject && (this.ctx.serviceObject = this.serviceObject);
                 }
             } catch (e) {
                 console.error('error in rpc service creation : ' + e);
@@ -41298,7 +41298,9 @@ define('xide/manager/ServerActionBase',[
             if (err) {
                 if (err.code === 1) {
                     if (err.message && _.isArray(err.message)) {
-                        this.publish(types.EVENTS.ERROR, {message: err.message.join('<br/>')});
+                        this.publish(types.EVENTS.ERROR, {
+                            message: err.message.join('<br/>')
+                        });
                         return;
                     }
                 } else if (err.code === 0) {
@@ -41332,11 +41334,11 @@ define('xide/manager/ServerActionBase',[
             if (this.config && this.config.RPC_PARAMS) {
                 params = utils.mixin(params, this.config.RPC_PARAMS.rpcFixedParams);
                 this.serviceObject.extraArgs = params;
-                if (this.config.RPC_PARAMS.rpcUserField) {
-                    params[this.config.RPC_PARAMS.rpcUserField] = this.config.RPC_PARAMS.rpcUserValue;
-                    this.serviceObject.signatureField = this.config.RPC_PARAMS.rpcSignatureField;
-                    this.serviceObject.signatureToken = this.config.RPC_PARAMS.rpcSignatureToken;
-                }
+                //if (this.config.RPC_PARAMS.rpcUserField) {
+                //    params[this.config.RPC_PARAMS.rpcUserField] = this.config.RPC_PARAMS.rpcUserValue;
+                //    this.serviceObject.signatureField = this.config.RPC_PARAMS.rpcSignatureField;
+                //    this.serviceObject.signatureToken = this.config.RPC_PARAMS.rpcSignatureToken;
+                //}
             }
         },
         callMethodEx: function (serviceClassIn, method, args, readyCB, omitError) {
@@ -41374,7 +41376,9 @@ define('xide/manager/ServerActionBase',[
                     return;
                 }
                 if (omitError == true) {
-                    thiz.publish(types.EVENTS.STATUS, {message: 'Ok!'}, this);
+                    thiz.publish(types.EVENTS.STATUS, {
+                        message: 'Ok!'
+                    }, this);
                 }
 
             }, function (err) {
@@ -41392,7 +41396,9 @@ define('xide/manager/ServerActionBase',[
             return this.serviceObject[this.getServiceClass(serverClassIn)][method](args);
         },
         callMethod: function (method, args, readyCB, omitError) {
-            args = args || [[]];
+            args = args || [
+                []
+            ];
             var serviceClass = this.serviceClass;
             try {
                 var thiz = this;
@@ -44310,42 +44316,6 @@ define('xide/manager/RPCService',[
             if (this.correctTarget) {
                 request.target = this._smd.target;
             }
-
-
-            if (this.extraArgs) {
-                var index = 0;
-                for (var key in this.extraArgs) {
-
-                    request.target += request.target.indexOf('?') != -1 ? '&' : '?';
-                    request.target += key + '=' + this.extraArgs[key];
-                }
-            }
-            if (this.signatureToken) {
-                request.target += request.target.indexOf('?') != -1 ? '&' : '?';
-                var signature = SHA1._hmac(request.data, this.signatureToken, 1);
-
-                /*                  var aParams = {
-                 "service": serviceClass + ".get",
-                 "path":path,
-                 "callback":"asdf",
-                 "raw":"html",
-                 "attachment":"0",
-                 "send":"1",
-                 "user":this.config.RPC_PARAMS.rpcUserValue
-                 };
-
-                 var pStr  =  dojo.toJson(aParams);
-                 var signature = SHA1._hmac(pStr, this.config.RPC_PARAMS.rpcSignatureToken, 1);
-
-                 console.error('sign ' + pStr + ' with ' + this.config.RPC_PARAMS.rpcSignatureToken + ' to ' + signature);
-                 */
-                //var pStr  =  dojo.toJson(request.data);
-
-                var signature = SHA1._hmac(request.data, this.signatureToken, 1);
-                //console.error('sign ' + request.data + ' with ' +  this.signatureToken + ' to ' + signature);
-                request.target += this.signatureField + '=' + signature;
-            }
-
             var deferred = Service.transportRegistry.match(request.transport).fire(request);
             deferred.addBoth(function (results) {
                 return request._envDef.deserialize.call(this, results);
@@ -64754,7 +64724,7 @@ define('xfile/data/Store',[
      * Constants
      * @type {string}
      */
-    var C_ITEM_EXPANDED = "_EX";      // Attribute indicating if a directory item is fully expanded.
+    var C_ITEM_EXPANDED = "_EX"; // Attribute indicating if a directory item is fully expanded.
     /**
      *
      * A store based on dstore/Memory and additional dstore mixins, used for all xfile grids.
@@ -64850,7 +64820,7 @@ define('xfile/data/Store',[
             options: {
                 fields: 1663,
                 includeList: "*",
-                excludeList: "*"    // XPHP actually sets this to ".svn,.git,.idea" which are compatible to PHP's 'glob'
+                excludeList: "*" // XPHP actually sets this to ".svn,.git,.idea" which are compatible to PHP's 'glob'
             },
             /**
              * @member serviceUrl {string} the path to the service entry point. There are 2 modes this end-point must
@@ -65097,7 +65067,9 @@ define('xfile/data/Store',[
                     var deferred = new Deferred();
                     var _loadNext = function () {
                         //no additional lodash or array stuff please, keep it simple
-                        var isFinish = !_.find(partsToLoad, { loaded: false });
+                        var isFinish = !_.find(partsToLoad, {
+                            loaded: false
+                        });
                         if (isFinish) {
                             deferred.resolve(thiz._getItem(path));
                         } else {
@@ -65145,7 +65117,10 @@ define('xfile/data/Store',[
                             itemStr += '/';
                         }
                         itemStr += parts[i];
-                        partsToLoad.push({ path: itemStr, loaded: false });
+                        partsToLoad.push({
+                            path: itemStr,
+                            loaded: false
+                        });
                     }
                     //fire
                     _loadNext();
@@ -65266,26 +65241,26 @@ define('xfile/data/Store',[
                 var result = this._request(path, options);
                 //console.log('load path : ' + path);
                 result.then(function (items) {
-                    //console.log('got : items for ' + path, items);
-                    var _item = thiz._getItem(path, true);
-                    if (_item) {
-                        if (force) {
-                            if (!_.isEmpty(_item.children)) {
-                                thiz.removeItems(_item.children);
+                        //console.log('got : items for ' + path, items);
+                        var _item = thiz._getItem(path, true);
+                        if (_item) {
+                            if (force) {
+                                if (!_.isEmpty(_item.children)) {
+                                    thiz.removeItems(_item.children);
+                                }
+                            }
+                            _item._EX = true;
+                            thiz.addItems(items, force);
+                            _item.children = items;
+                            return items;
+                        } else {
+                            if (options && options.onError) {
+                                options.onError('Error Requesting path on server : ' + path);
+                            } else {
+                                throw new Error('cant get item at ' + path);
                             }
                         }
-                        _item._EX = true;
-                        thiz.addItems(items, force);
-                        _item.children = items;
-                        return items;
-                    } else {
-                        if (options && options.onError) {
-                            options.onError('Error Requesting path on server : ' + path);
-                        } else {
-                            throw new Error('cant get item at ' + path);
-                        }
-                    }
-                }.bind(this),
+                    }.bind(this),
                     function (err) {
                         console.error('error in load');
                     });
@@ -65408,7 +65383,11 @@ define('xfile/data/Store',[
                 }
             },
             getDefaultSort: function () {
-                return [{ property: 'name', descending: false, ignoreCase: true }];
+                return [{
+                    property: 'name',
+                    descending: false,
+                    ignoreCase: true
+                }];
             },
             filter: function (data) {
                 if (data && typeof data === 'function') {
@@ -65443,25 +65422,34 @@ define('xfile/data/Store',[
             },
             _request: function (path, options) {
                 var collection = this;
-                //console.log('requesting ' + path);
-                return this.runDeferred(null, 'ls', {
-                    path: path,
-                    mount: this.mount,
-                    options: this.options,
-                    recursive: this.recursive
-                },
-                    utils.mixin({ checkErrors: false, displayError: true }, options)).then(function (response) {
-                        var results = collection._normalize(response);
-                        collection._parse(results);
-                        // support items in the results
-                        results = results.children || results;
-                        return results;
-                    }, function (e) {
-                        if (options && options.displayError === false) {
-                            return;
-                        }
-                        logError(e, 'error in FileStore : ' + this.mount + ' :' + e);
-                    });
+                const onError = ((e) => {
+                    if (options && options.displayError === false) {
+                        return;
+                    }
+                    logError(e, 'error in FileStore : ' + this.mount + ' :' + e);
+                });
+                const promise = this.runDeferred(null, 'ls', {
+                        path: path,
+                        mount: this.mount,
+                        options: this.options,
+                        recursive: this.recursive
+                    },
+                    utils.mixin({
+                        checkErrors: false,
+                        displayError: true
+                    }, options), onError).then(function (response) {
+                    var results = collection._normalize(response);
+                    collection._parse(results);
+                    // support items in the results
+                    results = results.children || results;
+                    return results;
+                }, function (e) {
+                    if (options && options.displayError === false) {
+                        return;
+                    }
+                    logError(e, 'error in FileStore : ' + this.mount + ' :' + e);
+                });
+                return promise;
             },
             fetchRangeSync: function () {
                 var data = this.fetchSync();
@@ -65486,10 +65474,10 @@ define('xfile/data/Store',[
                 return new QueryResults(results.then(function (data) {
                     return data;
                 }), {
-                        totalLength: results.then(function (data) {
-                            return data.length;
-                        })
-                    });
+                    totalLength: results.then(function (data) {
+                        return data.length;
+                    })
+                });
             },
             initRoot: function () {
                 //first time load
@@ -65572,9 +65560,11 @@ define('xfile/data/Store',[
                 // object:
                 //		The parent object
                 // returns: dstore/Store.Collection
-                return this.root.filter({ parent: this.getIdentity(object) });
+                return this.root.filter({
+                    parent: this.getIdentity(object)
+                });
             },
-            spin:true
+            spin: true
         };
     }
     var Module = declare("xfile/data/Store", [TreeMemory, Cache, Trackable, ObservableStore, ServerActionBase.declare, ReloadMixin], Implementation());
