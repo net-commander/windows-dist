@@ -6400,13 +6400,12 @@ define('deliteful/Accordion',[
 	"decor/sniff",
 	"requirejs-dplugins/Promise!",
 	"delite/register",
-	"delite/KeyNav",
 	"requirejs-dplugins/jquery!attributes/classes",
 	"delite/DisplayContainer",
 	"./Accordion/AccordionHeader",
 	"./features",
 	"delite/theme!./Accordion/themes/{{theme}}/Accordion.css"
-], function (dcl, has, Promise, register, KeyNav, $, DisplayContainer, AccordionHeader) {
+], function (dcl, has, Promise, register, $, DisplayContainer, AccordionHeader) {
 
 	function setVisibility(node, val) {
 		node.style.display = val ? "" : "none";
@@ -6446,7 +6445,7 @@ define('deliteful/Accordion',[
 	 * @class module:deliteful/Accordion
 	 * @augments module:delite/DisplayContainer
 	 */
-	return register("d-accordion", [HTMLElement, DisplayContainer, KeyNav], /** @lends module:deliteful/Accordion# */ {
+	return register("d-accordion", [HTMLElement, DisplayContainer], /** @lends module:deliteful/Accordion# */ {
 		/**
 		 * The name of the CSS class of this widget.
 		 * @member {string}
@@ -6469,6 +6468,13 @@ define('deliteful/Accordion',[
 		 * @default "singleOpen"
 		 */
 		mode: defaultMode,
+
+		/**
+		 * Allow all the accordion panes to be closed.
+		 * @member {boolean}
+		 * @default false
+		 */
+		allowAllClosed: false,
 
 		/**
 		 * If true, animation is used when a panel is opened or closed.
@@ -6494,6 +6500,13 @@ define('deliteful/Accordion',[
 		closedIconClass: "",
 
 		/**
+		 * The aria-level value to set on accordion headers.
+		 * @member {number}
+		 * @default 3
+		 */
+		ariaLevel: 3,
+
+		/**
 		 * List of upgraded panels (i.e. `<d-panel>` widgets that have already run createdCallback() and
 		 * attachedCallback()).
 		 * @member {module:delite/Panel[]}
@@ -6514,21 +6527,25 @@ define('deliteful/Accordion',[
 					this._panelList.push(this._setupUpgradedChild(panels[i]));
 				}
 			}
-		},
 
-		postRender: function () {
-			this.setAttribute("role", "tablist");
-			this.setAttribute("aria-multiselectable", "false");
 			this.on("delite-remove-child", this._onRemoveChild.bind(this));
-		},
+			this.on("keydown", this.keyDownHandler.bind(this));
 
-		/**
-		 * Handle a mouse click or touch on a panel header.
-		 * @param event
-		 * @private
-		 */
-		_headerClickHandler: function (event) {
-			this.activatePanel(event.currentTarget.panel);
+			// Process clicks on header's <button aria-controls="panelId"> to open associated panel.
+			// Ignore clicks on other buttons or controls in headers or panels.  Click may occur on the
+			// <span> inside the <button> (at least on Chrome), so trace up until <button> is found.
+			this.on("click", function (event) {
+				for (var target = event.target; target !== this; target = target.parentNode) {
+					var panelId = target.getAttribute("aria-controls"),
+						panel = panelId && this.ownerDocument.getElementById(panelId);
+					if (panel && panel.parentNode === this) {
+						event.stopPropagation();
+						event.preventDefault();
+						this.activatePanel(panel);
+						break;
+					}
+				}
+			}.bind(this));
 		},
 
 		/**
@@ -6536,17 +6553,12 @@ define('deliteful/Accordion',[
 		 * @param panel
 		 */
 		activatePanel: function (panel) {
-			switch (this.mode) {
-			case accordionModes.singleOpen:
-				this.show(panel);
-				break;
-			case accordionModes.multipleOpen:
-				if (panel.open) {
+			if (panel.open) {
+				if (this.mode === accordionModes.multipleOpen || this.allowAllClosed) {
 					this.hide(panel);
-				} else {
-					this.show(panel);
 				}
-				break;
+			} else {
+				this.show(panel);
 			}
 		},
 
@@ -6560,23 +6572,27 @@ define('deliteful/Accordion',[
 		},
 
 		_setupUpgradedChild: function (panel) {
+			// Panel must have id for the rest of this code to work.
+			if (!panel.id) {
+				panel.id = panel.widgetId;
+			}
+
 			// Create the header (that displays the panel's title).
 			var header = this.createHeader(panel, {
-				id: panel.id + "_panelHeader",
+				id: panel.id + "-header",
 				label: panel.label,
 				openIconClass: panel.openIconClass || this.openIconClass,
 				closedIconClass: panel.closedIconClass || this.closedIconClass,
-				panel: panel
+				panelId: panel.id
 			});
-			header.setAttribute("tabindex", "-1");
-			header.setAttribute("role", "tab");
-			header.setAttribute("aria-expanded", "false");
-			header.setAttribute("aria-selected", "false");
-			header.on("click", this._headerClickHandler.bind(this));
+			if (this.ariaLevel) {
+				header.setAttribute("aria-level", this.ariaLevel);
+			}
+
 			header.placeAt(panel, "before");
 
 			// React to programmatic changes on the panel to update the header.
-			panel.observe(function (oldValues) {
+			header.own(panel.observe(function (oldValues) {
 				if ("label" in oldValues) {
 					header.label = panel.label;
 				}
@@ -6586,12 +6602,12 @@ define('deliteful/Accordion',[
 				if ("closedIconClass" in oldValues) {
 					header.closedIconClass = panel.closedIconClass;
 				}
-			});
+			}));
 
 			// And set up the panel itself.
 			setVisibility(panel, false);
 			panel.open = false;
-			panel.setAttribute("role", "tabpanel");
+			panel.setAttribute("role", "region");
 			panel.setAttribute("aria-labelledby", header.labelNode.id);
 			panel.setAttribute("aria-hidden", "true");
 			panel.headerNode = header;
@@ -6622,18 +6638,18 @@ define('deliteful/Accordion',[
 		getChildren: function () {
 			// Override getChildren() to only return the panels, not the headers
 			return Array.prototype.filter.call(this.children, function (element) {
-				return element.getAttribute("role") === "tabpanel";
+				return element.getAttribute("role") === "region";
 			});
 		},
 
 		getHeaders: function () {
 			return Array.prototype.filter.call(this.children, function (element) {
-				return element.getAttribute("role") === "tab";
+				return element.getAttribute("role") === "heading";
 			});
 		},
 
-		/* jshint maxcomplexity: 14 */
 		refreshRendering: function (props) {
+			/* jshint maxcomplexity: 14 */
 			if ("selectedChildId" in props && this.selectedChildId) {
 				var childNode = this.ownerDocument.getElementById(this.selectedChildId);
 				if (childNode) {
@@ -6653,7 +6669,8 @@ define('deliteful/Accordion',[
 			}
 
 			// If no panel was selected, then show the first one.
-			if (("attached" in props || "_panelList" in  props) && this._panelList.length > 0) {
+			if (("attached" in props || "_panelList" in  props) && this._panelList.length > 0 &&
+					!this.allowAllClosed) {
 				this._showOpenPanel();
 			}
 
@@ -6672,18 +6689,20 @@ define('deliteful/Accordion',[
 				}.bind(this));
 			}
 			if ("mode" in props) {
-				this.setAttribute("aria-multiselectable", this.mode === accordionModes.multipleOpen);
 				if (this.mode === accordionModes.singleOpen) {
-					this._showOpenPanel();
-					this._panelList.forEach(function (panel) {
-						if (panel.open && panel !== this._selectedChild) {
-							this.hide(panel);
-						}
-					}.bind(this));
+					if (!this.allowAllClosed) {
+						this._showOpenPanel();
+					}
+					if (this._selectedChild) {
+						this._panelList.forEach(function (panel) {
+							if (panel.open && panel !== this._selectedChild) {
+								this.hide(panel);
+							}
+						}.bind(this));
+					}
 				}
 			}
 		},
-		/* jshint maxcomplexity: 10 */
 
 		_useAnimation: function () {
 			return (this.animate && (function () {
@@ -6740,7 +6759,7 @@ define('deliteful/Accordion',[
 			var valid = true, promises = [];
 			if (params.hide) {
 				if (widget.open) {
-					if (this._numOpenPanels > 1) {
+					if (this._numOpenPanels > 1 || this.allowAllClosed) {
 						this._numOpenPanels--;
 						widget.open = false;
 						widget.headerNode.open = false;
@@ -6759,7 +6778,7 @@ define('deliteful/Accordion',[
 						var origin = this._selectedChild;
 						this._selectedChild = widget;
 						this.selectedChildId = widget.id;
-						if (origin !== widget) {
+						if (origin && origin !== widget) {
 							promises.push(this.hide(origin));
 						}
 					}
@@ -6773,14 +6792,7 @@ define('deliteful/Accordion',[
 			if (valid) {
 				promises.push(this._doTransition(widget, params));
 				// Update WAI-ARIA attributes.
-				widget.headerNode.setAttribute("aria-selected", "" + widget.open);
-				widget.headerNode.setAttribute("aria-expanded", "" + widget.open);
 				widget.setAttribute("aria-hidden", "" + !widget.open);
-				if (params.hide) {
-					widget.headerNode.removeAttribute("aria-controls");
-				} else {
-					widget.headerNode.setAttribute("aria-controls", widget.id);
-				}
 			}
 			return Promise.all(promises);
 		},
@@ -6849,7 +6861,7 @@ define('deliteful/Accordion',[
 		onAddChild: dcl.superCall(function (sup) {
 			return function (node) {
 				var res = sup.call(this, node);
-				if (node.getAttribute("role") !== "tab") {
+				if (node.getAttribute("role") !== "heading") {
 					// Process new panels (but not the headers created to go along with the panels).
 					this._panelList.push(this._setupUpgradedChild(node));
 					this.notifyCurrentValue("_panelList");
@@ -6859,82 +6871,105 @@ define('deliteful/Accordion',[
 		}),
 
 		_onRemoveChild: function (event) {
-			this._panelList.splice(this._panelList.indexOf(event.child), 1);
-			this.notifyCurrentValue("_panelList");
+			// If panel was removed, then destroy associated header and update this._panelList.
+			// Ignore notification for removed header.
+
+			var panel = event.child;
+			if (panel.headerNode) {
+				panel.headerNode.destroy();
+			}
+
+			var index = this._panelList.indexOf(panel);
+			if (index >= 0) {
+				this._panelList.splice(index, 1);
+				this.notifyCurrentValue("_panelList");
+			}
 		},
 
-		//////////// delite/KeyNav implementation ///////////////////////////////////////
 		// Keyboard navigation is based on WAI-ARIA Pattern for Accordion:
-		// http://www.w3.org/TR/2013/WD-wai-aria-practices-20130307/#accordion
+		// https://www.w3.org/TR/wai-aria-practices/#accordion
 
-		// Arrow keys should go to first focusable field in each header.
-		// To get to the other focusable fields, user should use the tab key.
-		// By default, only the header itself is focusable.  If a subclass makes
-		// elements inside the header focusable, then it should change descendantSelector.
-		descendantSelector: "[role=tab]",
-
-		_getCurrentHeader: function () {
-			var node = this.navigatedDescendant;
+		_getEnclosingHeader: function (node) {
 			while (node && node !== this) {
-				if (node.getAttribute("role") === "tab") {
+				if (node.getAttribute("role") === "heading") {
 					return node;
 				}
 				node = node.parentElement;
 			}
 		},
 
-		/**
-		 * Navigate to the next (offset=1) or previous header (offset=-1).
-		 * @param offset
-		 * @private
-		 */
-		_switchHeader: function (offset) {
-			var focusedHeader = this._getCurrentHeader();
-			if (focusedHeader) {
-				var headers = this.getHeaders();
-				var idx = headers.indexOf(focusedHeader),
-					newIdx = (idx + headers.length + offset) % headers.length;
-				this.navigateTo(headers[newIdx]);
+		_getEnclosingPanel: function (node) {
+			while (node && node !== this) {
+				if (node.getAttribute("role") === "region") {
+					return node;
+				}
+				node = node.parentElement;
 			}
 		},
 
-		previousKeyHandler: function () {
-			this._switchHeader(-1);
-		},
+		keyDownHandler: function (evt) {
+			// Handle keystrokes from headers.
+			var headers = this.getHeaders();
 
-		nextKeyHandler: function () {
-			this._switchHeader(1);
-		},
+			// Return next (offset=1) or previous (offset=-1) header, with looping.
+			function nextPrevHeader(header, offset) {
+				var idx = headers.indexOf(header),
+					newIdx = (idx + headers.length + offset) % headers.length;
+				return headers[newIdx];
+			}
 
-		upKeyHandler: function () {
-			this._switchHeader(-1);
-		},
-
-		downKeyHandler: function () {
-			this._switchHeader(1);
-		},
-
-		spacebarKeyHandler: function () {
-			var focusedHeader = this._getCurrentHeader();
-			this.activatePanel(focusedHeader.panel);
-		},
-
-		enterKeyHandler: function () {
-			var focusedHeader = this._getCurrentHeader();
-			this.activatePanel(focusedHeader.panel);
-		},
-
-		focus: function () {
-			// Navigate to the header for the first open panel, or if no open panels, then the first header.
-			var header = this.children[0];
-			for (var i = 0; i < this.children.length; i++) {
-				if (this.children[i].open) {
-					header = this.children[i];
-					break;
+			// Return the new header to navigate to given the specified focusedHeader and the keydown event.
+			function headerKeystrokeHandler(focusedHeader, evt) {
+				switch (((evt.ctrlKey || evt.metaKey) ? "Ctrl-" : "") + evt.key) {
+				case "ArrowDown":
+					return nextPrevHeader(focusedHeader, 1);
+				case "ArrowUp":
+					return nextPrevHeader(focusedHeader, -1);
+				case "Home":
+					return headers[0];
+				case "End":
+					return headers[headers.length - 1];
+				case "Ctrl-PageDown":
+					return nextPrevHeader(focusedHeader, 1);
+				case "Ctrl-PageUp":
+					return nextPrevHeader(focusedHeader, -1);
 				}
 			}
 
-			this.navigateTo(header);
+			// Return the new header to navigate to given the specified focused panel and the keydown event.
+			function panelKeystrokeHandler(focusedPanel, evt) {
+				if (evt.ctrlKey || evt.metaKey) {
+					if (evt.key === "PageUp") {
+						return focusedPanel.headerNode;
+					} else if (evt.key === "PageDown") {
+						return nextPrevHeader(focusedPanel.headerNode, 1);
+					}
+				}
+			}
+
+			// Handle keystroke on headers and panels.
+			var focusedHeader = this._getEnclosingHeader(evt.target);
+			var newHeader;
+			if (focusedHeader) {
+				newHeader =  headerKeystrokeHandler(focusedHeader, evt);
+			} else {
+				var focusedPanel = this._getEnclosingPanel(evt.target);
+				if (focusedPanel) {
+					newHeader = panelKeystrokeHandler(focusedPanel, evt);
+				}
+			}
+			if (newHeader) {
+				newHeader.focus();
+				evt.stopPropagation();
+				evt.preventDefault();
+			}
+		},
+
+		focus: function () {
+			// Navigate to first header, regardless of which panels are open.
+			// Seems to be what Aria 1.1 Accordion spec implies.
+			var headers = this.getHeaders();
+			headers[0].focus();
 		}
 	});
 });
@@ -10595,16 +10630,14 @@ define('requirejs-dplugins/Promise',["require"], function (require) {
 	};
 });;
 define('delite/handlebars!deliteful/Accordion/AccordionHeader/AccordionHeader.html',["delite/handlebars"], function(handlebars){
-	return handlebars.compile("<template role=\"tab\" aria-labelledby=\"{{this.widgetId + '_label'}}\" tabindex=\"-1\">\n\t<span role=\"presentation\" attach-point=\"iconNode\" class=\"d-icon {{this.open ? this.openIconClass : this.closedIconClass}}\"></span>\n\t<span attach-point=\"labelNode\" id=\"{{this.widgetId + '_label'}}\">{{label}}</span>\n</template>");
+	return handlebars.compile("<template role=\"heading\" class=\"{{this.open ? 'd-open' : ''}}\">\n\t<button aria-expanded=\"{{open}}\" aria-controls=\"{{panelId}}\" attach-point=\"focusNode\" class=\"d-header-label-button\" aria-labelledby=\"{{widgetId}}_label\">\n\t\t<span role=\"presentation\" attach-point=\"iconNode\" class=\"d-icon {{this.open ? this.openIconClass : this.closedIconClass}}\"></span>\n\t\t<span attach-point=\"labelNode\" id=\"{{widgetId}}_label\" class=\"d-label\">{{label}}</span>\n\t</button>\n</template>");
 });;
 /** @module deliteful/Accordion/AccordionHeader */
 define('deliteful/Accordion/AccordionHeader',[
-	"delite/a11y",
 	"delite/register",
 	"delite/Widget",
 	"delite/handlebars!./AccordionHeader/AccordionHeader.html"
 ], function (
-	a11y,
 	register,
 	Widget,
 	template
@@ -10650,270 +10683,17 @@ define('deliteful/Accordion/AccordionHeader',[
 		closedIconClass: "",
 
 		/**
-		 * Corresponding panel.
-		 * @member {delite/Widget}
+		 * ID of corresponding panel.
+		 * @member {string}
 		 */
-		panel: null,
+		panelId: "",
 
 		template: template,
 
-		createdCallback: function () {
-			this.on("focusin", this.focusinHandler.bind(this));
-			this.on("focusout", this.focusoutHandler.bind(this));
-			this.on("keydown", this.keydownHandler.bind(this));
-		},
-
-		refreshRendering: function (oldVals) {
-			if ("panel" in oldVals) {
-				this.panel.on("focusin", this.focusinHandler.bind(this));
-				this.panel.on("focusout", this.focusoutHandler.bind(this));
-			}
-		},
-
-		/**
-		 * Handler for when header or related panel gets a focus event.
-		 * @param evt
-		 */
-		focusinHandler: function (evt) {
-			if (evt.target === this || this.panel.contains(evt.target)) {
-				// If the AccordionHeader itself is focused, or if the panel is focused,
-				// then set tabIndex=0 so that tab and shift-tab work correctly.
-				this.tabIndex = 0;
-
-				// Handling for when there are fields inside the header that can be tab navigated.
-				// Set all the tabindexes to 0 so that user can tab around fields in the header.
-				Array.prototype.forEach.call(this.querySelectorAll("[tabindex]"), function (node) {
-					node.tabIndex = 0;
-				});
-			} else {
-				// If my descendant gets focus, remove my tabIndex to
-				// avoid Safari and Firefox problems with nested focusable elements.
-				this.removeAttribute("tabindex");
-			}
-		},
-
-		keydownHandler: function (evt) {
-			// The focusinHandler() may have removed my tabIndex, but shift-tab from a node
-			// inside of me should still go to me.  Call getFirstInTabbingOrder() on every
-			// keystroke in case content changes dynamically.
-			if (evt.shiftKey && evt.key === "Tab" && evt.target === a11y.getFirstInTabbingOrder(this)) {
-				evt.preventDefault();
-				evt.stopPropagation();
-				this.tabIndex = 0;
-				this.focus();
-			}
-		},
-
-		/**
-		 * Handler for when header or related panel gets a blur event.
-		 * @param evt
-		 */
-		focusoutHandler: function (evt) {
-			if (!this.contains(evt.relatedTarget) && !this.panel.contains(evt.relatedTarget)) {
-				// Set all the tabindexes to -1 so that tabbing doesn't hit unselected headers.
-				this.tabIndex = -1;
-				Array.prototype.forEach.call(this.querySelectorAll("[tabindex]"), function (node) {
-					node.tabIndex = -1;
-				});
-			}
+		focus: function () {
+			this.focusNode.focus();
 		}
 	});
-});
-;
-/**
- * Accessibility utility functions (keyboard, tab stops, etc.).
- * @module delite/a11y
- * */
-define('delite/a11y',[], function () {
-
-	var a11y = /** @lends module:delite/a11y */ {
-		/**
-		 * Returns true if Element is visible.
-		 * @param {Element} elem - The Element.
-		 * @returns {boolean}
-		 * @private
-		 */
-		_isElementShown: function (elem) {
-			var s = getComputedStyle(elem);
-			return s.visibility !== "hidden"
-				&& s.visibility !== "collapsed"
-				&& s.display !== "none"
-				&& elem.type !== "hidden";
-		},
-
-		/**
-		 * Tests if element is tab-navigable even without an explicit tabIndex setting
-		 * @param {Element} elem - The Element.
-		 * @returns {boolean}
-		 */
-		hasDefaultTabStop: function (elem) {
-			/* jshint maxcomplexity:11 */
-
-			// No explicit tabIndex setting, need to investigate node type
-			switch (elem.nodeName.toLowerCase()) {
-			case "a":
-				// An <a> w/out a tabindex is only navigable if it has an href
-				return elem.hasAttribute("href");
-			case "area":
-			case "button":
-			case "input":
-			case "object":
-			case "select":
-			case "textarea":
-				// These are navigable by default
-				return true;
-			case "iframe":
-				// If it's an editor <iframe> then it's tab navigable.
-				var contentDocument = elem.contentDocument;
-				if ("designMode" in contentDocument && contentDocument.designMode === "on") {
-					return true;
-				}
-				var body = contentDocument.body;
-				return body && (body.contentEditable === "true" ||
-					(body.firstChild && body.firstChild.contentEditable === "true"));
-			default:
-				return elem.contentEditable === "true";
-			}
-		},
-
-		/**
-		 * Returns effective tabIndex of an element, either a number, or undefined if element isn't focusable.
-		 * @param {Element} elem - The Element.
-		 * @returns {number|undefined}
-		 */
-		effectiveTabIndex: function (elem) {
-			if (elem.disabled) {
-				return undefined;
-			} else if (elem.hasAttribute("tabIndex")) {
-				// Explicit tab index setting
-				return +elem.getAttribute("tabIndex");// + to convert string --> number
-			} else {
-				// No explicit tabIndex setting, so depends on node type
-				return a11y.hasDefaultTabStop(elem) ? 0 : undefined;
-			}
-		},
-
-		/**
-		 * Tests if an element is tab-navigable.
-		 * @param {Element} elem - The Element.
-		 * @returns {boolean}
-		 */
-		isTabNavigable: function (elem) {
-			return a11y.effectiveTabIndex(elem) >= 0;
-		},
-
-		/**
-		 * Tests if an element is focusable by tabbing to it, or clicking it with the mouse.
-		 * @param {Element} elem - The Element.
-		 * @returns {boolean}
-		 */
-		isFocusable: function (elem) {
-			return a11y.effectiveTabIndex(elem) >= -1;
-		},
-
-		/**
-		 * Finds descendants of the specified root node.
-		 *
-		 * The following descendants of the specified root node are returned:
-		 *
-		 * - the first tab-navigable element in document order without a tabIndex or with tabIndex="0"
-		 * - the last tab-navigable element in document order without a tabIndex or with tabIndex="0"
-		 * - the first element in document order with the lowest positive tabIndex value
-		 * - the last element in document order with the highest positive tabIndex value
-		 *
-		 * @param Element root - The Element.
-		 * @returns {Object} Hash of the format `{first: Element, last: Element, lowest: Element, highest: Element}`.
-		 * @private
-		 */
-		_getTabNavigable: function (root) {
-			var first, last, lowest, lowestTabindex, highest, highestTabindex, radioSelected = {};
-
-			function radioName(node) {
-				// If this element is part of a radio button group, return the name for that group.
-				return node && node.tagName.toLowerCase() === "input" &&
-					node.type && node.type.toLowerCase() === "radio" &&
-					node.name && node.name.toLowerCase();
-			}
-
-			var shown = a11y._isElementShown, effectiveTabIndex = a11y.effectiveTabIndex;
-
-			function walkTree(/*Element*/ parent) {
-				/* jshint maxcomplexity:14 */
-				for (var child = parent.firstChild; child; child = child.nextSibling) {
-					// Skip text elements, hidden elements
-					if (child.nodeType !== 1 || !shown(child)) {
-						continue;
-					}
-
-					var tabindex = effectiveTabIndex(child);
-					if (tabindex >= 0) {
-						if (tabindex === 0) {
-							if (!first) {
-								first = child;
-							}
-							last = child;
-						} else if (tabindex > 0) {
-							if (!lowest || tabindex < lowestTabindex) {
-								lowestTabindex = tabindex;
-								lowest = child;
-							}
-							if (!highest || tabindex >= highestTabindex) {
-								highestTabindex = tabindex;
-								highest = child;
-							}
-						}
-						var rn = radioName(child);
-						if (child.checked && rn) {
-							radioSelected[rn] = child;
-						}
-					}
-					if (child.nodeName.toUpperCase() !== "SELECT") {
-						walkTree(child);
-					}
-				}
-			}
-
-			if (shown(root)) {
-				walkTree(root);
-			}
-			function rs(node) {
-				// substitute checked radio button for unchecked one, if there is a checked one with the same name.
-				return radioSelected[radioName(node)] || node;
-			}
-
-			return { first: rs(first), last: rs(last), lowest: rs(lowest), highest: rs(highest) };
-		},
-
-		/**
-		 * Finds the descendant of the specified root node that is first in the tabbing order.
-		 * @param {string|Element} root
-		 * @param {Document} [doc]
-		 * @returns {Element}
-		 */
-		getFirstInTabbingOrder: function (root, doc) {
-			if (typeof root === "string") {
-				root = (doc || document).getElementById(root);
-			}
-			var elems = a11y._getTabNavigable(root);
-			return elems.lowest ? elems.lowest : elems.first;
-		},
-
-		/**
-		 * Finds the descendant of the specified root node that is last in the tabbing order.
-		 * @param {string|Element} root
-		 * @param {Document} [doc]
-		 * @returns {Element}
-		 */
-		getLastInTabbingOrder: function (root, doc) {
-			if (typeof root === "string") {
-				root = (doc || document).getElementById(root);
-			}
-			var elems = a11y._getTabNavigable(root);
-			return elems.last ? elems.last : elems.highest;
-		}
-	};
-
-	return a11y;
 });
 ;
 /** @module delite/DisplayContainer */
@@ -11120,816 +10900,6 @@ define('delite/DisplayContainer',["dcl/dcl", "requirejs-dplugins/Promise!", "./C
 		}
 	});
 });;
-/** @module delite/KeyNav */
-define('delite/KeyNav',[
-	"dcl/dcl",
-	"requirejs-dplugins/jquery!attributes/classes",	// addClass(), removeClass()
-	"./features",
-	"./Widget",
-	"dpointer/events"		// so can just monitor for "pointerdown"
-], function (dcl, $, has, Widget) {
-
-	/**
-	 * Dispatched after the user has selected a different descendant, by clicking, arrow keys,
-	 * or keyboard search.
-	 * @example
-	 * widget.on("keynav-child-navigated", function (evt) {
-	 *	console.log("old value: " + evt.oldValue);
-	 *	console.log("new value: " + evt.newValue);
-	 * }
-	 * @event module:delite/KeyNav#keynav-child-navigated
-	 * @property {number} oldValue - The previously selected item.
-	 * @property {number} newValue - The new selected item.
-	 */
-
-	/**
-	 * Return true if node is an `<input>` or similar that responds to keyboard input.
-	 * @param {Element} node
-	 * @returns {boolean}
-	 */
-	function takesInput(node) {
-		var tag = node.nodeName.toLowerCase();
-
-		return !node.readOnly && (tag === "textarea" || (tag === "input" &&
-			/^(color|email|number|password|search|tel|text|url|range)$/.test(node.type)));
-	}
-
-	/**
-	 * Return true if node is "clickable" via keyboard space / enter key
-	 * @param {Element} node
-	 * @returns {boolean}
-	 */
-	function keyboardClickable(node) {
-		return !node.readOnly && /^(button|a)$/i.test(node.nodeName);
-	}
-
-	/**
-	  * A mixin to allow arrow key and letter key navigation of child Elements.
-	  * It can be used by delite/Container based widgets with a flat list of children,
-	  * or more complex widgets like a Tree.
-	  *
-	  * To use this mixin, the subclass must:
-	  *
-	  * - Implement one method for each keystroke that the subclass wants to handle.
-	  *   The methods for up and down arrow keys are `upKeyHandler() and `downKeyHandler()`.
-	  *   For BIDI support, the left and right arrows are handled specially, mapped to the `previousKeyHandler()`
-	  *   and `nextKeyHandler()` methods in LTR mode, or reversed in RTL mode.
-	  *   Otherwise, the method name is based on the key names
-	  *   defined by https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key, for example `homeKeyHandler()`.
-	  *   The method takes two parameters: the event, and the currently navigated node.
-	  *   Most subclasses will want to implement either `previousKeyHandler()`
-	  *   and `nextKeyHandler()`, or `downKeyHandler()` and `upKeyHandler()`.
-	  * - Set all navigable descendants' initial tabIndex to "-1"; both initial descendants and any
-	  *   descendants added later, by for example `addChild()`.  Exception: if `focusDescendants` is false then the
-	  *   descendants shouldn't have any tabIndex at all.
-	  * - Define `descendantSelector` as a function or string that identifies navigable child Elements.
-	  * - If the descendant elements contain text, they should have a label attribute.  KeyNav uses the label
-	  *   attribute for letter key navigation.
-	  *
-	  * @mixin module:delite/KeyNav
-	  * @augments module:delite/Widget
-	  */
-	return dcl(Widget, /** @lends module:delite/KeyNav# */ {
-
-		/*jshint -W101*/
-		/**
-		 * When true, focus the descendant widgets as the user navigates to them via arrow keys or keyboard letter
-		 * search.  When false, rather than focusing the widgets, it merely sets `navigatedDescendant`,
-		 * and sets the `d-active-descendant` class on the descendant widget the user has navigated to.
-		 *
-		 * False mode is intended for widgets like ComboBox where the focus is somewhere outside this widget
-		 * (typically on an `<input>`) and keystrokes are merely being forwarded to the KeyNav widget.
-		 *
-		 * When set to false:
-		 *
-		 * - Navigable descendants shouldn't have any tabIndex (as opposed to having tabIndex=-1).
-		 * - The focused element should specify `aria-owns` to point to this KeyNav Element.
-		 * - The focused Element must be kept synced so that `aria-activedescendant` points to the currently
-		 *   navigated descendant.  Do this responding to the `keynav-child-navigated` event emitted by this widget,
-		 *   or by calling `observe()` and monitoring changed to `navigatedDescendant`.
-		 * - The focused Element must forward keystrokes by calling `emit("keydown", ...)` and/or
-		 *   `emit("keypress", ...)` on this widget.
-		 * - You must somehow set the initial navigated descendant, typically by calling `navigateToFirst()` either
-		 *   when the the dropdown is opened, or on the first call to `downKeyHandler()`.
-		 * - You must have some CSS styling so that the currently navigated node is apparent.
-		 *
-		 * See http://www.w3.org/WAI/GL/wiki/Using_aria-activedescendant_to_allow_changes_in_focus_within_widgets_to_be_communicated_to_Assistive_Technology#Example_1:_Combobox
-		 * for details.
-		 * @member {boolean}
-		 * @default true
-		 * @protected
-		 */
-		focusDescendants: true,
-		/*jshint +W101*/
-
-		/**
-		 * The currently navigated descendant, or null if there isn't one.
-		 * @member {Element}
-		 * @readonly
-		 * @protected
-		 */
-		navigatedDescendant: null,
-
-		/**
-		 * Selector to identify which descendant Elements are navigable via arrow keys or
-		 * keyboard search.  Note that for subclasses like a Tree, one navigable node could be a descendant of another.
-		 *
-		 * It's either a function that takes an Element parameter and returns true/false,
-		 * or a CSS selector string, for example ".list-item".
-		 *
-		 * By default, the direct DOM children of this widget are considered the selectable descendants.
-		 *
-		 * Must be set in the prototype rather than on the instance.
-		 *
-		 * @member {string|Function}
-		 * @protected
-		 * @constant
-		 */
-		descendantSelector: null,
-
-		/**
-		 * The node to receive the KeyNav behavior.
-		 * Can be set in a template via a `attach-point` assignment.
-		 * If missing, then `this.containerNode` or `this` will be used.
-		 * If set, then subclass must set the tabIndex on this node rather than the root node.
-		 * @member {Element}
-		 * @protected
-		 */
-		keyNavContainerNode: null,
-
-		/**
-		 * Figure out effective navigable descendant of this event.
-		 * @param {Event} evt
-		 * @private
-		 */
-		_getTargetElement: function (evt) {
-			for (var child = evt.target; child !== this; child = child.parentNode) {
-				if (this._selectorFunc(child)) {
-					return child;
-				}
-			}
-			return null;
-		},
-
-		postRender: function () {
-			// If keyNavContainerNode unspecified, set to default value.
-			if (!this.keyNavContainerNode) {
-				this.keyNavContainerNode = this.containerNode || this;
-			}
-
-			this.on("keypress", this._keynavKeyPressHandler.bind(this), this.keyNavContainerNode);
-			this.on("keydown", this._keynavKeyDownHandler.bind(this), this.keyNavContainerNode);
-
-			this.on("pointerdown", this.pointerdownHandler.bind(this), this.keyNavContainerNode);
-			this.on("focusin", this.focusinHandler.bind(this), this.keyNavContainerNode);
-			this.on("focusout", this.focusoutHandler.bind(this), this.keyNavContainerNode);
-
-			// Setup function to check which child nodes are navigable.
-			if (typeof this.descendantSelector === "string") {
-				var matchesFuncName = has("dom-matches");
-				this._selectorFunc = function (elem) {
-					return elem[matchesFuncName](this.descendantSelector);
-				};
-			} else if (this.descendantSelector) {
-				this._selectorFunc = this.descendantSelector;
-			} else {
-				this._selectorFunc = function (elem) { return elem.parentNode === this.containerNode; };
-			}
-		},
-
-		attachedCallback: function () {
-			// If the user hasn't specified a tabindex declaratively, then set to default value.
-			var container = this.keyNavContainerNode;
-			if (this.focusDescendants && !container.hasAttribute("tabindex")) {
-				container.tabIndex = "0";
-			}
-		},
-
-		/**
-		 * Called on pointerdown event (on container or child of container).
-		 * Navigation occurs on pointerdown, to match behavior of native elements.
-		 * Normally this handler isn't needed as it's redundant w/the focusin event.
-		 */
-		pointerdownHandler: function (evt) {
-			var target = this._getTargetElement(evt);
-			if (target) {
-				this._descendantNavigateHandler(target, evt);
-			}
-		},
-
-		/**
-		 * Called on focus of container or child of container.
-		 */
-		focusinHandler: function (evt) {
-			var container = this.keyNavContainerNode;
-			if (this.focusDescendants) {
-				if (evt.target === this || evt.target === container) {
-					// Ignore spurious focus event:
-					// On IE, clicking the scrollbar of a select dropdown moves focus from the focused child item to me
-					if (!this.navigatedDescendant) {
-						// Focus the first child but do it on a delay so that activationTracker sees my "focus"
-						// event before seeing the "focus" event on the child widget.
-						this.defer(this.focus);
-					}
-				} else {
-					// When container's descendant gets focus,
-					// remove the container's tabIndex so that tab or shift-tab
-					// will go to the fields after/before the container, rather than the container itself.
-					// Also avoids Safari and Firefox problems with nested focusable elements.
-					if (container.hasAttribute("tabindex")) {
-						this._savedTabIndex = container.tabIndex;
-						container.removeAttribute("tabindex");
-					}
-
-					// Handling for when navigatedDescendant or a node inside a navigableDescendant gets focus.
-					var navigatedDescendant = this._getTargetElement(evt);
-					if (navigatedDescendant) {
-						if (evt.target === navigatedDescendant) {
-							// If the navigable descendant itself is focused, then set tabIndex=0 so that tab and
-							// shift-tab work correctly.
-							navigatedDescendant.tabIndex = this._savedTabIndex;
-						}
-
-						// Note: when focus is moved outside the navigable descendant,
-						// focusoutHandler() resets its tabIndex to -1.
-
-						this._descendantNavigateHandler(navigatedDescendant, evt);
-					}
-				}
-			}
-		},
-
-		/**
-		 * Called on blur of container or child of container.
-		 */
-		focusoutHandler: function (evt) {
-			if (this.focusDescendants) {
-				// Note: don't use this.navigatedDescendant because it may or may not have already been
-				// updated to point to the new descendant, depending on if navigation was by mouse
-				// or keyboard.
-				var previouslyNavigatedDescendant = this._getTargetElement(evt);
-				if (previouslyNavigatedDescendant) {
-					if (previouslyNavigatedDescendant !== evt.relatedTarget) {
-						// If focus has moved outside of the previously navigated descendant, then set its
-						// tabIndex back to -1, for future time when navigable descendant is clicked.
-						previouslyNavigatedDescendant.tabIndex = "-1";
-						$(previouslyNavigatedDescendant).removeClass("d-active-descendant");
-
-						if (this.navigatedDescendant === previouslyNavigatedDescendant) {
-							this.navigatedDescendant = null;
-						}
-					}
-				}
-
-				// If focus has moved outside of container, then restore container's tabindex.
-				if ("_savedTabIndex" in this && !this.keyNavContainerNode.contains(evt.relatedTarget)) {
-					this.keyNavContainerNode.setAttribute("tabindex", this._savedTabIndex);
-					delete this._savedTabIndex;
-				}
-			}
-		},
-
-		/**
-		 * Called on home key.
-		 * @param {Event} evt
-		 * @param {Element} navigatedDescendant
-		 * @protected
-		 */
-		homeKeyHandler: function (evt) {
-			this.navigateToFirst(evt);
-		},
-
-		/**
-		 * Called on end key.
-		 * @param {Event} evt
-		 * @param {Element} navigatedDescendant
-		 * @protected
-		 */
-		endKeyHandler: function (evt) {
-			this.navigateToLast(evt);
-		},
-
-		/**
-
-		/**
-		 * Default focus() implementation: navigate to the first navigable descendant.
-		 * Note that if `focusDescendants` is false, this will merely set the `d-active-descendant` class
-		 * rather than actually focusing the descendant.
-		 */
-		focus: function () {
-			this.navigateToFirst();
-		},
-
-		/**
-		 * Navigate to the first navigable descendant.
-		 * Note that if `focusDescendants` is false, this will merely set the `d-active-descendant` class
-		 * rather than actually focusing the descendant.
-		 * @param {Event} [triggerEvent] - The event that lead to the navigation, or `undefined`
-		 *     if the navigation is triggered programmatically.
-		 * @protected
-		 */
-		navigateToFirst: function (triggerEvent) {
-			this.navigateTo(this.getNext(this.keyNavContainerNode, 1), triggerEvent);
-		},
-
-		/**
-		 * Navigate to the last navigable descendant.
-		 * Note that if `focusDescendants` is false, this will merely set the `d-active-descendant` class
-		 * rather than actually focusing the descendant.
-		 * @param {Event} [triggerEvent] - The event that lead to the navigation, or `undefined`
-		 *     if the navigation is triggered programmatically.
-		 * @protected
-		 */
-		navigateToLast: function (triggerEvent) {
-			this.navigateTo(this.getNext(this.keyNavContainerNode, -1), false, triggerEvent);
-		},
-
-		/**
-		 * Navigate to the specified descendant.
-		 * Note that if `focusDescendants` is false, this will merely set the `d-active-descendant` class
-		 * rather than actually focusing the descendant.
-		 * @param {Element} child - Reference to the descendant.
-		 * @param {boolean} [last] - If true and if descendant has multiple focusable nodes, focus the
-		 *     last one instead of the first one.  This assumes that the child's `focus()` method takes a boolean
-		 *     parameter where `true` means to focus the last child.
-		 * @param {Event} [triggerEvent] - The event that lead to the navigation, or `undefined`
-		 *     if the navigation is triggered programmatically.
-		 * @protected
-		 */
-		navigateTo: function (child, last, triggerEvent) {
-			if (this.focusDescendants) {
-				// For IE focus outline to appear, must set tabIndex before focus.
-				// If this._savedTabIndex is set, use it instead of this.tabIndex, because it means
-				// the container's tabIndex has already been changed to -1.
-				child.tabIndex = "_savedTabIndex" in this ? this._savedTabIndex : this.keyNavContainerNode.tabIndex;
-				child.focus(last ? "end" : "start");
-
-				// _descendantNavigateHandler() will be called automatically from child's focus event.
-			} else {
-				this._descendantNavigateHandler(child, triggerEvent);
-			}
-		},
-
-		/**
-		 * Called when a child is navigated to, either by user clicking it, or programatically by arrow key handling
-		 * code.  It marks that the specified child is the navigated one.
-		 * @param {Element} child
-		 * @param {Event} triggerEvent - The event that lead to the navigation, or `undefined`
-		 *     if the navigation is triggered programmatically.
-		 * @fires module:delite/KeyNav#keynav-child-navigated
-		 * @private
-		 */
-		_descendantNavigateHandler: function (child, triggerEvent) {
-			if (child && child !== this.navigatedDescendant) {
-				if (this.navigatedDescendant) {
-					$(this.navigatedDescendant).removeClass("d-active-descendant");
-					this.navigatedDescendant.tabIndex = "-1";
-				}
-
-				this.emit("keynav-child-navigated", {
-					oldValue: this.navigatedDescendant,
-					newValue: child,
-					triggerEvent: triggerEvent
-				});
-
-				// mark that the new node is the currently navigated one
-				this.navigatedDescendant = child;
-				if (child) {
-					$(child).addClass("d-active-descendant");
-				}
-			}
-		},
-
-		_searchString: "",
-
-		/**
-		 * If multiple characters are typed where each keystroke happens within
-		 * multiCharSearchDuration of the previous keystroke,
-		 * search for nodes matching all the keystrokes.
-		 *
-		 * For example, typing "ab" will search for entries starting with
-		 * "ab" unless the delay between "a" and "b" is greater than `multiCharSearchDuration`.
-		 *
-		 * @member {number} KeyNav#multiCharSearchDuration
-		 * @default 1000
-		 */
-		multiCharSearchDuration: 1000,
-
-		/**
-		 * When a key is pressed that matches a child item,
-		 * this method is called so that a widget can take appropriate action if necessary.
-		 *
-		 * @param {Element} item
-		 * @param {Event} evt
-		 * @param {string} searchString
-		 * @param {number} numMatches
-		 * @private
-		 */
-		_keyboardSearchHandler: function (item, /*jshint unused: vars */ evt, searchString, numMatches) {
-			if (item) {
-				this.navigateTo(item);
-			}
-		},
-
-		/**
-		 * Compares the searchString to the Element's text label, returning:
-		 *
-		 * - -1: a high priority match  and stop searching
-		 * - 0: not a match
-		 * - 1: a match but keep looking for a higher priority match
-		 *
-		 * @param {Element} item
-		 * @param {string} searchString
-		 * @returns {number}
-		 * @private
-		 */
-		_keyboardSearchCompare: function (item, searchString) {
-			var element = item,
-				text = item.label || (element.focusNode ? element.focusNode.label : "") || element.textContent || "",
-				currentString = text.replace(/^\s+/, "").substr(0, searchString.length).toLowerCase();
-
-			// stop searching after first match by default
-			return (!!searchString.length && currentString === searchString) ? -1 : 0;
-		},
-
-		/**
-		 * Called when keydown.  Ignores key events inside <input>, <button>, etc.,
-		 * and passes the other events to the _processKeyDown() method.
-		 * @param {Event} evt
-		 * @private
-		 */
-		_keynavKeyDownHandler: function (evt) {
-			// Ignore left, right, home, end, and space on <input> controls.
-			if (takesInput(evt.target) &&
-				(evt.key === "ArrowLeft" || evt.key === "ArrowRight" ||
-				evt.key === "Home" || evt.key === "End" || evt.key === "Spacebar")) {
-				return;
-			}
-
-			// Ignore space and enter on <button> elements.
-			if (keyboardClickable(evt.target) && (evt.key === "Enter" || evt.key === "Spacebar")) {
-				return;
-			}
-
-			this._processKeyDown(evt);
-		},
-
-		/**
-		 * Called when there's a keydown event that should be handled by the KeyNav class.
-		 * @param evt
-		 * @private
-		 */
-		_processKeyDown: function (evt) {
-			if (evt.key === "Spacebar" && this._searchTimer && !(evt.ctrlKey || evt.altKey || evt.metaKey)) {
-				// If the user types some string like "new york", interpret the space as part of the search rather
-				// than to perform some action, even if there is a key handler method defined.
-
-				// Stop a11yclick from interpreting key as a click event.
-				// Also stop IE from scrolling, and most browsers (except FF) from emitting keypress event.
-				evt.preventDefault();
-
-				this._keyboardSearch(evt, " ");
-			} else {
-				// Otherwise call the handler specified in this.keyHandlers.
-				this._applyKeyHandler(evt);
-			}
-		},
-
-		/**
-		 * If the class has defined a method to handle the specified key, then call it.
-		 * See the description of `KeyNav` for details on how to define methods.
-		 * @param {Event} evt
-		 * @private
-		 */
-		_applyKeyHandler: function (evt) {
-			// Get name of method to call
-			var methodName;
-			switch (evt.key) {
-			case "ArrowLeft":
-				methodName = this.effectiveDir === "rtl" ? "nextKeyHandler" : "previousKeyHandler";
-				break;
-			case "ArrowRight":
-				methodName = this.effectiveDir === "rtl" ? "previousKeyHandler" : "nextKeyHandler";
-				break;
-			case "ArrowUp":
-			case "ArrowDown":
-				methodName = evt.key.charAt(5).toLowerCase() + evt.key.substr(6) + "KeyHandler";
-				break;
-			default:
-				methodName = evt.key.charAt(0).toLowerCase() + evt.key.substr(1) + "KeyHandler";
-			}
-
-			// Call it
-			var func = this[methodName];
-			if (func) {
-				func.call(this, evt, this.navigatedDescendant);
-				evt.stopPropagation();
-				evt.preventDefault();
-				this._searchString = ""; // so a DOWN_ARROW b doesn't search for ab
-			}
-		},
-
-		/**
-		 * When a printable key is pressed, it's handled here, searching by letter.
-		 * @param {Event} evt
-		 * @private
-		 */
-		_keynavKeyPressHandler: function (evt) {
-			// Ignore:
-			//		- keystrokes on <input> and <textarea>
-			// 		- duplicate events on firefox (ex: arrow key that will be handled by keydown handler)
-			//		- control sequences like CMD-Q.
-			//		- the SPACE key (only occurs on FF)
-			//
-			// Note: if there's no search in progress, then SPACE should be ignored.   If there is a search
-			// in progress, then SPACE is handled in _keynavKeyDownHandler.
-			if (takesInput(evt.target) || evt.charCode <= 32 || evt.ctrlKey || evt.altKey || evt.metaKey) {
-				return;
-			}
-
-			evt.preventDefault();
-			evt.stopPropagation();
-
-			this._keyboardSearch(evt, evt.key.toLowerCase());
-		},
-
-		/**
-		 * Perform a search of the widget's options based on the user's keyboard activity.
-		 *
-		 * Called on keypress (and sometimes keydown), searches through this widget's children
-		 * looking for items that match the user's typed search string.  Multiple characters
-		 * typed within `multiCharSearchDuration` of each other are combined for multi-character searching.
-		 * @param {Event} evt
-		 * @param {string} keyChar
-		 * @private
-		 */
-		_keyboardSearch: function (evt, keyChar) {
-			var
-				matchedItem = null,
-				searchString,
-				numMatches = 0;
-
-			if (this._searchTimer) {
-				this._searchTimer.remove();
-			}
-			this._searchString += keyChar;
-			var allSameLetter = /^(.)\1*$/.test(this._searchString);
-			var searchLen = allSameLetter ? 1 : this._searchString.length;
-			searchString = this._searchString.substr(0, searchLen);
-			this._searchTimer = this.defer(function () { // this is the "success" timeout
-				this._searchTimer = null;
-				this._searchString = "";
-			}, this.multiCharSearchDuration);
-			var currentItem = this.navigatedDescendant || null;
-			if (searchLen === 1 || !currentItem) {
-				currentItem = this.getNext(currentItem, 1); // skip current
-				if (!currentItem) {
-					return;
-				} // no items
-			}
-			var stop = currentItem;
-			do {
-				var rc = this._keyboardSearchCompare(currentItem, searchString);
-				if (!!rc && numMatches++ === 0) {
-					matchedItem = currentItem;
-				}
-				if (rc === -1) { // priority match
-					numMatches = -1;
-					break;
-				}
-				currentItem = this.getNext(currentItem, 1);
-			} while (currentItem !== stop);
-
-			this._keyboardSearchHandler(matchedItem, evt, searchString, numMatches);
-		},
-
-		/**
-		 * Returns the next or previous navigable descendant, relative to "child".
-		 * If "child" is this, then it returns the first focusable descendant (when dir === 1)
-		 * or last focusable descendant (when dir === -1).
-		 * @param {Element} child - The current child Element.
-		 * @param {number} dir - 1 = after, -1 = before
-		 * @returns {Element}
-		 * @protected
-		 */
-		getNext: function (child, dir) {
-			var container = this.keyNavContainerNode, origChild = child;
-			function dfsNext(node) {
-				if (node.firstElementChild) { return node.firstElementChild; }
-				while (node !== container) {
-					if (node.nextElementSibling) { return node.nextElementSibling; }
-					node = node.parentNode;
-				}
-				return container;	// loop around, plus corner case when no children
-			}
-			function dfsLast(node) {
-				while (node.lastElementChild) { node = node.lastElementChild; }
-				return node;
-			}
-			function dfsPrev(node) {
-				return node === container ? dfsLast(container) : // loop around, plus corner case when no children
-					(node.previousElementSibling && dfsLast(node.previousElementSibling)) || node.parentNode;
-			}
-			while (true) {
-				child = dir > 0 ? dfsNext(child) : dfsPrev(child);
-				if (child === origChild) {
-					return null;	// looped back to original child
-				} else if (this._selectorFunc(child)) {
-					return child;	// this child matches
-				}
-			}
-		}
-	});
-});
-;
-define('delite/features',["requirejs-dplugins/has"], function (has) {
-	// Flag for whether to create background iframe behind popups like Menus and Dialog.
-	// A background iframe is useful to prevent problems with popups appearing behind applets/pdf files.
-	has.add("config-bgIframe", false);
-
-	// Flag to enable advanced bidi support
-	has.add("bidi", false);
-
-	// Flag to enable inheritance direction from any ancestor
-	has.add("inherited-dir", false);
-
-	if (typeof window !== "undefined") {
-		// Returns the name of the method to test if an element matches a CSS selector.
-		has.add("dom-matches", function () {
-			var node = document.body;
-			if (node.matches) {
-				return "matches";
-			}
-			if (node.webkitMatchesSelector) {
-				return "webkitMatchesSelector";
-			}
-			if (node.mozMatchesSelector) {
-				return "mozMatchesSelector";
-			}
-			if (node.msMatchesSelector) {
-				return "msMatchesSelector";
-			}
-		});
-
-		// Does platform have native support for document.registerElement() or a polyfill to simulate it?
-		has.add("document-register-element", !!document.registerElement);
-
-		// Test for how to monitor DOM nodes being inserted and removed from the document.
-		// For DOMNodeInserted events, there are two variations:
-		//		"root" - just notified about the root of each tree added to the document
-		//		"all" - notified about all nodes added to the document
-		has.add("MutationObserver", window.MutationObserver ? "MutationObserver" : window.WebKitMutationObserver ?
-			"WebKitMutationObserver" : "");
-		has.add("DOMNodeInserted", function () {
-			var root = document.createElement("div"),
-				child = document.createElement("div"),
-				sawRoot, sawChild;
-			root.id = "root";
-			child.id = "child";
-			root.appendChild(child);
-
-			function listener(event) {
-				if (event.target.id === "root") {
-					sawRoot = true;
-				}
-				if (event.target.id === "child") {
-					sawChild = true;
-				}
-			}
-
-			document.body.addEventListener("DOMNodeInserted", listener);
-			document.body.appendChild(root);
-			document.body.removeChild(root);
-			document.body.removeEventListener("DOMNodeInserted", listener);
-			return sawChild ? "all" : sawRoot ? "root" : "";
-		});
-
-		// Can we use __proto__ to reset the prototype of DOMNodes?
-		// It's not available on IE<11, and even on IE11 it makes the node's attributes
-		// (ex: node.attributes, node.textContent) disappear, so disabling it on IE11 too.
-		has.add("dom-proto-set", function () {
-			var node = document.createElement("div");
-			/* jshint camelcase: false */
-			/* jshint proto: true */
-			return !!node.__proto__;
-			/* jshint camelcase: true */
-			/* jshint proto: false */
-		});
-
-		// Support for <template> elements (specifically, that their content is available via templateNode.content
-		// rather than templateNode.children[] etc.
-		has.add("dom-template", !!document.createElement("template").content);
-	}
-
-	return has;
-});;
-define('requirejs-dplugins/has',["module"], function (module) {
-	var cache = (module.config && module.config()) || {};
-	var tokensRE = /[\?:]|[^:\?]+/g;
-
-	function resolve(resource, has, isBuild) {
-		var tokens = resource.match(tokensRE);
-		var i = 0;
-		var get = function (skip) {
-			var term = tokens[i++];
-			if (term === ":") {
-				// empty string module name; therefore, no dependency
-				return "";
-			} else {
-				// postfixed with a ? means it is a feature to branch on, the term is the name of the feature
-				if (tokens[i++] === "?") {
-					var hasResult = has(term);
-					if (hasResult === undefined && isBuild) {
-						return undefined;
-					} else if (!skip && hasResult) {
-						// matched the feature, get the first value from the options
-						return get();
-					} else {
-						// did not match, get the second value, passing over the first
-						get(true);
-						return get(skip);
-					}
-				}
-				// A module or empty string.
-				// This allows to tell apart "undefined flag at build time" and "no module required" cases.
-				return term || "";
-			}
-		};
-		return get();
-	}
-
-	function forEachModule(tokens, callback) {
-		for (var i = 0; i < tokens.length; i++) {
-			if (tokens[i] !== ":" && tokens[i] !== "?" && tokens[i + 1] !== "?") {
-				callback(tokens[i], i);
-			}
-		}
-	}
-
-	var has = function (name) {
-		var global = (function () {
-			return this;
-		})();
-
-		return typeof cache[name] === "function" ? (cache[name] = cache[name](global)) : cache[name]; // Boolean
-	};
-
-	has.cache = cache;
-
-	has.add = function (name, test, now, force) {
-		if (!has("builder")) {
-			(typeof cache[name] === "undefined" || force) && (cache[name] = test);
-			return now && has(name);
-		}
-	};
-
-	has.normalize = function (resource, normalize) {
-		var tokens = resource.match(tokensRE);
-
-		forEachModule(tokens, function (module, index) {
-			tokens[index] = normalize(module);
-		});
-
-		return tokens.join("");
-	};
-
-	has.load = function (resource, req, onLoad, config) {
-		config = config || {};
-
-		if (!resource) {
-			onLoad();
-			return;
-		}
-
-		var mid = resolve(resource, has, config.isBuild);
-
-		if (mid) {
-			req([mid], onLoad);
-		} else {
-			onLoad();
-		}
-	};
-
-	has.addModules = function (pluginName, resource, addModules) {
-		var modulesToInclude = [];
-
-		var mid = resolve(resource, has, true);
-		if (mid) {
-			modulesToInclude.push(mid);
-		} else if (typeof mid === "undefined") {
-			// has expression cannot be resolved at build time so include all the modules just in case.
-			var tokens = resource.match(tokensRE);
-			forEachModule(tokens, function (module) {
-				modulesToInclude.push(module);
-			});
-		}
-
-		addModules(modulesToInclude);
-	};
-
-	return has;
-});
-;
 /** @module xdeliteful/Script */
 define('xdeliteful/Script',[
     "dcl/dcl",
@@ -12875,6 +11845,113 @@ define('xdeliteful/MediaPlayer',[
 });
 
 ;
+define('requirejs-dplugins/has',["module"], function (module) {
+	var cache = (module.config && module.config()) || {};
+	var tokensRE = /[\?:]|[^:\?]+/g;
+
+	function resolve(resource, has, isBuild) {
+		var tokens = resource.match(tokensRE);
+		var i = 0;
+		var get = function (skip) {
+			var term = tokens[i++];
+			if (term === ":") {
+				// empty string module name; therefore, no dependency
+				return "";
+			} else {
+				// postfixed with a ? means it is a feature to branch on, the term is the name of the feature
+				if (tokens[i++] === "?") {
+					var hasResult = has(term);
+					if (hasResult === undefined && isBuild) {
+						return undefined;
+					} else if (!skip && hasResult) {
+						// matched the feature, get the first value from the options
+						return get();
+					} else {
+						// did not match, get the second value, passing over the first
+						get(true);
+						return get(skip);
+					}
+				}
+				// A module or empty string.
+				// This allows to tell apart "undefined flag at build time" and "no module required" cases.
+				return term || "";
+			}
+		};
+		return get();
+	}
+
+	function forEachModule(tokens, callback) {
+		for (var i = 0; i < tokens.length; i++) {
+			if (tokens[i] !== ":" && tokens[i] !== "?" && tokens[i + 1] !== "?") {
+				callback(tokens[i], i);
+			}
+		}
+	}
+
+	var has = function (name) {
+		var global = (function () {
+			return this;
+		})();
+
+		return typeof cache[name] === "function" ? (cache[name] = cache[name](global)) : cache[name]; // Boolean
+	};
+
+	has.cache = cache;
+
+	has.add = function (name, test, now, force) {
+		if (!has("builder")) {
+			(typeof cache[name] === "undefined" || force) && (cache[name] = test);
+			return now && has(name);
+		}
+	};
+
+	has.normalize = function (resource, normalize) {
+		var tokens = resource.match(tokensRE);
+
+		forEachModule(tokens, function (module, index) {
+			tokens[index] = normalize(module);
+		});
+
+		return tokens.join("");
+	};
+
+	has.load = function (resource, req, onLoad, config) {
+		config = config || {};
+
+		if (!resource) {
+			onLoad();
+			return;
+		}
+
+		var mid = resolve(resource, has, config.isBuild);
+
+		if (mid) {
+			req([mid], onLoad);
+		} else {
+			onLoad();
+		}
+	};
+
+	has.addModules = function (pluginName, resource, addModules) {
+		var modulesToInclude = [];
+
+		var mid = resolve(resource, has, true);
+		if (mid) {
+			modulesToInclude.push(mid);
+		} else if (typeof mid === "undefined") {
+			// has expression cannot be resolved at build time so include all the modules just in case.
+			var tokens = resource.match(tokensRE);
+			forEachModule(tokens, function (module) {
+				modulesToInclude.push(module);
+			});
+		}
+
+		addModules(modulesToInclude);
+	};
+
+	return has;
+});
+;
 /** @module deliteful/TabBar */
 define('xdeliteful/TabBar',[
     "dcl/dcl",
@@ -13764,15 +12841,21 @@ define('deliteful/list/List',[
 		 * @protected
 		 */
 		updateRenderers: function (items) {
-			if (this.selectionMode !== "none" && (this.type === "grid" || this.type === "listbox")) {
-				for (var i = 0; i < items.length; i++) {
-					var currentItem = items[i];
-					var renderer = this.getRendererByItemId(this.getIdentity(currentItem));
-					if (renderer) {
-						var itemSelected = !!this.isSelected(currentItem);
+			if (this.selectionMode === "none") {
+				return;
+			}
+			for (var i = 0; i < items.length; i++) {
+				var currentItem = items[i];
+				var renderer = this.getRendererByItemId(this.getIdentity(currentItem));
+				if (renderer) {
+					var itemSelected = !!this.isSelected(currentItem);
+					if (this.type === "grid" || this.type === "listbox") {
+						// According to https://www.w3.org/TR/wai-aria/states_and_properties#aria-selected
+						// aria-selected shouldn't be set on role=menuitem nodes.  That's what the future
+						// https://www.w3.org/TR/wai-aria-1.1/#aria-current role is for.
 						renderer.renderNode.setAttribute("aria-selected", itemSelected ? "true" : "false");
-						$(renderer).toggleClass(this._cssClasses.selected, itemSelected);
 					}
+					$(renderer).toggleClass(this._cssClasses.selected, itemSelected);
 				}
 			}
 		},
@@ -14365,37 +13448,30 @@ define('deliteful/list/List',[
 		 * @private
 		 */
 		_spaceKeydownHandler: function (evt) {
-			if (this.selectionMode !== "none") {
-				if (this.handleSelection(evt)) {
-					evt.preventDefault();
-				} // else do not prevent-default, for the sake of use-cases
-				// such as Combobox where the target of the key event is an
-				// input element outside the List. In this use-case, delite/HasDropDown
-				// forwards "keydown" events to the List instance and prevent-defaults
-				// the event if any key handler prevent-defaults the event, which would
-				// forbid the user from entering space characters in the input element.
+			if (this.selectionMode !== "none" && this.getEnclosingRenderer(evt.target)) {
+				evt.preventDefault();
+
+				// Wait until keyup to fire the selection event, so widgets like ComboButton don't switch focus
+				// too early, sending a stray keyup event to the ComboButton anchor node.
+				var handle = this.on("keyup", function (evt2) {
+					handle.remove();
+					this.handleSelection(evt2);
+				}.bind(this));
 			}
 		},
 
-		/*jshint maxcomplexity:13*/
 		/**
 		 * Handles keydown events for the aria role grid
 		 * @param {Event} evt the keydown event
 		 * @private
 		 */
 		_gridKeydownHandler: function (evt) {
-			if (evt.key === "Enter" || evt.key === "F2") {
-				if (this.navigatedDescendant && !this.navigatedDescendant.hasAttribute("navindex")) {
-					// Enter Actionable Mode
-					// TODO: prevent default ONLY IF autoAction is false on the renderer ?
-					// See http://www.w3.org/TR/2013/WD-wai-aria-practices-20130307/#grid
+			// jshint maxcomplexity:12
+			if (this.navigatedDescendant && this.navigatedDescendant.hasAttribute("navindex")) {
+				// We are in Actionable mode
+				if (evt.key === "Tab") {
 					evt.preventDefault();
-					this._enterActionableMode();
-				}
-			} else if (evt.key === "Tab") {
-				if (this.navigatedDescendant && this.navigatedDescendant.hasAttribute("navindex")) {
-					// We are in Actionable mode
-					evt.preventDefault();
+					evt.stopPropagation();
 					var renderer = this._getFocusedRenderer();
 					var next = renderer[evt.shiftKey ? "getPrev" : "getNext"](this.navigatedDescendant);
 					while (!next) {
@@ -14404,13 +13480,21 @@ define('deliteful/list/List',[
 						next = renderer[evt.shiftKey ? "getLast" : "getFirst"]();
 					}
 					this.navigateTo(next);
+				} else if (evt.key === "Escape") {
+					// Leave Actionable mode
+					evt.preventDefault();
+					evt.stopPropagation();
+					this._leaveActionableMode();
 				}
-			} else if (evt.key === "Escape") {
-				// Leave Actionable mode
-				this._leaveActionableMode();
+			} else if (evt.key === "Enter" || evt.key === "F2") {
+				// Enter Actionable Mode
+				// TODO: prevent default ONLY IF autoAction is false on the renderer ?
+				// See http://www.w3.org/TR/2013/WD-wai-aria-practices-20130307/#grid
+				evt.preventDefault();
+				evt.stopPropagation();
+				this._enterActionableMode();
 			}
 		},
-		/*jshint maxcomplexity:10*/
 
 		/**
 		 * @private
@@ -20077,7 +19161,7 @@ define('delite/StoreMap',["dcl/dcl", "./Store"], function (dcl, Store) {
 
 		queryStoreAndInitItems: dcl.superCall(function (sup) {
 			return function (processQueryResult, force) {
-				if (this.attached || force) {
+				if (this._storeMapAttachedOnce || force) {
 					sup.apply(this, arguments);
 				} else {
 					// we just keep the last processQueryResult we were called with as we are before attachment
@@ -20090,31 +19174,36 @@ define('delite/StoreMap',["dcl/dcl", "./Store"], function (dcl, Store) {
 		attachedCallback: function () {
 			// This runs after the attributes have been processed (and converted into properties),
 			// and after any properties specified to the constructor have been mixed in.
+			// It should not re-run if the StoreMap is detached and then reattached.
 
-			// look into properties of the instance for keys to map
-			var mappedKeys = [];
-			for (var prop in this) {
-				var match = propregexp.exec(prop);
-				if (match && mappedKeys.indexOf(match[0]) === -1) {
-					mappedKeys.push(match[0]);
+			if (!this._storeMapAttachedOnce) {
+				// look into properties of the instance for keys to map
+				var mappedKeys = [];
+				for (var prop in this) {
+					var match = propregexp.exec(prop);
+					if (match && mappedKeys.indexOf(match[0]) === -1) {
+						mappedKeys.push(match[0]);
+					}
 				}
-			}
 
-			// which are the considered keys in the store item itself
-			if (this.copyAllItemProps) {
-				this._itemKeys = [];
-				for (var i = 0; i < mappedKeys.length; i++) {
-					this._itemKeys.push(this[mappedKeys[i] + "Attr"] ?
-						this[mappedKeys[i] + "Attr"] : mappedKeys[i]);
+				// which are the considered keys in the store item itself
+				if (this.copyAllItemProps) {
+					this._itemKeys = [];
+					for (var i = 0; i < mappedKeys.length; i++) {
+						this._itemKeys.push(this[mappedKeys[i] + "Attr"] ?
+							this[mappedKeys[i] + "Attr"] : mappedKeys[i]);
+					}
 				}
-			}
 
-			this._mappedKeys = mappedKeys;
-			this.deliver();
-			
-			if (this._pendingQuery) {
-				this.queryStoreAndInitItems(this._pendingQuery, true);
-				this._pendingQuery = null;
+				this._mappedKeys = mappedKeys;
+				this.deliver();
+
+				if (this._pendingQuery) {
+					this.queryStoreAndInitItems(this._pendingQuery, true);
+					this._pendingQuery = null;
+				}
+
+				this._storeMapAttachedOnce = true;
 			}
 		},
 
@@ -20203,9 +19292,9 @@ define('delite/Store',[
 	"requirejs-dplugins/Promise!",
 	"decor/ObservableArray",
 	"decor/Observable",
-	"./ArrayToStoreAdapter",
-	"./DstoreToStoreAdapter"
-], function (dcl, has, Invalidating, Promise, ObservableArray, Observable, ArrayToStoreAdapter, DstoreToStoreAdapter) {
+	"./ArrayQueryAdapter",
+	"./DstoreQueryAdapter"
+], function (dcl, has, Invalidating, Promise, ObservableArray, Observable, ArrayQueryAdapter, DstoreQueryAdapter) {
 
 	/**
 	 * Dispatched once the query has been executed and the `renderItems` array
@@ -20348,10 +19437,10 @@ define('delite/Store',[
 			this._untrack();
 			if (this.source != null) {
 				if (!Array.isArray(this.source)) {
-					this._storeAdapter = new DstoreToStoreAdapter({source: this.source, query: this.query,
+					this._storeAdapter = new DstoreQueryAdapter({source: this.source, query: this.query,
 						processQueryResult: processQueryResult});
 				} else {
-					this._storeAdapter = new ArrayToStoreAdapter({source: this.source, query: this.query,
+					this._storeAdapter = new ArrayQueryAdapter({source: this.source, query: this.query,
 						processQueryResult: processQueryResult});
 				}
 				var collection = this._storeAdapter;
@@ -20434,10 +19523,6 @@ define('delite/Store',[
 			if (this._newQueryListener) {
 				this._newQueryListener.remove(this._newQueryListener);
 			}
-		},
-
-		detachedCallback: function () {
-			this._untrack();
 		},
 
 		destroy: function () {
@@ -20572,23 +19657,23 @@ define('delite/Store',[
 	});
 });
 ;
-/** @module delite/DstoreToStoreAdapter */
-define('delite/DstoreToStoreAdapter',[
+/** @module delite/DstoreQueryAdapter */
+define('delite/DstoreQueryAdapter',[
 	"dcl/dcl"
 ], function (dcl) {
 
 	/**
-	 * An adapter to use dstore/Store in the source of delite/Store.js.
-	 * Created to keep a commun interface with the use of an array instead of dstore/Store.
+	 * An adapter to use dstore/Store in the `source` of delite/Store.js.
+	 * Created to keep a common interface with the use of an array instead of dstore/Store.
 	 * The arguments to pass to the constructor are:
 	 *
 	 * - source: dstore/Store - the dstore/Store represented by the adapter.
 	 * - query: the query filter to apply to the store.
 	 * - processQueryResult: function to apply to the store.
 	 *
-	 * @class module:delite/DstoreToStoreAdapter
+	 * @class module:delite/DstoreQueryAdapter
 	 */
-	return dcl(null, /** @lends module:delite/DstoreToStoreAdapter# */ {
+	return dcl(null, /** @lends module:delite/DstoreQueryAdapter# */ {
 		constructor: function (args) {
 			this.source = args.source;
 			this.data = args.processQueryResult(this.source.filter(args.query));
@@ -20667,8 +19752,8 @@ define('delite/DstoreToStoreAdapter',[
 	});
 });
 ;
-/** @module delite/ArrayToStoreAdapter */
-define('delite/ArrayToStoreAdapter',[
+/** @module delite/ArrayQueryAdapter */
+define('delite/ArrayQueryAdapter',[
 	"dcl/dcl",
 	"decor/Evented",
 	"decor/ObservableArray",
@@ -20690,7 +19775,7 @@ define('delite/ArrayToStoreAdapter',[
 
 	/**
 	 * An adapter to use an array in the source of delite/Store.js.
-	 * Created to keep a commun interface with the use of dstore/Store instead of an array.
+	 * Created to keep a common interface with the use of dstore/Store instead of an array.
 	 *
 	 * The arguments to pass to the constructor are:
 	 *
@@ -20698,9 +19783,9 @@ define('delite/ArrayToStoreAdapter',[
 	 * - query: the query filter to apply to the source.
 	 * - processQueryResult: function to apply to the source
 	 *
-	 * @class module:delite/ArrayToStoreAdapter
+	 * @class module:delite/ArrayQueryAdapter
 	 */
-	return dcl(Evented, /** @lends module:delite/ArrayToStoreAdapter# */ {
+	return dcl(Evented, /** @lends module:delite/ArrayQueryAdapter# */ {
 		constructor: function (args) {
 			this.source = args.source;
 			// affect the callbacks of the observe functions
@@ -21028,7 +20113,7 @@ define('delite/ArrayToStoreAdapter',[
 					promise = pro;
 				}};
 				this.emit("_new-query-asked", evt);
-				return promise;
+				return promise || syncThenable(res);
 			} else {
 				return syncThenable(res);
 			}
@@ -21461,6 +20546,709 @@ define('decor/Observable',[
 	return Observable;
 });
 ;
+/** @module delite/KeyNav */
+define('delite/KeyNav',[
+	"dcl/dcl",
+	"requirejs-dplugins/jquery!attributes/classes",	// addClass(), removeClass()
+	"./features",
+	"./Widget",
+	"dpointer/events"		// so can just monitor for "pointerdown"
+], function (dcl, $, has, Widget) {
+
+	/**
+	 * Dispatched after the user has selected a different descendant, by clicking, arrow keys,
+	 * or keyboard search.
+	 * @example
+	 * widget.on("keynav-child-navigated", function (evt) {
+	 *	console.log("old value: " + evt.oldValue);
+	 *	console.log("new value: " + evt.newValue);
+	 * }
+	 * @event module:delite/KeyNav#keynav-child-navigated
+	 * @property {number} oldValue - The previously selected item.
+	 * @property {number} newValue - The new selected item.
+	 */
+
+	/**
+	 * Return true if node is an `<input>` or similar that responds to keyboard input.
+	 * @param {Element} node
+	 * @returns {boolean}
+	 */
+	function takesInput(node) {
+		var tag = node.nodeName.toLowerCase();
+
+		return !node.readOnly && (tag === "textarea" || (tag === "input" &&
+			/^(color|email|number|password|search|tel|text|url|range)$/.test(node.type)));
+	}
+
+	/**
+	 * Return true if node is "clickable" via keyboard space / enter key
+	 * @param {Element} node
+	 * @returns {boolean}
+	 */
+	function keyboardClickable(node) {
+		return !node.readOnly && /^(button|a)$/i.test(node.nodeName);
+	}
+
+	/**
+	  * A mixin to allow arrow key and letter key navigation of child Elements.
+	  * It can be used by delite/Container based widgets with a flat list of children,
+	  * or more complex widgets like a Tree.
+	  *
+	  * To use this mixin, the subclass must:
+	  *
+	  * - Implement one method for each keystroke that the subclass wants to handle.
+	  *   The methods for up and down arrow keys are `upKeyHandler() and `downKeyHandler()`.
+	  *   For BIDI support, the left and right arrows are handled specially, mapped to the `previousKeyHandler()`
+	  *   and `nextKeyHandler()` methods in LTR mode, or reversed in RTL mode.
+	  *   Otherwise, the method name is based on the key names
+	  *   defined by https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key, for example `homeKeyHandler()`.
+	  *   The method takes two parameters: the event, and the currently navigated node.
+	  *   Most subclasses will want to implement either `previousKeyHandler()`
+	  *   and `nextKeyHandler()`, or `downKeyHandler()` and `upKeyHandler()`.
+	  * - Set all navigable descendants' initial tabIndex to "-1"; both initial descendants and any
+	  *   descendants added later, by for example `addChild()`.  Exception: if `focusDescendants` is false then the
+	  *   descendants shouldn't have any tabIndex at all.
+	  * - Define `descendantSelector` as a function or string that identifies navigable child Elements.
+	  * - If the descendant elements contain text, they should have a label attribute.  KeyNav uses the label
+	  *   attribute for letter key navigation.
+	  *
+	  * @mixin module:delite/KeyNav
+	  * @augments module:delite/Widget
+	  */
+	return dcl(Widget, /** @lends module:delite/KeyNav# */ {
+
+		/*jshint -W101*/
+		/**
+		 * When true, focus the descendant widgets as the user navigates to them via arrow keys or keyboard letter
+		 * search.  When false, rather than focusing the widgets, it merely sets `navigatedDescendant`,
+		 * and sets the `d-active-descendant` class on the descendant widget the user has navigated to.
+		 *
+		 * False mode is intended for widgets like ComboBox where the focus is somewhere outside this widget
+		 * (typically on an `<input>`) and keystrokes are merely being forwarded to the KeyNav widget.
+		 *
+		 * When set to false:
+		 *
+		 * - Navigable descendants shouldn't have any tabIndex (as opposed to having tabIndex=-1).
+		 * - The focused element should specify `aria-owns` to point to this KeyNav Element.
+		 * - The focused Element must be kept synced so that `aria-activedescendant` points to the currently
+		 *   navigated descendant.  Do this responding to the `keynav-child-navigated` event emitted by this widget,
+		 *   or by calling `observe()` and monitoring changed to `navigatedDescendant`.
+		 * - The focused Element must forward keystrokes by calling `emit("keydown", ...)` and/or
+		 *   `emit("keypress", ...)` on this widget.
+		 * - You must somehow set the initial navigated descendant, typically by calling `navigateToFirst()` either
+		 *   when the the dropdown is opened, or on the first call to `downKeyHandler()`.
+		 * - You must have some CSS styling so that the currently navigated node is apparent.
+		 *
+		 * See http://www.w3.org/WAI/GL/wiki/Using_aria-activedescendant_to_allow_changes_in_focus_within_widgets_to_be_communicated_to_Assistive_Technology#Example_1:_Combobox
+		 * for details.
+		 * @member {boolean}
+		 * @default true
+		 * @protected
+		 */
+		focusDescendants: true,
+		/*jshint +W101*/
+
+		/**
+		 * The currently navigated descendant, or null if there isn't one.
+		 * @member {Element}
+		 * @readonly
+		 * @protected
+		 */
+		navigatedDescendant: null,
+
+		/**
+		 * Selector to identify which descendant Elements are navigable via arrow keys or
+		 * keyboard search.  Note that for subclasses like a Tree, one navigable node could be a descendant of another.
+		 *
+		 * It's either a function that takes an Element parameter and returns true/false,
+		 * or a CSS selector string, for example ".list-item".
+		 *
+		 * By default, the direct DOM children of this widget are considered the selectable descendants.
+		 *
+		 * Must be set in the prototype rather than on the instance.
+		 *
+		 * @member {string|Function}
+		 * @protected
+		 * @constant
+		 */
+		descendantSelector: null,
+
+		/**
+		 * The node to receive the KeyNav behavior.
+		 * Can be set in a template via a `attach-point` assignment.
+		 * If missing, then `this.containerNode` or `this` will be used.
+		 * If set, then subclass must set the tabIndex on this node rather than the root node.
+		 * @member {Element}
+		 * @protected
+		 */
+		keyNavContainerNode: null,
+
+		/**
+		 * Figure out effective navigable descendant of this event.
+		 * @param {Event} evt
+		 * @private
+		 */
+		_getTargetElement: function (evt) {
+			for (var child = evt.target; child !== this; child = child.parentNode) {
+				if (this._selectorFunc(child)) {
+					return child;
+				}
+			}
+			return null;
+		},
+
+		postRender: function () {
+			// If keyNavContainerNode unspecified, set to default value.
+			if (!this.keyNavContainerNode) {
+				this.keyNavContainerNode = this.containerNode || this;
+			}
+
+			this.on("keypress", this._keynavKeyPressHandler.bind(this), this.keyNavContainerNode);
+			this.on("keydown", this._keynavKeyDownHandler.bind(this), this.keyNavContainerNode);
+
+			this.on("pointerdown", this.pointerdownHandler.bind(this), this.keyNavContainerNode);
+			this.on("focusin", this.focusinHandler.bind(this), this.keyNavContainerNode);
+			this.on("focusout", this.focusoutHandler.bind(this), this.keyNavContainerNode);
+
+			// Setup function to check which child nodes are navigable.
+			if (typeof this.descendantSelector === "string") {
+				var matchesFuncName = has("dom-matches");
+				this._selectorFunc = function (elem) {
+					return elem[matchesFuncName](this.descendantSelector);
+				};
+			} else if (this.descendantSelector) {
+				this._selectorFunc = this.descendantSelector;
+			} else {
+				this._selectorFunc = function (elem) { return elem.parentNode === this.containerNode; };
+			}
+		},
+
+		attachedCallback: function () {
+			// If the user hasn't specified a tabindex declaratively, then set to default value.
+			var container = this.keyNavContainerNode;
+			if (this.focusDescendants && !container.hasAttribute("tabindex")) {
+				container.tabIndex = "0";
+			}
+		},
+
+		/**
+		 * Called on pointerdown event (on container or child of container).
+		 * Navigation occurs on pointerdown, to match behavior of native elements.
+		 * Normally this handler isn't needed as it's redundant w/the focusin event.
+		 */
+		pointerdownHandler: function (evt) {
+			var target = this._getTargetElement(evt);
+			if (target) {
+				this._descendantNavigateHandler(target, evt);
+			}
+		},
+
+		/**
+		 * Called on focus of container or child of container.
+		 */
+		focusinHandler: function (evt) {
+			var container = this.keyNavContainerNode;
+			if (this.focusDescendants) {
+				if (evt.target === this || evt.target === container) {
+					// Ignore spurious focus event:
+					// On IE, clicking the scrollbar of a select dropdown moves focus from the focused child item to me
+					if (!this.navigatedDescendant) {
+						// Focus the first child but do it on a delay so that activationTracker sees my "focus"
+						// event before seeing the "focus" event on the child widget.
+						this.defer(this.focus);
+					}
+				} else {
+					// When container's descendant gets focus,
+					// remove the container's tabIndex so that tab or shift-tab
+					// will go to the fields after/before the container, rather than the container itself.
+					// Also avoids Safari and Firefox problems with nested focusable elements.
+					if (container.hasAttribute("tabindex")) {
+						this._savedTabIndex = container.tabIndex;
+						container.removeAttribute("tabindex");
+					}
+
+					// Handling for when navigatedDescendant or a node inside a navigableDescendant gets focus.
+					var navigatedDescendant = this._getTargetElement(evt);
+					if (navigatedDescendant) {
+						if (evt.target === navigatedDescendant) {
+							// If the navigable descendant itself is focused, then set tabIndex=0 so that tab and
+							// shift-tab work correctly.
+							navigatedDescendant.tabIndex = this._savedTabIndex;
+						}
+
+						// Note: when focus is moved outside the navigable descendant,
+						// focusoutHandler() resets its tabIndex to -1.
+
+						this._descendantNavigateHandler(navigatedDescendant, evt);
+					}
+				}
+			}
+		},
+
+		/**
+		 * Called on blur of container or child of container.
+		 */
+		focusoutHandler: function (evt) {
+			if (this.focusDescendants) {
+				// Note: don't use this.navigatedDescendant because it may or may not have already been
+				// updated to point to the new descendant, depending on if navigation was by mouse
+				// or keyboard.
+				var previouslyNavigatedDescendant = this._getTargetElement(evt);
+				if (previouslyNavigatedDescendant) {
+					if (previouslyNavigatedDescendant !== evt.relatedTarget) {
+						// If focus has moved outside of the previously navigated descendant, then set its
+						// tabIndex back to -1, for future time when navigable descendant is clicked.
+						previouslyNavigatedDescendant.tabIndex = "-1";
+						$(previouslyNavigatedDescendant).removeClass("d-active-descendant");
+
+						if (this.navigatedDescendant === previouslyNavigatedDescendant) {
+							this.navigatedDescendant = null;
+						}
+					}
+				}
+
+				// If focus has moved outside of container, then restore container's tabindex.
+				if ("_savedTabIndex" in this && !this.keyNavContainerNode.contains(evt.relatedTarget)) {
+					this.keyNavContainerNode.setAttribute("tabindex", this._savedTabIndex);
+					delete this._savedTabIndex;
+				}
+			}
+		},
+
+		/**
+		 * Called on home key.
+		 * @param {Event} evt
+		 * @param {Element} navigatedDescendant
+		 * @protected
+		 */
+		homeKeyHandler: function (evt) {
+			this.navigateToFirst(evt);
+		},
+
+		/**
+		 * Called on end key.
+		 * @param {Event} evt
+		 * @param {Element} navigatedDescendant
+		 * @protected
+		 */
+		endKeyHandler: function (evt) {
+			this.navigateToLast(evt);
+		},
+
+		/**
+
+		/**
+		 * Default focus() implementation: navigate to the first navigable descendant.
+		 * Note that if `focusDescendants` is false, this will merely set the `d-active-descendant` class
+		 * rather than actually focusing the descendant.
+		 */
+		focus: function () {
+			this.navigateToFirst();
+		},
+
+		/**
+		 * Navigate to the first navigable descendant.
+		 * Note that if `focusDescendants` is false, this will merely set the `d-active-descendant` class
+		 * rather than actually focusing the descendant.
+		 * @param {Event} [triggerEvent] - The event that lead to the navigation, or `undefined`
+		 *     if the navigation is triggered programmatically.
+		 * @protected
+		 */
+		navigateToFirst: function (triggerEvent) {
+			this.navigateTo(this.getNext(this.keyNavContainerNode, 1), triggerEvent);
+		},
+
+		/**
+		 * Navigate to the last navigable descendant.
+		 * Note that if `focusDescendants` is false, this will merely set the `d-active-descendant` class
+		 * rather than actually focusing the descendant.
+		 * @param {Event} [triggerEvent] - The event that lead to the navigation, or `undefined`
+		 *     if the navigation is triggered programmatically.
+		 * @protected
+		 */
+		navigateToLast: function (triggerEvent) {
+			this.navigateTo(this.getNext(this.keyNavContainerNode, -1), false, triggerEvent);
+		},
+
+		/**
+		 * Navigate to the specified descendant.
+		 * Note that if `focusDescendants` is false, this will merely set the `d-active-descendant` class
+		 * rather than actually focusing the descendant.
+		 * @param {Element} child - Reference to the descendant.
+		 * @param {boolean} [last] - If true and if descendant has multiple focusable nodes, focus the
+		 *     last one instead of the first one.  This assumes that the child's `focus()` method takes a boolean
+		 *     parameter where `true` means to focus the last child.
+		 * @param {Event} [triggerEvent] - The event that lead to the navigation, or `undefined`
+		 *     if the navigation is triggered programmatically.
+		 * @protected
+		 */
+		navigateTo: function (child, last, triggerEvent) {
+			if (this.focusDescendants) {
+				// For IE focus outline to appear, must set tabIndex before focus.
+				// If this._savedTabIndex is set, use it instead of this.tabIndex, because it means
+				// the container's tabIndex has already been changed to -1.
+				child.tabIndex = "_savedTabIndex" in this ? this._savedTabIndex : this.keyNavContainerNode.tabIndex;
+				child.focus(last ? "end" : "start");
+
+				// _descendantNavigateHandler() will be called automatically from child's focus event.
+			} else {
+				this._descendantNavigateHandler(child, triggerEvent);
+			}
+		},
+
+		/**
+		 * Called when a child is navigated to, either by user clicking it, or programatically by arrow key handling
+		 * code.  It marks that the specified child is the navigated one.
+		 * @param {Element} child
+		 * @param {Event} triggerEvent - The event that lead to the navigation, or `undefined`
+		 *     if the navigation is triggered programmatically.
+		 * @fires module:delite/KeyNav#keynav-child-navigated
+		 * @private
+		 */
+		_descendantNavigateHandler: function (child, triggerEvent) {
+			if (child && child !== this.navigatedDescendant) {
+				if (this.navigatedDescendant) {
+					$(this.navigatedDescendant).removeClass("d-active-descendant");
+					this.navigatedDescendant.tabIndex = "-1";
+				}
+
+				this.emit("keynav-child-navigated", {
+					oldValue: this.navigatedDescendant,
+					newValue: child,
+					triggerEvent: triggerEvent
+				});
+
+				// mark that the new node is the currently navigated one
+				this.navigatedDescendant = child;
+				if (child) {
+					$(child).addClass("d-active-descendant");
+				}
+			}
+		},
+
+		_searchString: "",
+
+		/**
+		 * If multiple characters are typed where each keystroke happens within
+		 * multiCharSearchDuration of the previous keystroke,
+		 * search for nodes matching all the keystrokes.
+		 *
+		 * For example, typing "ab" will search for entries starting with
+		 * "ab" unless the delay between "a" and "b" is greater than `multiCharSearchDuration`.
+		 *
+		 * @member {number} KeyNav#multiCharSearchDuration
+		 * @default 1000
+		 */
+		multiCharSearchDuration: 1000,
+
+		/**
+		 * When a key is pressed that matches a child item,
+		 * this method is called so that a widget can take appropriate action if necessary.
+		 *
+		 * @param {Element} item
+		 * @param {Event} evt
+		 * @param {string} searchString
+		 * @param {number} numMatches
+		 * @private
+		 */
+		_keyboardSearchHandler: function (item, /*jshint unused: vars */ evt, searchString, numMatches) {
+			if (item) {
+				this.navigateTo(item);
+			}
+		},
+
+		/**
+		 * Compares the searchString to the Element's text label, returning:
+		 *
+		 * - -1: a high priority match  and stop searching
+		 * - 0: not a match
+		 * - 1: a match but keep looking for a higher priority match
+		 *
+		 * @param {Element} item
+		 * @param {string} searchString
+		 * @returns {number}
+		 * @private
+		 */
+		_keyboardSearchCompare: function (item, searchString) {
+			var element = item,
+				text = item.label || (element.focusNode ? element.focusNode.label : "") || element.textContent || "",
+				currentString = text.replace(/^\s+/, "").substr(0, searchString.length).toLowerCase();
+
+			// stop searching after first match by default
+			return (!!searchString.length && currentString === searchString) ? -1 : 0;
+		},
+
+		/**
+		 * Called when keydown.  Ignores key events inside <input>, <button>, etc.,
+		 * and passes the other events to the _processKeyDown() method.
+		 * @param {Event} evt
+		 * @private
+		 */
+		_keynavKeyDownHandler: function (evt) {
+			// Ignore left, right, home, end, and space on <input> controls.
+			if (takesInput(evt.target) &&
+				(evt.key === "ArrowLeft" || evt.key === "ArrowRight" ||
+				evt.key === "Home" || evt.key === "End" || evt.key === "Spacebar")) {
+				return;
+			}
+
+			// Ignore space and enter on <button> elements.
+			if (keyboardClickable(evt.target) && (evt.key === "Enter" || evt.key === "Spacebar")) {
+				return;
+			}
+
+			this._processKeyDown(evt);
+		},
+
+		/**
+		 * Called when there's a keydown event that should be handled by the KeyNav class.
+		 * @param evt
+		 * @private
+		 */
+		_processKeyDown: function (evt) {
+			if (evt.key === "Spacebar" && this._searchTimer && !(evt.ctrlKey || evt.altKey || evt.metaKey)) {
+				// If the user types some string like "new york", interpret the space as part of the search rather
+				// than to perform some action, even if there is a key handler method defined.
+
+				// Stop a11yclick from interpreting key as a click event.
+				// Also stop IE from scrolling, and most browsers (except FF) from emitting keypress event.
+				evt.preventDefault();
+
+				this._keyboardSearch(evt, " ");
+			} else {
+				// Otherwise call the handler specified in this.keyHandlers.
+				this._applyKeyHandler(evt);
+			}
+		},
+
+		/**
+		 * If the class has defined a method to handle the specified key, then call it.
+		 * See the description of `KeyNav` for details on how to define methods.
+		 * @param {Event} evt
+		 * @private
+		 */
+		_applyKeyHandler: function (evt) {
+			// Get name of method to call
+			var methodName;
+			switch (evt.key) {
+			case "ArrowLeft":
+				methodName = this.effectiveDir === "rtl" ? "nextKeyHandler" : "previousKeyHandler";
+				break;
+			case "ArrowRight":
+				methodName = this.effectiveDir === "rtl" ? "previousKeyHandler" : "nextKeyHandler";
+				break;
+			case "ArrowUp":
+			case "ArrowDown":
+				methodName = evt.key.charAt(5).toLowerCase() + evt.key.substr(6) + "KeyHandler";
+				break;
+			default:
+				methodName = evt.key.charAt(0).toLowerCase() + evt.key.substr(1) + "KeyHandler";
+			}
+
+			// Call it
+			var func = this[methodName];
+			if (func) {
+				func.call(this, evt, this.navigatedDescendant);
+				evt.stopPropagation();
+				evt.preventDefault();
+				this._searchString = ""; // so a DOWN_ARROW b doesn't search for ab
+			}
+		},
+
+		/**
+		 * When a printable key is pressed, it's handled here, searching by letter.
+		 * @param {Event} evt
+		 * @private
+		 */
+		_keynavKeyPressHandler: function (evt) {
+			// Ignore:
+			//		- keystrokes on <input> and <textarea>
+			// 		- duplicate events on firefox (ex: arrow key that will be handled by keydown handler)
+			//		- control sequences like CMD-Q.
+			//		- the SPACE key (only occurs on FF)
+			//
+			// Note: if there's no search in progress, then SPACE should be ignored.   If there is a search
+			// in progress, then SPACE is handled in _keynavKeyDownHandler.
+			if (takesInput(evt.target) || evt.charCode <= 32 || evt.ctrlKey || evt.altKey || evt.metaKey) {
+				return;
+			}
+
+			evt.preventDefault();
+			evt.stopPropagation();
+
+			this._keyboardSearch(evt, evt.key.toLowerCase());
+		},
+
+		/**
+		 * Perform a search of the widget's options based on the user's keyboard activity.
+		 *
+		 * Called on keypress (and sometimes keydown), searches through this widget's children
+		 * looking for items that match the user's typed search string.  Multiple characters
+		 * typed within `multiCharSearchDuration` of each other are combined for multi-character searching.
+		 * @param {Event} evt
+		 * @param {string} keyChar
+		 * @private
+		 */
+		_keyboardSearch: function (evt, keyChar) {
+			var
+				matchedItem = null,
+				searchString,
+				numMatches = 0;
+
+			if (this._searchTimer) {
+				this._searchTimer.remove();
+			}
+			this._searchString += keyChar;
+			var allSameLetter = /^(.)\1*$/.test(this._searchString);
+			var searchLen = allSameLetter ? 1 : this._searchString.length;
+			searchString = this._searchString.substr(0, searchLen);
+			this._searchTimer = this.defer(function () { // this is the "success" timeout
+				this._searchTimer = null;
+				this._searchString = "";
+			}, this.multiCharSearchDuration);
+			var currentItem = this.navigatedDescendant || null;
+			if (searchLen === 1 || !currentItem) {
+				currentItem = this.getNext(currentItem, 1); // skip current
+				if (!currentItem) {
+					return;
+				} // no items
+			}
+			var stop = currentItem;
+			do {
+				var rc = this._keyboardSearchCompare(currentItem, searchString);
+				if (!!rc && numMatches++ === 0) {
+					matchedItem = currentItem;
+				}
+				if (rc === -1) { // priority match
+					numMatches = -1;
+					break;
+				}
+				currentItem = this.getNext(currentItem, 1);
+			} while (currentItem !== stop);
+
+			this._keyboardSearchHandler(matchedItem, evt, searchString, numMatches);
+		},
+
+		/**
+		 * Returns the next or previous navigable descendant, relative to "child".
+		 * If "child" is this, then it returns the first focusable descendant (when dir === 1)
+		 * or last focusable descendant (when dir === -1).
+		 * @param {Element} child - The current child Element.
+		 * @param {number} dir - 1 = after, -1 = before
+		 * @returns {Element}
+		 * @protected
+		 */
+		getNext: function (child, dir) {
+			var container = this.keyNavContainerNode, origChild = child;
+			function dfsNext(node) {
+				if (node.firstElementChild) { return node.firstElementChild; }
+				while (node !== container) {
+					if (node.nextElementSibling) { return node.nextElementSibling; }
+					node = node.parentNode;
+				}
+				return container;	// loop around, plus corner case when no children
+			}
+			function dfsLast(node) {
+				while (node.lastElementChild) { node = node.lastElementChild; }
+				return node;
+			}
+			function dfsPrev(node) {
+				return node === container ? dfsLast(container) : // loop around, plus corner case when no children
+					(node.previousElementSibling && dfsLast(node.previousElementSibling)) || node.parentNode;
+			}
+			while (true) {
+				child = dir > 0 ? dfsNext(child) : dfsPrev(child);
+				if (child === origChild) {
+					return null;	// looped back to original child
+				} else if (this._selectorFunc(child)) {
+					return child;	// this child matches
+				}
+			}
+		}
+	});
+});
+;
+define('delite/features',["requirejs-dplugins/has"], function (has) {
+	// Flag for whether to create background iframe behind popups like Menus and Dialog.
+	// A background iframe is useful to prevent problems with popups appearing behind applets/pdf files.
+	has.add("config-bgIframe", false);
+
+	// Flag to enable advanced bidi support
+	has.add("bidi", false);
+
+	// Flag to enable inheritance direction from any ancestor
+	has.add("inherited-dir", false);
+
+	if (typeof window !== "undefined") {
+		// Returns the name of the method to test if an element matches a CSS selector.
+		has.add("dom-matches", function () {
+			var node = document.body;
+			if (node.matches) {
+				return "matches";
+			}
+			if (node.webkitMatchesSelector) {
+				return "webkitMatchesSelector";
+			}
+			if (node.mozMatchesSelector) {
+				return "mozMatchesSelector";
+			}
+			if (node.msMatchesSelector) {
+				return "msMatchesSelector";
+			}
+		});
+
+		// Does platform have native support for document.registerElement() or a polyfill to simulate it?
+		has.add("document-register-element", !!document.registerElement);
+
+		// Test for how to monitor DOM nodes being inserted and removed from the document.
+		// For DOMNodeInserted events, there are two variations:
+		//		"root" - just notified about the root of each tree added to the document
+		//		"all" - notified about all nodes added to the document
+		has.add("MutationObserver", window.MutationObserver ? "MutationObserver" : window.WebKitMutationObserver ?
+			"WebKitMutationObserver" : "");
+		has.add("DOMNodeInserted", function () {
+			var root = document.createElement("div"),
+				child = document.createElement("div"),
+				sawRoot, sawChild;
+			root.id = "root";
+			child.id = "child";
+			root.appendChild(child);
+
+			function listener(event) {
+				if (event.target.id === "root") {
+					sawRoot = true;
+				}
+				if (event.target.id === "child") {
+					sawChild = true;
+				}
+			}
+
+			document.body.addEventListener("DOMNodeInserted", listener);
+			document.body.appendChild(root);
+			document.body.removeChild(root);
+			document.body.removeEventListener("DOMNodeInserted", listener);
+			return sawChild ? "all" : sawRoot ? "root" : "";
+		});
+
+		// Can we use __proto__ to reset the prototype of DOMNodes?
+		// It's not available on IE<11, and even on IE11 it makes the node's attributes
+		// (ex: node.attributes, node.textContent) disappear, so disabling it on IE11 too.
+		has.add("dom-proto-set", function () {
+			var node = document.createElement("div");
+			/* jshint camelcase: false */
+			/* jshint proto: true */
+			return !!node.__proto__;
+			/* jshint camelcase: true */
+			/* jshint proto: false */
+		});
+
+		// Support for <template> elements (specifically, that their content is available via templateNode.content
+		// rather than templateNode.children[] etc.
+		has.add("dom-template", !!document.createElement("template").content);
+	}
+
+	return has;
+});;
 /** @module delite/Selection */
 define('delite/Selection',["dcl/dcl", "decor/sniff", "./Widget"], function (dcl, has, Widget) {
 	
@@ -22044,7 +21832,7 @@ define('delite/CustomElement',[
 				// Try to interpret value as global variable, ex: store="myStore", array of strings
 				// ex: "1, 2, 3", or expression, ex: constraints="min: 10, max: 100"
 				return getObject(value) ||
-					(this[name] instanceof Array ? (value ? value.split(/\s+/) : []) : stringToObject(value));
+					(Array.isArray(this[name]) ? (value ? value.split(/,\s*/) : []) : stringToObject(value));
 			case "function":
 				return this.parseFunctionAttribute(value, []);
 			}
@@ -22160,7 +21948,7 @@ define('delite/CustomElement',[
 		 * @protected
 		 */
 		emit: function (type, eventObj, node) {
-			on.emit(node || this, type, eventObj);
+			return on.emit(node || this, type, eventObj);
 		},
 
 		/**
@@ -22340,9 +22128,14 @@ define('decor/Stateful',[
 	"dcl/advise",
 	"dcl/dcl",
 	"./features",
-	"./Observable"
-], function (advise, dcl, has, Observable) {
+	"./Notifier"
+], function (advise, dcl, has, Notifier) {
 	var apn = {};
+
+	// Object.is() polyfill from Observable.js
+	function is(lhs, rhs) {
+		return lhs === rhs && (lhs !== 0 || 1 / lhs === 1 / rhs) || lhs !== lhs && rhs !== rhs;
+	}
 
 	/**
 	 * Helper function to map "foo" --> "_setFooAttr" with caching to avoid recomputing strings.
@@ -22360,19 +22153,6 @@ define('decor/Stateful',[
 			g: "_get" + uc + "Attr"
 		};
 		return ret;
-	}
-
-	/**
-	 * Utility function for notification.
-	 */
-	function notify(stateful, name, oldValue) {
-		Observable.getNotifier(stateful).notify({
-			// Property is never new because setting up shadow property defines the property
-			type: "update",
-			object: stateful,
-			name: name + "",
-			oldValue: oldValue
-		});
 	}
 
 	var REGEXP_IGNORE_PROPS = /^constructor$|^_set$|^_get$|^deliver$|^discardChanges$|^_(.+)Attr$/;
@@ -22401,7 +22181,7 @@ define('decor/Stateful',[
 	 * });
 	 * obj.foo = bar;
 	 * // Stateful by default interprets the first parameter passed to
-	 * // the constructor as a set of properties to set on the widget 
+	 * // the constructor as a set of properties to set on the widget
 	 * // immediately after it is created.
 	 *
 	 * @example <caption>Example 2</caption>
@@ -22471,7 +22251,6 @@ define('decor/Stateful',[
 					ctor.prototype.introspect(ctor._props);
 					ctor._introspected = true;
 				}
-				Observable.call(this);
 			},
 
 			after: function (args) {
@@ -22508,6 +22287,7 @@ define('decor/Stateful',[
 			}
 		},
 
+
 		/**
 		 * Internal helper for directly setting a property value without calling the custom setter.
 		 *
@@ -22522,9 +22302,7 @@ define('decor/Stateful',[
 			var shadowPropName = propNames(name).p,
 				oldValue = this[shadowPropName];
 			this[shadowPropName] = value;
-			// Even if Object.observe() is natively available,
-			// automatic change record emission won't happen if there is a ECMAScript setter
-			!Observable.is(value, oldValue) && notify(this, name, oldValue);
+			!is(value, oldValue) && this._notify && this._notify(name, oldValue);
 		},
 
 		/**
@@ -22548,9 +22326,11 @@ define('decor/Stateful',[
 		 * @param {...string} name The property name.
 		 */
 		notifyCurrentValue: function () {
-			Array.prototype.forEach.call(arguments, function (name) {
-				notify(this, name, this[propNames(name).p]);
-			}, this);
+			if (this._notify) {
+				Array.prototype.forEach.call(arguments, function (name) {
+					this._notify(name, this[propNames(name).p]);
+				}, this);
+			}
 		},
 
 		/**
@@ -22569,9 +22349,8 @@ define('decor/Stateful',[
 		 * Multiple changes to a property in a micro-task are squashed.
 		 * @method module:decor/Stateful#observe
 		 * @param {function} callback The callback.
-		 * @returns {module:decor/Stateful.PropertyListObserver}
-		 *     The observer that can be used to stop observation
-		 *     or synchronously deliver/discard pending change records.
+		 * @returns {Object}
+		 *     Object with `deliver()`, `discardChanges()`, and `remove()` methods.
 		 * @example
 		 *     var stateful = new (dcl(Stateful, {
 		 *             foo: undefined,
@@ -22593,19 +22372,33 @@ define('decor/Stateful',[
 		 *     stateful.baz = 10;
 		 */
 		observe: function (callback) {
-			// create new listener
-			var h = new Stateful.PropertyListObserver(this, this.getPropsToObserve());
-			h.open(callback, this);
+			var h = new Notifier(callback.bind(this));
 
-			// make this.deliver() and this.discardComputing() call deliver() and discardComputing() on new listener
-			var a1 = advise.after(this, "deliver", h.deliver.bind(h)),
-				a2 = advise.after(this, "discardChanges", h.discardChanges.bind(h));
-			advise.before(h, "close", function () {
-				a1.unadvise();
-				a2.unadvise();
-			});
+			// Tell the Notifier when any property's value is changed,
+			// Also, make this.deliver() and this.discardComputing() call deliver() and discardComputing() on Notifier.
+			var advices = [
+				advise.after(this, "_notify", function (args) {
+					h.notify(args[0], args[1]);
+				}),
+				advise.after(this, "deliver", h.deliver.bind(h)),
+				advise.after(this, "discardChanges", h.discardChanges.bind(h))
+			];
 
-			return h;
+			return {
+				deliver: h.deliver.bind(h),
+				discardChanges: h.discardChanges.bind(h),
+				remove: function () {
+					if (!this._removed) {
+						h.discardChanges();
+						advices.forEach(function (advice) {
+							advice.destroy();
+						});
+						h = null;
+						advices = null;
+						this._removed = true;
+					}
+				}
+			};
 		},
 
 		/**
@@ -22623,94 +22416,111 @@ define('decor/Stateful',[
 
 	dcl.chainAfter(Stateful, "introspect");
 
+	return Stateful;
+});
+;
+/** @module decor/Notifier */
+define('decor/Notifier',[
+	"dcl/dcl",
+	"./schedule"
+], function (
+	dcl,
+	schedule
+) {
+	// Keep track of order that callbacks were registered, we will call them in that order
+	// regardless of the order the objects were updated.
+	var seq = 0;
+
+	// ChangeCollectors with pending change notifications (to be delivered at end of microtask).
+	var hotChangeCollectors = {};
+
+	// Handle to timer to deliver change notifications.
+	var deliverHandle;
+
+	// Deliver all pending change notifications in the order that the callbacks were registered.
+	function deliverAllByTimeout() {
+		for (var anyWorkDone = true; anyWorkDone;) {
+			anyWorkDone = false;
+
+			// Observation may stop during observer callback
+			var callbacks = [];
+			for (var s in hotChangeCollectors) {
+				callbacks.push(hotChangeCollectors[s]);
+			}
+			hotChangeCollectors = {};
+
+			callbacks = callbacks.sort(function (lhs, rhs) {
+				return lhs._seq - rhs._seq;
+			});
+
+			for (var i = 0, l = callbacks.length; i < l; ++i) {
+				callbacks[i].deliver();
+				anyWorkDone = true;
+			}
+		}
+		deliverHandle = null;
+	}
+
 	/**
-	 * An observer to observe a set of {@link module:decor/Stateful Stateful} properties at once.
-	 * This class is what {@link module:decor/Stateful#observe} returns.
-	 * @class module:decor/Stateful.PropertyListObserver
-	 * @param {Object} o - The {@link module:decor/Stateful Stateful} being observed.
-	 * @param {Object} props - Hash of properties to observe.
+	 * Object to be notified of changes to specified object, queue up those changes,
+	 * and eventually call the specified callback with summary of those changes.
 	 */
-	Stateful.PropertyListObserver = function (o, props) {
-		this.o = o;
-		this.props = props;
+	var Notifier = function (callback) {
+		this._seq = seq++;
+		this.callback = callback;
 	};
 
-	Stateful.PropertyListObserver.prototype = {
+	Notifier.prototype = /** @lends module:decor/Notifier */ {
 		/**
-		 * Starts the observation.
-		 * {@link module:decor/Stateful#observe `Stateful#observe()`} calls this method automatically.
-		 * @method module:decor/Stateful.PropertyListObserver#open
-		 * @param {function} callback The change callback.
-		 * @param {Object} thisObject The object that should work as "this" object for callback.
+		 * Record that specified property has changed.
+		 * It will be notified at the end of microtask, or when deliver() is called.
+		 * @method module:decor/Notifier#notify
+		 * @param {string} prop - name of property
+		 * @param oldVal - old value of property
 		 */
-		open: function (callback, thisObject) {
-			var props = this.props;
-			this._boundCallback = function (records) {
-				if (!this._closed && !this._beingDiscarded) {
-					var oldValues = {};
-					records.forEach(function (record) {
-						// for consistency with platforms w/out native Object.observe() support,
-						// only notify about updates to properties in prototype (see getProps())
-						if (record.name in props && !(record.name in oldValues)) {
-							oldValues[record.name] = record.oldValue;
-						}
-					});
-					/* jshint unused: false */
-					for (var s in oldValues) {
-						callback.call(thisObject, oldValues);
-						break;
-					}
-				}
-			}.bind(this);
-			this._h = Observable.observe(this.o, this._boundCallback);
-			return this.o;
+		notify: function (prop, oldVal) {
+			if (!this.oldVals) {
+				this.oldVals = {};
+			}
+
+			if (!(prop in this.oldVals)) {
+				this.oldVals[prop] = oldVal;
+				hotChangeCollectors[this._seq] = this;
+			}
+
+			// Setup timer to notify callbacks at the end of microtask.
+			// Note: Notifications are published in the order that objects are modified, rather than
+			// in the order that objects were watched.  asudoh said this was bad and decor/Observable
+			// somehow does it the other way.
+			if (!deliverHandle) {
+				deliverHandle = schedule(deliverAllByTimeout);
+			}
 		},
 
 		/**
-		 * Synchronously delivers pending change records.
-		 * @method module:decor/Stateful.PropertyListObserver#deliver
+		 * Call callback with set of properties that have changed, and their old values.
+		 * @method module:decor/Notifier#deliver
 		 */
 		deliver: function () {
-			this._boundCallback && Observable.deliverChangeRecords(this._boundCallback);
+			if (this.oldVals) {
+				var oldVals = this.oldVals;
+				delete this.oldVals;
+				delete hotChangeCollectors[this._seq];
+				this.callback(oldVals);
+			}
 		},
 
 		/**
-		 * Discards pending change records.
-		 * @method module:decor/Stateful.PropertyListObserver#discardChanges
+		 * Discard all changes queued up by notify().
+		 * @method module:decor/Notifier#discardChanges
 		 */
 		discardChanges: function () {
-			this._beingDiscarded = true;
-			this._boundCallback && Observable.deliverChangeRecords(this._boundCallback);
-			this._beingDiscarded = false;
-			return this.o;
-		},
-
-		/**
-		 * Does nothing, just exists for API compatibility with liaison and other data binding libraries.
-		 * @method module:decor/Stateful.PropertyListObserver#setValue
-		 */
-		setValue: function () {},
-
-		/**
-		 * Stops the observation.
-		 * @method module:decor/Stateful.PropertyListObserver#close
-		 */
-		close: function () {
-			if (this._h) {
-				this._h.remove();
-				this._h = null;
-			}
-			this._closed = true;
+			delete this.oldVals;
+			delete hotChangeCollectors[this._seq];
 		}
 	};
 
-	/**
-	 * Synonym for {@link module:decor/Stateful.PropertyListObserver#close `close()`}.
-	 * @method module:decor/Stateful.PropertyListObserver#remove
-	 */
-	Stateful.PropertyListObserver.prototype.remove = Stateful.PropertyListObserver.prototype.close;
-
-	return Stateful;
+	return Notifier;
 });
 ;
 /** @module decor/Destroyable */
@@ -22734,19 +22544,24 @@ define('decor/Destroyable',[
 		destroy: dcl.advise({
 			before: function () {
 				this._beingDestroyed = true;
-				this._releaseHandles();
+				if (this._releaseHandles) {
+					this._releaseHandles();
+					delete this._releaseHandles;
+				}
 			},
 			after: function () {
 				this._destroyed = true;
 			}
 		}),
 
-		_releaseHandles: function () {
-		},
-
 		/**
 		 * Track specified handles and remove/destroy them when this instance is destroyed, unless they were
 		 * already removed/destroyed manually.
+		 *
+		 * Each object passed to `own()` must either be a Promise (i.e. a thenable),
+		 * or have either a `destroy()`, `remove()`, or `cancel()` method.  If an object has more
+		 * than one of those methods, only the first matching one in the above list is used.
+		 *
 		 * @returns {Object[]} The array of specified handles, so you can do for example:
 		 * `var handle = this.own(on(...))[0];`
 		 * @protected
@@ -22758,46 +22573,39 @@ define('decor/Destroyable',[
 				"cancel"
 			];
 
-			// transform arguments into an Array
+			// Convert arguments to array.
 			var ary = Array.prototype.slice.call(arguments);
+
+			// Track each argument.
 			ary.forEach(function (handle) {
-				// When this.destroy() is called, destroy handle.  Since I'm using advise.before(),
-				// the handle will be destroyed before a subclass's destroy() method starts running, before it calls
-				// this.inherited() or even if it doesn't call this.inherited() at all.  If that's an issue, make an
-				// onDestroy() method and connect to that instead.
+				// Figure out name of method to destroy handle.
 				var destroyMethodName;
+				for (var i = 0; i < cleanupMethods.length; i++) {
+					if (cleanupMethods[i] in handle) {
+						destroyMethodName = cleanupMethods[i];
+						break;
+					}
+				}
+				if (!destroyMethodName) {
+					throw new TypeError("own() called with handle without destroy method");
+				}
+
+				// Register handle to be destroyed/released when this.destroy() is called.
 				var odh = advise.after(this, "_releaseHandles", function () {
 					handle[destroyMethodName]();
 				});
 
-				// Callback for when handle is manually destroyed.
-				var hdhs = [];
-
-				function onManualDestroy() {
-					odh.destroy();
-					hdhs.forEach(function (hdh) {
+				// Setup listeners for manual destroy of handle.
+				if (handle.then) {
+					// Special path for Promises.  Detect when Promise is settled and remove listener.
+					handle.then(odh.destroy.bind(odh), odh.destroy.bind(odh));
+				} else {
+					// Path for non-promises.  Use AOP to detect when handle is manually destroyed.
+					var hdh = advise.after(handle, destroyMethodName, function () {
+						odh.destroy();
 						hdh.destroy();
 					});
 				}
-
-				// Setup listeners for manual destroy of handle.
-				// Also compute destroyMethodName, used in listener above.
-				if (handle.then) {
-					// Special path for Promises.  Detect when Promise is settled.
-					handle.then(onManualDestroy, onManualDestroy);
-				}
-				cleanupMethods.forEach(function (cleanupMethod) {
-					if (typeof handle[cleanupMethod] === "function") {
-						if (!destroyMethodName) {
-							// Use first matching method name in above listener.
-							destroyMethodName = cleanupMethod;
-						}
-						if (!handle.then) {
-							// Path for non-promises.  Use AOP to detect when handle is manually destroyed.
-							hdhs.push(advise.after(handle, cleanupMethod, onManualDestroy));
-						}
-					}
-				});
 			}, this);
 
 			return ary;
@@ -24851,7 +24659,7 @@ define('requirejs-text/text',['module'], function (module) {
             }
 
             //Load the text. Use XHR if possible and in a browser.
-            if (!hasLocation || useXhr(url, defaultProtocol, defaultHostName, defaultPort) || url.indexOf('.html') !== -1) {
+            if (!hasLocation || useXhr(url, defaultProtocol, defaultHostName, defaultPort)) {
                 text.get(url, function (content) {
                     text.finishLoad(name, parsed.strip, content, onLoad);
                 }, function (err) {
@@ -27085,6 +26893,9 @@ define('deliteful/StarRating',[
 			if ("disabled" in props) {
 				$(this).toggleClass(this.baseClass + "-disabled", this.disabled);
 			}
+			if ("readOnly" in props) {
+				$(this).toggleClass(this.baseClass + "-readonly", this.readOnly);
+			}
 			if ("max" in props) {
 				this.focusNode.setAttribute("aria-valuemax", this.max);
 			}
@@ -27401,7 +27212,6 @@ define('delite/FormValueWidget',[
 		handleOnInput: genHandler("input", "_previousOnInputValue", "_onInputHandle"),
 
 		afterFormResetCallback: function () {
-			console.log(this.id, "FormValueWidget#afterFormResetCallback");
 			if (this.value !== this.valueNode.value) {
 				this.value = this.valueNode.value;
 			}
@@ -27429,6 +27239,8 @@ define('delite/FormValueWidget',[
  * and its descendants (ex: DropDownButton's descendant is a Tooltip)
  * have been unhovered for `hoverDelay` milliseconds.  If the user unhovers a node and then re-hovers within
  * `hoverDelay` milliseconds, there's no `delite-hover-deactivated` event.
+ *
+ * Call `activationTracker.on("hover-stack", callback)` to track the stack of currently hovered nodes.
  *
  * TO IMPLEMENT: Generally, there is a delay between hovering a node and the "delite-hover-activated" event, and
  * if the user hovers a node and then unhovers within the delay, there's no "delite-hover-activated"
@@ -27459,16 +27271,11 @@ define('delite/activationTracker',[
 	"requirejs-domready/domReady!"
 ], function (advise, dcl, $, Evented, on) {
 
-	// Time of the last touch/mouse and focusin events
+	// Time of the last touch/mouse event.
 	var lastPointerDownTime;
-	var lastFocusinTime;
 
 	// Time of last touchend event.  Tells us if the mouseover event is real or emulated.
 	var lastTouchendTime;
-
-	// Last node that got pointerdown or focusin event, and the time it happened.
-	var lastPointerDownOrFocusInNode;
-	var lastPointerDownOrFocusInTime;
 
 	var ActivationTracker = dcl(Evented, /** @lends module:delite/activationTracker */ {
 		/**
@@ -27533,10 +27340,6 @@ define('delite/activationTracker',[
 				_this._focusHandler(evt.target);
 			}
 
-			function blurHandler(evt) {
-				_this._blurHandler(evt.target);
-			}
-
 			function touchendHandler() {
 				lastTouchendTime = (new Date()).getTime();
 			}
@@ -27551,61 +27354,44 @@ define('delite/activationTracker',[
 				_this._mouseOverHandler(evt.target);
 			}
 
+			function processMutations(mutations) {
+				mutations.forEach(function (mutation) {
+					// Update activeStack and hoverStack to not contain any nodes that were detached from the document.
+					var removedRoot, idx = 0;
+					while ((removedRoot = mutation.removedNodes && mutation.removedNodes[idx++])) {
+						if (removedRoot.nodeType === 1) {
+							var activeStackIndex = _this.activeStack.indexOf(removedRoot);
+							if (activeStackIndex > -1) {
+								_this._setActiveStack(_this.activeStack.slice(0, activeStackIndex));
+							}
+							var hoverStackIndex = _this.hoverStack.indexOf(removedRoot);
+							if (hoverStackIndex > -1) {
+								_this._setHoverStack(_this.hoverStack.slice(0, hoverStackIndex));
+							}
+						}
+					}
+				});
+			}
+
 			if (body) {
 				// Listen for touches or mousedowns.
 				body.addEventListener("pointerdown", pointerDownHandler, true);
 				body.addEventListener("focus", focusHandler, true);	// need true since focus doesn't bubble
-				body.addEventListener("blur", blurHandler, true);	// need true since blur doesn't bubble
 				body.addEventListener("touchend", touchendHandler, true);
 				body.addEventListener("mouseover", mouseOverHandler);
+
+				var observer = new MutationObserver(processMutations);
+				var observeHandle = observer.observe(body, {childList: true, subtree: true});
 
 				return {
 					remove: function () {
 						body.removeEventListener("pointerdown", pointerDownHandler, true);
 						body.removeEventListener("focus", focusHandler, true);
-						body.removeEventListener("blur", blurHandler, true);
-						body.addEventListener("mouseover", mouseOverHandler);
+						body.removeEventListener("mouseover", mouseOverHandler);
+						observeHandle.disconnect();
 					}
 				};
 			}
-		},
-
-		/**
-		 * Called when focus leaves a node.
-		 * Usually ignored, _unless_ it *isn't* followed by touching another node,
-		 * which indicates that we tabbed off the last field on the page,
-		 * in which case every widget is marked inactive.
-		 * @param {Element} node
-		 * @private
-		 */
-		_blurHandler: function (node) { // jshint unused: vars
-			var now = (new Date()).getTime();
-
-			// IE9+ and chrome have a problem where focusout events come after the corresponding focusin event.
-			// For chrome problem see https://bugs.dojotoolkit.org/ticket/17668.
-			// IE problem happens when moving focus from the Editor's <iframe> to a normal DOMNode.
-			if (now < lastFocusinTime + 100) {
-				return;
-			}
-
-			// Unset timer to zero-out widget stack; we'll reset it below if appropriate.
-			if (this._clearActiveWidgetsTimer) {
-				clearTimeout(this._clearActiveWidgetsTimer);
-			}
-
-			if (now < lastPointerDownOrFocusInTime + 500) {
-				// This blur event is coming late (after the call to _pointerDownOrFocusHandler() rather than before.
-				// So let _pointerDownOrFocusHandler() handle setting the widget stack.
-				// See https://bugs.dojotoolkit.org/ticket/17668
-				return;
-			}
-
-			// If the blur event isn't followed (or preceded) by a focus or pointerdown event,
-			// mark all widgets as inactive.
-			this._clearActiveWidgetsTimer = setTimeout(function () {
-				delete this._clearActiveWidgetsTimer;
-				this._setStack([]);
-			}.bind(this), 0);
 		},
 
 		/**
@@ -27654,20 +27440,10 @@ define('delite/activationTracker',[
 		 * @private
 		 */
 		_pointerDownOrFocusHandler: function (node, by) {
-			if (this._clearActiveWidgetsTimer) {
-				// forget the recent blur event
-				clearTimeout(this._clearActiveWidgetsTimer);
-				delete this._clearActiveWidgetsTimer;
-			}
-
 			// Compute stack of active widgets ending at node (ex: ComboButton --> Menu --> MenuItem).
 			var newStack = this._getStack(node, by !== "mouse");
 
-			this._setStack(newStack, by);
-
-			// Keep track of most recent focusin or pointerdown event.
-			lastPointerDownOrFocusInTime = (new Date()).getTime();
-			lastPointerDownOrFocusInNode = node;
+			this._setActiveStack(newStack, by);
 		},
 
 		/**
@@ -27687,13 +27463,11 @@ define('delite/activationTracker',[
 				return;
 			}
 
-			// Keep track of time of last focusin event.
-			lastFocusinTime = (new Date()).getTime();
-
 			// Also, if clicking a node causes its ancestor to be focused, ignore the focus event.
 			// Example in the activationTracker.html functional test on IE, where clicking the spinner buttons
 			// focuses the <fieldset> holding the spinner.
-			if ((new Date()).getTime() < lastPointerDownTime + 100 &&
+			var lastPointerDownOrFocusInNode = this.activeStack[this.activeStack.length - 1];
+			if (lastPointerDownOrFocusInNode && (new Date()).getTime() < lastPointerDownTime + 100 &&
 					node.contains(lastPointerDownOrFocusInNode.parentNode)) {
 				return;
 			}
@@ -27714,7 +27488,7 @@ define('delite/activationTracker',[
 		 * @param {string} by - "mouse" if the focus/pointerdown was caused by a mouse down event.
 		 * @private
 		 */
-		_setStack: function (newStack, by) {
+		_setActiveStack: function (newStack, by) {
 			var oldStack = this.activeStack, lastOldIdx = oldStack.length - 1, lastNewIdx = newStack.length - 1;
 
 			if (newStack[lastNewIdx] === oldStack[lastOldIdx]) {
@@ -27750,13 +27524,29 @@ define('delite/activationTracker',[
 		 * @private
 		 */
 		_mouseOverHandler: function (node) {
-			var oldStack = this.hoverStack, lastOldIdx = oldStack.length - 1;
-			var newStack = this.hoverStack = this._getStack(node), lastNewIdx = newStack.length - 1;
-			var i;
+			this._setHoverStack(this._getStack(node));
+		},
+
+		/**
+		 * The stack of hovered nodes has changed.  Send out appropriate events and record new stack.
+		 * @param {Element} newStack - Array of nodes, starting from the top (outermost) node.
+		 * @private
+		 */
+		_setHoverStack: function (newStack) {
+			var oldStack = this.hoverStack, lastOldIdx = oldStack.length - 1, lastNewIdx = newStack.length - 1;
+
+			if (newStack[lastNewIdx] === oldStack[lastOldIdx]) {
+				// no changes, return now to avoid spurious notifications about changes to activeStack
+				return;
+			}
+
+			this.hoverStack = newStack;
+			this.emit("hover-stack", newStack);
 
 			// For all elements that have left the hover chain, stop timer to
 			// send those elements delite-hover-activated event, or start timer to send
 			// those elements delite-hover-deactivated event.
+			var i;
 			for (i = lastOldIdx; i >= 0 && oldStack[i] !== newStack[i]; i--) {
 				this.onNodeLeaveHoverStack(oldStack[i]);
 			}
@@ -27869,7 +27659,7 @@ define('delite/FormWidget',[
 		tabIndex: 0,
 
 		/**
-		 * Comma separated list of tabbable nodes, i.e. comma separated list of widget properties that reference
+		 * Array of names of widget properties that reference
 		 * the widget DOM nodes that receive focus during tab operations.
 		 *
 		 * Aria roles are applied to these nodes rather than the widget root node.
@@ -27877,10 +27667,10 @@ define('delite/FormWidget',[
 		 * Note that FormWidget requires that all of the tabbable nodes be sub-nodes of the widget, rather than the
 		 * root node.  This is because of its processing of `tabIndex`.
 		 *
-		 * @member {string}
+		 * @member {Array|string}
 		 * @default "focusNode"
 		 */
-		tabStops: "focusNode",
+		tabStops: ["focusNode"],
 
 		/**
 		 * If set to true, the widget will not respond to user input and will not be included in form submission.
@@ -27898,6 +27688,14 @@ define('delite/FormWidget',[
 		 * @default false
 		 */
 		required: false,
+
+		/**
+		 * If set to true, the widget move all aria-* attributes found on the root DOM element of this widget and
+		 * apply those to the focusNode using the overridden setAttribute method.
+		 * @member {boolean}
+		 * @default true
+		 */
+		moveAriaAttributes: true,
 
 		/**
 		 * For widgets with a single tab stop, the Element within the widget, often an `<input>`,
@@ -27949,7 +27747,7 @@ define('delite/FormWidget',[
 
 			// If the tab stops have changed then start by removing the tabIndex from all the old tab stops.
 			if ("tabStops" in oldValues) {
-				oldValues.tabStops.split(/, */).forEach(function (nodeName) {
+				oldValues.tabStops.forEach(function (nodeName) {
 					var node = this[nodeName];
 					node.tabIndex = "-1";				// backup plan in case next line of code ineffective
 					node.removeAttribute("tabindex");	// works for <div> etc. but not <input>
@@ -27976,14 +27774,22 @@ define('delite/FormWidget',[
 					node.alt = this.alt;
 
 					// Set the disabled property for native elements like <input>, and also custom elements with a
-					// disabled property.  Note that on IE every element has a disabled property, so it's hard to
-					// test if it's real or not.
-					node.disabled = this.disabled;
-					node.required = this.required;
-
-					// Set aria-disabled and required but try to avoid setting it redundantly.
-					if (!(/^(button|input|select|textarea|optgroup|option|fieldset)$/i.test(node.tagName))) {
+					// disabled property.  Otherwise set aria-disabled.  Note that on IE every element has a
+					// disabled property, so it's hard to test if it's real or not.
+					// _propsToObserve is set by register() based on CustomElement.getProps().
+					if (/^(button|fieldset|input|keygen|optgroup|option|select|textarea)$/i.test(node.tagName) ||
+						(node._ctor && node._ctor._propsToObserve && "disabled" in node._ctor._propsToObserve)) {
+						node.disabled = this.disabled;
+					} else {
 						node.setAttribute("aria-disabled", "" + this.disabled);
+					}
+
+					// Likewise for aria-required.
+					if (/^(input|select|textarea)$/i.test(node.tagName) ||
+						(node._ctor && node._ctor._propsToObserve && "required" in node._ctor._propsToObserve)) {
+						node.required = this.required;
+					} else if (/^(combobox|gridcell|listbox|radiogroup|spinbutton|textbox|tree)$/i.test(
+						node.getAttribute("role"))) {
 						node.setAttribute("aria-required", "" + this.required);
 					}
 
@@ -28035,7 +27841,7 @@ define('delite/FormWidget',[
 		 * @protected
 		 */
 		firstFocusNode: function () {
-			return this[this.tabStops.split(/, */)[0]];
+			return this[this.tabStops[0]];
 		},
 
 		/**
@@ -28045,7 +27851,7 @@ define('delite/FormWidget',[
 		 * @protected
 		 */
 		forEachFocusNode: function (callback) {
-			this.tabStops.split(/, */).map(function (nodeName) {
+			this.tabStops.forEach(function (nodeName) {
 				var node = this[nodeName];
 				if (node !== this) {	// guard against hard to debug infinite recursion
 					callback.call(this, node);
@@ -28059,10 +27865,8 @@ define('delite/FormWidget',[
 
 		setAttribute: dcl.superCall(function (sup) {
 			return function (name, value) {
-				if (/^aria-/.test(name)) {
-					this.forEachFocusNode(function (node) {
-						node.setAttribute(name, value);
-					});
+				if (/^aria-/.test(name) && this.focusNode && this.moveAriaAttributes) {
+					this.focusNode.setAttribute(name, value);
 				} else {
 					sup.call(this, name, value);
 				}
@@ -28071,8 +27875,8 @@ define('delite/FormWidget',[
 
 		getAttribute: dcl.superCall(function (sup) {
 			return function (name) {
-				if (/^aria-/.test(name)) {
-					return this.firstFocusNode().getAttribute(name);
+				if (/^aria-/.test(name) && this.focusNode && this.moveAriaAttributes) {
+					return this.focusNode.getAttribute(name);
 				} else {
 					return sup.call(this, name);
 				}
@@ -28081,8 +27885,8 @@ define('delite/FormWidget',[
 
 		hasAttribute: dcl.superCall(function (sup) {
 			return function (name) {
-				if (/^aria-/.test(name)) {
-					return this.firstFocusNode().hasAttribute(name);
+				if (/^aria-/.test(name) && this.focusNode && this.moveAriaAttributes) {
+					return this.focusNode.hasAttribute(name);
 				} else {
 					return sup.call(this, name);
 				}
@@ -28091,10 +27895,8 @@ define('delite/FormWidget',[
 
 		removeAttribute: dcl.superCall(function (sup) {
 			return function (name) {
-				if (/^aria-/.test(name)) {
-					this.forEachFocusNode(function (node) {
-						node.removeAttribute(name);
-					});
+				if (/^aria-/.test(name) && this.focusNode && this.moveAriaAttributes) {
+					this.focusNode.removeAttribute(name);
 				} else {
 					sup.call(this, name);
 				}
@@ -28102,16 +27904,7 @@ define('delite/FormWidget',[
 		}),
 
 		postRender: function () {
-			// Move all initially specified aria- attributes to focus node(s).
-			var attr, idx = 0;
-			while ((attr = this.attributes[idx++])) {
-				if (/^aria-/.test(attr.name)) {
-					this.setAttribute(attr.name, attr.value);
-
-					// force remove from root node not focus nodes
-					HTMLElement.prototype.removeAttribute.call(this, attr.name);
-				}
-			}
+			this._moveAriaAttributes();
 		},
 
 		attachedCallback: function () {
@@ -28139,7 +27932,26 @@ define('delite/FormWidget',[
 			if (this.checked !== this.valueNode.checked) {
 				this.checked = this.valueNode.checked;
 			}
-		}
+		},
+
+		/**
+		 * Move all initially specified aria-* attributes to focus node.
+		 *
+		 * @protected
+		 */
+		_moveAriaAttributes: function () {
+			if (this.focusNode && this.moveAriaAttributes) {
+				var attr, idx = 0;
+				while ((attr = this.attributes[idx++])) {
+					if (/^aria-/.test(attr.name)) {
+						this.setAttribute(attr.name, attr.value);
+
+						// force remove from root node not focus nodes
+						HTMLElement.prototype.removeAttribute.call(this, attr.name);
+					}
+				}
+			}
+		},
 	});
 });
 
@@ -28302,7 +28114,8 @@ define('deliteful/LinearLayout',[
 			}
 		}
 	});
-});;
+});
+;
 /** @module deliteful/SidePane */
 define('deliteful/SidePane',[
 	"dcl/dcl",
@@ -29104,11 +28917,16 @@ define('deliteful/ViewStack',[
 
 		_startNodeTransition: function (node) {
 			return new Promise(function (resolve) {
+				// Set up fail-safe in case we don't get the "transitionend" event below.
+				var failsafe = this.defer(resolve, 1000);
+
+				// Set up listener for when the animation completes.
 				node.addEventListener("transitionend", function after() {
 					node.removeEventListener("transitionend", after);
+					failsafe.remove();
 					resolve();
 				});
-			}).then(this._afterNodeTransitionHandler.bind(this, node));
+			}.bind(this)).then(this._afterNodeTransitionHandler.bind(this, node));
 		},
 
 		_afterNodeTransitionHandler: function (node) {
@@ -29527,7 +29345,7 @@ define('deliteful/ProgressIndicator',[
 
 		postRender: function () {
 			this.lineNodeList = this.linesNode.querySelectorAll("line");
-			var symbolId = this.baseClass + "-" + this.widgetId + "-symbol";
+			var symbolId = this.widgetId + "-symbol";
 			this.symbolNode.id = symbolId;
 			//set unique SVG symbol id
 			this.useNode.setAttributeNS("http://www.w3.org/1999/xlink", "xlink:href", "#" + symbolId);
@@ -29844,7 +29662,7 @@ define('deliteful/channelBreakpoints',["module"],
 });
 ;
 define('delite/handlebars!deliteful/Switch/Switch.html',["delite/handlebars"], function(handlebars){
-	return handlebars.compile("<template class=\"d-switch d-switch-width d-switch-rounded\" role=\"presentation\">\n\t<input type=\"checkbox\" class=\"-d-switch-input d-switch-width\" attach-point=\"focusNode,valueNode\" checked=\"{{checked}}\" value=\"{{value}}\" name=\"{{name}}\">\n\t<div class=\"-d-switch-push -d-switch-transition {{this.checked ? 'd-switch-width' : ''}}\" attach-point=\"_pushNode\"></div><div class=\"-d-switch-knobglass\" attach-point=\"_knobGlassNode\" touch-action=\"none\"></div><div class=\"-d-switch-inner-wrapper -d-switch-transition\" attach-point=\"_innerWrapperNode\">&nbsp;\n\t\t<div class=\"-d-switch-inner -d-switch-pull -d-switch-transition\" attach-point=\"_innerNode\">\n\t\t\t<div class=\"-d-switch-block d-switch-leading d-switch-width\">{{this.checkedLabel}}&nbsp;</div><div class=\"-d-switch-block -d-switch-knob d-switch-rounded\" attach-point=\"_knobNode\">&nbsp;</div><div class=\"-d-switch-block d-switch-trailing d-switch-width\">{{this.uncheckedLabel}}&nbsp;</div>\n\t\t</div>\n\t</div>\n</template>");
+	return handlebars.compile("<template class=\"d-switch-width d-switch-rounded\" role=\"presentation\">\n\t<input type=\"checkbox\" class=\"-d-switch-input d-switch-width\" attach-point=\"focusNode,valueNode\" checked=\"{{checked}}\" value=\"{{value}}\" name=\"{{name}}\">\n\t<div class=\"-d-switch-push -d-switch-transition {{this.checked ? 'd-switch-width' : ''}}\" attach-point=\"_pushNode\"></div><div class=\"-d-switch-knobglass\" attach-point=\"_knobGlassNode\" touch-action=\"none\"></div><div class=\"-d-switch-inner-wrapper -d-switch-transition\" attach-point=\"_innerWrapperNode\">&nbsp;\n\t\t<div class=\"-d-switch-inner -d-switch-pull -d-switch-transition\" attach-point=\"_innerNode\">\n\t\t\t<div class=\"-d-switch-block d-switch-leading d-switch-width\">{{this.checkedLabel}}&nbsp;</div><div class=\"-d-switch-block -d-switch-knob d-switch-rounded\" attach-point=\"_knobNode\">&nbsp;</div><div class=\"-d-switch-block d-switch-trailing d-switch-width\">{{this.uncheckedLabel}}&nbsp;</div>\n\t\t</div>\n\t</div>\n</template>");
 });;
 /** @module deliteful/Switch */
 define('deliteful/Switch',[
@@ -30350,7 +30168,7 @@ define('deliteful/Checkbox',[
 	});
 });;
 define('delite/handlebars!deliteful/Select/Select.html',["delite/handlebars"], function(handlebars){
-	return handlebars.compile("<template class=\"d-select\" role=\"presentation\">\n\t<select class=\"d-select-inner\" attach-point=\"valueNode,focusNode\" value=\"{{value}}\" name=\"{{name}}\" size=\"{{size}}\" multiple=\"{{this.selectionMode === 'multiple'}}\" disabled=\"{{disabled}}\"></select>\n</template>");
+	return handlebars.compile("<template role=\"presentation\">\n\t<select class=\"d-select-inner\" attach-point=\"valueNode,focusNode\" value=\"{{value}}\" name=\"{{name}}\" size=\"{{size}}\" multiple=\"{{this.selectionMode === 'multiple'}}\" disabled=\"{{disabled}}\"></select>\n</template>");
 });;
 /** @module deliteful/Select */
 define('deliteful/Select',[
@@ -30687,14 +30505,15 @@ define('deliteful/Select',[
 });
 ;
 define('delite/handlebars!deliteful/Combobox/Combobox.html',["delite/handlebars"], function(handlebars){
-	return handlebars.compile("<template class=\"d-combobox\" role=\"presentation\">\n\t<input class=\"d-combobox-input\" role=\"combobox\" attach-point=\"inputNode,focusNode\" autocomplete=\"off\" autocorrect=\"off\" autocapitalize=\"none\" aria-autocomplete=\"list\" type=\"text\" readonly=\"{{this._inputReadOnly ? 'readonly' : ''}}\" placeholder=\"{{searchPlaceHolder}}\">\n\t<input class=\"d-hidden\" attach-point=\"valueNode\" readonly=\"\" name=\"{{name}}\" value=\"{{value}}\">\n\t<span class=\"d-combobox-arrow\" d-shown=\"{{hasDownArrow}}\" attach-point=\"buttonNode\" aria-hidden=\"true\"></span>\n</template>");
+	return handlebars.compile("<template role=\"combobox\" aria-expanded=\"{{opened}}\" attach-point=\"popupStateNode\">\n\t<input class=\"d-combobox-input\" attach-point=\"inputNode,focusNode\" autocomplete=\"off\" autocorrect=\"off\" autocapitalize=\"none\" aria-autocomplete=\"list\" type=\"text\" readonly=\"{{this._inputReadOnly ? 'readonly' : ''}}\" placeholder=\"{{searchPlaceHolder}}\" on-click=\"{{inputClickHandler}}\">\n\t<input class=\"d-hidden\" attach-point=\"valueNode\" readonly=\"\" name=\"{{name}}\" value=\"{{value}}\">\n\t<span class=\"d-combobox-arrow\" d-shown=\"{{hasDownArrow}}\" attach-point=\"buttonNode\" aria-hidden=\"true\"></span>\n</template>");
 });;
 /** @module deliteful/Combobox */
 define('deliteful/Combobox',[
 	"dcl/dcl",
-	"requirejs-dplugins/jquery!attributes/classes,event",	// addClass(), css(), on(), off()
 	"dstore/Filter",
 	"dojo/string",
+	"decor/ObservableArray",
+	"decor/Observable",
 	"delite/register",
 	"delite/CssState",
 	"delite/FormValueWidget",
@@ -30706,9 +30525,10 @@ define('deliteful/Combobox',[
 	"delite/theme!./Combobox/themes/{{theme}}/Combobox.css"
 ], function (
 	dcl,
-	$,
 	Filter,
 	string,
+	ObservableArray,
+	Observable,
 	register,
 	CssState,
 	FormValueWidget,
@@ -30784,7 +30604,6 @@ define('deliteful/Combobox',[
 	 *   });
 	 * HTML:
 	 * <d-combobox id="combobox1">
-	 *   <d-list>
 	 *   { "label": "France", "sales": 500, "profit": 50, "region": "EU" },
 	 *   { "label": "Germany", "sales": 450, "profit": 48, "region": "EU" },
 	 *   { "label": "UK", "sales": 700, "profit": 60, "region": "EU" },
@@ -30793,7 +30612,6 @@ define('deliteful/Combobox',[
 	 *   { "label": "Brazil", "sales": 450, "profit": 30, "region": "America" },
 	 *   { "label": "China", "sales": 500, "profit": 40, "region": "Asia" },
 	 *   { "label": "Japan", "sales": 900, "profit": 100, "region": "Asia" }
-	 *   </d-list>
 	 * </d-combobox>
 	 *
 	 * @example <caption>Programmatic</caption>
@@ -30820,8 +30638,6 @@ define('deliteful/Combobox',[
 		// to allow delegation from host widget to a different widget - to get
 		// a clean mechanism to support all possible use-cases. (Probably also
 		// requires changes in List).
-		// TODO: improve API doc.
-		// TODO: add (optional) placeholder?
 
 		// Note: the property `disabled` is inherited from delite/FormWidget.
 
@@ -30988,10 +30804,18 @@ define('deliteful/Combobox',[
 		 */
 		_isMobile: !!ComboPopup,
 
+		/**
+		 * The Combobox widget is a special component where we don't need to move the
+		 * aria attributes from the root element to the focusNode. So here we're
+		 * overriding this property to false, disabling the move procedure.
+		 */
+		moveAriaAttributes: false,
+
 		createdCallback: function () {
-			// Declarative case (list specified declaratively inside the declarative Combobox)
+			// Declarative case.
 			var list = this.querySelector("d-list");
 			if (list) {
+				// Old API: <d-list> child of <d-combobox>.  Possibly remove this in the future.
 				if (!list.attached) {
 					list.addEventListener("customelement-attached", this._attachedlistener = function () {
 						list.removeEventListener("customelement-attached", this._attachedlistener);
@@ -31001,28 +30825,37 @@ define('deliteful/Combobox',[
 				} else {
 					this.list = list;
 				}
-			}
-
-			this.on("click", function () {
-				// NOTE: This runs only when in mobile mode
-				if (this._isMobile && !this.disabled) {
-					this.openDropDown();
-				}
-			}.bind(this));
-
-			this.on("mousedown", function (evt) {
-				// NOTE: This runs only when in desktop mode
-				if (!this._isMobile && (!this.minFilterChars || this._inputReadOnly)) {
-					// event could be triggered by the down arrow element. If so, we do not react to it.
-					if (evt.srcElement !== this.buttonNode && !this.disabled) {
-						if (!this.opened) {
-							this.openDropDown();
-						} else {
-							this.closeDropDown(true);
+			} else if (this.textContent.trim()) {
+				// New API: JSON data as innerHTML of <d-combobox>.
+				var data = JSON.parse("[" + this.textContent + "]");
+				if (data.length) {
+					this.source = new ObservableArray();
+					for (var j = 0; j < data.length; j++) {
+						if (!data[j].id) {
+							data[j].id = Math.random();
 						}
+						this.source[j] = new Observable(data[j]);
 					}
 				}
-			}.bind(this));
+				this.textContent = "";
+			}
+		},
+
+		/**
+		 * Handle clicks on the `<input>`.
+		 * Note that HasDropDown handles clicks on the arrow icon.
+		 */
+		inputClickHandler: function (event) {
+			event.stopPropagation();
+			event.preventDefault();
+
+			if (this.disabled) {
+				return;
+			}
+
+		    if (this._isMobile || !this.minFilterChars || this._inputReadOnly) {
+				this.toggleDropDown();
+			}
 		},
 
 		parseAttribute: dcl.superCall(function (sup) {
@@ -31070,7 +30903,7 @@ define('deliteful/Combobox',[
 			}
 
 			if (!this.list.id) {
-				this.list.id = this.id ? this.id + "-list" : this.tag + "-" + this.widgetId + "-list";
+				this.list.id = this.id ? this.id + "-list" : this.widgetId + "-list";
 			}
 		},
 
@@ -31078,8 +30911,7 @@ define('deliteful/Combobox',[
 			this._prepareInput(this.inputNode);
 		},
 
-		computeProperties: function (oldValues, justCreated) {
-			/* jshint maxcomplexity: 12 */
+		computeProperties: function (oldValues) {
 			// If value was specified as a string (like during creation from markup),
 			// but selectionMode === multiple, need to convert it to an array.
 			if (this.selectionMode === "multiple" && typeof this.value === "string") {
@@ -31093,31 +30925,13 @@ define('deliteful/Combobox',[
 			this._inputReadOnly = this.readOnly || !this.autoFilter ||
 				this._isMobile || this.selectionMode === "multiple";
 
-			// Sometimes, especially during creation, the app will specify a value without specifying a displayedValue.
-			// In that case, copy this.value to this.displayedValue.  This code is fragile though; need to make
-			// sure Combobox itself always sets displayedValue at the same time it sets value.
-			var valueChanged = justCreated ? this.hasOwnProperty("_shadowValueAttr") : "value" in oldValues;
-			var displayedValueChanged = justCreated ? this.hasOwnProperty("_shadowDisplayedValueAttr") :
-				"displayedValue" in oldValues;
-			if (valueChanged && !displayedValueChanged) {
-				if (this.selectionMode === "single") {
-					this.displayedValue = this.value;
-				} else {
-					var items = this.value;
-					var n = items.length;
-					if (n > 1) {
-						this.displayedValue = string.substitute(this.multipleChoiceMsg, {items: n});
-					} else if (n === 1) {
-						this.displayedValue = items[0];
-					} else {
-						this.displayedValue = this.multipleChoiceNoSelectionMsg;
-					}
+			// Set this.displayedValue based on this.value.
+			if ("value" in oldValues) {
+				if (this.selectionMode === "multiple" && this.value.length === 0) {
+					this.displayedValue = this.multipleChoiceNoSelectionMsg;
+				} else if (this.selectionMode === "multiple" && this.value.length > 1) {
+					this.displayedValue = string.substitute(this.multipleChoiceMsg, {items: this.value.length});
 				}
-
-				// Call computeProperties() again to flush out the change record for "displayedValue".
-				// That way, all the notifications are processed before the new Combobox() constructor
-				// finishes running.
-				this.deliverComputing();
 			}
 		},
 
@@ -31136,7 +30950,6 @@ define('deliteful/Combobox',[
 				// Note: Can't just put readonly={{_inputReadOnly}} in the template because we need to override
 				// when delite/FormWidget sets the <input>'s readonly attribute based on this.readOnly.
 				this.inputNode.readOnly = this._inputReadOnly;
-				this._setSelectable(this.inputNode, !this._inputReadOnly);
 			}
 
 			// Update <input>'s value if necessary, but don't update the value because the user
@@ -31152,24 +30965,6 @@ define('deliteful/Combobox',[
 			}
 		},
 
-		/**
-		 * Configures inputNode such that the text is selectable or unselectable.
-		 * @private
-		 */
-		_setSelectable: function (inputNode, selectable) {
-			if (selectable) {
-				inputNode.removeAttribute("unselectable");
-				$(inputNode)
-					.css("user-select", "") // maps to WebkitUserSelect, etc.
-					.off("selectstart", false);
-			} else {
-				inputNode.setAttribute("unselectable", "on");
-				$(inputNode)
-					.css("user-select", "none") // maps to WebkitUserSelect, etc.
-					.on("selectstart", false);
-			}
-		},
-
 		afterFormResetCallback: function () {
 			if (this.value !== this.valueNode.value) {
 				if (this.selectionMode === "single") {
@@ -31177,10 +30972,6 @@ define('deliteful/Combobox',[
 				} else if (this.selectionMode === "multiple") {
 					this.value = this.valueNode.value ? this.valueNode.value.split(",") : [];
 				}
-
-				// computeProperties() will do the wrong thing if it thinks value was set without displayedValue
-				// being set.
-				this.notifyCurrentValue("displayedValue");
 			}
 		},
 
@@ -31197,10 +30988,10 @@ define('deliteful/Combobox',[
 				// Class added on the list such that Combobox' theme can have a specific
 				// CSS selector for elements inside the List when used as dropdown in
 				// the combo.
-				$(this.list).addClass("d-combobox-list");
+				this.list.classList.add("d-combobox-list");
 
 				// The drop-down is hidden initially
-				$(this.list).addClass("d-hidden");
+				this.list.classList.add("d-hidden");
 
 				// The role=listbox is required for the list part of a combobox by the
 				// aria spec of role=combobox
@@ -31388,7 +31179,7 @@ define('deliteful/Combobox',[
 				this._valueSetByUserInput = false;
 			}
 		},
-			
+
 		/**
 		 * Defines the milliseconds the widget has to wait until a new filter operation starts.
 		 * @type {Number}
@@ -31406,9 +31197,15 @@ define('deliteful/Combobox',[
 				// change event. But there's no equivalent on Safari / iOS...
 
 				// save what user typed at each keystroke.
-				this.value = this.displayedValue = inputElement.value;
+				this.displayedValue = inputElement.value;
+
+				// Clear value.  No value until user selects something from dropdown again.
+				this.value = "";
 				this._valueSetByUserInput = true;
-				this.handleOnInput(this.value); // emit "input" event.
+				if (this.list && this.list.selectedItems.length > 0) {
+					this.list.selectedItems = [];
+				}
+				this.handleOnInput(this.value); // if we just cleared this.value then emit "input" event
 
 				if (this._timeoutHandle !== undefined) {
 					this._timeoutHandle.remove();
@@ -31426,6 +31223,7 @@ define('deliteful/Combobox',[
 				evt.stopPropagation();
 				evt.preventDefault();
 			}.bind(this), inputElement);
+
 			this.on("change", function (evt) {
 				// Stop the spurious "change" events emitted while the user types
 				// such that only the "change" events emitted via FormValueWidget.handleOnChange()
@@ -31433,6 +31231,7 @@ define('deliteful/Combobox',[
 				evt.stopPropagation();
 				evt.preventDefault();
 			}.bind(this), inputElement);
+
 			this.on("keydown", function (evt) {
 				/* jshint maxcomplexity: 16 */
 				// deliteful issue #382: prevent the browser from navigating to
@@ -31486,11 +31285,6 @@ define('deliteful/Combobox',[
 			// the List can be empty, so:
 			this.displayedValue = selectedItem ? this._getItemLabel(selectedItem) : "";
 			this.value = selectedItem ? this._getItemValue(selectedItem) : "";
-
-			// If user selects a choice from the dropdown with the same label as what's
-			// currently typed into the <input>, make sure computeProperties() doesn't set
-			// the <input> to the item's value (ex: "DE" rather than "Germany").
-			this.notifyCurrentValue("displayedValue");
 		},
 
 		_validateMultiple: function () {
@@ -31634,6 +31428,8 @@ define('deliteful/Combobox',[
 				var promise = sup.apply(this, arguments);
 
 				return promise.then(function () {
+					this.inputNode.setAttribute("aria-controls", this.dropDown.id);
+
 					// Avoid that List gives focus to list items when navigating, which would
 					// blur the input field used for entering the filtering criteria.
 					this.dropDown.focusDescendants = false;
@@ -31653,8 +31449,8 @@ define('deliteful/Combobox',[
 
 		closeDropDown: dcl.superCall(function (sup) {
 			return function (focus, suppressChangeEvent) {
-				var input = this._popupInput || this.inputNode;
-				input.removeAttribute("aria-activedescendant");
+				this.inputNode.removeAttribute("aria-activedescendant");
+				this.inputNode.removeAttribute("aria-controls");
 
 				// Closing the dropdown represents a commit interaction, unless the dropdown closes
 				// automatically because the user backspaced, in which case suppressChangeEvent is true.
@@ -31714,15 +31510,25 @@ define('deliteful/Combobox',[
 					nd.id = "d-combobox-item-" + idCounter++;
 				}
 
-				var input = this._popupInput || this.inputNode;
-				input.setAttribute("aria-activedescendant", nd.id);
+				this.inputNode.setAttribute("aria-activedescendant", nd.id);
 			}
+		},
+
+		destroy: function () {
+			if (this._ListListeners) {
+				this._ListListeners.forEach(function (handle) {
+					handle.remove();
+				});
+			}
+			this._ListListeners = null;
+
+			this.list = null;
 		}
 	});
 });
 ;
 define('delite/handlebars!deliteful/Combobox/ComboPopup.html',["delite/handlebars","deliteful/LinearLayout","deliteful/Button"], function(handlebars){
-	return handlebars.compile("<template role=\"presentation\">\n\t<d-linear-layout style=\"height: 100%\">\n\t\t<label class=\"d-combo-popup-header\" for=\"{{_tag}}-{{widgetId}}-input\">{{header}}</label>\n\t\t<input id=\"{{_tag}}-{{widgetId}}-input\" d-hidden=\"{{!(this.combobox.autoFilter &amp;&amp; this.combobox.selectionMode !== 'multiple')}}\" attach-point=\"inputNode\" class=\"d-combobox-input\" role=\"combobox\" autocomplete=\"off\" autocapitalize=\"none\" autocorrect=\"off\" aria-autocomplete=\"list\" aria-haspopup=\"true\" aria-owns=\"{{combobox.list.id}}\" type=\"text\" placeholder=\"{{combobox.searchPlaceHolder}}\">\n\t\t<div attach-point=\"listNode\"></div>\n\t\t<d-linear-layout d-hidden=\"{{combobox.selectionMode !== 'multiple'}}\" vertical=\"false\">\n\t\t\t<button is=\"d-button\" class=\"fill d-combo-cancel-button\" label=\"{{combobox.cancelMsg}}\" on-click=\"{{cancelHandler}}\"></button>\n\t\t\t<button is=\"d-button\" class=\"fill d-combo-ok-button\" label=\"{{combobox.okMsg}}\" on-click=\"{{okHandler}}\"></button>\n\t\t</d-linear-layout>\n\t</d-linear-layout>\n</template>");
+	return handlebars.compile("<template role=\"combobox\" aria-expanded=\"true\" aria-owns=\"{{combobox.list.id}}\" aria-haspopup=\"listbox\">\n\t<d-linear-layout style=\"height: 100%\">\n\t\t<label class=\"d-combo-popup-header\" for=\"{{widgetId}}-input\">{{header}}</label>\n\t\t<input id=\"{{widgetId}}-input\" d-hidden=\"{{!(this.combobox.autoFilter &amp;&amp; this.combobox.selectionMode !== 'multiple')}}\" attach-point=\"inputNode\" class=\"d-combobox-input\" autocomplete=\"off\" autocapitalize=\"none\" autocorrect=\"off\" aria-autocomplete=\"list\" aria-controls=\"{{combobox.list.id}}\" type=\"text\" placeholder=\"{{combobox.searchPlaceHolder}}\">\n\t\t<div attach-point=\"listNode\"></div>\n\t\t<d-linear-layout d-hidden=\"{{combobox.selectionMode !== 'multiple'}}\" vertical=\"false\">\n\t\t\t<button is=\"d-button\" class=\"fill d-combo-cancel-button\" label=\"{{combobox.cancelMsg}}\" on-click=\"{{cancelHandler}}\"></button>\n\t\t\t<button is=\"d-button\" class=\"fill d-combo-ok-button\" label=\"{{combobox.okMsg}}\" on-click=\"{{okHandler}}\"></button>\n\t\t</d-linear-layout>\n\t</d-linear-layout>\n</template>");
 });;
 /** @module deliteful/Combobox/ComboPopup */
 define('deliteful/Combobox/ComboPopup',[
@@ -31892,18 +31698,214 @@ define('delite/Dialog',[
 	});
 });
 ;
+/**
+ * Accessibility utility functions (keyboard, tab stops, etc.).
+ * @module delite/a11y
+ * */
+define('delite/a11y',[], function () {
+
+	var a11y = /** @lends module:delite/a11y */ {
+		/**
+		 * Returns true if Element is visible.
+		 * @param {Element} elem - The Element.
+		 * @returns {boolean}
+		 * @private
+		 */
+		_isElementShown: function (elem) {
+			var s = getComputedStyle(elem);
+			return s.visibility !== "hidden"
+				&& s.visibility !== "collapsed"
+				&& s.display !== "none"
+				&& elem.type !== "hidden";
+		},
+
+		/**
+		 * Tests if element is tab-navigable even without an explicit tabIndex setting
+		 * @param {Element} elem - The Element.
+		 * @returns {boolean}
+		 */
+		hasDefaultTabStop: function (elem) {
+			/* jshint maxcomplexity:11 */
+
+			// No explicit tabIndex setting, need to investigate node type
+			switch (elem.nodeName.toLowerCase()) {
+			case "a":
+				// An <a> w/out a tabindex is only navigable if it has an href
+				return elem.hasAttribute("href");
+			case "area":
+			case "button":
+			case "input":
+			case "object":
+			case "select":
+			case "textarea":
+				// These are navigable by default
+				return true;
+			case "iframe":
+				// If it's an editor <iframe> then it's tab navigable.
+				var contentDocument = elem.contentDocument;
+				if ("designMode" in contentDocument && contentDocument.designMode === "on") {
+					return true;
+				}
+				var body = contentDocument.body;
+				return body && (body.contentEditable === "true" ||
+					(body.firstChild && body.firstChild.contentEditable === "true"));
+			default:
+				return elem.contentEditable === "true";
+			}
+		},
+
+		/**
+		 * Returns effective tabIndex of an element, either a number, or undefined if element isn't focusable.
+		 * @param {Element} elem - The Element.
+		 * @returns {number|undefined}
+		 */
+		effectiveTabIndex: function (elem) {
+			if (elem.disabled) {
+				return undefined;
+			} else if (elem.hasAttribute("tabIndex")) {
+				// Explicit tab index setting
+				return +elem.getAttribute("tabIndex");// + to convert string --> number
+			} else {
+				// No explicit tabIndex setting, so depends on node type
+				return a11y.hasDefaultTabStop(elem) ? 0 : undefined;
+			}
+		},
+
+		/**
+		 * Tests if an element is tab-navigable.
+		 * @param {Element} elem - The Element.
+		 * @returns {boolean}
+		 */
+		isTabNavigable: function (elem) {
+			return a11y.effectiveTabIndex(elem) >= 0;
+		},
+
+		/**
+		 * Tests if an element is focusable by tabbing to it, or clicking it with the mouse.
+		 * @param {Element} elem - The Element.
+		 * @returns {boolean}
+		 */
+		isFocusable: function (elem) {
+			return a11y.effectiveTabIndex(elem) >= -1;
+		},
+
+		/**
+		 * Finds descendants of the specified root node.
+		 *
+		 * The following descendants of the specified root node are returned:
+		 *
+		 * - the first tab-navigable element in document order without a tabIndex or with tabIndex="0"
+		 * - the last tab-navigable element in document order without a tabIndex or with tabIndex="0"
+		 * - the first element in document order with the lowest positive tabIndex value
+		 * - the last element in document order with the highest positive tabIndex value
+		 *
+		 * @param Element root - The Element.
+		 * @returns {Object} Hash of the format `{first: Element, last: Element, lowest: Element, highest: Element}`.
+		 * @private
+		 */
+		_getTabNavigable: function (root) {
+			var first, last, lowest, lowestTabindex, highest, highestTabindex, radioSelected = {};
+
+			function radioName(node) {
+				// If this element is part of a radio button group, return the name for that group.
+				return node && node.tagName.toLowerCase() === "input" &&
+					node.type && node.type.toLowerCase() === "radio" &&
+					node.name && node.name.toLowerCase();
+			}
+
+			var shown = a11y._isElementShown, effectiveTabIndex = a11y.effectiveTabIndex;
+
+			function walkTree(/*Element*/ parent) {
+				/* jshint maxcomplexity:14 */
+				for (var child = parent.firstChild; child; child = child.nextSibling) {
+					// Skip text elements, hidden elements
+					if (child.nodeType !== 1 || !shown(child)) {
+						continue;
+					}
+
+					var tabindex = effectiveTabIndex(child);
+					if (tabindex >= 0) {
+						if (tabindex === 0) {
+							if (!first) {
+								first = child;
+							}
+							last = child;
+						} else if (tabindex > 0) {
+							if (!lowest || tabindex < lowestTabindex) {
+								lowestTabindex = tabindex;
+								lowest = child;
+							}
+							if (!highest || tabindex >= highestTabindex) {
+								highestTabindex = tabindex;
+								highest = child;
+							}
+						}
+						var rn = radioName(child);
+						if (child.checked && rn) {
+							radioSelected[rn] = child;
+						}
+					}
+					if (child.nodeName.toUpperCase() !== "SELECT") {
+						walkTree(child);
+					}
+				}
+			}
+
+			if (shown(root)) {
+				walkTree(root);
+			}
+			function rs(node) {
+				// substitute checked radio button for unchecked one, if there is a checked one with the same name.
+				return radioSelected[radioName(node)] || node;
+			}
+
+			return { first: rs(first), last: rs(last), lowest: rs(lowest), highest: rs(highest) };
+		},
+
+		/**
+		 * Finds the descendant of the specified root node that is first in the tabbing order.
+		 * @param {string|Element} root
+		 * @param {Document} [doc]
+		 * @returns {Element}
+		 */
+		getFirstInTabbingOrder: function (root, doc) {
+			if (typeof root === "string") {
+				root = (doc || document).getElementById(root);
+			}
+			var elems = a11y._getTabNavigable(root);
+			return elems.lowest ? elems.lowest : elems.first;
+		},
+
+		/**
+		 * Finds the descendant of the specified root node that is last in the tabbing order.
+		 * @param {string|Element} root
+		 * @param {Document} [doc]
+		 * @returns {Element}
+		 */
+		getLastInTabbingOrder: function (root, doc) {
+			if (typeof root === "string") {
+				root = (doc || document).getElementById(root);
+			}
+			var elems = a11y._getTabNavigable(root);
+			return elems.last ? elems.last : elems.highest;
+		}
+	};
+
+	return a11y;
+});
+;
 /** @module delite/HasDropDown */
 define('delite/HasDropDown',[
 	"dcl/dcl",
 	"requirejs-dplugins/Promise!",
-	"requirejs-dplugins/jquery!attributes/classes",	// addClass(), removeClass(), hasClass()
+	"./on",
 	"./place",
 	"./popup",
 	"./register",
 	"./Widget",
 	"./activationTracker",		// for delite-deactivated event
 	"dpointer/events"		// for "pointerenter", "pointerleave"
-], function (dcl, Promise, $, place, popup, register, Widget) {
+], function (dcl, Promise, on, place, popup, register, Widget) {
 	
 	/**
 	 * Dispatched before popup widget is shown.
@@ -31969,6 +31971,25 @@ define('delite/HasDropDown',[
 		 * @protected
 		 */
 		buttonNode: null,
+
+		/**
+		 * The Element that will contain some aria attributes.
+		 * Useful for widgets like Combobox that needs some special attibutes like aria-haspopup
+		 * to be defined on a specific element.
+		 * @member {Element}
+		 * @protected
+		 */
+		popupStateNode: null,
+
+		/**
+		 * The node to display the popup next to.
+		 * Can be set in a template via a `attach-point` assignment.
+		 * If undefined, popup will be displayed next to`this.behaviorNode` (if defined),
+		 * or otherwise next to `this`.
+		 * @member {Element}
+		 * @protected
+		 */
+		aroundNode: null,
 
 		/**
 		 * The widget to display as a popup.  Applications/subwidgets should *either*:
@@ -32060,6 +32081,12 @@ define('delite/HasDropDown',[
 		opened: false,
 
 		/**
+		 * Computed element to set aria attributes on.
+		 * @private
+		 */
+		_effectivePopupStateNode: null,
+
+		/**
 		 * Callback when the user clicks the arrow icon.
 		 * @private
 		 */
@@ -32106,50 +32133,72 @@ define('delite/HasDropDown',[
 			}.bind(this));
 		},
 
-		preRender: function () {
-			// Remove old listeners if we are re-rendering, just in case some of the listeners were put onto
-			// the root node.  We don't want to make duplicate listeners.
-			if (this._HasDropDownListeners) {
-				this._HasDropDownListeners.forEach(function (handle) {
-					handle.remove();
-				});
+		computeProperties: function (oldVals) {
+			if ("popupStateNode" in oldVals || "focusNode" in oldVals || "buttonNode" in oldVals ||
+				"behaviorNode" in oldVals) {
+				this._effectivePopupStateNode = this.popupStateNode || this.focusNode || this.buttonNode ||
+					this.behaviorNode || this;
 			}
 		},
 
-		postRender: function () {
-			this.behaviorNode = this.behaviorNode || this;
-			this.buttonNode = this.buttonNode || this.behaviorNode;
-			this.popupStateNode = this.focusNode || this.buttonNode;
+		refreshRendering: function (oldVals) {
+			if ("_effectivePopupStateNode" in oldVals) {
+				if (oldVals._effectivePopupStateNode) {
+					oldVals._effectivePopupStateNode.removeAttribute("aria-haspopup");
+				}
+				if (this._effectivePopupStateNode) {
+					this._effectivePopupStateNode.setAttribute("aria-haspopup", "true");
+				}
+			}
 
-			this.popupStateNode.setAttribute("aria-haspopup", "true");
+			if ("behaviorNode" in oldVals || "buttonNode" in oldVals || "focusNode" in oldVals ||
+				"openOnHover" in oldVals) {
+				this._removeHasDropDownListeners();
+				this._setupHasDropDownListeners();
+			}
+		},
+
+		_setupHasDropDownListeners: function () {
+			var behaviorNode = this.behaviorNode || this,
+				buttonNode = this.buttonNode || behaviorNode,
+				keystrokeNode = this.focusNode || behaviorNode;
 
 			this._HasDropDownListeners = [
 				// basic listeners
-				this.on("click", this._dropDownClickHandler.bind(this), this.buttonNode),
-				this.on("keydown", this._dropDownKeyDownHandler.bind(this), this.focusNode || this.behaviorNode),
-				this.on("keyup", this._dropDownKeyUpHandler.bind(this), this.focusNode || this.behaviorNode),
+				on(buttonNode, "click", this._dropDownClickHandler.bind(this)),
+				on(keystrokeNode, "keydown", this._dropDownKeyDownHandler.bind(this)),
+				on(keystrokeNode, "keyup", this._dropDownKeyUpHandler.bind(this)),
 
-				this.on("delite-deactivated", this._deactivatedHandler.bind(this), this.behaviorNode),
+				on(behaviorNode, "delite-deactivated", this._deactivatedHandler.bind(this)),
 
-				// set this.hovering when mouse is over widget so we can differentiate real mouse clicks from synthetic
-				// mouse clicks generated from JAWS upon keyboard events
-				this.on("pointerenter", function () {
+				// set this.hovering when mouse is over widget so we can differentiate real mouse clicks
+				// from synthetic mouse clicks generated from JAWS upon keyboard events
+				on(behaviorNode, "pointerenter", function () {
 					this.hovering = true;
-				}.bind(this), this.behaviorNode),
-				this.on("pointerleave", function () {
+				}.bind(this)),
+				on(behaviorNode, "pointerleave", function () {
 					this.hovering = false;
-				}.bind(this), this.behaviorNode)
+				}.bind(this))
 			];
 
 			if (this.openOnHover) {
 				this._HasDropDownListeners.push(
-					this.on("delite-hover-activated", function () {
+					on(buttonNode, "delite-hover-activated", function () {
 						this.openDropDown();
-					}.bind(this), this.buttonNode),
-					this.on("delite-hover-deactivated", function () {
+					}.bind(this)),
+					on(buttonNode, "delite-hover-deactivated", function () {
 						this.closeDropDown();
-					}.bind(this), this.buttonNode)
+					}.bind(this))
 				);
+			}
+		},
+
+		_removeHasDropDownListeners: function () {
+			if (this._HasDropDownListeners) {
+				this._HasDropDownListeners.forEach(function (handle) {
+					handle.remove();
+				});
+				delete this._HasDropDownListeners;
 			}
 		},
 
@@ -32167,6 +32216,8 @@ define('delite/HasDropDown',[
 		},
 
 		destroy: function () {
+			this._removeHasDropDownListeners();
+
 			if (this.dropDown) {
 				// Destroy the drop down, unless it's already been destroyed.  This can happen because
 				// the drop down is a direct child of <body> even though it's logically my child.
@@ -32189,18 +32240,6 @@ define('delite/HasDropDown',[
 				return;
 			}
 			var dropDown = this._currentDropDown, target = e.target;
-			if (dropDown && this.opened) {
-				// Forward the keystroke to the dropdown widget.
-				// deliteful/List (the dropdown for deliteful/Combobox)
-				// listens for events on List#containerNode rather than the List root node.
-				var forwardNode = dropDown.keyNavContainerNode || dropDown.containerNode || dropDown;
-				if (dropDown.emit("keydown", e, forwardNode) === false) {
-					/* false return code means that the drop down handled the key */
-					e.stopPropagation();
-					e.preventDefault();
-					return;
-				}
-			}
 			if (dropDown && this.opened && e.key === "Escape") {
 				this.closeDropDown();
 				e.stopPropagation();
@@ -32219,6 +32258,16 @@ define('delite/HasDropDown',[
 				this._openOnKeyUp = true;
 				e.stopPropagation();
 				e.preventDefault();
+			} else if (dropDown && this.opened) {
+				// Forward the keystroke to the dropdown widget.
+				// deliteful/List (the dropdown for deliteful/Combobox)
+				// listens for events on List#containerNode rather than the List root node.
+				var forwardNode = dropDown.keyNavContainerNode || dropDown.containerNode || dropDown;
+				if (dropDown.emit("keydown", e, forwardNode) === false) {
+					/* false return code means that the drop down handled the key */
+					e.stopPropagation();
+					e.preventDefault();
+				}
 			}
 		},
 
@@ -32323,7 +32372,8 @@ define('delite/HasDropDown',[
 				delete this._cancelPendingDisplay;
 
 				this._currentDropDown = dropDown;
-				var behaviorNode = this.behaviorNode,
+				var behaviorNode = this.behaviorNode || this,
+					aroundNode = this.aroundNode || behaviorNode,
 					self = this;
 
 				this.emit("delite-before-show", {
@@ -32339,20 +32389,20 @@ define('delite/HasDropDown',[
 				dropDown._originalStyle = dropDown.style.cssText;
 
 				// Set width of drop down if necessary, so that dropdown width [including scrollbar]
-				// matches width of behaviorNode.  Don't do anything for when dropDownPosition=["center"] though,
+				// matches width of aroundNode.  Don't do anything for when dropDownPosition=["center"] though,
 				// in which case popup.open() doesn't return a value.
 				if (this.dropDownPosition[0] !== "center") {
 					if (this.forceWidth) {
-						dropDown.style.width = behaviorNode.offsetWidth + "px";
+						dropDown.style.width = aroundNode.offsetWidth + "px";
 					} else if (this.autoWidth) {
-						dropDown.style.minWidth = behaviorNode.offsetWidth + "px";
+						dropDown.style.minWidth = aroundNode.offsetWidth + "px";
 					}
 				}
 
 				var retVal = popup.open({
 					parent: behaviorNode,
 					popup: dropDown,
-					around: behaviorNode,
+					around: aroundNode,
 					orient: this.dropDownPosition,
 					maxHeight: this.maxHeight,
 					onExecute: function () {
@@ -32362,19 +32412,19 @@ define('delite/HasDropDown',[
 						self.closeDropDown(true);
 					},
 					onClose: function () {
-						$(self.popupStateNode).removeClass("d-drop-down-open");
+						self._effectivePopupStateNode.classList.remove("d-drop-down-open");
 						this.opened = false;
 					}
 				});
 
-				$(this.popupStateNode).addClass("d-drop-down-open");
+				this._effectivePopupStateNode.classList.add("d-drop-down-open");
 				this.opened = true;
 
-				this.popupStateNode.setAttribute("aria-owns", dropDown.id);
+				this._effectivePopupStateNode.setAttribute("aria-owns", dropDown.id);
 
 				// Set aria-labelledby on dropdown if it's not already set to something more meaningful
 				if (dropDown.getAttribute("role") !== "presentation" && !dropDown.getAttribute("aria-labelledby")) {
-					dropDown.setAttribute("aria-labelledby", this.behaviorNode.id);
+					dropDown.setAttribute("aria-labelledby", behaviorNode.id);
 				}
 
 				this.emit("delite-after-show", {
@@ -32422,8 +32472,9 @@ define('delite/HasDropDown',[
 			}
 
 			if (this.opened) {
-				if (focus && this.behaviorNode.focus) {
-					this.behaviorNode.focus();
+				var behaviorNode = this.behaviorNode || this;
+				if (focus && behaviorNode.focus) {
+					behaviorNode.focus();
 				}
 
 				this.emit("delite-before-hide", {
@@ -32451,7 +32502,7 @@ define('delite/HasDropDown',[
 			}
 
 			// Avoid complaint about aria-owns pointing to hidden element.
-			this.popupStateNode.removeAttribute("aria-owns");
+			this._effectivePopupStateNode.removeAttribute("aria-owns");
 
 			this._previousDropDown = this._currentDropDown;
 			delete this._currentDropDown;
@@ -34174,7 +34225,7 @@ define('deliteful/Slider',[
 					}
 					this.handleMin.setAttribute("aria-valuemin", this.min);
 					this.focusNode.setAttribute("aria-valuemax", this.max);
-					this.tabStops = "handleMin,focusNode";
+					this.tabStops = ["handleMin", "focusNode"];
 					this.handleMin._isActive = true;
 					// prevent default browser behavior / accept pointer events
 					// todo: use pan-x/pan-y according to this.vertical (once supported by dpointer)
@@ -34305,9 +34356,10 @@ define('deliteful/Slider',[
 			_refreshValueRendering: function () {
 				var currentVal = this._getValueAsArray();
 				if (!this.handleMin._isActive && currentVal.length === 2) {
+					this.handleMin.className = "";
 					this.handleMin.setAttribute("aria-valuemin", this.min);
 					this.focusNode.setAttribute("aria-valuemax", this.max);
-					this.tabStops = "handleMin,focusNode";
+					this.tabStops = ["handleMin", "focusNode"];
 					this.handleMin._isActive = true;
 				}
 				if (this.handleMin._isActive && currentVal.length === 1) {
@@ -35264,7 +35316,7 @@ define('delite/Widget',[
 		//////////// INITIALIZATION METHODS ///////////////////////////////////////
 
 		createdCallback: function () {
-			this.widgetId = ++cnt;
+			this.widgetId = "d-" + (++cnt);
 		},
 
 		// deliver() is called on widget creation, either from CustomElement#attachedCallback() (for the declarative
@@ -35391,11 +35443,15 @@ define('delite/Widget',[
 		},
 
 		/**
-		 * Helper method to set/remove an attribute based on the given value:
+		 * Helper method to set/remove an attribute on a node based on the given value:
 		 *
 		 * - If value is undefined, the attribute is removed.  Useful for attributes like aria-valuenow.
 		 * - If value is boolean, the attribute is set to "true" or "false".  Useful for attributes like aria-selected.
 		 * - If value is a number, it's converted to a string.
+		 *
+		 * When called for this widget's root node, sets attribute on this widget's root node even if this widget
+		 * overrides `setAttribute()` etc. (like delite/FormWidget).  But when called on a nested custom element,
+		 * calls that element's `setAttribute()` method.
 		 *
 		 * @param {Element} node - The node to set the property on.
 		 * @param {string} name - Name of the property.
@@ -35404,9 +35460,17 @@ define('delite/Widget',[
 		 */
 		setOrRemoveAttribute: function (node, name, value) {
 			if (value === undefined) {
-				node.removeAttribute(name);
+				if (node === this) {
+					HTMLElement.prototype.removeAttribute.call(node, name);
+				} else {
+					node.removeAttribute(name);
+				}
 			} else {
-				node.setAttribute(name, "" + value);
+				if (node === this) {
+					HTMLElement.prototype.setAttribute.call(node, name, "" + value);
+				} else {
+					node.setAttribute(name, "" + value);
+				}
 			}
 		},
 
@@ -35903,10 +35967,10 @@ define('delite/Template',["./register"], function (register) {
 					this.generateWatchCode(dependsOn,
 							"this.setClassComponent('template'+this.widgetId, " + js + ", " + nodeName + ")");
 				} else {
-					this.buildText.push(propName ? nodeName + "." + propName + " = " + js + ";" :
-						nodeName + ".setAttribute('" + attr + "', " + js + ");");
-					this.generateWatchCode(dependsOn, propName ? nodeName + "." + propName + " = " + js :
-						"this.setOrRemoveAttribute(" + nodeName + ", '" + attr + "', " + js + ")");
+					var setJs = propName ? nodeName + "." + propName + " = " + js :
+						"this.setOrRemoveAttribute(" + nodeName + ", '" + attr + "', " + js + ")";
+					this.buildText.push(setJs);
+					this.generateWatchCode(dependsOn, setJs);
 				}
 			}
 
@@ -35983,7 +36047,8 @@ define('delite/Template',["./register"], function (register) {
 	};
 
 	return Template;
-});;
+});
+;
 /**
  * Pointer Events utilities
  */
@@ -37606,7 +37671,7 @@ define('decor/features',["requirejs-dplugins/has"], function (has) {
 	return has;
 });
 ;
-/** @module liaison/ObservableArray */
+/** @module decor/ObservableArray */
 define('decor/ObservableArray',[
 	"requirejs-dplugins/has",
 	"./Observable"
@@ -37615,14 +37680,14 @@ define('decor/ObservableArray',[
 
 	/**
 	 * The same argument list of Array, taking the length of the new array or the initial list of array elements.
-	 * @typedef {number|...Anything} module:liaison/ObservableArray~CtorArguments
+	 * @typedef {number|...Anything} module:decor/ObservableArray~CtorArguments
 	 */
 
 	/**
 	 * An observable array, working as a shim
 	 * of {@link http://wiki.ecmascript.org/doku.php?id=harmony:observe ECMAScript Harmony Array.observe()}.
 	 * @class
-	 * @alias module:liaison/ObservableArray
+	 * @alias module:decor/ObservableArray
 	 * @augments module:decor/Observable
 	 * @param {module:decor/ObservableArray~CtorArguments} [args]
 	 *     The length of the new array or the initial list of array elements.
@@ -37685,9 +37750,9 @@ define('decor/ObservableArray',[
 		}
 
 		/**
-		 * @method module:liaison/ObservableArray.test
+		 * @method module:decor/ObservableArray.test
 		 * @param {Array} a The array to test.
-		 * @returns {boolean} true if o is an instance of {@link module:liaison/ObservableArray ObservableArray}.
+		 * @returns {boolean} true if o is an instance of {@link module:decor/ObservableArray ObservableArray}.
 		 */
 		ObservableArray.test = function (a) {
 			return a && a[observableArrayMarker];
@@ -37695,10 +37760,10 @@ define('decor/ObservableArray',[
 	})();
 
 	/**
-	 * @method module:liaison/ObservableArray.canObserve
+	 * @method module:decor/ObservableArray.canObserve
 	 * @param {Array} a The array to test.
 	 * @returns {boolean}
-	 *     true if o can be observed with {@link module:liaison/ObservableArray.observe ObservableArray.observe()}.
+	 *     true if o can be observed with {@link module:decor/ObservableArray.observe ObservableArray.observe()}.
 	 */
 	if (has("object-observe-api")) {
 		ObservableArray.canObserve = function (a) {
@@ -37718,7 +37783,7 @@ define('decor/ObservableArray',[
 			 * @param {number} removeCount [An integer indicating the number of old array elements to remove.
 			 * @param {...Anything} [var_args] The elements to add to the array.
 			 * @return {Array} An array containing the removed elements.
-			 * @memberof module:liaison/ObservableArray#
+			 * @memberof module:decor/ObservableArray#
 			 */
 			function splice(index, removeCount) {
 				/* jshint validthis: true */
@@ -37746,7 +37811,7 @@ define('decor/ObservableArray',[
 				return result;
 			}
 
-			augmentedMethods = /** @lends module:liaison/ObservableArray# */ {
+			augmentedMethods = /** @lends module:decor/ObservableArray# */ {
 				splice: splice,
 
 				/**
@@ -37876,7 +37941,7 @@ define('decor/ObservableArray',[
 	 * All change records will be converted to "splice" and are sorted by index and merged to smaller number
 	 * of change records.
 	 * @method
-	 * @param {Object} observable The {@link module:liaison/ObservableArray ObservableArray} to observe.
+	 * @param {Object} observable The {@link module:decor/ObservableArray ObservableArray} to observe.
 	 * @param {module:decor/Observable~ChangeCallback} callback The change callback.
 	 * @returns {Handle} The handle to stop observing.
 	 * @throws {TypeError} If the 1st argument is non-object or null.
@@ -38057,6 +38122,11 @@ define('decor/Invalidating',[
 		discardComputing: function () {
 			this._hComputing && this._hComputing.discardChanges();
 			return this._hComputing;
+		},
+
+		destroy: function () {
+			this._hComputing = null;
+			this._hRendering = null;
 		},
 
 		/**
@@ -38412,9 +38482,8 @@ define('xide/client/WebSocket',[
     "dcl/dcl",
     'xide/utils',
     'xide/utils/_LogMixin',
-    'xide/client/ClientBase',
-    'xdojo/has'
-], function (dcl, utils, _logMixin, ClientBase,has) {
+    'xide/client/ClientBase'
+], function (dcl, utils, _logMixin, ClientBase) {
     var debug = false;
     return dcl([ClientBase, _logMixin], {
         declaredClass:"xide.client.WebSocket",
@@ -38433,139 +38502,8 @@ define('xide/client/WebSocket',[
         onConnected:function(){
             debug && console.log('on connected');
         },
-        connect_sock_js: function (_options) {
-            this.options = utils.mixin(this.options, _options);
-            var host = this.options.host;
-            //host = host.replace('http://','wss://');
-            var port = this.options.port;
-            if (this.options.debug) {
-                this.initLogger(this.options.debug);
-            }
-            if (!host) {
-                console.error('something wrong with data!',_options);
-                return;
-            }
-            debug && console.log("Connecting to " + host + ':' + port, "socket_client");
-            var protocol = [
-                'websocket',
-                'xdr-streaming',
-                'xhr-streaming',
-                'iframe-eventsource',
-                'iframe-htmlfile',
-                'xdr-polling',
-                'xhr-polling',
-                'iframe-xhr-polling',
-                'jsonp-polling'
-            ];
-
-            var options = {
-                debug: debug,
-                devel: true,
-                noCredentials:true,
-                nullOrigin:true
-            };
-            options.transports = protocol;
-            var sock = new SockJS(host + ":" + port, null, options);
-            var thiz = this;
-
-            sock.onopen = function () {
-                thiz.onConnected();
-                if (thiz.delegate.onConnected) {
-                    thiz.delegate.onConnected();
-                }
-            };
-
-            sock.onmessage = function (e) {
-                if (thiz.delegate.onServerResponse) {
-                    thiz.delegate.onServerResponse(e);
-                }
-            };
-
-            sock.onerror=function(){
-                console.error('error');
-            }
-            sock.onclose = function (e) {
-                if (thiz.autoReconnect) {
-                    debug &&  console.log('closed ' + host + ' try re-connect');
-                    if (thiz.delegate.onLostConnection) {
-                        thiz.delegate.onLostConnection(e);
-                    }
-                    thiz.reconnect();
-                }else{
-                    debug && console.log('closed ' + host);
-                }
-            };
-            this._socket = sock;
-        },
-        connect_socket_io: function (_options) {
-            this.options = utils.mixin(this.options, _options);
-            var host = this.options.host;
-            //host = host.replace('http://','wss://');
-            var port = this.options.port;
-            if (this.options.debug) {
-                this.initLogger(this.options.debug);
-            }
-            if (!host) {
-                console.error('something wrong with data!',_options);
-                return;
-            }
-            debug && console.log("Connecting to " + host + ':' + port, "socket_client");
-            var protocol = [
-                'websocket',
-                'xdr-streaming',
-                'xhr-streaming',
-                'iframe-eventsource',
-                'iframe-htmlfile',
-                'xdr-polling',
-                'xhr-polling',
-                'iframe-xhr-polling',
-                'jsonp-polling'
-            ];
-
-            var options = {
-                debug: debug,
-                devel: true,
-                noCredentials:true,
-                nullOrigin:true
-            };
-            options.transports = protocol;
-            var sock = new SockJS(host + ":" + port, null, options);
-            var thiz = this;
-
-            sock.onopen = function () {
-                thiz.onConnected();
-                if (thiz.delegate.onConnected) {
-                    thiz.delegate.onConnected();
-                }
-            };
-
-            sock.onmessage = function (e) {
-                if (thiz.delegate.onServerResponse) {
-                    thiz.delegate.onServerResponse(e);
-                }
-            };
-
-            sock.onerror=function(){
-                console.error('error');
-            }
-            sock.onclose = function (e) {
-                if (thiz.autoReconnect) {
-                    debug &&  console.log('closed ' + host + ' try re-connect');
-                    if (thiz.delegate.onLostConnection) {
-                        thiz.delegate.onLostConnection(e);
-                    }
-                    thiz.reconnect();
-                }else{
-                    debug && console.log('closed ' + host);
-                }
-            };
-            this._socket = sock;
-        },
         connect: function (_options) {
-            return this.connect_sock_js(_options);
-            /*
             this.options = utils.mixin(this.options, _options);
-            //debugger;
             var host = this.options.host;
             //host = host.replace('http://','wss://');
             var port = this.options.port;
@@ -38589,21 +38527,6 @@ define('xide/client/WebSocket',[
                 'jsonp-polling'
             ];
 
-
-            var sock = io(host + ":" + port);
-
-            sock.on('connect', function(){
-                thiz.onConnected();
-                if (thiz.delegate.onConnected) {
-                    thiz.delegate.onConnected();
-                }
-            });
-            sock.on('event', function(data){
-
-            });
-            sock.on('disconnect', function(){});
-
-
             var options = {
                 debug: debug,
                 devel: true,
@@ -38611,12 +38534,14 @@ define('xide/client/WebSocket',[
                 nullOrigin:true
             };
             options.transports = protocol;
-
-            //var sock = new SockJS(host + ":" + port, null, options);
+            var sock = new SockJS(host + ":" + port, null, options);
             var thiz = this;
 
             sock.onopen = function () {
-
+                thiz.onConnected();
+                if (thiz.delegate.onConnected) {
+                    thiz.delegate.onConnected();
+                }
             };
 
             sock.onmessage = function (e) {
@@ -38640,7 +38565,6 @@ define('xide/client/WebSocket',[
                 }
             };
             this._socket = sock;
-            */
         },
         emit: function (signal, dataIn, tag) {
             dataIn.tag = tag || 'notag';
@@ -38878,18 +38802,6 @@ define('xide/data/Memory',[
      * @extends module:dstore/Memory
      */
     return declare('xide.data.Memory',[Memory, _Base], {
-        /**
-         * Get/Set toggle to prevent notifications for mass store operations. Without there will be performance drops.
-         * @param silent {boolean|null}
-         */
-        silent: function (silent) {
-            if (silent === undefined) {
-                return this._ignoreChangeEvents;
-            }
-            if (silent === true || silent === false && silent !== this._ignoreChangeEvents) {
-                this._ignoreChangeEvents = silent;
-            }
-        },
         /**
          * XIDE specific override to ensure the _store property. This is because the store may not use dmodel in some
          * cases like running server-side but the _store property is expected to be there.
@@ -39333,109 +39245,104 @@ define('xide/encoding/_base',[
 	//	These functions are 32-bit word-based.  See _sha-64 for 64-bit word ops.
 	var base = {};//lang.getObject("dojox.encoding.digests", true);
 
-	base.outputTypes = {
+	base.outputTypes={
 		// summary:
 		//		Enumeration for input and output encodings.
-		Base64: 0,
-		Hex: 1,
-		String: 2,
-		Raw: 3
+		Base64:0, Hex:1, String:2, Raw:3
 	};
 
 	//	word-based addition
-	base.addWords = function ( /* word */ a, /* word */ b) {
+	base.addWords=function(/* word */a, /* word */b){
 		// summary:
 		//		add a pair of words together with rollover
-		var l = (a & 0xFFFF) + (b & 0xFFFF);
-		var m = (a >> 16) + (b >> 16) + (l >> 16);
-		return (m << 16) | (l & 0xFFFF); //	word
+		var l=(a&0xFFFF)+(b&0xFFFF);
+		var m=(a>>16)+(b>>16)+(l>>16);
+		return (m<<16)|(l&0xFFFF);	//	word
 	};
 
 	//	word-based conversion method, for efficiency sake;
 	//	most digests operate on words, and this should be faster
 	//	than the encoding version (which works on bytes).
-	var chrsz = 8; //	16 for Unicode
-	var mask = (1 << chrsz) - 1;
+	var chrsz=8;	//	16 for Unicode
+	var mask=(1<<chrsz)-1;
 
-	base.stringToWord = function ( /* string */ s) {
+	base.stringToWord=function(/* string */s){
 		// summary:
 		//		convert a string to a word array
-		var wa = [];
-		for (var i = 0, l = s.length * chrsz; i < l; i += chrsz) {
-			wa[i >> 5] |= (s.charCodeAt(i / chrsz) & mask) << (i % 32);
+		var wa=[];
+		for(var i=0, l=s.length*chrsz; i<l; i+=chrsz){
+			wa[i>>5]|=(s.charCodeAt(i/chrsz)&mask)<<(i%32);
 		}
-		return wa; //	word[]
+		return wa;	//	word[]
 	};
 
-	base.wordToString = function ( /* word[] */ wa) {
+	base.wordToString=function(/* word[] */wa){
 		// summary:
 		//		convert an array of words to a string
-		var s = [];
-		for (var i = 0, l = wa.length * 32; i < l; i += chrsz) {
-			s.push(String.fromCharCode((wa[i >> 5] >>> (i % 32)) & mask));
+		var s=[];
+		for(var i=0, l=wa.length*32; i<l; i+=chrsz){
+			s.push(String.fromCharCode((wa[i>>5]>>>(i%32))&mask));
 		}
-		return s.join(""); //	string
+		return s.join("");	//	string
 	};
 
-	base.wordToHex = function ( /* word[] */ wa) {
+	base.wordToHex=function(/* word[] */wa){
 		// summary:
 		//		convert an array of words to a hex tab
-		var h = "0123456789abcdef",
-			s = [];
-		for (var i = 0, l = wa.length * 4; i < l; i++) {
-			s.push(h.charAt((wa[i >> 2] >> ((i % 4) * 8 + 4)) & 0xF) + h.charAt((wa[i >> 2] >> ((i % 4) * 8)) & 0xF));
+		var h="0123456789abcdef", s=[];
+		for(var i=0, l=wa.length*4; i<l; i++){
+			s.push(h.charAt((wa[i>>2]>>((i%4)*8+4))&0xF)+h.charAt((wa[i>>2]>>((i%4)*8))&0xF));
 		}
-		return s.join(""); //	string
+		return s.join("");	//	string
 	};
 
-	base.wordToBase64 = function ( /* word[] */ wa) {
+	base.wordToBase64=function(/* word[] */wa){
 		// summary:
 		//		convert an array of words to base64 encoding, should be more efficient
 		//		than using dojox.encoding.base64
-		var p = "=",
-			tab = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/",
-			s = [];
-		for (var i = 0, l = wa.length * 4; i < l; i += 3) {
-			var t = (((wa[i >> 2] >> 8 * (i % 4)) & 0xFF) << 16) | (((wa[i + 1 >> 2] >> 8 * ((i + 1) % 4)) & 0xFF) << 8) | ((wa[i + 2 >> 2] >> 8 * ((i + 2) % 4)) & 0xFF);
-			for (var j = 0; j < 4; j++) {
-				if (i * 8 + j * 6 > wa.length * 32) {
+		var p="=", tab="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/", s=[];
+		for(var i=0, l=wa.length*4; i<l; i+=3){
+			var t=(((wa[i>>2]>>8*(i%4))&0xFF)<<16)|(((wa[i+1>>2]>>8*((i+1)%4))&0xFF)<<8)|((wa[i+2>>2]>>8*((i+2)%4))&0xFF);
+			for(var j=0; j<4; j++){
+				if(i*8+j*6>wa.length*32){
 					s.push(p);
 				} else {
-					s.push(tab.charAt((t >> 6 * (3 - j)) & 0x3F));
+					s.push(tab.charAt((t>>6*(3-j))&0x3F));
 				}
 			}
 		}
-		return s.join(""); //	string
+		return s.join("");	//	string
 	};
 
 	//	convert to UTF-8
-	base.stringToUtf8 = function (input) {
+	base.stringToUtf8 = function(input){
 		var output = "";
 		var i = -1;
 		var x, y;
 
-		while (++i < input.length) {
+		while(++i < input.length){
 			x = input.charCodeAt(i);
 			y = i + 1 < input.length ? input.charCodeAt(i + 1) : 0;
-			if (0xD800 <= x && x <= 0xDBFF && 0xDC00 <= y && y <= 0xDFFF) {
+			if(0xD800 <= x && x <= 0xDBFF && 0xDC00 <= y && y <= 0xDFFF){
 				x = 0x10000 + ((x & 0x03FF) << 10) + (y & 0x03FF);
 				i++;
 			}
 
-			if (x <= 0x7F)
+			if(x <= 0x7F)
 				output += String.fromCharCode(x);
-			else if (x <= 0x7FF)
+			else if(x <= 0x7FF)
 				output += String.fromCharCode(0xC0 | ((x >>> 6) & 0x1F), 0x80 | (x & 0x3F));
-			else if (x <= 0xFFFF)
+			else if(x <= 0xFFFF)
 				output += String.fromCharCode(0xE0 | ((x >>> 12) & 0x0F), 0x80 | ((x >>> 6) & 0x3F), 0x80 | (x & 0x3F));
-			else if (x <= 0x1FFFFF)
+			else if(x <= 0x1FFFFF)
 				output += String.fromCharCode(0xF0 | ((x >>> 18) & 0x07), 0x80 | ((x >>> 12) & 0x3F), 0x80 | ((x >>> 6) & 0x3F), 0x80 | (x & 0x3F));
 		}
 		return output;
 	};
 
 	return base;
-});;
+});
+;
 define('dstore/QueryResults',['dojo/_base/lang', 'dojo/when'], function (lang, when) {
 	function forEach(callback, instance) {
 		return when(this, function(data) {
@@ -41113,20 +41020,21 @@ define('xide/manager/ServerActionBase',[
             return (r ? enc.slice(0, r - 3) : enc) + '==='.slice(r || 3);
 
         },
-        runDeferred: function (serviceClassIn, method, args, options, onError) {
+        runDeferred: function (serviceClassIn, method, args, options) {
+            var self = this;
             if (this.serviceObject.__init) {
                 if (this.serviceObject.__init.isResolved()) {
-                    return this._runDeferred(serviceClassIn, method, args, options, onError);
+                    return self._runDeferred(serviceClassIn, method, args, options);
                 }
                 var dfd = new Deferred();
-                this.serviceObject.__init.then(() => {
-                    this._runDeferred(serviceClassIn, method, args, options, onError).then(() => {
+                this.serviceObject.__init.then(function () {
+                    self._runDeferred(serviceClassIn, method, args, options).then(function () {
                         dfd.resolve(arguments);
                     });
                 });
                 return dfd;
             }
-            return this._runDeferred(serviceClassIn, method, args, options);
+            return self._runDeferred(serviceClassIn, method, args, options);
         },
         /**
          * Public main entry, all others below are deprecated
@@ -41136,7 +41044,7 @@ define('xide/manager/ServerActionBase',[
          * @param options
          * @returns {Deferred}
          */
-        _runDeferred: function (serviceClassIn, method, args, options, onError) {
+        _runDeferred: function (serviceClassIn, method, args, options) {
             var deferred = new Deferred(),
                 promise;
             options = options || this.defaultOptions;
@@ -41156,7 +41064,7 @@ define('xide/manager/ServerActionBase',[
                 serviceClass = this.getServiceClass(serviceClassIn),
                 thiz = this;
 
-            const resolve = function (data, error) {
+            var resolve = function (data, error) {
                 var dfd = deferred;
                 if (options.returnProm) {
                     dfd = promise;
@@ -41169,6 +41077,7 @@ define('xide/manager/ServerActionBase',[
                 }
                 dfd.resolve(data);
             };
+
             promise = service[serviceClass][method](args);
             promise.then(function (res) {
                 res = res || {};
@@ -41204,12 +41113,9 @@ define('xide/manager/ServerActionBase',[
                 }
                 resolve(res);
             }, function (err) {
-                onError && onError(err);
-                thiz.onError({
-                    code: 1,
-                    message: 'Rest Error for ' + method
-                });
+                thiz.onError(err);
             });
+
             if (options.returnProm) {
                 return promise;
             }
@@ -41282,7 +41188,8 @@ define('xide/manager/ServerActionBase',[
                     }
                     if (this.config) {
                         obj.serviceObject.config = this.config;
-                    }!this.ctx.serviceObject && (this.ctx.serviceObject = this.serviceObject);
+                    }
+                    !this.ctx.serviceObject && (this.ctx.serviceObject = this.serviceObject);
                 }
             } catch (e) {
                 console.error('error in rpc service creation : ' + e);
@@ -41298,9 +41205,7 @@ define('xide/manager/ServerActionBase',[
             if (err) {
                 if (err.code === 1) {
                     if (err.message && _.isArray(err.message)) {
-                        this.publish(types.EVENTS.ERROR, {
-                            message: err.message.join('<br/>')
-                        });
+                        this.publish(types.EVENTS.ERROR, {message: err.message.join('<br/>')});
                         return;
                     }
                 } else if (err.code === 0) {
@@ -41334,11 +41239,11 @@ define('xide/manager/ServerActionBase',[
             if (this.config && this.config.RPC_PARAMS) {
                 params = utils.mixin(params, this.config.RPC_PARAMS.rpcFixedParams);
                 this.serviceObject.extraArgs = params;
-                //if (this.config.RPC_PARAMS.rpcUserField) {
-                //    params[this.config.RPC_PARAMS.rpcUserField] = this.config.RPC_PARAMS.rpcUserValue;
-                //    this.serviceObject.signatureField = this.config.RPC_PARAMS.rpcSignatureField;
-                //    this.serviceObject.signatureToken = this.config.RPC_PARAMS.rpcSignatureToken;
-                //}
+                if (this.config.RPC_PARAMS.rpcUserField) {
+                    params[this.config.RPC_PARAMS.rpcUserField] = this.config.RPC_PARAMS.rpcUserValue;
+                    this.serviceObject.signatureField = this.config.RPC_PARAMS.rpcSignatureField;
+                    this.serviceObject.signatureToken = this.config.RPC_PARAMS.rpcSignatureToken;
+                }
             }
         },
         callMethodEx: function (serviceClassIn, method, args, readyCB, omitError) {
@@ -41376,9 +41281,7 @@ define('xide/manager/ServerActionBase',[
                     return;
                 }
                 if (omitError == true) {
-                    thiz.publish(types.EVENTS.STATUS, {
-                        message: 'Ok!'
-                    }, this);
+                    thiz.publish(types.EVENTS.STATUS, {message: 'Ok!'}, this);
                 }
 
             }, function (err) {
@@ -41396,9 +41299,7 @@ define('xide/manager/ServerActionBase',[
             return this.serviceObject[this.getServiceClass(serverClassIn)][method](args);
         },
         callMethod: function (method, args, readyCB, omitError) {
-            args = args || [
-                []
-            ];
+            args = args || [[]];
             var serviceClass = this.serviceClass;
             try {
                 var thiz = this;
@@ -44316,6 +44217,42 @@ define('xide/manager/RPCService',[
             if (this.correctTarget) {
                 request.target = this._smd.target;
             }
+
+
+            if (this.extraArgs) {
+                var index = 0;
+                for (var key in this.extraArgs) {
+
+                    request.target += request.target.indexOf('?') != -1 ? '&' : '?';
+                    request.target += key + '=' + this.extraArgs[key];
+                }
+            }
+            if (this.signatureToken) {
+                request.target += request.target.indexOf('?') != -1 ? '&' : '?';
+                var signature = SHA1._hmac(request.data, this.signatureToken, 1);
+
+                /*                  var aParams = {
+                 "service": serviceClass + ".get",
+                 "path":path,
+                 "callback":"asdf",
+                 "raw":"html",
+                 "attachment":"0",
+                 "send":"1",
+                 "user":this.config.RPC_PARAMS.rpcUserValue
+                 };
+
+                 var pStr  =  dojo.toJson(aParams);
+                 var signature = SHA1._hmac(pStr, this.config.RPC_PARAMS.rpcSignatureToken, 1);
+
+                 console.error('sign ' + pStr + ' with ' + this.config.RPC_PARAMS.rpcSignatureToken + ' to ' + signature);
+                 */
+                //var pStr  =  dojo.toJson(request.data);
+
+                var signature = SHA1._hmac(request.data, this.signatureToken, 1);
+                //console.error('sign ' + request.data + ' with ' +  this.signatureToken + ' to ' + signature);
+                request.target += this.signatureField + '=' + signature;
+            }
+
             var deferred = Service.transportRegistry.match(request.transport).fire(request);
             deferred.addBoth(function (results) {
                 return request._envDef.deserialize.call(this, results);
@@ -46780,6 +46717,18 @@ define('xide/data/ObservableStore',[
          * @type {Array<String>} List of default properties to be observed by dmodel.property.observe.
          */
         observedProperties: [],
+        /**
+         * Get/Set toggle to prevent notifications for mass store operations. Without there will be performance drops.
+         * @param silent {boolean|null}
+         */
+        silent: function (silent) {
+            if (silent === undefined) {
+                return this._ignoreChangeEvents;
+            }
+            if (silent === true || silent === false && silent !== this._ignoreChangeEvents) {
+                this._ignoreChangeEvents = silent;
+            }
+        },
         /**
          * XIDE Override and extend putSync for adding the _store property and observe a new item's properties.
          * @param item
@@ -52210,14 +52159,14 @@ define('xcf/manager/DeviceManager',[
                             {
                                 value: 4,
                                 label: 'Show Debug Messages'
-                            },
+                            },/*,
                             {
                                 value: 8,
                                 label: 'Allow Multiple Device Connections'
-                            },
+                            },*/
                             {
                                 value: 16,
-                                label: 'Server'
+                                label: 'Make Server'
                             }
 
                         ],
@@ -52233,14 +52182,14 @@ define('xcf/manager/DeviceManager',[
                         {
                             value: 4,
                             label: 'Show Debug Messages'
-                        },
+                        },/*
                         {
                             value: 8,
                             label: 'Allow Multiple Device Connections'
-                        },
+                        },*/
                         {
                             value: 16,
-                            label: 'Server'
+                            label: 'Make Server'
                         }
 
                     ];
@@ -66018,7 +65967,6 @@ define('xide/manager/Reloadable',[
         xideServiceClient: null,
         fileUpdateTimes:{},
         onXIDELoaded: function (min, WebSocket) {
-            return;
             var thiz = this;
             var _ctorArgs = {
                 delegate: {
@@ -66527,7 +66475,7 @@ define('xide/manager/Context',[
         isBrowser = has('host-browser'),
         bases = isBrowser ? [ContextBase, Context_UI] : [ContextBase],
         debugFileChanges = false,
-        debugModuleReload = false;
+        debugModuleReload = true;
 
     /**
      * @class module:xide/manager/Context
@@ -66612,25 +66560,26 @@ define('xide/manager/Context',[
                     var modulePath = data.data.modulePath;
                     if (modulePath) {
                         modulePath = modulePath.replace('.js', '');
-                        var _re = _require; //hide from gcc
+                        var _re = _require;//hide from gcc
                         //try pre-amd module
                         var module = null;
                         try {
                             module = _re(modulePath);
-                        } catch (e) {}
+                        } catch (e) {
+                        }
 
 
                         //special: driver
                         var _start = 'data/system/drivers';
                         if (path.indexOf(_start) != -1) {
-                            var libPath = path.substr(path.indexOf(_start) + (_start.length + 1), path.length);
+                            var libPath = path.substr(path.indexOf(_start) + (_start.length + 1 ), path.length);
                             libPath = libPath.replace('.js', '');
                             modulePath = 'system_drivers/' + libPath;
                         }
 
                         _start = 'user/drivers';
                         if (path.indexOf(_start) != -1) {
-                            var libPath = path.substr(path.indexOf(_start) + (_start.length + 1), path.length);
+                            var libPath = path.substr(path.indexOf(_start) + (_start.length + 1 ), path.length);
                             libPath = libPath.replace('.js', '');
                             modulePath = 'user_drivers/' + libPath;
                         }
@@ -66644,7 +66593,7 @@ define('xide/manager/Context',[
                             if (path.indexOf(vfsConfig['user_drivers']) !== -1) {
                                 var _start = vfsConfig['user_drivers'];
                                 _start = _start.replace(/\/+$/, "");
-                                var libPath = path.substr(path.indexOf(_start) + (_start.length + 1), path.length);
+                                var libPath = path.substr(path.indexOf(_start) + (_start.length + 1 ), path.length);
                                 libPath = libPath.replace('.js', '');
                                 modulePath = 'user_drivers/' + libPath;
                             }
@@ -66660,13 +66609,14 @@ define('xide/manager/Context',[
                 }
             }
         },
-        onNodeServiceStoreReady: function (evt) {},
+        onNodeServiceStoreReady: function (evt) {
+        },
         mergeFunctions: function (target, source, oldModule, newModule) {
             for (var i in source) {
                 var o = source[i];
                 if (_.isFunction(source[i])) {
                     if (source[i] && target) {
-                        target[i] = source[i];
+                        target[i] = source[i];//swap
                     }
                 }
             }
@@ -66685,7 +66635,6 @@ define('xide/manager/Context',[
                 pluginPromises = [],
                 newModules = [],
                 thiz = this;
-
             _require({
                 cacheBust: 'time=' + new Date().getTime()
             });
@@ -66721,7 +66670,6 @@ define('xide/manager/Context',[
 
             _module = _module.replace('0/8', '0.8');
             _module = _module.replace('/src/', '/');
-
             function handleError(error) {
                 debugModuleReload && console.log(error.src, error.id);
                 debugModuleReload && console.error('require error ' + _module, error);
@@ -66750,6 +66698,8 @@ define('xide/manager/Context',[
                         try {
                             oldModule = _require(utils.replaceAll('.', '/', _module));
                         } catch (e) {
+                            //logError(e,'error requiring '+_module);
+                            //dfd.reject(e);
                             debugModuleReload && console.log('couldnt require old module', _module);
                         }
                     }
@@ -66768,7 +66718,9 @@ define('xide/manager/Context',[
                     }
                 })
             }
+
             _require.undef(_module);
+
             var thiz = this;
             if (reload) {
                 setTimeout(function () {
@@ -66808,7 +66760,7 @@ define('xide/manager/Context',[
                                     moduleProto: moduleLoaded.prototype
                                 });
                             }
-                            thiz.setModule(_module, moduleLoaded);
+                            thiz.setModule(_module,moduleLoaded);
                             dfd.resolve(moduleLoaded);
                         });
                     } catch (e) {
@@ -66826,6 +66778,7 @@ define('xide/manager/Context',[
             if (isBrowser) {
                 var path = evt.path;
                 var _p = this.findVFSMount(path);
+                var _p2 = this.toVFSShort(path, _p);
                 path = utils.replaceAll('//', '/', path);
                 path = path.replace('/PMaster/', '');
                 var reloadFn = window['xappOnStyleSheetChanged'];
@@ -66902,7 +66855,7 @@ define('xide/manager/Context',[
                 if (path.indexOf(mountPath) !== -1) {
                     var _start = mountPath;
                     _start = _start.replace(/\/+$/, "");
-                    var libPath = path.substr(path.indexOf(_start) + (_start.length + 1), path.length);
+                    var libPath = path.substr(path.indexOf(_start) + (_start.length + 1 ), path.length);
                     return libPath;
                 }
             }
@@ -66955,10 +66908,9 @@ define('xide/manager/Context',[
         /*
          * STD - API
          */
-        constructor: function (config, args) {
+        constructor: function (config) {
             this.managers = [];
             this.config = config;
-            this.args = args;
             this.language = 'en';
             this.subscribe(types.EVENTS.ON_CHANGED_CONTENT, this.onDidChangeFileContent);
         },
@@ -67193,7 +67145,7 @@ define('xide/manager/Context_UI',[
          * @param editorClass
          * @param editorArgs
          */
-        registerEditorExtension: function (name, extensions, iconClass, owner, isDefault, onEdit, editorClass, editorArgs, actions) {
+        registerEditorExtension: function (name, extensions, iconClass, owner, isDefault, onEdit, editorClass, editorArgs) {
             iconClass = iconClass || 'el-icon-brush';
             var thiz = this,
                 _editorArgs = {
@@ -77173,7 +77125,6 @@ define('xide/utils/CIUtils',[
                 group:utils.toString(ci['group']),
                 user:utils.toObject(ci['user']),
                 dst:utils.toString(ci['dst']),
-                id:utils.toString(ci['id']),
                 params:utils.toString(ci['params'])
             })
         }
@@ -77957,9 +77908,6 @@ define('xide/utils/HTMLUtils',[
         }
         return false;
     };
-    utils.find=function(clss,parent){
-        return $(clss,parent)[0];
-    }
     /**
      * Finds and returns a widgets instance in a stack-container by name
      * @param name
@@ -79709,7 +79657,7 @@ define('xide/utils/HexUtils',[
         var buffer = utils.bufferFromDecString(string);
         var result = "";
         for (var i = 0; i < buffer.length; i++) {
-            result += String.fromCharCode(buffer[i]);
+            result += String.fromCharCode(buffer[i], 16);
         }
         return result;
     };
@@ -80648,6 +80596,7 @@ define('xide/utils/StringUtils',[
         }
         str = utils.cleanString(str);//control characters
         str = str.replace('./', '');//file store specifics
+        str = str.replace('/.', '');//file store specifics
         str = str.replace(/([^:]\/)\/+/g, "$1");//double slashes
         return str;
     };
@@ -82429,11 +82378,9 @@ define('xide/types',[
     var mod = new dcl(null,{
         declaredClass:"xide/types"
     });
-    mod.test = 22;
+    mod.test = 2;
     return mod;
-});
-
-;
+});;
 define('dstore/Filter',['dojo/_base/declare'], function (declare) {
 	// a Filter builder
 	function filterCreator(type) {

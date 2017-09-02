@@ -238,11 +238,9 @@ define('xide/types',[
     var mod = new dcl(null,{
         declaredClass:"xide/types"
     });
-    mod.test = 22;
+    mod.test = 2;
     return mod;
 });
-
-
 /** @module xgrid/Renderer **/
 define('xgrid/Renderer',[
     "xdojo/declare",
@@ -4028,6594 +4026,6 @@ define('xfile/component',[
 });
 
 
-/** @module xgrid/ThumbRenderer **/
-define('xgrid/ThumbRenderer',[
-    "xdojo/declare",
-    'xide/types',
-    'dojo/dom-construct',
-    './Renderer'
-], function (declare,types,domConstruct,Renderer) {
-    /**
-     * The list renderer does nothing since the xgrid/Base is already inherited from
-     * dgrid/OnDemandList and its rendering as list already.
-     *
-     * @class module:xgrid/ThumbRenderer
-     * @extends module:xgrid/Renderer
-     */
-    var Implementation = {
-        isThumbGrid:false,
-        _getLabel:function(){ return "Thumb"; },
-        _getIcon:function(){ return "fa-th-large"; },
-        activateRenderer:function(renderer){
-            this._showHeader(false);
-            this.isThumbGrid = true;
-        },
-        deactivateRenderer:function(renderer){
-            this.isThumbGrid = false;
-        },
-        /**
-         * Override renderRow
-         * @param obj
-         * @returns {*}
-         */
-        renderRow: function (obj) {
-            if (obj.render) {
-                return obj.render(obj, this.inherited);
-            }
-            return domConstruct.create('span', {
-                className: "fileGridCell",
-                innerHTML: '<span class=\"' + 'fa-cube fa-5x' + '\""></span> <div class="name">' + obj.name + '</div>',
-                style: 'color:blue;max-width:200px;float:left;margin:18px;padding:18px;'
-            });
-        }
-    };
-
-    //package via declare
-    var _class = declare('xgrid.ThumbRenderer',[Renderer],Implementation);
-    _class.Implementation = Implementation;
-
-    return _class;
-});
-/** @module xfile/ThumbRenderer **/
-define('xfile/ThumbRenderer',[
-    "xdojo/declare",
-    'xide/utils',
-    'dojo/dom-construct',
-    'xgrid/ThumbRenderer'
-], function (declare,utils,domConstruct,ThumbRenderer) {
-
-    /**
-     * The list renderer does nothing since the xgrid/Base is already inherited from
-     * dgrid/OnDemandList and its rendering as list already.
-     *
-     * @class module:xfile/ThumbRenderer
-     * @extends module:xfile/Renderer
-     */
-    return declare('xfile.ThumbRenderer',[ThumbRenderer],{
-        thumbSize: "400",
-        resizeThumb: true,
-        __type:'thumb',
-        deactivateRenderer:function(){
-            $(this.domNode.parentNode).removeClass('metro');
-            $(this.domNode).css('padding','');
-            this.isThumbGrid = false;
-
-        },
-        activateRenderer:function(){
-            $(this.domNode.parentNode).addClass('metro');
-            $(this.contentNode).css('padding','8px');
-            this.isThumbGrid = true;
-            this.refresh();
-        },
-
-        _renderUpload:function(name,progress,obj){
-
-            progress = parseInt(progress.replace('%',''));
-            if(progress==100){
-                progress = 90;
-            }
-
-            var result = '<div class="tile widget uploadItem"><div class="radial-progress tile widget " data-progress="' + progress + '">'+
-                '<div class="circle">'+
-                '<div class="mask full">'+
-                '<div class="fill"></div>'+
-                '</div>'+
-                '<div class="mask half">'+
-                '<div class="fill"></div>'+
-                '<div class="fill fix"></div>'+
-                '</div>'+
-                '<div class="shadow"></div>'+
-                '</div>'+
-                '<div class="inset">'+
-                '<div class="percentage">'+
-                '<div class="numbers"><span>-</span>';
-
-            for(var i= 0 ; i< 99 ; i++){
-
-                result+=('<span>' + i +'%' + '</span>');
-
-            };
-
-            result+='</div>'+
-                '</div>'+
-                '</div>'+
-                '</div></div>';
-
-            return result;
-
-        },
-        /**
-         * Override renderRow
-         * @param obj
-         * @returns {*}
-         */
-        renderRow: function (obj) {
-            if(obj.isUpload === true){
-                return $(this._renderUpload(obj.name, obj.progress + '%',obj))[0];
-            }
-            if(obj.renderRow){
-                var _res = obj.renderRow.apply(this,[obj]);
-                if(_res){
-                    return _res;
-                }
-            }
-            var thiz = this,
-                div = domConstruct.create('div', {
-                    className: "tile widget"
-                }),
-                icon = obj.icon,
-                no_access = obj.read === false && obj.write === false,
-                isBack = obj.name == '..',
-                directory = obj && !!obj.directory,
-                useCSS = false,
-                label = '',
-                imageClass = 'fa fa-folder fa-5x',
-                isImage = false;
-
-            this._doubleWidthThumbs = true;
-            var iconStyle='text-shadow: 2px 2px 5px rgba(0,0,0,0.3);font-size: 72px;opacity: 0.7';
-            var contentClass = 'icon';
-            if (directory) {
-
-                if (isBack) {
-                    imageClass = 'fa fa-level-up fa-5x itemFolder';
-                    useCSS = true;
-                } else if (!no_access) {
-                    imageClass = 'fa fa-folder fa-5x itemFolder';
-                    useCSS = true;
-                } else {
-                    imageClass = 'fa fa-lock fa-5x itemFolder';
-                    useCSS = true;
-                }
-
-            } else {
-
-                imageClass = 'itemIcon';
-
-                if (no_access) {
-                    imageClass = 'fa fa-lock fa-5x itemFolder';
-                    useCSS = true;
-                } else {
-
-                    if (utils.isImage(obj.path)) {
-
-                        var url = this.getImageUrl(obj);
-                        if (url) {
-                            obj.icon = url;
-                        } else {
-                            obj.icon = thiz.config.REPO_URL + '/' + obj.path;
-                        }
-
-                        imageClass = 'imageFile';
-
-                    } else {
-                        imageClass = 'fa fa-5x ' + utils.getIconClass(obj.path);
-                        useCSS = true;
-                    }
-                }
-
-            }
-
-            label = obj.name;
-
-            var folderContent =  '<span style="' + iconStyle + '" class="fa fa-6x '+imageClass +'"></span>';
-
-            if (utils.isImage(obj.path)) {
-
-                var url = this.getImageUrl(obj);
-                if (url) {
-                    obj.icon = url;
-                } else {
-                    obj.icon = thiz.config.REPO_URL + '/' + obj.path;
-                }
-
-                imageClass = '';
-                contentClass = 'image';
-                folderContent = '<div style="" class="tile-content image">' +
-                    '<img class=\"' + imageClass + '\" src="' + obj.icon + '"/>' +
-                    '</div>';
-
-                useCSS = true;
-                isImage = true;
-
-            }
-            var label2 = label + '\n' + obj.modified;
-            var html = '<div title="' + label2 +'" class="tile-content ' + contentClass +'">'+
-                folderContent +
-                '</div>'+
-
-                '<div class="brand opacity">'+
-                '<span class="thumbText text opacity ellipsis" style="">'+
-                label +
-                '</span>'+
-                '</div>';
-
-            if (useCSS) {
-                div.innerHTML = html;
-                return div;
-            }
-
-
-            if (directory) {
-                div.innerHTML = html;
-            } else {
-                div.innerHTML = '<img class=\"' + imageClass + '\" src="' + obj.icon + '"/>&nbsp;<div class="name">' + obj.name + '</div>';
-            }
-            return div;
-
-        },
-        getImageUrl: function (item) {
-            var fileManager = this.ctx.getFileManager();
-            if (fileManager && fileManager) {
-                var params = null;
-                if (this.resizeThumb) {
-                    params = {
-                        width: this.thumbSize
-                    }
-                }
-                return fileManager.getImageUrl(item, null, params);
-            }
-            return null;
-        }
-    });
-});
-define('dgrid/util/has-css3',[
-	'dojo/has'
-], function (has) {
-	// This module defines feature tests for CSS3 features such as transitions.
-	// The css-transitions, css-transforms, and css-transforms3d has-features
-	// can report either boolean or string:
-	// * false indicates no support
-	// * true indicates prefix-less support
-	// * string indicates the vendor prefix under which the feature is supported
-
-	var cssPrefixes = ['ms', 'O', 'Moz', 'Webkit'];
-
-	function testStyle(element, property) {
-		var style = element.style,
-			i;
-
-		if (property in style) {
-			// Standard, no prefix
-			return true;
-		}
-		property = property.slice(0, 1).toUpperCase() + property.slice(1);
-		for (i = cssPrefixes.length; i--;) {
-			if ((cssPrefixes[i] + property) in style) {
-				// Vendor-specific css property prefix
-				return cssPrefixes[i];
-			}
-		}
-
-		// Otherwise, not supported
-		return false;
-	}
-
-	has.add('css-transitions', function (global, doc, element) {
-		return testStyle(element, 'transitionProperty');
-	});
-
-	has.add('css-transforms', function (global, doc, element) {
-		return testStyle(element, 'transform');
-	});
-
-	has.add('css-transforms3d', function (global, doc, element) {
-		return testStyle(element, 'perspective');
-	});
-
-	has.add('transitionend', function () {
-		// Infer transitionend event name based on CSS transitions has-feature.
-		var tpfx = has('css-transitions');
-		if (!tpfx) {
-			return false;
-		}
-		if (tpfx === true) {
-			return 'transitionend';
-		}
-		return {
-			ms: 'MSTransitionEnd',
-			O: 'oTransitionEnd',
-			Moz: 'transitionend',
-			Webkit: 'webkitTransitionEnd'
-		}[tpfx];
-	});
-
-	return has;
-});
-
-define('dgrid/util/touch',[
-	'dojo/on'
-	//'dojo/query'
-], function (on, query) {
-	// This module exposes useful functions for working with touch devices.
-
-	var util = {
-		// Overridable defaults related to extension events defined below.
-		tapRadius: 10,
-		dbltapTime: 250,
-
-		selector: function (selector, eventType, children) {
-			// summary:
-			//		Reimplementation of on.selector, taking an iOS quirk into account
-			return function (target, listener) {
-				var bubble = eventType.bubble;
-				if (bubble) {
-					// the event type doesn't naturally bubble, but has a bubbling form, use that
-					eventType = bubble;
-				}
-				else if (children !== false) {
-					// for normal bubbling events we default to allowing children of the selector
-					children = true;
-				}
-				return on(target, eventType, function (event) {
-					var eventTarget = event.target;
-
-					// iOS tends to report the text node an event was fired on, rather than
-					// the top-level element; this may end up causing errors in selector engines
-					if (eventTarget.nodeType === 3) {
-						eventTarget = eventTarget.parentNode;
-					}
-
-					// there is a selector, so make sure it matches
-					while (!query.matches(eventTarget, selector, target)) {
-						//debugger;
-						if (eventTarget === target || !children || !(eventTarget = eventTarget.parentNode)) {
-							return;
-						}
-					}
-					return listener.call(eventTarget, event);
-				});
-			};
-		},
-
-		countCurrentTouches: function (evt, node) {
-			// summary:
-			//		Given a touch event and a DOM node, counts how many current touches
-			//		presently lie within that node.  Useful in cases where an accurate
-			//		count is needed but tracking changedTouches won't suffice because
-			//		other handlers stop events from bubbling high enough.
-
-			if (!('touches' in evt)) {
-				// Not a touch event (perhaps called from a mouse event on a
-				// platform supporting touch events)
-				return -1;
-			}
-
-			var i, numTouches, touch;
-			for (i = 0, numTouches = 0; (touch = evt.touches[i]); ++i) {
-				if (node.contains(touch.target)) {
-					++numTouches;
-				}
-			}
-			return numTouches;
-		}
-	};
-
-	function handleTapStart(target, listener, evt, prevent) {
-		// Common function for handling tap detection.
-		// The passed listener will only be fired when and if a touchend is fired
-		// which confirms the overall gesture resembled a tap.
-
-		if (evt.targetTouches.length > 1) {
-			return; // ignore multitouch
-		}
-
-		var start = evt.changedTouches[0],
-			startX = start.screenX,
-			startY = start.screenY;
-
-		prevent && evt.preventDefault();
-
-		var endListener = on(target, 'touchend', function (evt) {
-			var end = evt.changedTouches[0];
-			if (!evt.targetTouches.length) {
-				// only call listener if this really seems like a tap
-				if (Math.abs(end.screenX - startX) < util.tapRadius &&
-						Math.abs(end.screenY - startY) < util.tapRadius) {
-					prevent && evt.preventDefault();
-					listener.call(this, evt);
-				}
-				endListener.remove();
-			}
-		});
-	}
-
-	function tap(target, listener) {
-		// Function usable by dojo/on as a synthetic tap event.
-		return on(target, 'touchstart', function (evt) {
-			handleTapStart(target, listener, evt);
-		});
-	}
-
-	function dbltap(target, listener) {
-		// Function usable by dojo/on as a synthetic double-tap event.
-		var first, timeout;
-
-		return on(target, 'touchstart', function (evt) {
-			if (!first) {
-				// first potential tap: detect as usual, but with specific logic
-				handleTapStart(target, function (evt) {
-					first = evt.changedTouches[0];
-					timeout = setTimeout(function () {
-						first = timeout = null;
-					}, util.dbltapTime);
-				}, evt);
-			}
-			else {
-				handleTapStart(target, function (evt) {
-					// bail out if first was cleared between 2nd touchstart and touchend
-					if (!first) {
-						return;
-					}
-					var second = evt.changedTouches[0];
-					// only call listener if both taps occurred near the same place
-					if (Math.abs(second.screenX - first.screenX) < util.tapRadius &&
-							Math.abs(second.screenY - first.screenY) < util.tapRadius) {
-						timeout && clearTimeout(timeout);
-						first = timeout = null;
-						listener.call(this, evt);
-					}
-				}, evt, true);
-			}
-		});
-	}
-
-	util.tap = tap;
-	util.dbltap = dbltap;
-
-	return util;
-});
-define('dgrid/Tree',[
-	'dojo/_base/declare',
-	'dojo/_base/lang',
-	'dojo/_base/array',
-	'dojo/aspect',
-	'dojo/dom-construct',
-	'dojo/dom-class',
-	'dojo/on',
-	'dojo/query',
-	'dojo/when',
-	'./util/has-css3',
-	'./Grid',
-	'./util/touch'
-], function (declare, lang, arrayUtil, aspect, domConstruct, domClass, on, querySelector, when, has, Grid, touchUtil) {
-
-	return declare(null, {
-		// collapseOnRefresh: Boolean
-		//		Whether to collapse all expanded nodes any time refresh is called.
-		collapseOnRefresh: false,
-
-		// enableTreeTransitions: Boolean
-		//		Enables/disables all expand/collapse CSS transitions.
-		enableTreeTransitions: false,
-
-		// treeIndentWidth: Number
-		//		Width (in pixels) of each level of indentation.
-		treeIndentWidth: 9,
-
-		constructor: function () {
-			this._treeColumnListeners = [];
-		},
-
-		shouldExpand: function (row, level, previouslyExpanded) {
-			// summary:
-			//		Function called after each row is inserted to determine whether
-			//		expand(rowElement, true) should be automatically called.
-			//		The default implementation re-expands any rows that were expanded
-			//		the last time they were rendered (if applicable).
-
-			return previouslyExpanded;
-		},
-
-		expand: function (target, expand, noTransition) {
-			// summary:
-			//		Expands the row corresponding to the given target.
-			// target: Object
-			//		Row object (or something resolvable to one) to expand/collapse.
-			// expand: Boolean?
-			//		If specified, designates whether to expand or collapse the row;
-			//		if unspecified, toggles the current state.
-
-			if (!this._treeColumn) {
-				return;
-			}
-
-			var grid = this,
-				row = target.element ? target : this.row(target),
-				isExpanded = !!this._expanded[row.id],
-				hasTransitionend = has('transitionend'),
-				promise, collection = this.collection;
-
-			target = row.element;
-			if (!target) {
-				return;
-			}
-			target = target.className.indexOf('dgrid-expando-icon') > -1 ? target :
-				querySelector('.dgrid-expando-icon', target)[0];
-
-			noTransition = noTransition || !this.enableTreeTransitions;
-
-			if (target && target.mayHaveChildren && (noTransition || expand !== isExpanded)) {
-				// toggle or set expand/collapsed state based on optional 2nd argument
-				var expanded = expand === undefined ? !this._expanded[row.id] : expand;
-
-				if (collection.spin === true && expand) {
-					domClass.remove(target, 'ui-icon-triangle-1-e');
-					domClass.remove(target, 'ui-icon-triangle-1-se');
-					domClass.add(target, 'fa fa-spinner fa-spin dgrid-cell-loading');
-				} else {
-					domClass.replace(target, 'ui-icon-triangle-1-' + (expanded ? 'se' : 'e'),
-						'ui-icon-triangle-1-' + (expanded ? 'e' : 'se'));
-				}
-
-
-				domClass.toggle(row.element, 'dgrid-row-expanded', expanded);
-				var rowElement = row.element,
-					container = rowElement.connected,
-					containerStyle,
-					scrollHeight,
-					options = {};
-
-				if (!container) {
-					// if the children have not been created, create a container, a preload node and do the
-					// query for the children
-					container = options.container = rowElement.connected =
-						domConstruct.create('div', { className: 'dgrid-tree-container' }, rowElement, 'after');
-
-					var query = function (options) {
-						var childCollection = grid._renderedCollection.getChildren(row.data),
-							results;
-						if (grid.sort) {
-							childCollection = childCollection.sort(grid.sort);
-						}
-						if (childCollection.track && grid.shouldTrackCollection) {
-							container._rows = options.rows = [];
-
-							childCollection = childCollection.track();
-
-							// remember observation handles so they can be removed when the parent row is destroyed
-							container._handles = [
-								childCollection.tracking,
-								grid._observeCollection(childCollection, container, options)
-							];
-						}
-						if ('start' in options) {
-							var rangeArgs = {
-								start: options.start,
-								end: options.start + options.count
-							};
-							results = childCollection.fetchRange(rangeArgs);
-						} else {
-							results = childCollection.fetch();
-						}
-						return results;
-					};
-					// Include level information on query for renderQuery case
-					if ('level' in target) {
-						query.level = target.level;
-					}
-
-					// Add the query to the promise chain
-					if (this.renderQuery) {
-						promise = this.renderQuery(query, options);
-					}
-					else {
-						// If not using OnDemandList, we don't need preload nodes,
-						// but we still need a beforeNode to pass to renderArray,
-						// so create a temporary one
-						var firstChild = domConstruct.create('div', null, container);
-						promise = this._trackError(function () {
-							return grid.renderQueryResults(
-								query(options),
-								firstChild,
-								lang.mixin({ rows: options.rows },
-									'level' in query ? { queryLevel: query.level } : null
-								)
-							).then(function (rows) {
-								domConstruct.destroy(firstChild);
-								return rows;
-							});
-						});
-					}
-
-					if (hasTransitionend) {
-						// Update height whenever a collapse/expand transition ends.
-						// (This handler is only registered when each child container is first created.)
-						on(container, hasTransitionend, this._onTreeTransitionEnd);
-					}
-				}
-
-				// Show or hide all the children.
-
-				container.hidden = !expanded;
-				containerStyle = container.style;
-
-				// make sure it is visible so we can measure it
-				if (!hasTransitionend || noTransition) {
-					containerStyle.display = expanded ? 'block' : 'none';
-					containerStyle.height = '';
-				}
-				else {
-					if (expanded) {
-						containerStyle.display = 'block';
-						scrollHeight = container.scrollHeight;
-						containerStyle.height = '0px';
-					}
-					else {
-						// if it will be hidden we need to be able to give a full height
-						// without animating it, so it has the right starting point to animate to zero
-						domClass.add(container, 'dgrid-tree-resetting');
-						containerStyle.height = container.scrollHeight + 'px';
-					}
-					// Perform a transition for the expand or collapse.
-					setTimeout(function () {
-						domClass.remove(container, 'dgrid-tree-resetting');
-						containerStyle.height =
-							expanded ? (scrollHeight ? scrollHeight + 'px' : 'auto') : '0px';
-					}, 0);
-				}
-
-				// Update _expanded map.
-				if (expanded) {
-					this._expanded[row.id] = true;
-				}
-				else {
-					delete this._expanded[row.id];
-				}
-			}
-			function clear(target) {
-				if (collection.spin === true && target.mayHaveChildren) {
-					domClass.remove(target, 'fa-spin fa-spinner dgrid-cell-loading');
-					domClass.replace(target, 'ui-icon-triangle-1-' + (expanded ? 'se' : 'e'),
-						'ui-icon-triangle-1-' + (expanded ? 'e' : 'se'));
-				}
-			}
-			if (promise && promise.then) {
-				promise.then(function () {
-					clear(target);
-				});
-			} else {
-				clear(target);
-			}
-
-			// Always return a promise
-			return when(promise);
-		},
-
-		_configColumns: function () {
-			var columnArray = this.inherited(arguments);
-
-			// Set up hash to store IDs of expanded rows (here rather than in
-			// _configureTreeColumn so nothing breaks if no column has renderExpando)
-			this._expanded = {};
-
-			for (var i = 0, l = columnArray.length; i < l; i++) {
-				if (columnArray[i].renderExpando) {
-					this._configureTreeColumn(columnArray[i]);
-					break; // Allow only one tree column.
-				}
-			}
-			return columnArray;
-		},
-
-		insertRow: function (object) {
-			var rowElement = this.inherited(arguments);
-
-			// Auto-expand (shouldExpand) considerations
-			var row = this.row(rowElement),
-				expanded = this.shouldExpand(row, this._currentLevel, this._expanded[row.id]);
-
-			if (expanded) {
-				this.expand(rowElement, true, true);
-			}
-
-			if (expanded || (!this.collection.mayHaveChildren || this.collection.mayHaveChildren(object))) {
-				domClass.add(rowElement, 'dgrid-row-expandable');
-			}
-
-			return rowElement; // pass return value through
-		},
-
-		removeRow: function (rowElement, preserveDom) {
-			var connected = rowElement.connected,
-				childOptions = {};
-			if (connected) {
-				if (connected._handles) {
-					arrayUtil.forEach(connected._handles, function (handle) {
-						handle.remove();
-					});
-					delete connected._handles;
-				}
-
-				if (connected._rows) {
-					childOptions.rows = connected._rows;
-				}
-
-				querySelector('>.dgrid-row', connected).forEach(function (element) {
-					this.removeRow(element, true, childOptions);
-				}, this);
-
-				if (connected._rows) {
-					connected._rows.length = 0;
-					delete connected._rows;
-				}
-
-				if (!preserveDom) {
-					domConstruct.destroy(connected);
-				}
-			}
-
-			this.inherited(arguments);
-		},
-
-		_refreshCellFromItem: function (cell, item) {
-			if (!cell.column.renderExpando) {
-				return this.inherited(arguments);
-			}
-
-			this.inherited(arguments, [cell, item, {
-				queryLevel: querySelector('.dgrid-expando-icon', cell.element)[0].level - 1
-			}]);
-		},
-
-		cleanup: function () {
-			this.inherited(arguments);
-
-			if (this.collapseOnRefresh) {
-				// Clear out the _expanded hash on each call to cleanup
-				// (which generally coincides with refreshes, as well as destroy)
-				this._expanded = {};
-			}
-		},
-
-		_destroyColumns: function () {
-			this.inherited(arguments);
-			var listeners = this._treeColumnListeners;
-
-			for (var i = listeners.length; i--;) {
-				listeners[i].remove();
-			}
-			this._treeColumnListeners = [];
-			this._treeColumn = null;
-		},
-
-		_calcRowHeight: function (rowElement) {
-			// Override this method to provide row height measurements that
-			// include the children of a row
-			var connected = rowElement.connected;
-			// if connected, need to consider this in the total row height
-			return this.inherited(arguments) + (connected ? connected.offsetHeight : 0);
-		},
-
-		_configureTreeColumn: function (column) {
-			// summary:
-			//		Adds tree navigation capability to a column.
-
-			var grid = this;
-			var collection = this.collection;
-			var colSelector = '.dgrid-content .dgrid-column-' + column.id;
-			var clicked; // tracks row that was clicked (for expand dblclick event handling)
-
-			this._treeColumn = column;
-			if (!column._isConfiguredTreeColumn) {
-				var originalRenderCell = column.renderCell || this._defaultRenderCell;
-				column._isConfiguredTreeColumn = true;
-				column.renderCell = function (object, value, td, options) {
-					// summary:
-					//		Renders a cell that can be expanded, creating more rows
-
-					if (!collection) {
-						return;
-					}
-
-					var level = Number(options && options.queryLevel) + 1,
-						mayHaveChildren = !collection.mayHaveChildren || collection.mayHaveChildren(object),
-						expando, node;
-
-					level = grid._currentLevel = isNaN(level) ? 0 : level;
-
-					expando = column.renderExpando(level, mayHaveChildren,
-						grid._expanded[collection.getIdentity(object)], object);
-
-					expando.level = level;
-					expando.mayHaveChildren = mayHaveChildren;
-
-					node = originalRenderCell.call(column, object, value, td, options);
-					if (node && node.nodeType) {
-						td.appendChild(expando);
-						td.appendChild(node);
-					}
-					else {
-						td.insertBefore(expando, td.firstChild);
-					}
-				};
-
-				if (typeof column.renderExpando !== 'function') {
-					column.renderExpando = this._defaultRenderExpando;
-				}
-			}
-
-			var treeColumnListeners = this._treeColumnListeners;
-			if (treeColumnListeners.length === 0) {
-				// Set up the event listener once and use event delegation for better memory use.
-				treeColumnListeners.push(this.on(column.expandOn ||
-					'.dgrid-expando-icon:click,' + colSelector + ':dblclick,' + colSelector + ':keydown',
-					function (event) {
-						var row = grid.row(event);
-						if ((!grid.collection.mayHaveChildren || grid.collection.mayHaveChildren(row.data)) &&
-							(event.type !== 'keydown' || event.keyCode === 32) && !(event.type === 'dblclick' &&
-								clicked && clicked.count > 1 && row.id === clicked.id &&
-								event.target.className.indexOf('dgrid-expando-icon') > -1)) {
-							grid.expand(row);
-						}
-
-						// If the expando icon was clicked, update clicked object to prevent
-						// potential over-triggering on dblclick (all tested browsers but IE < 9).
-						if (event.target.className.indexOf('dgrid-expando-icon') > -1) {
-							if (clicked && clicked.id === grid.row(event).id) {
-								clicked.count++;
-							}
-							else {
-								clicked = {
-									id: grid.row(event).id,
-									count: 1
-								};
-							}
-						}
-					})
-				);
-
-				if (has('touch')) {
-					// Also listen on double-taps of the cell.
-					treeColumnListeners.push(this.on(touchUtil.selector(colSelector, touchUtil.dbltap),
-						function () {
-							grid.expand(this);
-						}));
-				}
-			}
-
-			/*
-			 column.renderCell = function (object, value, td, options) {
-			 // summary:
-			 //		Renders a cell that can be expanded, creating more rows
-
-			 var grid = column.grid,
-			 level = Number(options && options.queryLevel) + 1,
-			 mayHaveChildren = !grid.collection.mayHaveChildren || grid.collection.mayHaveChildren(object),
-			 expando, node;
-
-			 level = grid._currentLevel = isNaN(level) ? 0 : level;
-			 expando = column.renderExpando(level, mayHaveChildren,
-			 grid._expanded[grid.collection.getIdentity(object)], object);
-			 expando.level = level;
-			 expando.mayHaveChildren = mayHaveChildren;
-
-			 node = originalRenderCell.call(column, object, value, td, options);
-			 if (node && node.nodeType) {
-			 td.appendChild(expando);
-			 td.appendChild(node);
-			 }
-			 else {
-			 td.insertBefore(expando, td.firstChild);
-			 }
-			 };
-			 *//*
-   if (!column.originalRenderCell)
-   {
-	   column.originalRenderCell = column.renderCell || this._defaultRenderCell;
-	   column.renderCell = function (object, value, td, options) {
-		   // summary:
-		   //              Renders a cell that can be expanded, creating more rows
-		   var grid = column.grid,
-				   level = Number(options && options.queryLevel) + 1,
-				   mayHaveChildren = !grid.collection.mayHaveChildren || grid.collection.mayHaveChildren(object),
-				   expando,
-				   node;
-
-		   level = grid._currentLevel = isNaN(level) ? 0 : level;
-		   expando = column.renderExpando(level, mayHaveChildren,
-				   grid._expanded[grid.collection.getIdentity(object)], object);
-		   expando.level = level;
-		   expando.mayHaveChildren = mayHaveChildren;
-		   node = column.originalRenderCell(object, value, td, options);
-		   if (node && node.nodeType) {
-			   td.appendChild(expando);
-			   td.appendChild(node);
-		   }
-		   else {
-			   td.insertBefore(expando, td.firstChild);
-		   }
-	   };
-   }
-   */
-		},
-
-		_defaultRenderExpando: function (level, hasChildren, expanded) {
-			// summary:
-			//		Default implementation for column.renderExpando.
-			//		NOTE: Called in context of the column definition object.
-			// level: Number
-			//		Level of indentation for this row (0 for top-level)
-			// hasChildren: Boolean
-			//		Whether this item may have children (in most cases this determines
-			//		whether an expando icon should be rendered)
-			// expanded: Boolean
-			//		Whether this item is currently in expanded state
-			// object: Object
-			//		The item that this expando pertains to
-
-			var dir = this.grid.isRTL ? 'right' : 'left',
-				cls = 'dgrid-expando-icon';
-			if (hasChildren) {
-				cls += ' ui-icon ui-icon-triangle-1-' + (expanded ? 'se' : 'e');
-			}
-			return domConstruct.create('div', {
-				className: cls,
-				innerHTML: '&nbsp;',
-				style: 'margin-' + dir + ': ' + (level * this.grid.treeIndentWidth) + 'px; float: ' + dir + ';'
-			});
-		},
-
-		_onNotification: function (rows, event) {
-			if (event.type === 'delete') {
-				delete this._expanded[event.id];
-			}
-			this.inherited(arguments);
-		},
-
-		_onTreeTransitionEnd: function (event) {
-			var container = this,
-				height = this.style.height;
-			if (height) {
-				// After expansion, ensure display is correct;
-				// after collapse, set display to none to improve performance
-				this.style.display = height === '0px' ? 'none' : 'block';
-			}
-
-			// Reset height to be auto, so future height changes (from children
-			// expansions, for example), will expand to the right height.
-			if (event) {
-				// For browsers with CSS transition support, setting the height to
-				// auto or "" will cause an animation to zero height for some
-				// reason, so temporarily set the transition to be zero duration
-				domClass.add(this, 'dgrid-tree-resetting');
-				setTimeout(function () {
-					// Turn off the zero duration transition after we have let it render
-					domClass.remove(container, 'dgrid-tree-resetting');
-				}, 0);
-			}
-			// Now set the height to auto
-			this.style.height = '';
-		}
-	});
-});
-/** @module xgrid/TreeRenderer **/
-define('xgrid/TreeRenderer',[
-    "xdojo/declare",
-    'xgrid/Renderer',
-    'dgrid/Tree',
-    "dojo/keys",
-    "dojo/on",
-    "xide/$"
-], function (declare, Renderer, Tree, keys, on, $) {
-
-    function KEYBOARD_HANDLER(evt) {
-        this.onTreeKey(evt);
-        var thiz = this;
-        if (thiz.isThumbGrid) {
-            return;
-        }
-        if (evt.keyCode == keys.LEFT_ARROW || evt.keyCode == keys.RIGHT_ARROW || evt.keyCode == keys.HOME || evt.keyCode == keys.END) {
-        } else {
-            return;
-        }
-        var target = evt.target;
-        if (target) {
-            if (target.className.indexOf('InputInner') != -1 || target.className.indexOf('input') != -1 || evt.target.type === 'text') {
-                return;
-            }
-        }
-
-        var row = this.row(evt);
-        if (!row || !row.data) {
-            return;
-        }
-        var data = row.data,
-            isExpanded = this._isExpanded(data),
-            store = this.collection,
-            storeItem = store.getSync(data[store.idProperty]);
-
-        //old back compat: var children = data.getChildren ? data.getChildren() :  storeItem && storeItem.children ? null : store.children ? store.children(storeItem) : null;
-        var children = data.getChildren ? data.getChildren() : storeItem && storeItem.children ? storeItem.children : null;
-
-        //xideve hack
-        var wasStoreBased = false;
-        if (children == null && store.getChildrenSync && storeItem) {
-            children = store.getChildrenSync(storeItem);
-            if (children && children.length) {
-                wasStoreBased = true;
-            } else {
-                children = null;
-            }
-        }
-
-        var isFolder = storeItem ? (storeItem.isDir || storeItem.directory || storeItem.group) : false;
-        if (!isFolder && wasStoreBased && children) {
-            isFolder = true;
-        }
-        //xideve hack end
-
-        var firstChild = children ? children[0] : false,
-            focused = this._focusedNode,
-            last = focused ? this.down(focused, children ? children.length : 0, true) : null,
-            loaded = (storeItem._EX === true || storeItem._EX == null);
-
-        var selection = this.getSelection ? this.getSelection() : [storeItem];
-        //var selection2 = this.getSelection ? this._getSelected() : [storeItem];
-
-        var down = this.down(focused, -1, true),
-            up = this.down(focused, 1, true),
-            defaultSelectArgs = {
-                focus: true,
-                append: false,
-                delay: 1
-            };
-
-        if (firstChild && firstChild._reference) {
-            var _b = store.getSync(firstChild._reference);
-            if (_b) {
-                firstChild = _b;
-            }
-        }
-        if (evt.keyCode == keys.END) {
-            if (isExpanded && isFolder && last && last.element !== focused) {
-                this.select(last, null, true, defaultSelectArgs);
-                return;
-            }
-        }
-
-        function expand(what, expand) {
-            _.each(what, function (item) {
-                var _row = thiz.row(item);
-                if (_row && _row.element) {
-                    thiz.expand(_row, expand, true);
-                }
-            });
-        }
-
-        if (evt.keyCode == keys.LEFT_ARROW) {
-            evt.preventDefault();
-            if (data[store.parentField]) {
-                var item = row.data;
-                if (!isExpanded) {
-                    var parent = store.getSync(item[store.parentField]);
-                    var parentRow = parent ? this.row(parent) : null;
-                    //we select the parent only if its rendered at all
-                    if (parent && parentRow.element) {
-                        return this.select([parent], null, true, defaultSelectArgs);
-                    } else {
-                        if (down) {
-                            return this.select(down, null, true, defaultSelectArgs);
-                        } else {
-                            on.emit(this.contentNode, "keydown", { keyCode: 36, force: true });
-                        }
-                    }
-                }
-            }
-            if (row) {
-                if (isExpanded) {
-                    expand(selection, false);
-                } else {
-                    this.select(down, null, true, defaultSelectArgs);
-                }
-            }
-        }
-
-        if (evt.keyCode == keys.RIGHT_ARROW) {
-            evt.preventDefault();
-            // empty folder:
-            if (isFolder && loaded && isExpanded && !firstChild) {
-                //go to next
-                if (up) {
-                    return this.select(up, null, true, defaultSelectArgs);
-                }
-            }
-
-            if (loaded && isExpanded) {
-                firstChild && this.select([firstChild], null, true, defaultSelectArgs);
-            } else {
-                //has children or not loaded yet
-                if (firstChild || !loaded || isFolder) {
-                    expand(selection, true);
-                } else {
-                    //case on an cell without no children: select
-                    up && this.select(up, null, true, defaultSelectArgs);
-                }
-            }
-        }
-    }
-
-    /**
-     *
-     * @class module:xgrid/TreeRenderer
-     * @extends module:xgrid/Renderer
-     */
-    var Implementation = {
-        _expandOnClickHandle: null,
-        _getLabel: function () {
-            return "Tree";
-        },
-        _getIcon: function () {
-            return "fa-tree";
-        },
-        deactivateRenderer: function (renderer) {
-            this._expandOnClickHandle && this._expandOnClickHandle.remove();
-            if (this.expandOnClick) {
-                $(this.domNode).removeClass('openTreeOnClick');
-            }
-        },
-        activateRenderer: function () {
-            this._showHeader(true);
-            if (this.expandOnClick) {
-                this._expandOnClickHandle = this.on("click", this.onTreeClick.bind(this));
-                $(this.domNode).addClass('openTreeOnClick');
-            }
-        },
-        __getParent: function (item) {
-            if (item && item.getParent) {
-                var _parent = item.getParent();
-                if (_parent) {
-                    var row = this.row(_parent);
-                    if (row.element) {
-                        return this.__getParent(_parent);
-                    } else {
-                        return _parent || item;
-                    }
-                }
-            }
-            return item;
-        },
-        /**
-         * @TODO: move to xfile
-         */
-        getCurrentFolder: function () {
-            return this.__getParent(this.getRows()[0]);
-        },
-        _isExpanded: function (item) {
-            return !!this._expanded[this.row(item).id];
-        },
-        onTreeKey: function () {
-            this.inherited(arguments);
-        },
-        onTreeClick: function (e) {
-            var row = this.row(e);
-            row && this.expand(row, !this._isExpanded(row.data), true);
-        },
-        startup: function () {
-            if (this._started) {
-                return;
-            }
-            var res = this.inherited(arguments);
-            this.on("keydown", KEYBOARD_HANDLER.bind(this));
-            if (!this.renderers) {
-                //we are the only renderer
-                this.activateRenderer();
-            }
-            return res;
-        }
-    };
-
-    //package via declare
-    var Module = declare('xgrid.TreeRenderer', [Renderer, Tree], Implementation);
-    Module.Implementation = Implementation;
-    Module.KEYBOARD_HANDLER = KEYBOARD_HANDLER;
-    return Module;
-});
-define('dgrid/Selection',[
-	'dojo/_base/declare',
-	'dojo/dom-class',
-	'dojo/on',
-	'dojo/has',
-	'dojo/aspect',
-	'./List',
-	'dgrid/util/touch',
-	'dojo/query',
-	'dojo/_base/sniff',
-	'dojo/dom'
-], function (declare, domClass, on, has, aspect, List, touchUtil) {
-
-	has.add('dom-comparedocumentposition', function (global, doc, element) {
-		return !!element.compareDocumentPosition;
-	});
-
-	// Add a feature test for the onselectstart event, which offers a more
-	// graceful fallback solution than node.unselectable.
-	has.add('dom-selectstart', typeof document.onselectstart !== 'undefined');
-
-	var ctrlEquiv = has('mac') ? 'metaKey' : 'ctrlKey',
-		hasUserSelect = has('css-user-select'),
-		hasPointer = has('pointer'),
-		hasMSPointer = hasPointer && hasPointer.slice(0, 2) === 'MS',
-		downType = hasPointer ? hasPointer + (hasMSPointer ? 'Down' : 'down') : 'mousedown',
-		upType = hasPointer ? hasPointer + (hasMSPointer ? 'Up' : 'up') : 'mouseup';
-
-	if (hasUserSelect === 'WebkitUserSelect' && typeof document.documentElement.style.msUserSelect !== 'undefined') {
-		// Edge defines both webkit and ms prefixes, rendering feature detects as brittle as UA sniffs...
-		hasUserSelect = false;
-	}
-
-	function makeUnselectable(node, unselectable) {
-		// Utility function used in fallback path for recursively setting unselectable
-		var value = node.unselectable = unselectable ? 'on' : '',
-			elements = node.getElementsByTagName('*'),
-			i = elements.length;
-
-		while (--i) {
-			if (elements[i].tagName === 'INPUT' || elements[i].tagName === 'TEXTAREA') {
-				continue; // Don't prevent text selection in text input fields.
-			}
-			elements[i].unselectable = value;
-		}
-	}
-
-	function setSelectable(grid, selectable) {
-		// Alternative version of dojo/dom.setSelectable based on feature detection.
-
-		// For FF < 21, use -moz-none, which will respect -moz-user-select: text on
-		// child elements (e.g. form inputs).  In FF 21, none behaves the same.
-		// See https://developer.mozilla.org/en-US/docs/CSS/user-select
-		var node = grid.bodyNode,
-			value = selectable ? 'text' : has('ff') < 21 ? '-moz-none' : 'none';
-
-		// In IE10+, -ms-user-select: none will block selection from starting within the
-		// element, but will not block an existing selection from entering the element.
-		// When using a modifier key, IE will select text inside of the element as well
-		// as outside of the element, because it thinks the selection started outside.
-		// Therefore, fall back to other means of blocking selection for IE10+.
-		// Newer versions of Dojo do not even report msUserSelect (see https://github.com/dojo/dojo/commit/7ae2a43).
-		if (hasUserSelect && hasUserSelect !== 'msUserSelect') {
-			node.style[hasUserSelect] = value;
-		}
-		else if (has('dom-selectstart')) {
-			// For browsers that don't support user-select but support selectstart (IE<10),
-			// we can hook up an event handler as necessary.  Since selectstart bubbles,
-			// it will handle any child elements as well.
-			// Note, however, that both this and the unselectable fallback below are
-			// incapable of preventing text selection from outside the targeted node.
-			if (!selectable && !grid._selectstartHandle) {
-				grid._selectstartHandle = on(node, 'selectstart', function (evt) {
-					var tag = evt.target && evt.target.tagName;
-
-					// Prevent selection except where a text input field is involved.
-					if (tag !== 'INPUT' && tag !== 'TEXTAREA') {
-						evt.preventDefault();
-					}
-				});
-			}
-			else if (selectable && grid._selectstartHandle) {
-				grid._selectstartHandle.remove();
-				delete grid._selectstartHandle;
-			}
-		}
-		else {
-			// For browsers that don't support either user-select or selectstart (Opera),
-			// we need to resort to setting the unselectable attribute on all nodes
-			// involved.  Since this doesn't automatically apply to child nodes, we also
-			// need to re-apply it whenever rows are rendered.
-			makeUnselectable(node, !selectable);
-			if (!selectable && !grid._unselectableHandle) {
-				grid._unselectableHandle = aspect.after(grid, 'renderRow', function (row) {
-					makeUnselectable(row, true);
-					return row;
-				});
-			}
-			else if (selectable && grid._unselectableHandle) {
-				grid._unselectableHandle.remove();
-				delete grid._unselectableHandle;
-			}
-		}
-	}
-
-	return declare(null, {
-		// summary:
-		//		Add selection capabilities to a grid. The grid will have a selection property and
-		//		fire "dgrid-select" and "dgrid-deselect" events.
-
-		// selectionDelegate: String
-		//		Selector to delegate to as target of selection events.
-		selectionDelegate: '.dgrid-row',
-
-		// selectionEvents: String|Function
-		//		Event (or comma-delimited events, or extension event) to listen on
-		//		to trigger select logic.
-		selectionEvents: downType + ',' + upType + ',dgrid-cellfocusin',
-
-		// selectionTouchEvents: String|Function
-		//		Event (or comma-delimited events, or extension event) to listen on
-		//		in addition to selectionEvents for touch devices.
-		selectionTouchEvents: has('touch') ? touchUtil.tap : null,
-
-		// deselectOnRefresh: Boolean
-		//		If true, the selection object will be cleared when refresh is called.
-		deselectOnRefresh: true,
-
-		// allowSelectAll: Boolean
-		//		If true, allow ctrl/cmd+A to select all rows.
-		//		Also consulted by the selector plugin for showing select-all checkbox.
-		allowSelectAll: false,
-
-		// selection:
-		//		An object where the property names correspond to
-		//		object ids and values are true or false depending on whether an item is selected
-		selection: {},
-
-		// selectionMode: String
-		//		The selection mode to use, can be "none", "multiple", "single", or "extended".
-		selectionMode: 'extended',
-
-		// allowTextSelection: Boolean
-		//		Whether to still allow text within cells to be selected.  The default
-		//		behavior is to allow text selection only when selectionMode is none;
-		//		setting this property to either true or false will explicitly set the
-		//		behavior regardless of selectionMode.
-		allowTextSelection: undefined,
-
-		// _selectionTargetType: String
-		//		Indicates the property added to emitted events for selected targets;
-		//		overridden in CellSelection
-		_selectionTargetType: 'rows',
-
-		create: function () {
-			this.selection = {};
-			return this.inherited(arguments);
-		},
-		postCreate: function () {
-			this.inherited(arguments);
-
-			this._initSelectionEvents();
-
-			// Force selectionMode setter to run
-			var selectionMode = this.selectionMode;
-			this.selectionMode = '';
-			this._setSelectionMode(selectionMode);
-		},
-
-		destroy: function () {
-			this.inherited(arguments);
-
-			// Remove any extra handles added by Selection.
-			if (this._selectstartHandle) {
-				this._selectstartHandle.remove();
-			}
-			if (this._unselectableHandle) {
-				this._unselectableHandle.remove();
-			}
-			if (this._removeDeselectSignals) {
-				this._removeDeselectSignals();
-			}
-		},
-
-		_setSelectionMode: function (mode) {
-			// summary:
-			//		Updates selectionMode, resetting necessary variables.
-
-			if (mode === this.selectionMode) {
-				return;
-			}
-
-			// Start selection fresh when switching mode.
-			this.clearSelection();
-
-			this.selectionMode = mode;
-
-			// Compute name of selection handler for this mode once
-			// (in the form of _fooSelectionHandler)
-			this._selectionHandlerName = '_' + mode + 'SelectionHandler';
-
-			// Also re-run allowTextSelection setter in case it is in automatic mode.
-			this._setAllowTextSelection(this.allowTextSelection);
-		},
-
-		_setAllowTextSelection: function (allow) {
-			if (typeof allow !== 'undefined') {
-				setSelectable(this, allow);
-			}
-			else {
-				setSelectable(this, this.selectionMode === 'none');
-			}
-			this.allowTextSelection = allow;
-		},
-
-		_handleSelect: function (event, target) {
-			// Don't run if selection mode doesn't have a handler (incl. "none"), target can't be selected,
-			// or if coming from a dgrid-cellfocusin from a mousedown
-			if (!this[this._selectionHandlerName] || !this.allowSelect(this.row(target)) ||
-					(event.type === 'dgrid-cellfocusin' && event.parentType === 'mousedown') ||
-					(event.type === upType && target !== this._waitForMouseUp)) {
-				return;
-			}
-			this._waitForMouseUp = null;
-			this._selectionTriggerEvent = event;
-
-			// Don't call select handler for ctrl+navigation
-			if (!event.keyCode || !event.ctrlKey || event.keyCode === 32) {
-				// If clicking a selected item, wait for mouseup so that drag n' drop
-				// is possible without losing our selection
-				if (!event.shiftKey && event.type === downType && this.isSelected(target)) {
-					this._waitForMouseUp = target;
-				}
-				else {
-					this[this._selectionHandlerName](event, target);
-				}
-			}
-			this._selectionTriggerEvent = null;
-		},
-
-		_singleSelectionHandler: function (event, target) {
-			// summary:
-			//		Selection handler for "single" mode, where only one target may be
-			//		selected at a time.
-
-			var ctrlKey = event.keyCode ? event.ctrlKey : event[ctrlEquiv];
-			if (this._lastSelected === target) {
-				// Allow ctrl to toggle selection, even within single select mode.
-				this.select(target, null, !ctrlKey || !this.isSelected(target));
-			}
-			else {
-				this.clearSelection();
-				this.select(target);
-				this._lastSelected = target;
-			}
-		},
-
-		_multipleSelectionHandler: function (event, target) {
-			// summary:
-			//		Selection handler for "multiple" mode, where shift can be held to
-			//		select ranges, ctrl/cmd can be held to toggle, and clicks/keystrokes
-			//		without modifier keys will add to the current selection.
-
-			var lastRow = this._lastSelected,
-				ctrlKey = event.keyCode ? event.ctrlKey : event[ctrlEquiv],
-				value;
-
-			if (!event.shiftKey) {
-				// Toggle if ctrl is held; otherwise select
-				value = ctrlKey ? null : true;
-				lastRow = null;
-			}
-
-			this.select(target, lastRow, value,null,event.type.indexOf('mouse')!==-1 ? 'mouse' : event.type);
-
-			if (!lastRow) {
-				// Update reference for potential subsequent shift+select
-				// (current row was already selected above)
-				this._lastSelected = target;
-			}
-		},
-
-		_extendedSelectionHandler: function (event, target) {
-			// summary:
-			//		Selection handler for "extended" mode, which is like multiple mode
-			//		except that clicks/keystrokes without modifier keys will clear
-			//		the previous selection.
-
-			// Clear selection first for right-clicks outside selection and non-ctrl-clicks;
-			// otherwise, extended mode logic is identical to multiple mode
-			if (event.button === 2 ? !this.isSelected(target) :
-					!(event.keyCode ? event.ctrlKey : event[ctrlEquiv])) {
-				this.clearSelection(null, true);
-			}
-			this._multipleSelectionHandler(event, target);
-		},
-
-		_toggleSelectionHandler: function (event, target) {
-			// summary:
-			//		Selection handler for "toggle" mode which simply toggles the selection
-			//		of the given target.  Primarily useful for touch input.
-
-			this.select(target, null, null);
-		},
-
-		_initSelectionEvents: function () {
-			// summary:
-			//		Performs first-time hookup of event handlers containing logic
-			//		required for selection to operate.
-
-			var grid = this,
-				contentNode = this.contentNode,
-				selector = this.selectionDelegate;
-
-			this._selectionEventQueues = {
-				deselect: [],
-				select: []
-			};
-
-			if (has('touch') && !has('pointer') && this.selectionTouchEvents) {
-				// Listen for taps, and also for mouse/keyboard, making sure not
-				// to trigger both for the same interaction
-				on(contentNode, touchUtil.selector(selector, this.selectionTouchEvents), function (evt) {
-					grid._handleSelect(evt, this);
-					grid._ignoreMouseSelect = this;
-				});
-				on(contentNode, on.selector(selector, this.selectionEvents), function (event) {
-					if (grid._ignoreMouseSelect !== this) {
-						grid._handleSelect(event, this);
-					}
-					else if (event.type === upType) {
-						grid._ignoreMouseSelect = null;
-					}
-				});
-			}
-			else {
-				// Listen for mouse/keyboard actions that should cause selections
-				on(contentNode, on.selector(selector, this.selectionEvents), function (event) {
-					grid._handleSelect(event, this);
-				});
-			}
-
-			// Also hook up spacebar (for ctrl+space)
-			if (this.addKeyHandler) {
-				this.addKeyHandler(32, function (event) {
-					grid._handleSelect(event, event.target);
-				});
-			}
-
-			// If allowSelectAll is true, bind ctrl/cmd+A to (de)select all rows,
-			// unless the event was received from an editor component.
-			// (Handler further checks against _allowSelectAll, which may be updated
-			// if selectionMode is changed post-init.)
-			if (this.allowSelectAll) {
-				this.on('keydown', function (event) {
-					if (event[ctrlEquiv] && event.keyCode === 65 &&
-							!/\bdgrid-input\b/.test(event.target.className)) {
-						event.preventDefault();
-						grid[grid.allSelected ? 'clearSelection' : 'selectAll']();
-					}
-				});
-			}
-
-			// Update aspects if there is a collection change
-			if (this._setCollection) {
-				aspect.before(this, '_setCollection', function (collection) {
-					grid._updateDeselectionAspect(collection);
-				});
-			}
-			this._updateDeselectionAspect();
-		},
-
-		_updateDeselectionAspect: function (collection) {
-			// summary:
-			//		Hooks up logic to handle deselection of removed items.
-			//		Aspects to a trackable collection's notify method if applicable,
-			//		or to the list/grid's removeRow method otherwise.
-
-			var self = this,
-				signals;
-
-			function ifSelected(rowArg, methodName,why) {
-				// Calls a method if the row corresponding to the object is selected.
-				var row = self.row(rowArg),
-					selection = row && self.selection[row.id];
-				// Is the row currently in the selection list.
-				if (selection) {
-					self[methodName](row,null,true,null,why);
-				}
-			}
-
-			// Remove anything previously configured
-			if (this._removeDeselectSignals) {
-				this._removeDeselectSignals();
-			}
-
-			if (collection && collection.track && this._observeCollection) {
-				signals = [
-					aspect.before(this, '_observeCollection', function (collection) {
-						signals.push(
-							collection.on('delete', function (event) {
-								if (typeof event.index === 'undefined') {
-									// Call deselect on the row if the object is being removed.  This allows the
-									// deselect event to reference the row element while it still exists in the DOM.
-									ifSelected(event.id, 'deselect');
-								}
-							})
-						);
-					}),
-					aspect.after(this, '_observeCollection', function (collection) {
-						signals.push(
-							collection.on('update', function (event) {
-								if (typeof event.index !== 'undefined') {
-									// When List updates an item, the row element is removed and a new one inserted.
-									// If at this point the object is still in grid.selection,
-									// then call select on the row so the element's CSS is updated.
-									ifSelected(collection.getIdentity(event.target), 'select','update');
-								}
-							})
-						);
-					}, true)
-				];
-			}
-			else {
-				signals = [
-					aspect.before(this, 'removeRow', function (rowElement, preserveDom) {
-						var row;
-						if (!preserveDom) {
-							row = this.row(rowElement);
-							// if it is a real row removal for a selected item, deselect it
-							if (row && (row.id in this.selection)) {
-								this.deselect(row);
-							}
-						}
-					})
-				];
-			}
-
-			this._removeDeselectSignals = function () {
-				for (var i = signals.length; i--;) {
-					signals[i].remove();
-				}
-				signals = [];
-			};
-		},
-
-		allowSelect: function () {
-			// summary:
-			//		A method that can be overriden to determine whether or not a row (or
-			//		cell) can be selected. By default, all rows (or cells) are selectable.
-			// target: Object
-			//		Row object (for Selection) or Cell object (for CellSelection) for the
-			//		row/cell in question
-			return true;
-		},
-
-		_fireSelectionEvent: function (type) {
-			// summary:
-			//		Fires an event for the accumulated rows once a selection
-			//		operation is finished (whether singular or for a range)
-
-			var queue = this._selectionEventQueues[type],
-				triggerEvent = this._selectionTriggerEvent,
-				eventObject;
-
-			eventObject = {
-				bubbles: true,
-				grid: this
-			};
-			if (triggerEvent) {
-				eventObject.parentType = triggerEvent.type;
-			}
-			eventObject[this._selectionTargetType] = queue;
-
-			// Clear the queue so that the next round of (de)selections starts anew
-			this._selectionEventQueues[type] = [];
-
-			on.emit(this.contentNode, 'dgrid-' + type, eventObject);
-		},
-
-		_fireSelectionEvents: function () {
-			var queues = this._selectionEventQueues,
-				type;
-
-			for (type in queues) {
-				if (queues[type].length) {
-					this._fireSelectionEvent(type);
-				}
-			}
-		},
-
-		_select: function (row, toRow, value) {
-			// summary:
-			//		Contains logic for determining whether to select targets, but
-			//		does not emit events.  Called from select, deselect, selectAll,
-			//		and clearSelection.
-
-			var selection,
-				previousValue,
-				element,
-				toElement,
-				direction;
-
-			if (typeof value === 'undefined') {
-				// default to true
-				value = true;
-			}
-			if (!row.element) {
-				row = this.row(row);
-			}
-
-			// Check whether we're allowed to select the given row before proceeding.
-			// If a deselect operation is being performed, this check is skipped,
-			// to avoid errors when changing column definitions, and since disabled
-			// rows shouldn't ever be selected anyway.
-			if (value === false || this.allowSelect(row)) {
-				selection = this.selection;
-				previousValue = !!selection[row.id];
-				if (value === null) {
-					// indicates a toggle
-					value = !previousValue;
-				}
-				element = row.element;
-				if (!value && !this.allSelected) {
-					delete this.selection[row.id];
-				}
-				else {
-					selection[row.id] = value;
-				}
-				if (element) {
-					// add or remove classes as appropriate
-					if (value) {
-						domClass.add(element, 'dgrid-selected' +
-							(this.addUiClasses ? ' ui-state-active' : ''));
-					}
-					else {
-						domClass.remove(element, 'dgrid-selected ui-state-active');
-					}
-				}
-				if (value !== previousValue && element) {
-					// add to the queue of row events
-					this._selectionEventQueues[(value ? '' : 'de') + 'select'].push(row);
-				}
-
-				if (toRow) {
-					if (!toRow.element) {
-						toRow = this.row(toRow);
-					}
-
-					if (!toRow) {
-						this._lastSelected = element;
-						console.warn('The selection range has been reset because the ' +
-							'beginning of the selection is no longer in the DOM. ' +
-							'If you are using OnDemandList, you may wish to increase ' +
-							'farOffRemoval to avoid this, but note that keeping more nodes ' +
-							'in the DOM may impact performance.');
-						return;
-					}
-
-					toElement = toRow.element;
-					if (toElement) {
-						direction = this._determineSelectionDirection(element, toElement);
-						if (!direction) {
-							// The original element was actually replaced
-							toElement = document.getElementById(toElement.id);
-							direction = this._determineSelectionDirection(element, toElement);
-						}
-						while (row.element !== toElement && (row = this[direction](row))) {
-							this._select(row, null, value);
-						}
-					}
-				}
-			}
-		},
-
-		// Implement _determineSelectionDirection differently based on whether the
-		// browser supports element.compareDocumentPosition; use sourceIndex for IE<9
-		_determineSelectionDirection: has('dom-comparedocumentposition') ? function (from, to) {
-			var result = to.compareDocumentPosition(from);
-			if (result & 1) {
-				return false; // Out of document
-			}
-			return result === 2 ? 'down' : 'up';
-		} : function (from, to) {
-			if (to.sourceIndex < 1) {
-				return false; // Out of document
-			}
-			return to.sourceIndex > from.sourceIndex ? 'down' : 'up';
-		},
-
-		select: function (row, toRow, value) {
-			// summary:
-			//		Selects or deselects the given row or range of rows.
-			// row: Mixed
-			//		Row object (or something that can resolve to one) to (de)select
-			// toRow: Mixed
-			//		If specified, the inclusive range between row and toRow will
-			//		be (de)selected
-			// value: Boolean|Null
-			//		Whether to select (true/default), deselect (false), or toggle
-			//		(null) the row
-
-			this._select(row, toRow, value);
-			this._fireSelectionEvents();
-		},
-		deselect: function (row, toRow) {
-			// summary:
-			//		Deselects the given row or range of rows.
-			// row: Mixed
-			//		Row object (or something that can resolve to one) to deselect
-			// toRow: Mixed
-			//		If specified, the inclusive range between row and toRow will
-			//		be deselected
-
-			this.select(row, toRow, false);
-		},
-
-		clearSelection: function (exceptId, dontResetLastSelected) {
-			// summary:
-			//		Deselects any currently-selected items.
-			// exceptId: Mixed?
-			//		If specified, the given id will not be deselected.
-
-			this.allSelected = false;
-			for (var id in this.selection) {
-				if (exceptId !== id) {
-					this._select(id, null, false);
-				}
-			}
-			if (!dontResetLastSelected) {
-				this._lastSelected = null;
-			}
-			this._fireSelectionEvents();
-		},
-		selectAll: function () {
-			this.allSelected = true;
-			this.selection = {}; // we do this to clear out pages from previous sorts
-			for (var i in this._rowIdToObject) {
-				var row = this.row(this._rowIdToObject[i]);
-				this._select(row.id, null, true);
-			}
-			this._fireSelectionEvents();
-		},
-
-		isSelected: function (object) {
-			// summary:
-			//		Returns true if the indicated row is selected.
-
-			if (typeof object === 'undefined' || object === null) {
-				return false;
-			}
-			if (!object.element) {
-				object = this.row(object);
-			}
-/*
-            if (typeof object === 'undefined' || object === null) {
-                return false;
-            }*/
-
-
-			// First check whether the given row is indicated in the selection hash;
-			// failing that, check if allSelected is true (testing against the
-			// allowSelect method if possible)
-			return (object.id in this.selection) ? !!this.selection[object.id] :
-				this.allSelected && (!object.data || this.allowSelect(object));
-		},
-
-		refresh: function () {
-			if (this.deselectOnRefresh) {
-				this.clearSelection();
-			}
-			this._lastSelected = null;
-			return this.inherited(arguments);
-		},
-
-		renderArray: function () {
-			var rows = this.inherited(arguments),
-				selection = this.selection,
-				i,
-				row,
-				selected;
-
-			for (i = 0; i < rows.length; i++) {
-				row = this.row(rows[i]);
-				selected = row.id in selection ? selection[row.id] : this.allSelected;
-				if (selected) {
-					this.select(row, null, selected,null,'renderArray');
-				}
-			}
-			this._fireSelectionEvents();
-			return rows;
-		}
-	});
-});
-
-/** @module xide/lodash **/
-define('xide/lodash',[],function(){
-
-    /**
-     * temp. wanna be shim for lodash til dojo-2/loader lands here
-     */
-    if(typeof _ !=="undefined"){
-        return _;
-    }else{
-        console.error('error loading lodash',global['_']);
-    }
-});
-
-/** @module xgrid/Selection **/
-define('xgrid/Selection',[
-    "xdojo/declare",
-    "xdojo/has",
-    'xide/types',
-    'xide/utils',
-    'dgrid/Selection',
-    'dojo/dom-class',
-    'dojo/on',
-    'dojo/Deferred',
-    'xide/lodash',
-    'xide/$'
-], function (declare, has, types, utils, Selection, domClass, on, Deferred, _, $) {
-
-    /////////////////////////////////////////////////////////////////////
-    //
-    //  Utils
-    //
-    //
-    /**
-     * Event filter
-     * @param event
-     * @returns {string|boolean}
-     */
-    function handledEvent(event) {
-        // Text boxes and other inputs that can use direction keys should be ignored
-        // and not affect cell/row navigation
-        var target = event.target;
-        return target.type && (event.keyCode === 32);
-    }
-
-    /**
-     *
-     * @param selection to ids
-     * @returns {string[]}
-     */
-    function rows(selection) {
-        var result = [];
-        if (selection && selection.rows) {
-            selection.rows.forEach(function (row) {
-                result.push(row.id);
-            });
-        }
-        return result;
-    }
-
-    /**
-     *
-     * @param arrays
-     * @returns {*|Array}
-     */
-    function allArraysAlike(arrays) {
-        return _.all(arrays, function (array) {
-            return array.length == arrays[0].length && _.difference(array, arrays[0]).length == 0;
-        });
-    }
-
-    /**
-     *
-     * @param lastSelection
-     * @param newSelection
-     * @returns {*|Array}
-     */
-    function equals(lastSelection, newSelection) {
-        var cSelected = rows(lastSelection);
-        var nSelected = rows(newSelection);
-        return allArraysAlike([cSelected, nSelected]);
-    }
-
-    /**
-     *
-     * @param items
-     * @param now
-     * @param idProperty
-     * @returns {boolean}
-     */
-    function isSame(items, now, idProperty) {
-        var newSelection = items ? items.map(function (item) {
-            return item ? item.data || item : {};
-        }) : [];
-        var idsNew = newSelection.map(function (x) { return x[idProperty]; });
-        var idsNow = now.map(function (x) { return x[idProperty]; });
-        return (idsNew.join(',') === idsNow.join(','));
-    }
-
-    /**
-     *
-     * @param self {module:xgrid/Base}
-     */
-    function clearFocused(self) {
-        $(self.domNode).find('.dgrid-focus').each(function (i, el) {
-            $(el).removeClass('dgrid-focus');
-        });
-    }
-
-    var _debug = false;
-    var debugSelect = false;
-    /**
-     * @class module:xgrid/Selection
-     * @lends module:xgrid/Base
-     */
-    var Implementation = {
-        _lastSelection: null,
-        _lastFocused: null,
-        _refreshInProgress: null,
-        __lastLast: null,
-        __lastFirst: null,
-        /**
-         * Mute any selection events.
-         */
-        _muteSelectionEvents: true,
-        selectAll: function (filter) {
-            this.select(this.getRows(filter), null, true, {
-                append: false,
-                delay: 1
-            });
-        },
-        /**
-         *
-         * @param state
-         * @returns {object}
-         */
-        setState: function (state) {
-            state && state.selection && state.selection.selection && this.select(state.selection.selection, null, true, {
-                expand: true,
-                append: false,
-                scrollInto: true
-            }, 'restore');
-            return this.inherited(arguments);
-        },
-        /**
-         *
-         * @param state
-         * @returns {object}
-         */
-        getState: function (state) {
-            state = this.inherited(arguments) || {};
-            var selection = this._preserveSelection();
-            var thisState = {
-                selection: []
-            };
-            var collection = this.collection;
-            var idProp = collection.idProperty;
-            if (selection.selection && idProp) {
-                _.each(selection.selection, function (item) {
-                    if (item && item[idProp]) {
-                        thisState.selection.push(item[idProp]);
-                    }
-                });
-            }
-            if (selection.focused) {
-                thisState.focused = selection.focused.path;
-            }
-            state.selection = thisState;
-            return state;
-        },
-        /**
-         *
-         * @param restoreSelection
-         * @returns {*}
-         */
-        refresh: function (restoreSelection) {
-            if (!this.isRendered()) {
-                return false;
-            }
-            if (this._refreshInProgress) {
-                return this._refreshInProgress;
-            }
-
-            var _restore = restoreSelection !== false ? this._preserveSelection() : null,
-                thiz = this,
-                active = this.isActive(),
-                res = this.inherited(arguments);
-
-            this._refreshInProgress = res;
-
-            res && res.then && res.then(function () {
-                thiz._refreshInProgress = null;
-                active && _restore && thiz._restoreSelection(_restore, 1, !active, 'restore');
-            });
-            return res;
-        },
-        /**
-         * Normalize an item
-         * @param what
-         * @returns {*}
-         * @private
-         */
-        _normalize: function (what) {
-            if (!what) {
-                return null;
-            }
-            if (!what.element) {
-                what = this.cell(what);
-            }
-            if (what && what.row) {
-                what = what.row;
-            }
-            return what;
-        },
-        /**
-         * save deselect
-         */
-        deselectAll: function () {
-            if (!this._lastSelection) {
-                return;
-            }
-            this.clearSelection();
-            this._lastSelection = null;
-            this._lastFocused = null;
-            $(this.domNode).find('.dgrid-focus').each(function (i, el) {
-                $(el).removeClass('dgrid-focus');
-            });
-            this._emit('selectionChanged', {
-                selection: [],
-                why: "clear",
-                source: 'code'
-            });
-        },
-        invertSelection: function (items) {
-            var selection = items || this._getSelection() || [];
-            var newSelection = [],
-                all = this.getRows();
-            _.each(all, function (data) {
-                if (selection.indexOf(data) === -1) {
-                    newSelection.push(data);
-                }
-            });
-            return this.select(newSelection, null, true, {
-                append: false
-            });
-        },
-        runAction: function (action) {
-            if (_.isString(action)) {
-                action = this.getActionStore().getSync(action);
-            }
-            if (action.command === 'File/Select/None') {
-                this.deselectAll();
-                return true;
-            }
-            if (action.command === 'File/Select/All') {
-                this.selectAll();
-                return true;
-            }
-            if (action.command === 'File/Select/Invert') {
-                return this.invertSelection();
-            }
-            return this.inherited(arguments);
-        },
-        _preserveSelection: function () {
-            this.__lastSelection = this._getSelection();
-            this._lastFocused = this.getFocused();
-            return {
-                selection: this._getSelection(),
-                focused: this.getFocused()
-            };
-        },
-        _restoreSelection: function (what, delay, silent, reason) {
-            var lastFocused = what ? what.focused : this._lastFocused;
-            var lastSelection = what ? what.selection : this.__lastSelection;
-            if (_.isEmpty(lastSelection)) {
-                lastFocused = null;
-                this._lastFocused = null;
-            } else {
-                //restore:
-                var dfd = this.select(lastSelection, null, true, {
-                    silent: silent != null ? silent : true,
-                    append: false,
-                    delay: delay != null ? delay : 0
-                }, reason);
-
-                if (lastFocused && this.isActive()) {
-                    this.focus(this.row(lastFocused));
-                }
-                return dfd;
-            }
-        },
-        /**
-         * get previous item
-         * @param from
-         * @param domNode
-         * @param skipSelected
-         * @returns {*}
-         */
-        getPrevious: function (from, domNode, skipSelected) {
-            from = from || this.getFocused(domNode);
-            from = this._normalize(from);
-            var nextNode = this.cell(this._move(from, -1, "dgrid-row"));
-            if (nextNode && nextNode.row) {
-                nextNode = nextNode.row[domNode ? 'element' : 'data'];
-                if (skipSelected === true) {
-                    if (this.isSelected(nextNode)) {
-                        //nothing previous here
-                        if (from && from.data && from.data == nextNode) {
-                            return null;
-                        }
-                        var _nextNode = this.getPrevious(nextNode, domNode, skipSelected);
-                        if (_nextNode) {
-                            return _nextNode;
-                        }
-                    }
-                }
-            }
-            return nextNode;
-        },
-        /**
-         * get next item
-         * @param from
-         * @param domNode
-         * @param skipSelected
-         * @returns {*}
-         */
-        getNext: function (from, domNode, skipSelected) {
-            from = from || this.getFocused(domNode);
-            from = this._normalize(from);
-            var nextNode = this.cell(this._move(from, 1, "dgrid-row"));
-            if (nextNode && nextNode.row) {
-                nextNode = nextNode.row[domNode ? 'element' : 'data'];
-                if (skipSelected === true) {
-                    if (this.isSelected(nextNode)) {
-                        //nothing previous here
-                        if (from && from.data && from.data == nextNode) {
-                            return null;
-                        }
-                        var _nextNode = this.getNext(nextNode, domNode, skipSelected);
-                        if (_nextNode) {
-                            return _nextNode;
-                        }
-                    }
-                }
-            }
-            return nextNode;
-        },
-        /**
-         *
-         * @param filterFunction
-         * @returns selection {Object[] | NULL }
-         */
-        getSelection: function (filterFunction) {
-            return this._getSelection(filterFunction);
-        },
-        /**
-         *
-         * @param filterFunction
-         * @returns selection {Object[] | NULL }
-         */
-        _getSelection: function (filterFunction) {
-            var result = [];
-            var collection = this.collection;
-            if (collection) {
-                for (var id in this.selection) {
-                    var item = this.collection.getSync(id);
-                    item && result.push(item);
-                }
-                if (filterFunction) {
-                    return result.filter(filterFunction);
-                }
-            }
-            return result;
-        },
-        /**
-         *
-         * @param filterFunction
-         * @returns selection {Object[] | NULL }
-         */
-        _getSelected: function () {
-            return $('.dgrid-selected', this.domNode);
-        },
-        /**
-         *
-         * @param filter
-         * @returns {*}
-         */
-        getSelectedItem: function (filter) {
-            var _selection = this.getSelection(filter);
-            if (_selection.length === 1) {
-                return _selection[0];
-            }
-            return null;
-        },
-        /**
-         * Override std::postCreate
-         * @returns {*}
-         */
-        postCreate: function () {
-            var thiz = this;
-            if (this.options[types.GRID_OPTION.CLEAR_SELECTION_ON_CLICK] === true) {
-                var clickHandler = function (evt) {
-                    if (evt && evt.target && domClass.contains(evt.target, 'dgrid-content')) {
-                        this.deselectAll();
-                    }
-                }.bind(this);
-                this.on("click", function (evt) {
-                    clickHandler(evt);
-                }.bind(this));
-            }
-            this.on("dgrid-select", function (data) {
-                if (!equals(thiz._lastSelection, data)) {
-                    delete thiz._lastSelection;
-                    thiz._lastSelection = data;
-                    thiz._emit('selectionChanged', {
-                        selection: thiz._getSelection(),
-                        why: "select",
-                        source: data.parentType
-                    })
-                }
-            });
-            return this.inherited(arguments);
-        },
-        /**
-         * Override dgrid/Selection::_fireSelectionEvents
-         * @returns {*}
-         * @private
-         */
-        _fireSelectionEvents: function () {
-            if (this._muteSelectionEvents === true) {
-                return;
-            }
-            return this.inherited(arguments);
-        },
-        __select: function (items, toRow, select, dfd, reason) {
-            _.each(items, function (item) {
-                if (item) {
-                    var _row = this.row(item);
-                    if (_row) {
-                        this._select(_row, toRow, select);
-                    }
-                }
-            }, this);
-            dfd && dfd.resolve(items);
-            this._muteSelectionEvents = false;
-            this._fireSelectionEvents();
-            var rows = this.getRows();
-            if (rows && rows.length && items && items.length && select && reason && reason !== 'mouse') {
-                //trigger bounce if we hit
-                var _last = items[items.length - 1];
-                if (rows[rows.length - 1] == _last) {
-                    if (this.__lastLast && this.__lastLast == _last) {
-                        reason.indexOf('pointer') === -1 && this._emit('bounced', {
-                            direction: 1,
-                            item: _last
-                        });
-                        return;
-                    }
-                    this.__lastLast = _last;
-                } else {
-                    this.__lastLast = null;
-                }
-
-
-                var _first = items[0];
-                if (rows[0] == _first) {
-                    if (this.__lastFirst && this.__lastFirst == _first) {
-                        reason.indexOf('pointer') === -1 && this._emit('bounced', {
-                            direction: -1,
-                            item: _first
-                        })
-                        return;
-                    }
-                    this.__lastFirst = _first;
-                } else {
-                    this.__lastFirst = null;
-                }
-            } else {
-                this.__lastFirst = null;
-            }
-        },
-        /**
-         * Overrides dgrid selection
-         * @param mixed
-         * @param toRow {object|null} preserve super
-         * @param select {boolean|null} preserve super
-         * @param options {object}
-         * @param options.focus {boolean}
-         * @param options.silent {boolean}
-         * @param options.append {boolean}
-         * @param options.expand {boolean}
-         * @param options.scrollInto {boolean}
-         * @param reason {string} the origin event's type
-         * returns dojo/Deferred
-         */
-        select: function (mixed, toRow, select, options, reason) {
-            clearTimeout(this._selectTimer);
-            this._selectTimer = null;
-            var isMouse = reason === 'mouse',
-                isPrioritySelect = isMouse || reason === 'update',
-                isActive = this.isActive(),
-                def = new Deferred();
-
-            reason = reason || '';
-
-            //sanitize/defaults
-            options = options || {};
-
-            if (isPrioritySelect) {
-                isActive = true;
-            }
-            if (isMouse) {
-                options.focus = true;
-            }
-            select = select === null ? true : select;
-            var delay = options.delay || 0,
-                self = this,
-                coll = this.collection,
-                idProperty = coll.idProperty;
-
-            //silence selection change (batch or state restoring job)
-            if (options.silent === true) {
-                self._muteSelectionEvents = true;
-            }
-
-            //normalize to array
-            var items = utils.isArray(mixed) ? mixed : [mixed];
-            if (_.isEmpty(items)) {
-                return;
-            }
-            var _newItems = [];
-
-            //indices to items
-            if (_.isNumber(items[0])) {
-                var rows = self.getRows();
-                _.each(items, function (item) {
-                    _newItems.push(rows[item]);
-                });
-                items = _newItems;
-            } else if (_.isString(items[0])) {
-                _.each(items, function (item) {
-                    var _item = coll.getSync(item);
-                    if (_item) {
-                        _newItems.push(_item);
-                    }
-                });
-
-                items = _newItems;
-            } else if (items && items[0] && items[0].tagName) {
-                _.each(items, function (item) {
-                    _newItems.push(self.row(item).data);
-                });
-                items = _newItems;
-            }
-
-            if (!items.length) {
-                if (has('debug')) {
-                    _debug && console.log('nothing to select!');
-                }
-                def.resolve();
-                return def;
-            }
-
-
-            if (has('debug')) {
-                debugSelect && console.log('selected : ', _.map(items, "name"));
-            }
-
-            var _last = this._lastSelection ? this._lastSelection.rows : [];
-            var now = _last.map(function (x) { return x.data; });
-
-            var isEqual = isSame(items, now, idProperty);
-
-            //store update
-            if (reason === 'update' && select) {
-                options.focus = true;
-                options.append = false;
-                options.delay = 1;
-                //this.focus();
-            }
-
-            if (reason === 'dgrid-cellfocusin') {
-                options.focus = true;
-            }
-
-            //clear previous selection
-            if (options.append === false && select && !isEqual) {
-                self.clearSelection(items);
-                clearFocused(self);
-            }
-
-            if (isEqual && (reason === 'update' || reason === 'dgrid-cellfocusin')) {
-                if (options.focus) {
-                    clearFocused(self);
-                    self.focus(items[0]);
-                }
-                return;
-            }
-
-            //focus
-            if (options.focus === true) {
-                if (options.expand) {
-                    if (!self.isRendered(items[0])) {
-                        self._expandTo(items[0]);
-                    }
-                }
-            }
-            if (options.expand) {
-                if (!self.isRendered(items[0])) {
-                    self._expandTo(items[0]);
-                }
-            }
-            if (options.scrollInto && reason !== 'restore') {
-                var row = this.row(items[0]);
-                if (row.element) {
-                    row.element.scrollIntoView();
-                }
-            }
-
-            if (delay && items.length) {
-                this._selectTimer = setTimeout(function () {
-                    if (self.destroyed || !self.collection) {
-                        return;
-                    }
-                    if (options.append === false) {
-                        self.clearSelection();
-                    }
-                    clearFocused(self);
-                    self.focus(items[0], false);
-                    self.__select(items, toRow, select, def, reason);
-                }, delay);
-            } else {
-                self.__select(items, toRow, select, def, reason);
-            }
-            return def;
-        },
-
-        _setLast: function (selection) {
-            var _ids = [];
-            for (var i = 0; i < selection.length; i++) {
-                var obj = selection[i];
-                _ids.push(this.collection.getIdentity(obj));
-            }
-        },
-        isExpanded: function (item) {
-            item = this._normalize('root');
-            return !!this._expanded[item.id];
-        },
-        _expandTo: function (item) {
-            if (!item) {
-                return;
-            }
-            var store = this.collection;
-            if (_.isString(item)) {
-                item = store.getSync(item);
-            }
-            var parent = store.getSync(item[store.parentField]) || item.getParent ? item.getParent() : null;
-            if (parent) {
-                if (!this.isRendered(parent)) {
-                    this._expandTo(parent);
-                } else {
-                    if (!this.isExpanded(parent)) {
-                        this.expand(parent, true, true);
-                    }
-                    if (!this.isExpanded(item)) {
-                        this.expand(item, true, true);
-                    }
-                }
-            }
-        },
-        startup: function () {
-            var result = this.inherited(arguments);
-            //we want keyboard navigation also when nothing is selected
-            this.addHandle('keyup', on(this.domNode, 'keyup', function (event) {
-                // For now, don't squash browser-specific functionality by letting
-                // ALT and META function as they would natively
-                if (event.metaKey || event.altKey) {
-                    return;
-                }
-                var handler = this['keyMap'][event.keyCode];
-                // Text boxes and other inputs that can use direction keys should be ignored
-                // and not affect cell/row navigation
-                if (handler && !handledEvent(event) && this._getSelection().length == 0) {
-                    handler.call(this, event);
-                }
-            }.bind(this)));
-            return result;
-        }
-    };
-    //package via declare
-    var _class = declare('xgrid.Selection', Selection, Implementation);
-    _class.Implementation = Implementation;
-
-    return _class;
-});
-define('xgrid/Keyboard',[
-	'dojo/_base/declare',
-	'dojo/aspect',
-	'dojo/dom-class',
-	'dojo/on',
-	'dojo/_base/lang',
-	'dojo/has',
-	'dgrid/util/misc',
-	'dojo/_base/sniff',
-	'dcl/dcl'
-], function (declare, aspect, domClass, on, lang, has, miscUtil,dcl) {
-
-	var delegatingInputTypes = {
-			checkbox: 1,
-			radio: 1,
-			button: 1
-		},
-		hasGridCellClass = /\bdgrid-cell\b/,
-		hasGridRowClass = /\bdgrid-row\b/,
-		_debug = false;
-
-    has.add("dom-contains", function(global, doc, element){
-        return !!element.contains; // not supported by FF < 9
-    });
-
-    function contains(parent, node){
-        // summary:
-        //		Checks to see if an element is contained by another element.
-
-        if(has("dom-contains")){
-            return parent.contains(node);
-        }else{
-            return parent.compareDocumentPosition(node) & 8 /* DOCUMENT_POSITION_CONTAINS */;
-        }
-    }
-
-	var _upDownSelect = function(event,who,steps) {
-
-		var prev     = steps < 0,
-			selector = prev ? 'first:' : 'last',
-			s, n, sib, top, left;
-
-		var _current = who.row(event).element;
-		var sel = $(_current); // header reports row as undefined
-
-		var clDisabled = 'ui-state-disabled';
-		function sibling(n, direction) {
-			return n[direction+'All']('[id]:not(.'+clDisabled+'):not(.dgrid-content-parent):first');
-		}
-		var hasLeftRight=false;
-		if (sel.length) {
-			var next = who.up(who._focusedNode,1, true);
-			s = sel;
-			sib = $(next.element);
-			if (!sib.length) {
-				// there is no sibling on required side - do not move selection
-				n = s;
-			} else if (hasLeftRight) {//done somewhere else
-				n = sib;
-			} else {
-				// find up/down side file in icons view
-				top = s.position().top;
-				left = s.position().left;
-				n = s;
-				if (prev) {
-					do {
-						n = n.prev('[id]');
-					} while (n.length && !(n.position().top < top && n.position().left <= left));
-
-					if (n.is('.'+clDisabled)) {
-						n = sibling(n, 'next');
-					}
-				} else {
-					do {
-						n = n.next('[id]');
-					} while (n.length && !(n.position().top > top && n.position().left >= left));
-
-					if (n.is('.'+clDisabled)) {
-						n = sibling(n, 'prev');
-					}
-				}
-			}
-		}
-		return n;
-	};
-	var _rightLeftSelect = function(event,who,steps) {
-
-		var prev     = steps < 0,
-			selector = prev ? 'first:' : 'last',
-			s, n, sib, top, left;
-
-		var _current = who.row(event).element;
-		var sel = $(_current); // header reports row as undefined
-
-		var clDisabled = 'ui-state-disabled';
-		function sibling(n, direction) {
-			return n[direction+'All']('[id]:not(.'+clDisabled+'):not(.dgrid-content-parent):first');
-		}
-		var hasLeftRight=true;
-		if (sel.length) {
-			var next = who.up(who._focusedNode,1, true);
-			s = sel;
-			sib = $(next.element);
-			if (!sib.length) {
-				// there is no sibling on required side - do not move selection
-				n = s;
-			} else if (hasLeftRight) {//done somewhere else
-				n = sib;
-			} else {
-				// find up/down side file in icons view
-				top = s.position().top;
-				left = s.position().left;
-				n = s;
-				if (prev) {
-					do {
-						n = n.prev('[id]');
-					} while (n.length && !(n.position().top < top && n.position().left <= left));
-
-					if (n.is('.'+clDisabled)) {
-						n = sibling(n, 'next');
-					}
-				} else {
-					do {
-						n = n.next('[id]');
-					} while (n.length && !(n.position().top > top && n.position().left >= left));
-
-					if (n.is('.'+clDisabled)) {
-						n = sibling(n, 'prev');
-					}
-				}
-			}
-		}
-		return n;
-	};
-
-	var Implementation = {
-		// summary:
-		//		Adds keyboard navigation capability to a list or grid.
-
-		// pageSkip: Number
-		//		Number of rows to jump by when page up or page down is pressed.
-		pageSkip: 10,
-
-		tabIndex: -1,
-
-		// keyMap: Object
-		//		Hash which maps key codes to functions to be executed (in the context
-		//		of the instance) for key events within the grid's body.
-		keyMap: null,
-
-		// headerKeyMap: Object
-		//		Hash which maps key codes to functions to be executed (in the context
-		//		of the instance) for key events within the grid's header row.
-		headerKeyMap: null,
-
-		postMixInProperties: function () {
-			this.inherited(arguments);
-
-			if (!this.keyMap) {
-				this.keyMap = lang.mixin({}, Implementation.defaultKeyMap);
-			}
-			if (!this.headerKeyMap) {
-				this.headerKeyMap = lang.mixin({}, Implementation.defaultHeaderKeyMap);
-			}
-		},
-
-		postCreate: function () {
-			this.inherited(arguments);
-			var grid = this;
-
-			function handledEvent(event) {
-				// Text boxes and other inputs that can use direction keys should be ignored
-				// and not affect cell/row navigation
-				var target = event.target;
-				return target.type && (!delegatingInputTypes[target.type] || event.keyCode === 32);
-			}
-
-			function enableNavigation(areaNode) {
-
-				var cellNavigation = grid.cellNavigation,
-					isFocusableClass = cellNavigation ? hasGridCellClass : hasGridRowClass,
-					isHeader = areaNode === grid.headerNode,
-					initialNode = areaNode;
-
-				function initHeader() {
-					if (grid._focusedHeaderNode) {
-						// Remove the tab index for the node that previously had it.
-						grid._focusedHeaderNode.tabIndex = -1;
-					}
-					if (grid.showHeader) {
-						if (cellNavigation) {
-							// Get the focused element. Ensure that the focused element
-							// is actually a grid cell, not a column-set-cell or some
-							// other cell that should not be focused
-							var elements = grid.headerNode.getElementsByTagName('th');
-							for (var i = 0, element; (element = elements[i]); ++i) {
-								if (isFocusableClass.test(element.className)) {
-									grid._focusedHeaderNode = initialNode = element;
-									break;
-								}
-							}
-						}
-						else {
-							grid._focusedHeaderNode = initialNode = grid.headerNode;
-						}
-
-						// Set the tab index only if the header is visible.
-						if (initialNode) {
-							initialNode.tabIndex = grid.tabIndex;
-						}
-					}
-				}
-
-				if (isHeader) {
-					// Initialize header now (since it's already been rendered),
-					// and aspect after future renderHeader calls to reset focus.
-					initHeader();
-					aspect.after(grid, 'renderHeader', initHeader, true);
-				}
-				else {
-					aspect.after(grid, 'renderArray', function (rows) {
-						// summary:
-						//		Ensures the first element of a grid is always keyboard selectable after data has been
-						//		retrieved if there is not already a valid focused element.
-
-						var focusedNode = grid._focusedNode || initialNode;
-
-						// do not update the focused element if we already have a valid one
-						if (isFocusableClass.test(focusedNode.className) && miscUtil.contains(areaNode, focusedNode)) {
-							return rows;
-						}
-
-						// ensure that the focused element is actually a grid cell, not a
-						// dgrid-preload or dgrid-content element, which should not be focusable,
-						// even when data is loaded asynchronously
-						var elements = areaNode.getElementsByTagName('*');
-						for (var i = 0, element; (element = elements[i]); ++i) {
-							if (isFocusableClass.test(element.className)) {
-								focusedNode = grid._focusedNode = element;
-								break;
-							}
-						}
-
-						focusedNode.tabIndex = grid.tabIndex;
-						return rows;
-					});
-				}
-
-				grid._listeners.push(on(areaNode, 'mousedown', function (event) {
-					if (!handledEvent(event)) {
-						grid._focusOnNode(event.target, isHeader, event);
-					}
-				}));
-
-				grid._listeners.push(on(areaNode, 'keydown', function (event) {
-					//console.log('keyboardkey down : ',event);
-					// For now, don't squash browser-specific functionalities by letting
-					// ALT and META function as they would natively
-					if (event.metaKey || event.altKey) {
-						return;
-					}
-
-					var handler = grid[isHeader ? 'headerKeyMap' : 'keyMap'][event.keyCode];
-
-					// Text boxes and other inputs that can use direction keys should be ignored
-					// and not affect cell/row navigation
-					if (handler && !handledEvent(event)) {
-						handler.call(grid, event);
-					}
-				}));
-			}
-
-			if (this.tabableHeader) {
-				enableNavigation(this.headerNode);
-				on(this.headerNode, 'dgrid-cellfocusin', function () {
-					grid.scrollTo({ x: this.scrollLeft });
-				});
-			}
-			enableNavigation(this.contentNode);
-
-			this._debouncedEnsureScroll = miscUtil.debounce(this._ensureScroll, this);
-		},
-
-		removeRow: function (rowElement) {
-			if (!this._focusedNode) {
-				// Nothing special to do if we have no record of anything focused
-				return this.inherited(arguments);
-			}
-
-			var self = this,
-				isActive = document.activeElement === this._focusedNode,
-
-					focusedTarget = this[this.cellNavigation ? 'cell' : 'row'](this._focusedNode);
-
-            if(!focusedTarget){
-                console.error('no focus target');
-                return this.inherited(arguments);
-            }
-
-
-				var focusedRow = focusedTarget.row || focusedTarget,
-				sibling;
-			rowElement = rowElement.element || rowElement;
-
-			// If removed row previously had focus, temporarily store information
-			// to be handled in an immediately-following insertRow call, or next turn
-			if (rowElement === focusedRow.element) {
-				sibling = this.down(focusedRow, true);
-
-				// Check whether down call returned the same row, or failed to return
-				// any (e.g. during a partial unrendering)
-				if (!sibling || sibling.element === rowElement) {
-					sibling = this.up(focusedRow, true);
-				}
-
-				this._removedFocus = {
-					active: isActive,
-					rowId: focusedRow.id,
-					columnId: focusedTarget.column && focusedTarget.column.id,
-					siblingId: !sibling || sibling.element === rowElement ? undefined : sibling.id
-				};
-
-				// Call _restoreFocus on next turn, to restore focus to sibling
-				// if no replacement row was immediately inserted.
-				// Pass original row's id in case it was re-inserted in a renderArray
-				// call (and thus was found, but couldn't be focused immediately)
-				setTimeout(function () {
-					if (self._removedFocus) {
-						self._restoreFocus(focusedRow.id);
-					}
-				}, 0);
-
-				// Clear _focusedNode until _restoreFocus is called, to avoid
-				// needlessly re-running this logic
-				this._focusedNode = null;
-			}
-
-			this.inherited(arguments);
-		},
-
-		insertRow: function () {
-			var rowElement = this.inherited(arguments);
-			if (this._removedFocus && !this._removedFocus.wait) {
-				this._restoreFocus(rowElement);
-			}
-			return rowElement;
-		},
-
-		_restoreFocus: function (row) {
-			// summary:
-			//		Restores focus to the newly inserted row if it matches the
-			//		previously removed row, or to the nearest sibling otherwise.
-
-			var focusInfo = this._removedFocus,
-				newTarget,
-				cell;
-
-			row = row && this.row(row);
-			newTarget = row && row.element && row.id === focusInfo.rowId ? row :
-				typeof focusInfo.siblingId !== 'undefined' && this.row(focusInfo.siblingId);
-
-			if (newTarget && newTarget.element) {
-				if (!newTarget.element.parentNode.parentNode) {
-					// This was called from renderArray, so the row hasn't
-					// actually been placed in the DOM yet; handle it on the next
-					// turn (called from removeRow).
-					focusInfo.wait = true;
-					return;
-				}
-				// Should focus be on a cell?
-				if (typeof focusInfo.columnId !== 'undefined') {
-					cell = this.cell(newTarget, focusInfo.columnId);
-					if (cell && cell.element) {
-						newTarget = cell;
-					}
-				}
-				if (focusInfo.active && newTarget.element.offsetHeight !== 0) {
-					// Row/cell was previously focused and is visible, so focus the new one immediately
-					this._focusOnNode(newTarget, false, null);
-				}
-				else {
-					// Row/cell was not focused or is not visible, but we still need to
-					// update _focusedNode and the element's tabIndex/class
-					domClass.add(newTarget.element, 'dgrid-focus');
-					newTarget.element.tabIndex = this.tabIndex;
-					this._focusedNode = newTarget.element;
-				}
-			}
-
-			delete this._removedFocus;
-		},
-
-		addKeyHandler: function (key, callback, isHeader) {
-			// summary:
-			//		Adds a handler to the keyMap on the instance.
-			//		Supports binding additional handlers to already-mapped keys.
-			// key: Number
-			//		Key code representing the key to be handled.
-			// callback: Function
-			//		Callback to be executed (in instance context) when the key is pressed.
-			// isHeader: Boolean
-			//		Whether the handler is to be added for the grid body (false, default)
-			//		or the header (true).
-
-			// Aspects may be about 10% slower than using an array-based appraoch,
-			// but there is significantly less code involved (here and above).
-			return aspect.after( // Handle
-				this[isHeader ? 'headerKeyMap' : 'keyMap'], key, callback, true);
-		},
-
-		_ensureRowScroll: function (rowElement) {
-			// summary:
-			//		Ensures that the entire row is visible within the viewport.
-			//		Called for cell navigation in complex structures.
-
-			var scrollY = this.getScrollPosition().y;
-			if (scrollY > rowElement.offsetTop) {
-				// Row starts above the viewport
-				this.scrollTo({ y: rowElement.offsetTop });
-			}
-			else if (scrollY + this.contentNode.offsetHeight < rowElement.offsetTop + rowElement.offsetHeight) {
-				// Row ends below the viewport
-				this.scrollTo({ y: rowElement.offsetTop - this.contentNode.offsetHeight + rowElement.offsetHeight });
-			}
-		},
-
-		_ensureColumnScroll: function (cellElement) {
-			// summary:
-			//		Ensures that the entire cell is visible in the viewport.
-			//		Called in cases where the grid can scroll horizontally.
-
-			var scrollX = this.getScrollPosition().x;
-			var cellLeft = cellElement.offsetLeft;
-			if (scrollX > cellLeft) {
-				this.scrollTo({ x: cellLeft });
-			}
-			else {
-				var bodyWidth = this.bodyNode.clientWidth;
-				var cellWidth = cellElement.offsetWidth;
-				var cellRight = cellLeft + cellWidth;
-				if (scrollX + bodyWidth < cellRight) {
-					// Adjust so that the right side of the cell and grid body align,
-					// unless the cell is actually wider than the body - then align the left sides
-					this.scrollTo({ x: bodyWidth > cellWidth ? cellRight - bodyWidth : cellLeft });
-				}
-			}
-		},
-
-		_ensureScroll: function (cell, isHeader) {
-			// summary:
-			//		Corrects scroll based on the position of the newly-focused row/cell
-			//		as necessary based on grid configuration and dimensions.
-
-			if(this.cellNavigation && (this.columnSets || this.subRows.length > 1) && !isHeader){
-				this._ensureRowScroll(cell.row.element);
-			}
-			if(this.bodyNode.clientWidth < this.contentNode.offsetWidth){
-				this._ensureColumnScroll(cell.element);
-			}
-		},
-
-		_focusOnNode: function (element,isHeader,event,emit) {
-			var focusedNodeProperty = '_focused' + (isHeader ? 'Header' : '') + 'Node',
-				focusedNode = this[focusedNodeProperty],
-				cellOrRowType = this.cellNavigation ? 'cell' : 'row',
-				cell = this[cellOrRowType](element),
-				inputs,
-				input,
-				numInputs,
-				inputFocused,
-				i;
-
-			element = cell && cell.element;
-
-			if (!element /*|| element==this._focusedNode*/) {
-				//console.error('same el');
-				return;
-			}
-
-			if (this.cellNavigation) {
-				inputs = element.getElementsByTagName('input');
-				for (i = 0, numInputs = inputs.length; i < numInputs; i++) {
-					input = inputs[i];
-					if ((input.tabIndex !== -1 || '_dgridLastValue' in input) && !input.disabled) {
-						input.focus();
-						inputFocused = true;
-						break;
-					}
-				}
-			}
-
-			// Set up event information for dgrid-cellfocusout/in events.
-			// Note that these events are not fired for _restoreFocus.
-			if (event !== null) {
-				event = lang.mixin({ grid: this }, event);
-				if (event.type) {
-					event.parentType = event.type;
-				}
-				if (!event.bubbles) {
-					// IE doesn't always have a bubbles property already true.
-					// Opera throws if you try to set it to true if it is already true.
-					event.bubbles = true;
-				}
-			}
-
-			if (focusedNode) {
-				// Clean up previously-focused element
-				// Remove the class name and the tabIndex attribute
-				domClass.remove(focusedNode, 'dgrid-focus');
-				focusedNode.removeAttribute('tabindex');
-
-				// Expose object representing focused cell or row losing focus, via
-				// event.cell or event.row; which is set depends on cellNavigation.
-				if (event) {
-					event[cellOrRowType] = this[cellOrRowType](focusedNode);
-					on.emit(focusedNode, 'dgrid-cellfocusout', event);
-				}
-			}
-			focusedNode = this[focusedNodeProperty] = element;
-
-			if (event) {
-				// Expose object representing focused cell or row gaining focus, via
-				// event.cell or event.row; which is set depends on cellNavigation.
-				// Note that yes, the same event object is being reused; on.emit
-				// performs a shallow copy of properties into a new event object.
-				event[cellOrRowType] = cell;
-			}
-
-			var isFocusableClass = this.cellNavigation ? hasGridCellClass : hasGridRowClass;
-			if (!inputFocused && isFocusableClass.test(element.className)) {
-
-				element.tabIndex = this.tabIndex;
-				element.focus();
-			}
-			domClass.add(element, 'dgrid-focus');
-
-
-			if (event && emit!==false) {
-				on.emit(focusedNode, 'dgrid-cellfocusin', event);
-			}
-
-			this._debouncedEnsureScroll(cell, isHeader);
-		},
-
-		focusHeader: function (element) {
-			this._focusOnNode(element || this._focusedHeaderNode, true);
-		},
-
-		focus: function (element,emit) {
-			_debug && console.log('focuse : ' + (element ? element.id : ''));
-			var node = element || this._focusedNode;
-			if (node) {
-				if (element==this._focusedNode) {
-					//console.error('same el');
-					//return;
-				}
-				this._focusOnNode(node, false,null,emit);
-			}
-			else {
-				this.contentNode.focus();
-			}
-		}
-	};
-
-	// Common functions used in default keyMap (called in instance context)
-
-	var moveFocusVertical = Implementation.moveFocusVertical = function (event, steps) {
-		if(this.isThumbGrid){
-			var next = _upDownSelect(event,this,steps);
-			if(next && next.length){
-				this._focusOnNode(next[0], false, event);
-				event.preventDefault();
-				return;
-			}
-		}
-		var cellNavigation = this.cellNavigation,
-			target = this[cellNavigation ? 'cell' : 'row'](event),
-			columnId = cellNavigation && target.column.id,
-			next = this.down(this._focusedNode, steps, true);
-
-		// Navigate within same column if cell navigation is enabled
-		if (cellNavigation) {
-			next = this.cell(next, columnId);
-		}
-		this._focusOnNode(next, false, event);
-
-		event.preventDefault();
-	};
-
-	var moveFocusUp = Implementation.moveFocusUp = function (event) {
-		moveFocusVertical.call(this, event, -1);
-	};
-
-	var moveFocusDown = Implementation.moveFocusDown = function (event) {
-		moveFocusVertical.call(this, event, 1);
-	};
-
-	var moveFocusPageUp = Implementation.moveFocusPageUp = function (event) {
-		moveFocusVertical.call(this, event, -this.pageSkip);
-	};
-
-	var moveFocusPageDown = Implementation.moveFocusPageDown = function (event) {
-		moveFocusVertical.call(this, event, this.pageSkip);
-	};
-
-	var moveFocusHorizontal = Implementation.moveFocusHorizontal = function (event, steps) {
-
-		if (!this.cellNavigation && this.isThumbGrid!==true) {
-			return;
-		}
-
-		var isHeader = !this.row(event), // header reports row as undefined
-			currentNode = this['_focused' + (isHeader ? 'Header' : '') + 'Node'];
-
-		//var _row = this.row(event);
-		if(this.isThumbGrid==true){
-
-			var cellNavigation = this.cellNavigation,
-				next = this.down(this._focusedNode, steps, true);
-
-			// Navigate within same column if cell navigation is enabled
-			this._focusOnNode(next, false, event);
-			event.preventDefault();
-			return ;
-		}
-
-		this._focusOnNode(this.right(currentNode, steps), isHeader, event);
-		event.preventDefault();
-	};
-
-	var moveFocusLeft = Implementation.moveFocusLeft = function (event) {
-		moveFocusHorizontal.call(this, event, -1);
-	};
-
-	var moveFocusRight = Implementation.moveFocusRight = function (event) {
-		moveFocusHorizontal.call(this, event, 1);
-	};
-
-	var moveHeaderFocusEnd = Implementation.moveHeaderFocusEnd = function (event, scrollToBeginning) {
-		// Header case is always simple, since all rows/cells are present
-		var nodes;
-		if (this.cellNavigation) {
-			nodes = this.headerNode.getElementsByTagName('th');
-			this._focusOnNode(nodes[scrollToBeginning ? 0 : nodes.length - 1], true, event);
-		}
-		// In row-navigation mode, there's nothing to do - only one row in header
-
-		// Prevent browser from scrolling entire page
-		event.preventDefault();
-	};
-
-	var moveHeaderFocusHome = Implementation.moveHeaderFocusHome = function (event) {
-		moveHeaderFocusEnd.call(this, event, true);
-	};
-
-	var moveFocusEnd = Implementation.moveFocusEnd = function (event, scrollToTop) {
-		// summary:
-		//		Handles requests to scroll to the beginning or end of the grid.
-
-		// Assume scrolling to top unless event is specifically for End key
-		var cellNavigation = this.cellNavigation,
-			contentNode = this.contentNode,
-			contentPos = scrollToTop ? 0 : contentNode.scrollHeight,
-			scrollPos = contentNode.scrollTop + contentPos,
-			endChild = contentNode[scrollToTop ? 'firstChild' : 'lastChild'];
-
-		if(endChild.className.indexOf('dgrid-extra') > -1){
-			endChild = endChild['previousSibling'];
-		}
-
-		var	hasPreload = endChild.className.indexOf('dgrid-preload') > -1,
-			endTarget = hasPreload ? endChild[(scrollToTop ? 'next' : 'previous') + 'Sibling'] : endChild,
-			endPos = endTarget.offsetTop + (scrollToTop ? 0 : endTarget.offsetHeight),
-			handle;
-
-		if (hasPreload) {
-			// Find the nearest dgrid-row to the relevant end of the grid
-			while (endTarget && endTarget.className.indexOf('dgrid-row') < 0) {
-				endTarget = endTarget[(scrollToTop ? 'next' : 'previous') + 'Sibling'];
-			}
-			// If none is found, there are no rows, and nothing to navigate
-			if (!endTarget) {
-				return;
-			}
-		}
-
-		// Grid content may be lazy-loaded, so check if content needs to be
-		// loaded first
-		if (!hasPreload || endChild.offsetHeight < 1) {
-			// End row is loaded; focus the first/last row/cell now
-			if (cellNavigation) {
-				// Preserve column that was currently focused
-				endTarget = this.cell(endTarget, this.cell(event).column.id);
-			}
-			this._focusOnNode(endTarget, false, event);
-		}
-		else {
-			// In IE < 9, the event member references will become invalid by the time
-			// _focusOnNode is called, so make a (shallow) copy up-front
-			if (!has('dom-addeventlistener')) {
-				event = lang.mixin({}, event);
-			}
-
-			// If the topmost/bottommost row rendered doesn't reach the top/bottom of
-			// the contentNode, we are using OnDemandList and need to wait for more
-			// data to render, then focus the first/last row in the new content.
-			handle = aspect.after(this, 'renderArray', function (rows) {
-				var target = rows[scrollToTop ? 0 : rows.length - 1];
-				if (cellNavigation) {
-					// Preserve column that was currently focused
-					target = this.cell(target, this.cell(event).column.id);
-				}
-				this._focusOnNode(target, false, event);
-				handle.remove();
-				return rows;
-			});
-		}
-
-		if (scrollPos === endPos) {
-			// Grid body is already scrolled to end; prevent browser from scrolling
-			// entire page instead
-			event.preventDefault();
-		}
-	};
-
-	var moveFocusHome = Implementation.moveFocusHome = function (event) {
-		moveFocusEnd.call(this, event, true);
-	};
-
-	function preventDefault(event) {
-		event.preventDefault();
-	}
-
-	Implementation.defaultKeyMap = {
-		32: preventDefault, // space
-		33: moveFocusPageUp, // page up
-		34: moveFocusPageDown, // page down
-		35: moveFocusEnd, // end
-		36: moveFocusHome, // home
-		37: moveFocusLeft, // left
-		38: moveFocusUp, // up
-		39: moveFocusRight, // right
-		40: moveFocusDown // down
-	};
-
-	// Header needs fewer default bindings (no vertical), so bind it separately
-	Implementation.defaultHeaderKeyMap = {
-		32: preventDefault, // space
-		35: moveHeaderFocusEnd, // end
-		36: moveHeaderFocusHome, // home
-		37: moveFocusLeft, // left
-		39: moveFocusRight // right
-	};
-
-	var Module = declare(null,Implementation);
-	Module.dcl = dcl(null,Implementation);
-	return Module;
-});
-
-define('xgrid/ColumnHider',[
-	'xdojo/declare',
-    'dojo/has',
-    'dgrid/util/misc',
-    'xide/types',
-    'xide/utils'
-], function (declare, has, misc,types,utils) {
-
-    /*
-     *	Column Hider plugin for dgrid
-     *	Originally contributed by TRT 2011-09-28
-     *
-     *	A dGrid plugin that attaches a menu to a dgrid, along with a way of opening it,
-     *	that will allow you to show and hide columns.  A few caveats:
-     *
-     *	1. Menu placement is entirely based on CSS definitions.
-     *	2. If you want columns initially hidden, you must add "hidden: true" to your
-     *		column definition.
-     *	3. This implementation does NOT support ColumnSet, and has not been tested
-     *		with multi-subrow records.
-     *	4. Column show/hide is controlled via straight up HTML checkboxes.  If you
-     *		are looking for something more fancy, you'll probably need to use this
-     *		definition as a template to write your own plugin.
-     *
-     */
-	return declare('xgrid.ColumnHider',null, {
-        columnHiderActionRootCommand:'View/Columns',
-		// i18nColumnHider: Object
-		//		This object contains all of the internationalized strings for
-		//		the ColumnHider extension as key/value pairs.
-		i18nColumnHider: {},
-
-		// _columnHiderRules: Object
-		//		Hash containing handles returned from addCssRule.
-		_columnHiderRules: null,
-        _runAction:function(action,update,value){
-            if(action && action.command.indexOf(this.columnHiderActionRootCommand)!=-1 ){
-                var col = action.column;
-                var isHidden = this.isColumnHidden(col.id);
-                this.showColumn(col.id,isHidden);
-                update!==false && action.set('value', !this.isColumnHidden(col.id));
-            }
-            return this.inherited(arguments);
-        },
-        /**
-         *
-         * @param permissions
-         * @param actions
-         * @returns {Array}
-         */
-		getColumnHiderActions:function(permissions,actions){
-            var root = this.columnHiderActionRootCommand,
-                thiz = this,
-                columnActions = [],
-                VISIBILITY = types.ACTION_VISIBILITY,
-                node = this.domNode;
-
-            actions = actions || [];
-            var rootAction = _.find(actions,{
-                command:root
-            });
-            if(!rootAction) {
-                columnActions.push(this.createAction({
-                    label:'Columns',
-                    command:root,
-                    icon:'fa-columns',
-                    tab:'View',
-                    group:'Columns',
-                    toggleGroup:thiz.id + 'Columns',
-                    onCreate:function(action){
-                        action.setVisibility(VISIBILITY.RIBBON,{
-                            expand:true
-                        }).setVisibility(VISIBILITY.ACTION_TOOLBAR, false);
-                    }
-                }));
-            }
-            /**
-             *
-             * @param col
-             * @private
-             */
-            function _createEntry(col) {
-
-                var id = col.id,
-                    label = 'Show ' + ( col.label || col.field || ''),
-                    icon = col.icon || 'fa-cogs';
-
-                // Allow cols to opt out of the hider (e.g. for selector column).
-                if (col.unhidable) {
-                    return;
-                }
-                var _action = thiz.createAction(label, root + '/' + label , icon, null, 'View', 'Columns', 'item|view',
-
-                    //oncreate
-                    function(action){
-
-                        var widgetImplementation = {
-                            postMixInProperties: function() {
-                                this.inherited(arguments);
-                                this.checked = this.item.get('value') === true;
-                            },
-                            startup:function(){
-                                this.inherited(arguments);
-                                this.on('change',function(val){
-                                    thiz.showColumn(id,val);
-                                });
-                            }
-                        };
-                        var widgetArgs  ={
-                            checked:!col.hidden,
-                            iconClass:icon,
-                            style:'float:inherit;'
-                        };
-
-
-                        var _visibilityMixin = {
-                            //widgetClass:declare.classFactory('_Checked', [CheckedMenuItem,_ActionValueWidgetMixin], null, widgetImplementation ,null),
-                            widgetArgs:widgetArgs,
-                            actionType : 'multiToggle'
-                        };
-
-                        action.actionType = 'multiToggle';
-
-
-                        action.setVisibility(types.ACTION_VISIBILITY_ALL,utils.cloneKeys(_visibilityMixin,false));
-
-                        label = action.label.replace('Show ','');
-
-
-                        //for ribbons we collapse into 'Checkboxes'
-                        /*
-                        action.setVisibility(VISIBILITY.RIBBON,{
-                            widgetClass:declare.classFactory('_CheckedGroup', [ActionValueWidget], null,{
-                                iconClass:"",
-                                postMixInProperties: function() {
-                                    this.inherited(arguments);
-                                    this.checked = this.item.get('value') == true;
-                                },
-                                startup:function(){
-                                    this.inherited(arguments);
-                                    this.widget.on('change', function (val) {
-                                        thiz.showColumn(id,val);
-                                    }.bind(this));
-                                }
-                            } ,null),
-                            widgetArgs:{
-                                renderer:CheckBox,
-                                checked:!col.hidden,
-                                label:action.label.replace('Show ','')
-                            }
-                        });
-                        */
-
-                    }, /*handler*/ null ,
-                    {
-                        column:col,
-                        filterGroup:"item|view",
-                        tab:'View',
-                        value:!col.hidden,
-                        addPermission:true
-                    },
-                    null, null, permissions, node,thiz,thiz);
-
-                if(_action){
-                    columnActions.push(_action);
-                }
-
-                /**
-
-                columnActions.push(_ActionMixin.createActionParameters(label, root + '/' + label, 'Columns', icon, function () {
-                    console.log('handler');
-
-                }, '', null, null, thiz, thiz, {
-                    column:col,
-                    filterGroup:"item|view",
-                    tab:'View',
-                    value:!col.hidden,
-                    onCreate:function(action){
-
-                        var _action = this;
-
-                        action.owner = thiz;
-
-                        var widgetImplementation = {
-                            postMixInProperties: function() {
-                                this.inherited(arguments);
-                                this.checked = this.item.get('value') == true;
-                            },
-                            startup:function(){
-                                this.inherited(arguments);
-                                this.on('change',function(val){
-                                    thiz.showColumn(id,val);
-                                })
-                            },
-                            destroy:function(){
-
-                                this.inherited(arguments);
-                            }
-                        };
-                        var widgetArgs  ={
-                            checked:!col.hidden,
-                            iconClass:icon,
-                            style:'float:inherit;'
-                        };
-
-                        var _visibilityMixin = {
-                            widgetClass:declare.classFactory('_Checked', [CheckedMenuItem,_ActionValueWidgetMixin], null, widgetImplementation ,null),
-                            widgetArgs:widgetArgs
-                        };
-
-                        action.setVisibility(types.ACTION_VISIBILITY_ALL,_visibilityMixin);
-
-                        label = action.label.replace('Show ','');
-
-
-                        //for ribbons we collapse into 'Checkboxes'
-                        action.setVisibility(VISIBILITY.RIBBON,{
-                            widgetClass:declare.classFactory('_CheckedGroup', [ActionValueWidget], null,{
-                                iconClass:"",
-                                postMixInProperties: function() {
-                                    this.inherited(arguments);
-                                    this.checked = this.item.get('value') == true;
-                                },
-                                startup:function(){
-                                    this.inherited(arguments);
-                                    this.widget.on('change', function (val) {
-                                        thiz.showColumn(id,val);
-                                    }.bind(this));
-                                }
-                            } ,null),
-                            widgetArgs:{
-                                renderer:CheckBox,
-                                checked:!col.hidden,
-                                label:action.label.replace('Show ','')
-                            }
-                        });
-
-                    }
-                }));
-
-                */
-
-            }
-            var subRows = this.subRows,
-                first = true,
-                srLength, cLength, sr, c;
-            for (sr = 0, srLength = subRows.length; sr < srLength; sr++) {
-                for (c = 0, cLength = subRows[sr].length; c < cLength; c++) {
-                    _createEntry(subRows[sr][c]);
-                    if (first) {
-                        first = false;
-                    }
-                }
-            }
-            return columnActions;
-
-        },
-        resize:function(){
-            this.inherited(arguments);
-            this._checkHiddenColumns();
-        },
-        _checkHiddenColumns:function(){
-            var subRows = this.subRows,
-                srLength, cLength, sr, c,
-                totalWidth = $(this.domNode).width();
-
-            for (sr = 0, srLength = subRows.length; sr < srLength; sr++) {
-                for (c = 0, cLength = subRows[sr].length; c < cLength; c++) {
-                    var col = subRows[sr][c];
-                    if(col.minWidth){
-                        if(totalWidth < col.minWidth){
-                            if(!col.unhidable) {
-                                this.showColumn(col.id,false);
-                            }
-                        }else{
-                            this.showColumn(col.id,true);
-                        }
-                    }
-                }
-            }
-        },
-        startup:function(){
-            if(this._started){
-                return;
-            }
-
-            this._columnHiderCheckboxes = {};
-            this._columnHiderRules = {};
-            var res = this.inherited(arguments);
-            this._checkHiddenColumns();
-            var subRows = this.subRows,
-                srLength, cLength, sr, c,
-                thiz = this;
-
-            for (sr = 0, srLength = subRows.length; sr < srLength; sr++) {
-                for (c = 0, cLength = subRows[sr].length; c < cLength; c++) {
-
-                    var col = subRows[sr][c],
-                        id = col.id;
-
-                    if (col.hidden===true) {
-                        // Hide the column (reset first to avoid short-circuiting logic)
-                        col.hidden = false;
-                        thiz._hideColumn(id);
-                        col.hidden = true;
-                    }
-                }
-            }
-            if(this.getActionStore){
-                this.getActionStore().on('update',function(evt){
-                    var action = evt.target;
-                    if(action.command.indexOf('View/Columns')!==-1){
-                        var col = action.column;
-                        thiz.showColumn(col.id,action.get('value'));
-                        thiz.onAfterAction(action);
-
-                    }
-                });
-            }
-            return res;
-
-        },
-		left: function (cell, steps) {
-			return this.right(cell, -steps);
-		},
-		right: function (cell, steps) {
-			if (!cell.element) {
-				cell = this.cell(cell);
-			}
-			var nextCell = this.inherited(arguments),
-				prevCell = cell;
-
-			// Skip over hidden cells
-			while (nextCell.column.hidden) {
-				nextCell = this.inherited(arguments, [nextCell, steps > 0 ? 1 : -1]);
-				if (prevCell.element === nextCell.element) {
-					// No further visible cell found - return original
-					return cell;
-				}
-				prevCell = nextCell;
-			}
-			return nextCell;
-		},
-		isColumnHidden: function (id) {
-			// summary:
-			//		Convenience method to determine current hidden state of a column
-			return !!this._columnHiderRules[id];
-		},
-		_hideColumn: function (id) {
-			// summary:
-			//		Hides the column indicated by the given id.
-
-			// Use misc function directly, since we clean these up ourselves anyway
-			var grid = this,
-                domId = this.template ? this.template.id : this.domNode.id,
-                selectorPrefix = '#' + misc.escapeCssIdentifier(domId) + ' .dgrid-column-',
-				tableRule; // used in IE8 code path
-
-			if (this._columnHiderRules[id]) {
-				return;
-			}
-
-			this._columnHiderRules[id] = misc.addCssRule(selectorPrefix + misc.escapeCssIdentifier(id, '-'), 'display: none;');
-            
-			if (has('ie') === 8 || has('ie') === 10) {
-				// Work around IE8 display issue and IE10 issue where
-				// header/body cells get out of sync when ColumnResizer is also used
-				tableRule = misc.addCssRule('.dgrid-row-table', 'display: inline-table;');
-				window.setTimeout(function () {
-					tableRule.remove();
-					grid.resize();
-				}, 0);
-			}
-		},
-		_showColumn: function (id) {
-			// summary:
-			//		Shows the column indicated by the given id
-			//		(by removing the rule responsible for hiding it).
-
-			if (this._columnHiderRules[id]) {
-				this._columnHiderRules[id].remove();
-				delete this._columnHiderRules[id];
-			}
-		},
-        showColumn:function(id,show){
-            if(this.isColumnHidden(id)){
-                if(show) {
-                    this._showColumn(id);
-                }
-            }else if(!show){
-                this._hideColumn(id);
-            }
-        }
-	});
-});
-
-define('dgrid/_StoreMixin',[
-	'dojo/_base/declare',
-	'dojo/_base/lang',
-	'dojo/Deferred',
-	'dojo/aspect',
-	'dojo/dom-construct',
-	'dojo/has',
-	'dojo/on',
-	'dojo/when'
-], function (declare, lang, Deferred, aspect, domConstruct, has, on, when) {
-	// This module isolates the base logic required by store-aware list/grid
-	// components, e.g. OnDemandList/Grid and the Pagination extension.
-
-	function emitError(err) {
-		// called by _trackError in context of list/grid, if an error is encountered
-		if (typeof err !== 'object') {
-			// Ensure we actually have an error object, so we can attach a reference.
-			err = new Error(err);
-		}
-		else if (err.dojoType === 'cancel') {
-			// Don't fire dgrid-error events for errors due to canceled requests
-			// (unfortunately, the Deferred instrumentation will still log them)
-			return;
-		}
-
-		var event = on.emit(this.domNode, 'dgrid-error', {
-			grid: this,
-			error: err,
-			cancelable: true,
-			bubbles: true
-		});
-		if (event) {
-			console.error(err);
-		}
-	}
-
-	return declare(null, {
-		// collection: Object
-		//		The base object collection (implementing the dstore/api/Store API) before being sorted
-		//		or otherwise processed by the grid. Use it for general purpose store operations such as
-		//		`getIdentity` and `get`, `add`, `put`, and `remove`.
-		collection: null,
-
-		// _renderedCollection: Object
-		//		The object collection from which data is to be fetched. This is the sorted collection.
-		//		Use it when retrieving data to be rendered by the grid.
-		_renderedCollection: null,
-
-		// _rows: Array
-		//		Sparse array of row nodes, used to maintain the grid in response to events from a tracked collection.
-		//		Each node's index corresponds to the index of its data object in the collection.
-		_rows: null,
-
-		// _observerHandle: Object
-		//		The observer handle for the current collection, if trackable.
-		_observerHandle: null,
-
-		// shouldTrackCollection: Boolean
-		//		Whether this instance should track any trackable collection it is passed.
-		shouldTrackCollection: false,
-
-		// getBeforePut: boolean
-		//		If true, a get request will be performed to the store before each put
-		//		as a baseline when saving; otherwise, existing row data will be used.
-		getBeforePut: true,
-
-		// noDataMessage: String
-		//		Message to be displayed when no results exist for a collection, whether at
-		//		the time of the initial query or upon subsequent observed changes.
-		//		Defined by _StoreMixin, but to be implemented by subclasses.
-		noDataMessage: '',
-
-		// loadingMessage: String
-		//		Message displayed when data is loading.
-		//		Defined by _StoreMixin, but to be implemented by subclasses.
-		loadingMessage: '',
-
-		_total: 0,
-
-		constructor: function () {
-			// Create empty objects on each instance, not the prototype
-			this.dirty = {};
-			this._updating = {}; // Tracks rows that are mid-update
-			this._columnsWithSet = {};
-
-			// Reset _columnsWithSet whenever column configuration is reset
-			aspect.before(this, 'configStructure', lang.hitch(this, function () {
-				this._columnsWithSet = {};
-			}));
-		},
-
-		destroy: function () {
-			this.inherited(arguments);
-
-			if (this._renderedCollection) {
-				this._cleanupCollection();
-			}
-		},
-
-		_configColumn: function (column) {
-			// summary:
-			//		Implements extension point provided by Grid to store references to
-			//		any columns with `set` methods, for use during `save`.
-			if (column.set) {
-				this._columnsWithSet[column.field] = column;
-			}
-			this.inherited(arguments);
-		},
-
-		_setCollection: function (collection) {
-			// summary:
-			//		Assigns a new collection to the list/grid, sets up tracking
-			//		if applicable, and tells the list/grid to refresh.
-
-			if (this._renderedCollection) {
-				this.cleanup();
-				this._cleanupCollection({
-					// Only clear the dirty hash if the collection being used is actually from a different store
-					// (i.e. not just a re-sorted / re-filtered version of the same store)
-					shouldRevert: !collection || collection.storage !== this._renderedCollection.storage
-				});
-			}
-
-			this.collection = collection;
-
-			// Avoid unnecessary rendering and processing before the grid has started up
-			if (this._started) {
-				// Once startup is called, List.startup sets the sort property which calls _StoreMixin._applySort
-				// which sets the collection property again.  So _StoreMixin._applySort will be executed again
-				// after startup is called.
-				if (collection) {
-					var renderedCollection = collection;
-					if (this.sort && this.sort.length > 0) {
-						renderedCollection = collection.sort(this.sort);
-					}
-
-					if (renderedCollection.track && this.shouldTrackCollection) {
-						renderedCollection = renderedCollection.track();
-						this._rows = [];
-
-						this._observerHandle = this._observeCollection(
-							renderedCollection,
-							this.contentNode,
-							{ rows: this._rows }
-						);
-					}
-
-					this._renderedCollection = renderedCollection;
-				}
-				this.refresh();
-			}
-		},
-
-		_setStore: function () {
-			if (!this.collection) {
-				console.debug('set(\'store\') call detected, but you probably meant set(\'collection\')');
-			}
-		},
-
-		_getTotal: function () {
-			// summary:
-			//		Retrieves the currently-tracked total (as updated by
-			//		subclasses after store queries, or by _StoreMixin in response to
-			//		updated totalLength in events)
-
-			return this._total;
-		},
-
-		_cleanupCollection: function (options) {
-			// summary:
-			//		Handles cleanup duty for the previous collection;
-			//		called during _setCollection and destroy.
-			// options: Object?
-			//		* shouldRevert: Whether to clear the dirty hash
-
-			options = options || {};
-
-			if (this._renderedCollection.tracking) {
-				this._renderedCollection.tracking.remove();
-			}
-
-			// Remove observer and existing rows so any sub-row observers will be cleaned up
-			if (this._observerHandle) {
-				this._observerHandle.remove();
-				this._observerHandle = this._rows = null;
-			}
-
-			// Discard dirty map, as it applied to a previous collection
-			if (options.shouldRevert !== false) {
-				this.dirty = {};
-			}
-
-			this._renderedCollection = this.collection = null;
-		},
-
-		_applySort: function () {
-			if (this.collection) {
-				this.set('collection', this.collection);
-			}
-		},
-
-		row: function () {
-			// Extend List#row with more appropriate lookup-by-id logic
-			var row = this.inherited(arguments);
-			if (row && row.data && typeof row.id !== 'undefined') {
-
-				if(this.collection) {
-					row.id = this.collection.getIdentity(row.data);
-				}else{
-					console.error('_StoreMixin:have no collection!');
-				}
-
-			}
-			return row;
-		},
-
-		refresh: function () {
-			var result = this.inherited(arguments);
-
-			if (!this.collection) {
-				
-				this.noDataNode = domConstruct.create('div', {
-					className: 'dgrid-no-data',
-					innerHTML: this.noDataMessage
-				}, this.contentNode);
-				
-				this._emit('noData');
-			}
-			//{"values":[{"key":"Marantz-Power","value":"%%PowerState%%"}]}
-			return result;
-		},
-
-		refreshCell: function (cell) {
-			/*
-			 this.inherited(arguments);
-			 var row = cell.row;
-			 var self = this;
-			 */
-			if (!this.collection || !this._createBodyRowCell) {
-				//throw new Error('refreshCell requires a Grid with a collection.');
-				return false;
-			}
-
-			if(!cell.column){
-				return;
-			}
-			if (cell.column && cell.column.selector) {
-				return (new Deferred()).resolve();
-			}
-			this.inherited(arguments);
-			return this.collection.get(cell.row.id).then(lang.hitch(this, '_refreshCellFromItem', cell));
-
-/*
-			return this.collection.get(row.id).then(function (item) {
-
-				var cellElement = cell.element;
-
-				if(cellElement) {
-
-					if (cellElement.widget) {
-						cellElement.widget.destroyRecursive();
-					}
-					domConstruct.empty(cellElement);
-
-					var dirtyItem = self.dirty && self.dirty[row.id];
-					if (dirtyItem) {
-						item = lang.delegate(item, dirtyItem);
-					}
-
-					self._createBodyRowCell(cellElement, cell.column, item);
-				}
-			});
-			*/
-		},
-		_refreshCellFromItem: function (cell, item, options) {
-			if(!cell || !cell.element){
-				return;
-			}
-			var cellElement = cell.element;
-			if (cellElement.widget) {
-				cellElement.widget.destroyRecursive();
-			}
-			domConstruct.empty(cellElement);
-
-			var dirtyItem = this.dirty && this.dirty[cell.row.id];
-			if (dirtyItem) {
-				item = lang.delegate(item, dirtyItem);
-			}
-
-			this._createBodyRowCell(cellElement, cell.column, item, options);
-		},
-		renderArray: function () {
-			var rows = this.inherited(arguments);
-
-			if (!this.collection) {
-				if (rows.length && this.noDataNode) {
-					domConstruct.destroy(this.noDataNode);
-				}
-			}
-			return rows;
-		},
-
-		insertRow: function (object, parent, beforeNode, i, options) {
-			var store = this.collection,
-				dirty = this.dirty,
-				id = store && store.getIdentity(object),
-				dirtyObj,
-				row;
-
-			if (id in dirty && !(id in this._updating)) {
-				dirtyObj = dirty[id];
-			}
-			if (dirtyObj) {
-				// restore dirty object as delegate on top of original object,
-				// to provide protection for subsequent changes as well
-				object = lang.delegate(object, dirtyObj);
-			}
-
-			row = this.inherited(arguments);
-
-			if (options && options.rows) {
-				options.rows[i] = row;
-			}
-
-			// Remove no data message when a new row appears.
-			// Run after inherited logic to prevent confusion due to noDataNode
-			// no longer being present as a sibling.
-			if (this.noDataNode) {
-				domConstruct.destroy(this.noDataNode);
-				this.noDataNode = null;
-			}
-
-			return row;
-		},
-
-		updateDirty: function (id, field, value) {
-			// summary:
-			//		Updates dirty data of a field for the item with the specified ID.
-			var dirty = this.dirty,
-				dirtyObj = dirty[id];
-
-			if (!dirtyObj) {
-				dirtyObj = dirty[id] = {};
-			}
-			dirtyObj[field] = value;
-		},
-
-		save: function () {
-			// Keep track of the store and puts
-			var self = this,
-				store = this.collection,
-				dirty = this.dirty,
-				dfd = new Deferred(),
-				results = {},
-				getFunc = function (id) {
-					// returns a function to pass as a step in the promise chain,
-					// with the id variable closured
-					var data;
-					return (self.getBeforePut || !(data = self.row(id).data)) ?
-						function () {
-							return store.get(id);
-						} :
-						function () {
-							return data;
-						};
-				};
-
-			// function called within loop to generate a function for putting an item
-			function putter(id, dirtyObj) {
-				// Return a function handler
-				return function (object) {
-					var colsWithSet = self._columnsWithSet,
-						updating = self._updating,
-						key, data;
-
-					if (typeof object.set === 'function') {
-						object.set(dirtyObj);
-					} else {
-						// Copy dirty props to the original, applying setters if applicable
-						for (key in dirtyObj) {
-							object[key] = dirtyObj[key];
-						}
-					}
-
-					// Apply any set methods in column definitions.
-					// Note that while in the most common cases column.set is intended
-					// to return transformed data for the key in question, it is also
-					// possible to directly modify the object to be saved.
-					for (key in colsWithSet) {
-						data = colsWithSet[key].set(object);
-						if (data !== undefined) {
-							object[key] = data;
-						}
-					}
-
-					updating[id] = true;
-					// Put it in the store, returning the result/promise
-					return store.put(object).then(function (result) {
-						// Clear the item now that it's been confirmed updated
-						delete dirty[id];
-						delete updating[id];
-						results[id] = result;
-						return results;
-					});
-				};
-			}
-
-			var promise = dfd.then(function () {
-				// Ensure empty object is returned even if nothing was dirty, for consistency
-				return results;
-			});
-
-			// For every dirty item, grab the ID
-			for (var id in dirty) {
-				// Create put function to handle the saving of the the item
-				var put = putter(id, dirty[id]);
-
-				// Add this item onto the promise chain,
-				// getting the item from the store first if desired.
-				promise = promise.then(getFunc(id)).then(put);
-			}
-
-			// Kick off and return the promise representing all applicable get/put ops.
-			// If the success callback is fired, all operations succeeded; otherwise,
-			// save will stop at the first error it encounters.
-			dfd.resolve();
-			return promise;
-		},
-
-		revert: function () {
-			// summary:
-			//		Reverts any changes since the previous save.
-			this.dirty = {};
-			this.refresh();
-		},
-
-		_trackError: function (func) {
-			// summary:
-			//		Utility function to handle emitting of error events.
-			// func: Function|String
-			//		A function which performs some store operation, or a String identifying
-			//		a function to be invoked (sans arguments) hitched against the instance.
-			//		If sync, it can return a value, but may throw an error on failure.
-			//		If async, it should return a promise, which would fire the error
-			//		callback on failure.
-			// tags:
-			//		protected
-
-			if (typeof func === 'string') {
-				func = lang.hitch(this, func);
-			}
-
-			var self = this,
-				promise;
-
-			try {
-				promise = when(func());
-			} catch (err) {
-				// report sync error
-				var dfd = new Deferred();
-				dfd.reject(err);
-				promise = dfd.promise;
-			}
-
-			promise.otherwise(function (err) {
-				emitError.call(self, err);
-			});
-			return promise;
-		},
-
-		removeRow: function (rowElement, preserveDom, options) {
-			var row = {element: rowElement};
-			// Check to see if we are now empty...
-			if (!preserveDom && this.noDataMessage &&
-					(this.up(row).element === rowElement) &&
-					(this.down(row).element === rowElement)) {
-				// ...we are empty, so show the no data message.
-				this.noDataNode = domConstruct.create('div', {
-					className: 'dgrid-no-data',
-					innerHTML: this.noDataMessage
-				}, this.contentNode);
-				this._emit('noData');
-			}
-
-			var rows = (options && options.rows) || this._rows;
-			if (rows) {
-				delete rows[rowElement.rowIndex];
-			}
-
-			return this.inherited(arguments);
-		},
-
-		renderQueryResults: function (results, beforeNode, options) {
-			// summary:
-			//		Renders objects from QueryResults as rows, before the given node.
-
-			options = lang.mixin({ rows: this._rows }, options);
-			var self = this;
-
-			if (!has('dojo-built')) {
-				// Check for null/undefined totalResults to help diagnose faulty services/stores
-				results.totalLength.then(function (total) {
-					if (total == null) {
-						console.warn('Store reported null or undefined totalLength. ' +
-							'Make sure your store (and service, if applicable) are reporting total correctly!');
-					}
-				});
-			}
-
-			return results.then(function (resolvedResults) {
-				var resolvedRows = self.renderArray(resolvedResults, beforeNode, options);
-				delete self._lastCollection; // used only for non-store List/Grid
-				return resolvedRows;
-			});
-		},
-
-		_observeCollection: function (collection, container, options) {
-			var self = this,
-				rows = options.rows,
-				row;
-
-			var handles = [
-				collection.on('delete, update', function (event) {
-					var from = event.previousIndex;
-					var to = event.index;
-
-					if (from !== undefined && rows[from]) {
-						if ('max' in rows && (to === undefined || to < rows.min || to > rows.max)) {
-							rows.max--;
-						}
-
-						row = rows[from];
-
-						// check to make the sure the node is still there before we try to remove it
-						// (in case it was moved to a different place in the DOM)
-						if (row.parentNode === container) {
-							self.removeRow(row, false, options);
-						}
-
-						// remove the old slot
-						rows.splice(from, 1);
-
-						if (event.type === 'delete' ||
-								(event.type === 'update' && (from < to || to === undefined))) {
-							// adjust the rowIndex so adjustRowIndices has the right starting point
-							rows[from] && rows[from].rowIndex--;
-						}
-					}
-					if (event.type === 'delete') {
-						// Reset row in case this is later followed by an add;
-						// only update events should retain the row variable below
-						row = null;
-					}
-				}),
-
-				collection.on('add, update', function (event) {
-					var from = event.previousIndex;
-					var to = event.index;
-					var nextNode;
-
-					function advanceNext() {
-						nextNode = (nextNode.connected || nextNode).nextSibling;
-					}
-
-					// When possible, restrict observations to the actually rendered range
-					if (to !== undefined && (!('max' in rows) || (to >= rows.min && to <= rows.max))) {
-						if ('max' in rows && (from === undefined || from < rows.min || from > rows.max)) {
-							rows.max++;
-						}
-						// Add to new slot (either before an existing row, or at the end)
-						// First determine the DOM node that this should be placed before.
-						if (rows.length) {
-							nextNode = rows[to];
-							if (!nextNode) {
-								nextNode = rows[to - 1];
-								if (nextNode) {
-									// Make sure to skip connected nodes, so we don't accidentally
-									// insert a row in between a parent and its children.
-									advanceNext();
-								}
-							}
-						}
-						else {
-							// There are no rows.  Allow for subclasses to insert new rows somewhere other than
-							// at the end of the parent node.
-							nextNode = self._getFirstRowSibling && self._getFirstRowSibling(container);
-						}
-						// Make sure we don't trip over a stale reference to a
-						// node that was removed, or try to place a node before
-						// itself (due to overlapped queries)
-						if (row && nextNode && row.id === nextNode.id) {
-							advanceNext();
-						}
-						if (nextNode && !nextNode.parentNode) {
-							nextNode = document.getElementById(nextNode.id);
-						}
-						rows.splice(to, 0, undefined);
-						row = self.insertRow(event.target, container, nextNode, to, options);
-						self.highlightRow(row);
-					}
-					// Reset row so it doesn't get reused on the next event
-					row = null;
-				}),
-
-				collection.on('add, delete, update', function (event) {
-					var from = (typeof event.previousIndex !== 'undefined') ? event.previousIndex : Infinity,
-						to = (typeof event.index !== 'undefined') ? event.index : Infinity,
-						adjustAtIndex = Math.min(from, to);
-					from !== to && rows[adjustAtIndex] && self.adjustRowIndices(rows[adjustAtIndex]);
-
-					// the removal of rows could cause us to need to page in more items
-					if (from !== Infinity && self._processScroll && (rows[from] || rows[from - 1])) {
-						self._processScroll();
-					}
-
-					// Fire _onNotification, even for out-of-viewport notifications,
-					// since some things may still need to update (e.g. Pagination's status/navigation)
-					self._onNotification(rows, event, collection);
-
-					// Update _total after _onNotification so that it can potentially
-					// decide whether to perform actions based on whether the total changed
-					if (collection === self._renderedCollection && 'totalLength' in event) {
-						self._total = event.totalLength;
-					}
-				})
-			];
-
-			return {
-				remove: function () {
-					while (handles.length > 0) {
-						handles.pop().remove();
-					}
-				}
-			};
-		},
-
-		_onNotification: function () {
-			// summary:
-			//		Protected method called whenever a store notification is observed.
-			//		Intended to be extended as necessary by mixins/extensions.
-			// rows: Array
-			//		A sparse array of row nodes corresponding to data objects in the collection.
-			// event: Object
-			//		The notification event
-			// collection: Object
-			//		The collection that the notification is relevant to.
-			//		Useful for distinguishing child-level from top-level notifications.
-		}
-	});
-});
-
-define('dgrid/OnDemandList',[
-	'./List',
-	'./_StoreMixin',
-	'dojo/_base/declare',
-	'dojo/_base/lang',
-	'dojo/dom-construct',
-	'dojo/on',
-	'dojo/when',
-	'./util/misc'
-], function (List, _StoreMixin, declare, lang, domConstruct, on, when, miscUtil) {
-
-	return declare([ List, _StoreMixin ], {
-		// summary:
-		//		Extends List to include virtual scrolling functionality, querying a
-		//		dojo/store instance for the appropriate range when the user scrolls.
-
-		// minRowsPerPage: Integer
-		//		The minimum number of rows to request at one time.
-		minRowsPerPage: 2500,
-
-		// maxRowsPerPage: Integer
-		//		The maximum number of rows to request at one time.
-		maxRowsPerPage: 250,
-
-		// maxEmptySpace: Integer
-		//		Defines the maximum size (in pixels) of unrendered space below the
-		//		currently-rendered rows. Setting this to less than Infinity can be useful if you
-		//		wish to limit the initial vertical scrolling of the grid so that the scrolling is
-		// 		not excessively sensitive. With very large grids of data this may make scrolling
-		//		easier to use, albiet it can limit the ability to instantly scroll to the end.
-		maxEmptySpace: Infinity,
-
-		// bufferRows: Integer
-		//	  The number of rows to keep ready on each side of the viewport area so that the user can
-		//	  perform local scrolling without seeing the grid being built. Increasing this number can
-		//	  improve perceived performance when the data is being retrieved over a slow network.
-		bufferRows: 10,
-
-		// farOffRemoval: Integer
-		//		Defines the minimum distance (in pixels) from the visible viewport area
-		//		rows must be in order to be removed.  Setting to Infinity causes rows
-		//		to never be removed.
-		farOffRemoval: 2000,
-
-		// queryRowsOverlap: Integer
-		//		Indicates the number of rows to overlap queries. This helps keep
-		//		continuous data when underlying data changes (and thus pages don't
-		//		exactly align)
-		queryRowsOverlap: 0,
-
-		// pagingMethod: String
-		//		Method (from dgrid/util/misc) to use to either throttle or debounce
-		//		requests.  Default is "debounce" which will cause the grid to wait until
-		//		the user pauses scrolling before firing any requests; can be set to
-		//		"throttleDelayed" instead to progressively request as the user scrolls,
-		//		which generally incurs more overhead but might appear more responsive.
-		pagingMethod: 'debounce',
-
-		// pagingDelay: Integer
-		//		Indicates the delay (in milliseconds) imposed upon pagingMethod, to wait
-		//		before paging in more data on scroll events. This can be increased to
-		//		reduce client-side overhead or the number of requests sent to a server.
-		pagingDelay: miscUtil.defaultDelay,
-
-		// keepScrollPosition: Boolean
-		//		When refreshing the list, controls whether the scroll position is
-		//		preserved, or reset to the top.  This can also be overridden for
-		//		specific calls to refresh.
-		keepScrollPosition: true,
-
-		// rowHeight: Number
-		//		Average row height, computed in renderQuery during the rendering of
-		//		the first range of data.
-		rowHeight: 0,
-
-		postCreate: function () {
-			this.inherited(arguments);
-			var self = this;
-			// check visibility on scroll events
-			on(this.bodyNode, 'scroll',
-				miscUtil[this.pagingMethod](function (event) {
-					self._processScroll(event);
-				}, null, this.pagingDelay)
-			);
-		},
-
-		destroy: function () {
-			this.inherited(arguments);
-			if (this._refreshTimeout) {
-				clearTimeout(this._refreshTimeout);
-			}
-		},
-
-		renderQuery: function (query, options) {
-			// summary:
-			//		Creates a preload node for rendering a query into, and executes the query
-			//		for the first page of data. Subsequent data will be downloaded as it comes
-			//		into view.
-			// query: Function
-			//		Function to be called when requesting new data.
-			// options: Object?
-			//		Optional object containing the following:
-			//		* container: Container to build preload nodes within; defaults to this.contentNode
-
-			var self = this,
-				container = (options && options.container) || this.contentNode,
-				preload = {
-					query: query,
-					count: 0
-				},
-				preloadNode,
-				priorPreload = this.preload;
-
-			// Initial query; set up top and bottom preload nodes
-			var topPreload = {
-				node: domConstruct.create('div', {
-					className: 'dgrid-preload',
-					style: { height: '0' }
-				}, container),
-				count: 0,
-				query: query,
-				next: preload
-			};
-			topPreload.node.rowIndex = 0;
-			preload.node = preloadNode = domConstruct.create('div', {
-				className: 'dgrid-preload'
-			}, container);
-			preload.previous = topPreload;
-
-			// this preload node is used to represent the area of the grid that hasn't been
-			// downloaded yet
-			preloadNode.rowIndex = this.minRowsPerPage;
-
-			if (priorPreload) {
-				// the preload nodes (if there are multiple) are represented as a linked list, need to insert it
-				if ((preload.next = priorPreload.next) &&
-						// is this preload node below the prior preload node?
-						preloadNode.offsetTop >= priorPreload.node.offsetTop) {
-					// the prior preload is above/before in the linked list
-					preload.previous = priorPreload;
-				}
-				else {
-					// the prior preload is below/after in the linked list
-					preload.next = priorPreload;
-					preload.previous = priorPreload.previous;
-				}
-				// adjust the previous and next links so the linked list is proper
-				preload.previous.next = preload;
-				preload.next.previous = preload;
-			}
-			else {
-				this.preload = preload;
-			}
-
-			var loadingNode = domConstruct.create('div', {
-					className: 'dgrid-loading'
-				}, preloadNode, 'before'),
-				innerNode = domConstruct.create('div', {
-					className: 'dgrid-below'
-				}, loadingNode);
-			innerNode.innerHTML = this.loadingMessage;
-
-			// Establish query options, mixing in our own.
-			options = lang.mixin({ start: 0, count: this.minRowsPerPage },
-				'level' in query ? { queryLevel: query.level } : null);
-
-			// Protect the query within a _trackError call, but return the resulting collection
-			return this._trackError(function () {
-				var results = query(options);
-
-				// Render the result set
-				return self.renderQueryResults(results, preloadNode, options).then(function (trs) {
-					return results.totalLength.then(function (total) {
-						var trCount = trs.length,
-							parentNode = preloadNode.parentNode,
-							noDataNode = self.noDataNode;
-
-						if (self._rows) {
-							self._rows.min = 0;
-							self._rows.max = trCount === total ? Infinity : trCount - 1;
-						}
-
-						domConstruct.destroy(loadingNode);
-						if (!('queryLevel' in options)) {
-							self._total = total;
-						}
-						// now we need to adjust the height and total count based on the first result set
-						if (total === 0 && parentNode) {
-							if (noDataNode) {
-								domConstruct.destroy(noDataNode);
-								delete self.noDataNode;
-							}
-							self.noDataNode = noDataNode = domConstruct.create('div', {
-								className: 'dgrid-no-data',
-								innerHTML: self.noDataMessage
-							});
-							self._emit('noData');
-							parentNode.insertBefore(noDataNode, self._getFirstRowSibling(parentNode));
-						}
-						var height = 0;
-						for (var i = 0; i < trCount; i++) {
-							height += self._calcRowHeight(trs[i]);
-						}
-						// only update rowHeight if we actually got results and are visible
-						if (trCount && height) {
-							self.rowHeight = height / trCount;
-						}
-
-						total -= trCount;
-						preload.count = total;
-						preloadNode.rowIndex = trCount;
-						if (total) {
-							preloadNode.style.height = Math.min(total * self.rowHeight, self.maxEmptySpace) + 'px';
-						}
-						else {
-							preloadNode.style.display = 'none';
-						}
-
-						if (self._previousScrollPosition) {
-							// Restore position after a refresh operation w/ keepScrollPosition
-							self.scrollTo(self._previousScrollPosition);
-							delete self._previousScrollPosition;
-						}
-
-						// Redo scroll processing in case the query didn't fill the screen,
-						// or in case scroll position was restored
-						return when(self._processScroll()).then(function () {
-							return trs;
-						});
-					});
-				}).otherwise(function (err) {
-					// remove the loadingNode and re-throw
-					domConstruct.destroy(loadingNode);
-					throw err;
-				});
-			});
-		},
-
-		refresh: function (options) {
-			// summary:
-			//		Refreshes the contents of the grid.
-			// options: Object?
-			//		Optional object, supporting the following parameters:
-			//		* keepScrollPosition: like the keepScrollPosition instance property;
-			//			specifying it in the options here will override the instance
-			//			property's value for this specific refresh call only.
-
-			var self = this,
-				keep = (options && options.keepScrollPosition);
-
-			// Fall back to instance property if option is not defined
-			if (typeof keep === 'undefined') {
-				//keep = this.keepScrollPosition;
-			}
-
-			// Store scroll position to be restored after new total is received
-			if (keep) {
-				this._previousScrollPosition = this.getScrollPosition();
-			}
-
-			this.inherited(arguments);
-			if (this._renderedCollection) {
-				// render the query
-
-				// renderQuery calls _trackError internally
-				return this.renderQuery(function (queryOptions) {
-					return self._renderedCollection.fetchRange({
-						start: queryOptions.start,
-						end: queryOptions.start + queryOptions.count
-					});
-				}).then(function () {
-					// Emit on a separate turn to enable event to be used consistently for
-					// initial render, regardless of whether the backing store is async
-					self._refreshTimeout = setTimeout(function () {
-						on.emit(self.domNode, 'dgrid-refresh-complete', {
-							bubbles: true,
-							cancelable: false,
-							grid: self
-						});
-						self._refreshTimeout = null;
-					}, 0);
-				});
-			}
-		},
-
-		resize: function () {
-			this.inherited(arguments);
-			this._processScroll();
-		},
-
-		cleanup: function () {
-			this.inherited(arguments);
-			this.preload = null;
-		},
-
-		renderQueryResults: function (results) {
-			var rows = this.inherited(arguments);
-			var collection = this._renderedCollection;
-
-			if (collection && collection.releaseRange) {
-				rows.then(function (resolvedRows) {
-					if (resolvedRows[0] && !resolvedRows[0].parentNode.tagName) {
-						// Release this range, since it was never actually rendered;
-						// need to wait until totalLength promise resolves, since
-						// Trackable only adds the range then to begin with
-						results.totalLength.then(function () {
-							collection.releaseRange(resolvedRows[0].rowIndex,
-								resolvedRows[resolvedRows.length - 1].rowIndex + 1);
-						});
-					}
-				});
-			}
-
-			return rows;
-		},
-
-		_getFirstRowSibling: function (container) {
-			// summary:
-			//		Returns the DOM node that a new row should be inserted before
-			//		when there are no other rows in the current result set.
-			//		In the case of OnDemandList, this will always be the last child
-			//		of the container (which will be a trailing preload node).
-			return container.lastChild;
-		},
-
-		_calcRowHeight: function (rowElement) {
-			// summary:
-			//		Calculate the height of a row. This is a method so it can be overriden for
-			//		plugins that add connected elements to a row, like the tree
-
-			var sibling = rowElement.nextSibling;
-
-			// If a next row exists, compare the top of this row with the
-			// next one (in case "rows" are actually rendering side-by-side).
-			// If no next row exists, this is either the last or only row,
-			// in which case we count its own height.
-			if (sibling && !/\bdgrid-preload\b/.test(sibling.className)) {
-				return sibling.offsetTop - rowElement.offsetTop;
-			}
-
-			return rowElement.offsetHeight;
-		},
-
-		lastScrollTop: 0,
-		_processScroll: function (evt) {
-			// summary:
-			//		Checks to make sure that everything in the viewable area has been
-			//		downloaded, and triggering a request for the necessary data when needed.
-
-			if (!this.rowHeight) {
-				return;
-			}
-
-			var grid = this,
-				scrollNode = grid.bodyNode,
-				// grab current visible top from event if provided, otherwise from node
-				visibleTop = (evt && evt.scrollTop) || this.getScrollPosition().y,
-				visibleBottom = scrollNode.offsetHeight + visibleTop,
-				priorPreload, preloadNode, preload = grid.preload,
-				lastScrollTop = grid.lastScrollTop,
-				requestBuffer = grid.bufferRows * grid.rowHeight,
-				searchBuffer = requestBuffer - grid.rowHeight, // Avoid rounding causing multiple queries
-				// References related to emitting dgrid-refresh-complete if applicable
-				lastRows,
-				preloadSearchNext = true;
-
-			// XXX: I do not know why this happens.
-			// munging the actual location of the viewport relative to the preload node by a few pixels in either
-			// direction is necessary because at least WebKit on Windows seems to have an error that causes it to
-			// not quite get the entire element being focused in the viewport during keyboard navigation,
-			// which means it becomes impossible to load more data using keyboard navigation because there is
-			// no more data to scroll to to trigger the fetch.
-			// 1 is arbitrary and just gets it to work correctly with our current test cases; don’t wanna go
-			// crazy and set it to a big number without understanding more about what is going on.
-			// wondering if it has to do with border-box or something, but changing the border widths does not
-			// seem to make it break more or less, so I do not know…
-			var mungeAmount = 1;
-
-			grid.lastScrollTop = visibleTop;
-
-			function removeDistantNodes(preload, distanceOff, traversal, below) {
-				// we check to see the the nodes are "far off"
-				var farOffRemoval = grid.farOffRemoval,
-					preloadNode = preload.node;
-				// by checking to see if it is the farOffRemoval distance away
-				if (distanceOff > 2 * farOffRemoval) {
-					// there is a preloadNode that is far off;
-					// remove rows until we get to in the current viewport
-					var row;
-					var nextRow = preloadNode[traversal];
-					var reclaimedHeight = 0;
-					var count = 0;
-					var toDelete = [];
-					var firstRowIndex = nextRow && nextRow.rowIndex;
-					var lastRowIndex;
-
-					while ((row = nextRow)) {
-						var rowHeight = grid._calcRowHeight(row);
-						if (reclaimedHeight + rowHeight + farOffRemoval > distanceOff ||
-								(nextRow.className.indexOf('dgrid-row') < 0 &&
-									nextRow.className.indexOf('dgrid-loading') < 0)) {
-							// we have reclaimed enough rows or we have gone beyond grid rows
-							break;
-						}
-
-						nextRow = row[traversal];
-						reclaimedHeight += rowHeight;
-						count += row.count || 1;
-						// Just do cleanup here, as we will do a more efficient node destruction in a setTimeout below
-						grid.removeRow(row, true);
-						toDelete.push(row);
-
-						if ('rowIndex' in row) {
-							lastRowIndex = row.rowIndex;
-						}
-					}
-
-					if (grid._renderedCollection.releaseRange &&
-							typeof firstRowIndex === 'number' && typeof lastRowIndex === 'number') {
-						// Note that currently child rows in Tree structures are never unrendered;
-						// this logic will need to be revisited when that is addressed.
-
-						// releaseRange is end-exclusive, and won't remove anything if start >= end.
-						if (below) {
-							grid._renderedCollection.releaseRange(lastRowIndex, firstRowIndex + 1);
-						}
-						else {
-							grid._renderedCollection.releaseRange(firstRowIndex, lastRowIndex + 1);
-						}
-
-						grid._rows[below ? 'max' : 'min'] = lastRowIndex;
-						if (grid._rows.max >= grid._total - 1) {
-							grid._rows.max = Infinity;
-						}
-					}
-					// now adjust the preloadNode based on the reclaimed space
-					preload.count += count;
-					if (below) {
-						preloadNode.rowIndex -= count;
-						adjustHeight(preload);
-					}
-					else {
-						// if it is above, we can calculate the change in exact row changes,
-						// which we must do to not mess with the scroll position
-						preloadNode.style.height = (preloadNode.offsetHeight + reclaimedHeight) + 'px';
-					}
-					// we remove the elements after expanding the preload node so that
-					// the contraction doesn't alter the scroll position
-					var trashBin = document.createElement('div');
-					for (var i = toDelete.length; i--;) {
-						trashBin.appendChild(toDelete[i]);
-					}
-					setTimeout(function () {
-						// we can defer the destruction until later
-						domConstruct.destroy(trashBin);
-					}, 1);
-				}
-			}
-
-			function adjustHeight(preload, noMax) {
-				preload.node.style.height = Math.min(preload.count * grid.rowHeight,
-					noMax ? Infinity : grid.maxEmptySpace) + 'px';
-			}
-			function traversePreload(preload, moveNext) {
-				// Skip past preloads that are not currently connected
-				do {
-					preload = moveNext ? preload.next : preload.previous;
-				} while (preload && !preload.node.offsetWidth);
-				return preload;
-			}
-			while (preload && !preload.node.offsetWidth) {
-				// skip past preloads that are not currently connected
-				preload = preload.previous;
-			}
-			// there can be multiple preloadNodes (if they split, or multiple queries are created),
-			//	so we can traverse them until we find whatever is in the current viewport, making
-			//	sure we don't backtrack
-			while (preload && preload !== priorPreload) {
-				priorPreload = grid.preload;
-				grid.preload = preload;
-				preloadNode = preload.node;
-				var preloadTop = preloadNode.offsetTop;
-				var preloadHeight;
-
-				if (visibleBottom + mungeAmount + searchBuffer < preloadTop) {
-					// the preload is below the line of sight
-					preload = traversePreload(preload, (preloadSearchNext = false));
-				}
-				else if (visibleTop - mungeAmount - searchBuffer >
-						(preloadTop + (preloadHeight = preloadNode.offsetHeight))) {
-					// the preload is above the line of sight
-					preload = traversePreload(preload, (preloadSearchNext = true));
-				}
-				else {
-					// the preload node is visible, or close to visible, better show it
-					var offset = ((preloadNode.rowIndex ? visibleTop - requestBuffer :
-						visibleBottom) - preloadTop) / grid.rowHeight;
-					var count = (visibleBottom - visibleTop + 2 * requestBuffer) / grid.rowHeight;
-					// utilize momentum for predictions
-					var momentum = Math.max(
-						Math.min((visibleTop - lastScrollTop) * grid.rowHeight, grid.maxRowsPerPage / 2),
-						grid.maxRowsPerPage / -2);
-					count += Math.min(Math.abs(momentum), 10);
-					if (preloadNode.rowIndex === 0) {
-						// at the top, adjust from bottom to top
-						offset -= count;
-					}
-					offset = Math.max(offset, 0);
-					if (offset < 10 && offset > 0 && count + offset < grid.maxRowsPerPage) {
-						// connect to the top of the preloadNode if possible to avoid excessive adjustments
-						count += Math.max(0, offset);
-						offset = 0;
-					}
-					count = Math.min(Math.max(count, grid.minRowsPerPage),
-										grid.maxRowsPerPage, preload.count);
-
-					if (count === 0) {
-						preload = traversePreload(preload, preloadSearchNext);
-						continue;
-					}
-
-					count = Math.ceil(count);
-					offset = Math.min(Math.floor(offset), preload.count - count);
-
-					var options = {};
-					preload.count -= count;
-					var beforeNode = preloadNode,
-						keepScrollTo, queryRowsOverlap = grid.queryRowsOverlap,
-						below = (preloadNode.rowIndex > 0 || preloadNode.offsetTop > visibleTop) && preload;
-					if (below) {
-						// add new rows below
-						var previous = preload.previous;
-						if (previous) {
-							removeDistantNodes(previous,
-								visibleTop - (previous.node.offsetTop + previous.node.offsetHeight),
-								'nextSibling');
-							if (offset > 0 && previous.node === preloadNode.previousSibling) {
-								// all of the nodes above were removed
-								offset = Math.min(preload.count, offset);
-								preload.previous.count += offset;
-								adjustHeight(preload.previous, true);
-								preloadNode.rowIndex += offset;
-								queryRowsOverlap = 0;
-							}
-							else {
-								count += offset;
-							}
-							preload.count -= offset;
-						}
-						options.start = preloadNode.rowIndex - queryRowsOverlap;
-						options.count = Math.min(count + queryRowsOverlap, grid.maxRowsPerPage);
-						preloadNode.rowIndex = options.start + options.count;
-					}
-					else {
-						// add new rows above
-						if (preload.next) {
-							// remove out of sight nodes first
-							removeDistantNodes(preload.next, preload.next.node.offsetTop - visibleBottom,
-								'previousSibling', true);
-							beforeNode = preloadNode.nextSibling;
-							if (beforeNode === preload.next.node) {
-								// all of the nodes were removed, can position wherever we want
-								preload.next.count += preload.count - offset;
-								preload.next.node.rowIndex = offset + count;
-								adjustHeight(preload.next);
-								preload.count = offset;
-								queryRowsOverlap = 0;
-							}
-							else {
-								keepScrollTo = true;
-							}
-
-						}
-						options.start = preload.count;
-						options.count = Math.min(count + queryRowsOverlap, grid.maxRowsPerPage);
-					}
-					if (keepScrollTo && beforeNode && beforeNode.offsetWidth) {
-						keepScrollTo = beforeNode.offsetTop;
-					}
-
-					adjustHeight(preload);
-
-					// use the query associated with the preload node to get the next "page"
-					if ('level' in preload.query) {
-						options.queryLevel = preload.query.level;
-					}
-
-					// Avoid spurious queries (ideally this should be unnecessary...)
-					if (!('queryLevel' in options) && (options.start > grid._total || options.count < 0)) {
-						continue;
-					}
-
-					// create a loading node as a placeholder while the data is loaded
-					var loadingNode = domConstruct.create('div', {
-						className: 'dgrid-loading',
-						style: { height: count * grid.rowHeight + 'px' }
-					}, beforeNode, 'before');
-					domConstruct.create('div', {
-						className: 'dgrid-' + (below ? 'below' : 'above'),
-						innerHTML: grid.loadingMessage
-					}, loadingNode);
-					loadingNode.count = count;
-
-					// Query now to fill in these rows.
-					grid._trackError(function () {
-						// Use function to isolate the variables in case we make multiple requests
-						// (which can happen if we need to render on both sides of an island of already-rendered rows)
-						(function (loadingNode, below, keepScrollTo) {
-							/* jshint maxlen: 122 */
-							var rangeResults = preload.query(options);
-							lastRows = grid.renderQueryResults(rangeResults, loadingNode, options).then(function (rows) {
-								var gridRows = grid._rows;
-								if (gridRows && !('queryLevel' in options) && rows.length) {
-									// Update relevant observed range for top-level items
-									if (below) {
-										if (gridRows.max <= gridRows.min) {
-											// All rows were removed; update start of rendered range as well
-											gridRows.min = rows[0].rowIndex;
-										}
-										gridRows.max = rows[rows.length - 1].rowIndex;
-									}
-									else {
-										if (gridRows.max <= gridRows.min) {
-											// All rows were removed; update end of rendered range as well
-											gridRows.max = rows[rows.length - 1].rowIndex;
-										}
-										gridRows.min = rows[0].rowIndex;
-									}
-								}
-
-								// can remove the loading node now
-								beforeNode = loadingNode.nextSibling;
-								domConstruct.destroy(loadingNode);
-								// beforeNode may have been removed if the query results loading node was removed
-								// as a distant node before rendering
-								if (keepScrollTo && beforeNode && beforeNode.offsetWidth) {
-									// if the preload area above the nodes is approximated based on average
-									// row height, we may need to adjust the scroll once they are filled in
-									// so we don't "jump" in the scrolling position
-									var pos = grid.getScrollPosition();
-									grid.scrollTo({
-										// Since we already had to query the scroll position,
-										// include x to avoid TouchScroll querying it again on its end.
-										x: pos.x,
-										y: pos.y + beforeNode.offsetTop - keepScrollTo,
-										// Don't kill momentum mid-scroll (for TouchScroll only).
-										preserveMomentum: true
-									});
-								}
-
-								rangeResults.totalLength.then(function (total) {
-									if (!('queryLevel' in options)) {
-										grid._total = total;
-										if (grid._rows && grid._rows.max >= grid._total - 1) {
-											grid._rows.max = Infinity;
-										}
-									}
-									if (below) {
-										// if it is below, we will use the total from the collection to update
-										// the count of the last preload in case the total changes as
-										// later pages are retrieved
-
-										// recalculate the count
-										below.count = total - below.node.rowIndex;
-										// readjust the height
-										adjustHeight(below);
-									}
-								});
-
-								// make sure we have covered the visible area
-								grid._processScroll();
-								return rows;
-							}, function (e) {
-								domConstruct.destroy(loadingNode);
-								throw e;
-							});
-						})(loadingNode, below, keepScrollTo);
-					});
-
-					preload = preload.previous;
-
-				}
-			}
-
-			// return the promise from the last render
-			return lastRows;
-		}
-	});
-
-});
-
-define('dgrid/OnDemandGrid',[
-	'dojo/_base/declare',
-	'./Grid',
-	'./OnDemandList'
-], function (declare, Grid, OnDemandList) {
-	return declare([ Grid, OnDemandList ], {});
-});
-/** @module xgrid/Defaults **/
-define('xgrid/Defaults',[
-    'xdojo/declare'
-], function (declare) {
-    /**
-     * xGrid defaults
-     * */
-    return declare('xgrid/Defaults', null, {
-        minRowsPerPage: 100,
-        keepScrollPosition: true,
-        rowsPerPage: 30,
-        deselectOnRefresh: false,
-        cellNavigation: false,
-        _skipFirstRender: false,
-        loadingMessage: null,
-        preload: null,
-        childSelector: ".dgrid-row",
-        addUiClasses: false,
-        noDataMessage: '<span class="textWarning">No data....</span>',
-        showExtraSpace:true,
-        expandOnClick:true
-    });
-});
-
-/** module:xide/registry **/
-define('xide/registry',[
-	"dojo/_base/array", // array.forEach array.map
-	"dojo/_base/window", // win.body
-    "xdojo/has"
-], function(array, win, has){
-	/**
-	 * @TODOS:
-	 * - add namespaces
-	 * - remove window
-	 * - augment consumer API
-	 * - use std array
-	 * - add framework constraint
-	 * - move dom api out of here
-	 * - define widget.id better
-	 * - add search by class
-     */
-	var _widgetTypeCtr = {}, hash = {};
-	var registry =  {
-		// summary:
-		//		Registry of existing widget on page, plus some utility methods.
-
-		// length: Number
-		//		Number of registered widgets
-		length: 0,
-		add: function(widget){
-			// summary:
-			//		Add a widget to the registry. If a duplicate ID is detected, a error is thrown.
-			// widget: dijit/_WidgetBase
-			//		Any dijit/_WidgetBase subclass.
-			if(this._hash[widget.id]){
-                if(has('xblox')) {
-                    this.remove(widget.id);
-                    this.add(widget);
-                }else{
-                    throw new Error("Tried to register widget with id==" + widget.id + " but that id is already registered");
-                }
-			}
-			hash[widget.id] = widget;
-			this.length++;
-		},
-		/**
-		 * Remove a widget from the registry. Does not destroy the widget; simply
-		 * removes the reference.
-		 * @param id
-         */
-		remove: function(id){
-			if(hash[id]){
-				delete hash[id];
-				this.length--;
-			}
-		},
-		/**
-		 *
-		 * @param id {String|Widget}
-		 * @returns {String|Widget}
-         */
-		byId: function( id){
-			// summary:
-			//		Find a widget by it's id.
-			//		If passed a widget then just returns the widget.
-			return typeof id == "string" ? hash[id] : id;	// dijit/_WidgetBase
-		},
-		byNode: function(/*DOMNode*/ node){
-			// summary:
-			//		Returns the widget corresponding to the given DOMNode
-			return hash[node.getAttribute("widgetId")]; // dijit/_WidgetBase
-		},
-
-		/**
-		 * Convert registry into a true Array
-		 * @example:
-		 *	Work with the widget .domNodes in a real Array
-		 *	array.map(registry.toArray(), function(w){ return w.domNode; });
-		 * @returns {obj[]}
-         */
-		toArray: function(){
-			return _.values(_.mapKeys(hash, function(value, key) { value.id = key; return value; }));
-		},
-		/**
-		 * Generates a unique id for a given widgetType
-		 * @param widgetType {string}
-		 * @returns {string}
-         */
-		getUniqueId: function(widgetType){
-			var id;
-			do{
-				id = widgetType + "_" +
-					(widgetType in _widgetTypeCtr ?
-						++_widgetTypeCtr[widgetType] : _widgetTypeCtr[widgetType] = 0);
-			}while(hash[id]);
-			return id;
-		},
-		/**
-		 * Search subtree under root returning widgets found.
-		 * Doesn't search for nested widgets (ie, widgets inside other widgets).
-		 * @param root {HTMLElement} Node to search under.
-		 * @param skipNode {HTMLElement} If specified, don't search beneath this node (usually containerNode).
-         * @returns {Array}
-         */
-		findWidgets: function(root, skipNode){
-			var outAry = [];
-			function getChildrenHelper(root){
-				for(var node = root.firstChild; node; node = node.nextSibling){
-					if(node.nodeType == 1){
-						var widgetId = node.getAttribute("widgetId");
-						if(widgetId){
-							var widget = hash[widgetId];
-							if(widget){	// may be null on page w/multiple dojo's loaded
-								outAry.push(widget);
-							}
-						}else if(node !== skipNode){
-							getChildrenHelper(node);
-						}
-					}
-				}
-			}
-			getChildrenHelper(root);
-			return outAry;
-		},
-		_destroyAll: function(){
-			// summary:
-			//		Code to destroy all widgets and do other cleanup on page unload
-
-			// Clean up focus manager lingering references to widgets and nodes
-			// Destroy all the widgets, top down
-			_.each(registry.findWidgets(win.body()),function(widget){
-				// Avoid double destroy of widgets like Menu that are attached to <body>
-				// even though they are logically children of other widgets.
-				if(!widget._destroyed){
-					if(widget.destroyRecursive){
-						widget.destroyRecursive();
-					}else if(widget.destroy){
-						widget.destroy();
-					}
-				}
-			});
-		},
-		getEnclosingWidget: function(/*DOMNode*/ node){
-			// summary:
-			//		Returns the widget whose DOM tree contains the specified DOMNode, or null if
-			//		the node is not contained within the DOM tree of any widget
-			while(node){
-				var id = node.nodeType == 1 && node.getAttribute("widgetId");
-				if(id){
-					return hash[id];
-				}
-				node = node.parentNode;
-			}
-			return null;
-		},
-
-		// In case someone needs to access hash.
-		// Actually, this is accessed from WidgetSet back-compatibility code
-		_hash: hash
-	};
-	return registry;
-});
-
-/** @module xide/widgets/_Widget **/
-define('xide/widgets/_Widget',[
-    'xdojo/declare',
-    'dcl/dcl',
-    'xide/utils',
-    'xide/mixins/EventedMixin',
-    'xide/registry',
-    'xlang/i18'
-], function (declare,dcl,utils,EventedMixin,registry,i18) {
-    var forwardMethods = ['resize'];
-    function _resize(what){
-        try {
-            if (typeof what['resize'] === "function" && what._started) {
-                what['resize'].apply(what,arguments);
-            }else{
-                console.warn('widget has no resize or is not started yet ' + what.declaredClass,[what,what.resize]);
-            }
-        }catch(e){
-            logError(e,'error resizing sub widget ' + what.id + ' class:'+what.declaredClass);
-        }
-    }
-
-    function forward(method,args){
-        _.each(this._widgets,function(what){
-            if (what && typeof what[method] === "function") {
-                what[method].apply(what,args);
-            }
-        },this);
-    }
-
-    function set(prop,value){
-        _.each(this._widgets,function(what){
-            if (what && what[prop]) {
-                what[prop] = value;
-            }
-        },this);
-    }
-
-    /**
-     * @class module:xide/widgets/_Widget
-     */
-    var Implementation = {
-        _widgets:null,
-        __eventHandles:null,
-        _isResizing:false,
-        cssClass:'',
-        /**
-         * @type {module:xide/manager/ContextBase}
-         */
-        ctx:null,
-        /**
-         *
-         * @returns {module:xide/manager/ContextBase}
-         */
-        getContext:function(){
-            return this.ctx;
-        },
-        onResizeBegin:function(){
-            this._isResizing=true;
-            _.each(this._widgets,function(what){
-                what && (what._isResizing=true);
-            },this);
-        },
-        onResizeEnd:function(){
-            this._isResizing=false;
-            _.each(this._widgets,function(what){
-                what && (what._isResizing=false);
-            },this);
-        },
-        _toWidget:function(element){
-            if(element && element.id){
-                var widget = registry.byId(element.id);
-                if(widget){
-                    return widget;
-                }
-            }
-            return null;
-        },
-        parentByClass :function(className,max){
-            var i = 0,
-                element = this.domNode,
-                widget = null;
-            max = max || 20;
-            while (!widget && i < max && element) {
-                if (element) {
-                    var _widget = this._toWidget(element);
-                    if(_widget && _widget.declaredClass){
-                        if(_widget.declaredClass === className){
-                            widget = _widget;
-                        }
-                    }
-                    element = element.parentNode;
-                }
-                i++;
-            }
-            return widget;
-        },
-        _startWidgets:function(){
-            var result = false;
-            if(this._widgets) {
-                for (var i = 0; i < this._widgets.length; i++) {
-                    var w = this._widgets[i];
-                    if (w && !w._started && w.startup) {
-                        w.startup();
-                        w._started = true;
-                        result = true;
-                        w._emit('startup');
-                    }
-                }
-            }
-            return result;
-        },
-        _createForward:function(method){
-            var self = this;
-            if(!this[method]){
-                this[method] = function(){
-                    for (var i = 0; i < self._widgets.length; i++) {
-                        var w = self._widgets[i];
-                        w[method] && w[method]();
-                    }
-                };
-            }
-        },
-        onShow:function(){
-            if(this._widgets){
-                this._startWidgets();
-                for (var i = 0; i < this._widgets.length; i++) {
-                    var w = this._widgets[i];
-                    if(w && w!==this) {
-                        w._showing=true;
-                        w.open = true;
-                        w.onShow && w.onShow();
-                        w._emit && w._emit('show',{});
-
-                    }
-                }
-            }
-        },
-        onHide:function(){
-            if(this._widgets){
-                for (var i = 0; i < this._widgets.length; i++) {
-                    var w = this._widgets[i];
-                    
-                    if(!w){
-                        console.warn('invalid widget');
-                    }else {
-                        if(w!==this){
-                            w._showing = false;
-                            w.open = false;
-                            w.onHide && w.onHide();
-                            try{
-                                w._emit && w._emit('hide',{});
-                            }catch(e){
-                                logError(e,'error emitting on-hide');
-                            }
-
-                        }
-                    }
-                }
-            }
-        },
-        _getChildren:function(){
-            return this._widgets;
-        },
-        debounce:function(methodName,_function,delay,options,now){
-            return utils.debounce(this,methodName,_function,delay,options,now);
-        },
-        __addHandler:function(element,type,handler){
-            if(!element){
-                return;
-            }
-            handler = _.isString(handler) ? this[handler] ? this[handler] : null : handler;
-            var self = this;
-
-            if(typeof handler ==='function'){
-                return this.__on(element,type,null,function(){
-                    handler.apply(self,arguments);
-                });
-            }
-            return false;
-        },
-        _shouldResizeWidgets:function(){
-            return true;
-        },
-        resize:function(){
-            var _args = arguments;
-            this.inherited && this.inherited(_args);
-            if(this.shouldResizeWidgets && this.shouldResizeWidgets()===false){
-                return;
-            }
-            //if(this._isResizing ===true){return;}
-            if(this._widgets){
-                for (var i = 0; i < this._widgets.length; i++) {
-                    var what = this._widgets[i];
-                    if (what) {
-                        what.resizeToParent && utils.resizeTo(what, this, true, true);
-                        if (what && typeof what['resize'] === "function" && what._started) {
-                            what['resize'].apply(what, _args);
-                        }
-                    }
-                }
-            }
-        },
-        destroy:function(){
-            this.inherited && this.inherited(arguments);
-            var _widgets = this._widgets;
-            if (_widgets) {
-                for (var i = 0; i < _widgets.length; i++) {
-                    var widget = _widgets[i];
-                    if (widget && widget != this && widget._destroyed !== true) {
-                        utils.destroy(widget);
-                    }
-                }
-                delete this._widgets;
-                this._widgets = null;
-            }
-            if(this.domNode) {
-                registry.remove(this.domNode.id);
-                utils.destroy(this.domNode);
-            }
-            this._destroyed = true;
-        },
-        onAdded:function(){
-        },
-        /**
-         *
-         * @param mixed
-         * @param options
-         * @param parent
-         * @param startup
-         * @param select
-         * @param extension
-         * @returns {*}
-         */
-        add:function(mixed,options,parent,startup,select,extension){
-            if(mixed==this){
-                return mixed;
-            }
-            !this._widgets && (this._widgets = []);
-
-            var widgets = this._widgets;
-            if(_.isNumber(options)){
-                options = null;
-            }
-            if(options!==null && !_.isObject(options)){
-                options ={};
-            }
-            var result = null;
-
-            _.isEmpty(options) && (options=null);
-
-            var _parent = parent || ( parent!==false ? this.containerNode || this.domNode : null);
-
-            //case 1: instance or object
-            if((mixed && !options && !parent) || (!options && !parent && !startup && !select && !extension)){
-                widgets.indexOf(mixed)==-1 && (widgets.push(mixed));
-                return mixed;
-
-            //case 2: proto
-            }else if(mixed && options){
-                result = utils.addWidget(mixed,options,this,_parent,startup,null,null,select,extension);
-                widgets.push(result);
-            }
-            return result;
-        },
-        remove:function(mixed){
-            this._widgets && this._widgets.remove(mixed);
-        },
-        buildRendering:function() {
-            this.inherited && this.inherited(arguments);
-            var node = utils.getNode(this);
-            node && this.cssClass && $(node).addClass(this.cssClass);
-            node && this.style && $(node).attr('style',this.style);
-        }
-    };
-
-    var _Widget = dcl([EventedMixin.dcl,i18.dcl],Implementation);
-    var Module = declare('xide/widgets/_Widget',i18,Implementation);
-    Module.Implmentation = Implementation;
-    Module.dcl = _Widget;
-    dcl.chainAfter(_Widget,'destroy');
-    dcl.chainAfter(_Widget,'onResizeBegin');
-    dcl.chainAfter(_Widget,'onResizeEnd');
-    return Module;
-});
-
-/**
- * @module xide/_base/_Widget
- */
-define('xide/_base/_Widget',[
-    'dcl/dcl',
-    "dcl/inherited",
-    'xide/widgets/_Widget',
-    "xide/utils",
-    "dojo/string",
-    "dojo/_base/lang",
-    "xide/registry",
-    "dojo/cache",
-    "dojo/dom-construct",
-    'xide/lodash',
-    'xide/$'
-], function (dcl,inherited,_Widget,utils,string,lang,registry,cache,domConstruct,_,$) {
-
-    function destroy(w,preserveDom){
-        if(w.destroyRecursive){
-            w.destroyRecursive(preserveDom);
-        }else if(w.destroy){
-            w.destroy(preserveDom);
-        }
-    }
-
-    /////////////////////////////////////////////////////////////////
-    //
-    //  Attach Mixin Class
-    //
-    var attachAttribute = 'attachTo';
-    /**
-     *		Mixin for widgets to attach to dom nodes and setup events via
-     *		convenient data-dojo-attach-point and data-dojo-attach-event DOM attributes.
-     *
-     *		Superclass of _TemplatedMixin, and can also be used standalone when templates are pre-rendered on the
-     *		server.
-     *
-     *		Does not [yet] handle widgets like ContentPane with this.containerNode set.   It should skip
-     *		scanning for data-dojo-attach-point and data-dojo-attach-event inside this.containerNode, but it
-     *		doesn't.
-
-
-     * _attachPoints: [private] String[]
-     *		List of widget attribute names associated with data-dojo-attach-point=... in the
-     *		template, ex: ["containerNode", "labelNode"]
-     _attachPoints: [],
-
-     * _attachEvents: [private] Handle[]
-     *		List of connections associated with data-dojo-attach-event=... in the
-     *		template
-     _attachEvents: [],
-
-     * attachScope: [public] Object
-     *		Object to which attach points and events will be scoped.  Defaults
-     *		to 'this'.
-     attachScope: undefined,
-     */
-    var _AttachMixinClass = dcl(null, {
-        __attachAsjQueryObject:true,
-        __attachViaAddChild:true,
-        __stopAtContainerNode:false,
-        _started:false,
-        //attachDirect:true,
-        declaredClass:"xide/_base/_AttachMixin",
-        cssClass:'',
-        /**
-         * Attach to DOM nodes marked with special attributes.
-         */
-        buildRendering: function(){
-            this._attachPoints = [];
-            // recurse through the node, looking for, and attaching to, our
-            // attachment points and events, which should be defined on the template node.
-            this._attachTemplateNodes(this.domNode);
-            this._beforeFillContent();		// hook for _WidgetsInTemplateMixin
-            this.cssClass && this.domNode && $(this.domNode).addClass(this.cssClass);
-        },
-        _beforeFillContent: function(){},
-        /**
-         * Iterate through the dom nodes and attach functions and nodes accordingly.
-         * @description Map widget properties and functions to the handlers specified in
-         *		the dom node and it's descendants. This function iterates over all
-         *		nodes and looks for these properties:
-         *	    - attachTo
-         * @param rootNode {HTMLElement}
-         **/
-        _attachTemplateNodes: function(rootNode){
-            // DFS to process all nodes except those inside of this.containerNode
-            var node = rootNode;
-            while(true){
-                if  (
-                    node.nodeType == 1 &&
-                    ( this._processTemplateNode(node,function(n,p){return n.getAttribute(p);},this._attach)) &&
-                    node.firstChild
-                ){
-                    node = node.firstChild;
-                }else{
-                    if(node == rootNode){
-                        return;
-                    }
-                    while(!node.nextSibling){
-                        node = node.parentNode;
-                        if(node == rootNode){
-                            return;
-                        }
-                    }
-                    node = node.nextSibling;
-                }
-            }
-        },
-
-        _processTemplateNode: function(baseNode, getAttrFunc, attachFunc){
-            // summary:
-            //		Process data-dojo-attach-point and data-dojo-attach-event for given node or widget.
-            //		Returns true if caller should process baseNode's children too.
-            var ret = true;
-
-            // Process data-dojo-attach-point
-            var _attachScope = this.attachScope || this,
-                attachPoint = getAttrFunc(baseNode, attachAttribute);
-
-            if(attachPoint){
-                var point, points = attachPoint.split(/\s*,\s*/);
-                while((point = points.shift())){
-                    if(_.isArray(_attachScope[point])){
-                        _attachScope[point].push(baseNode);
-                    }else{
-                        _attachScope[point] = baseNode;
-                        this.__attachAsjQueryObject &&  (_attachScope['$'+point] = $(baseNode));
-                    }
-                    ret = this.__stopAtContainerNode ? (point != "containerNode") : ret;
-                    this._attachPoints.push(point);
-                }
-            }
-            return ret;
-        },
-        /**
-         * Detach and clean up the attachments made in _attachtempalteNodes.
-         * @private
-         */
-        _detachTemplateNodes: function() {
-            // Delete all attach points to prevent IE6 memory leaks.
-            var _attachScope = this.attachScope || this;
-            _.each(this._attachPoints, function(point){
-                delete _attachScope[point];
-            });
-            this._attachPoints = [];
-        },
-        destroyRendering: function(){
-            this._detachTemplateNodes();
-            this.inherited && this.inherited(arguments);
-        },
-        startup:dcl.superCall(function(sup) {
-            return function () {
-                var res = null;
-                if(sup){
-                    res = sup.call(this);
-                }
-                this._started=true;
-                return res;
-            };
-        })
-    });
-    /////////////////////////////////////////////////////////////////
-    //
-    //  Templated Mixin Class
-    //
-    //
-    var _TemplatedMixin = dcl(_AttachMixinClass, {
-        declaredClass:"xide/_base/_TemplatedMixin",
-        // summary:
-        //		Mixin for widgets that are instantiated from a template
-        // templateString: [protected] String
-        //		A string that represents the widget template.
-        //		Use in conjunction with dojo.cache() to load from a file.
-        templateString: null,
-        // templatePath: [protected deprecated] String
-        //		Path to template (HTML file) for this widget relative to dojo.baseUrl.
-        //		Deprecated: use templateString with require([... "dojo/text!..."], ...) instead
-        templatePath: null,
-        // skipNodeCache: [protected] Boolean
-        //		If using a cached widget template nodes poses issues for a
-        //		particular widget class, it can set this property to ensure
-        //		that its template is always re-built from a string
-        _skipNodeCache: false,
-        /*=====
-         // _rendered: Boolean
-         //		Not normally use, but this flag can be set by the app if the server has already rendered the template,
-         //		i.e. already inlining the template for the widget into the main page.   Reduces _TemplatedMixin to
-         //		just function like _AttachMixin.
-         _rendered: false,
-         =====*/
-        _stringRepl: function(tmpl){
-            // summary:
-            //		Does substitution of ${foo} type properties in template string
-            // tags:
-            //		private
-            var className = this.declaredClass, _this = this;
-            // Cache contains a string because we need to do property replacement
-            // do the property replacement
-            return string.substitute(tmpl, this, function(value, key){
-                if(key.charAt(0) == '!'){ value = lang.getObject(key.substr(1), false, _this); }
-                if(typeof value == "undefined"){
-                    var error = new Error(className+" template:"+key)
-                    logError(error);
-                } // a debugging aide
-                if(value == null){ return ""; }
-
-                // Substitution keys beginning with ! will skip the transform step,
-                // in case a user wishes to insert unescaped markup, e.g. ${!foo}
-                return key.charAt(0) == "!" ? value : this._escapeValue("" + value);
-            }, this);
-        },
-        _escapeValue: function(/*String*/ val){
-            // summary:
-            //		Escape a value to be inserted into the template, either into an attribute value
-            //		(ex: foo="${bar}") or as inner text of an element (ex: <span>${foo}</span>)
-
-            // Safer substitution, see heading "Attribute values" in
-            // http://www.w3.org/TR/REC-html40/appendix/notes.html#h-B.3.2
-            // and also https://www.owasp.org/index.php/XSS_%28Cross_Site_Scripting%29_Prevention_Cheat_Sheet#RULE_.231_-_HTML_Escape_Before_Inserting_Untrusted_Data_into_HTML_Element_Content
-            return val.replace(/["'<>&]/g, function(val){
-                return {
-                    "&": "&amp;",
-                    "<": "&lt;",
-                    ">": "&gt;",
-                    "\"": "&quot;",
-                    "'": "&#x27;"
-                }[val];
-            });
-        },
-        /*
-         * @description Construct the UI for this widget from a template, setting this.domNode.
-         */
-        buildRendering: dcl.superCall(function(sup){
-            return function(){
-                if(!this._rendered){
-                    if(!this.templateString){
-                        this.templateString = cache(this.templatePath, {sanitize: true});
-                    }
-                    // Lookup cached version of template, and download to cache if it
-                    // isn't there already.  Returns either a DomNode or a string, depending on
-                    // whether or not the template contains ${foo} replacement parameters.
-                    var cached = _TemplatedMixin.getCachedTemplate(this.templateString, this._skipNodeCache, this.ownerDocument);
-                    var node;
-                    if(_.isString(cached)){
-                        node =  $(this._stringRepl(cached))[0];
-                        if(node.nodeType != 1){
-                            // Flag common problems such as templates with multiple top level nodes (nodeType == 11)
-                            throw new Error("Invalid template: " + cached);
-                        }
-                    }else{
-                        // if it's a node, all we have to do is clone it
-                        node = cached.cloneNode(true);
-                    }
-                    this.domNode = node;
-                }
-
-                // Call down to _WidgetBase.buildRendering() to get base classes assigned
-                sup.call(this, arguments);
-                if(!this._rendered){
-                    this._fillContent(this.srcNodeRef);
-                }
-                this._rendered = true;
-                if(this.domNode && this.declaredClass){
-                    $(this.domNode).addClass(utils.replaceAll('/','.',this.declaredClass));
-                }
-            };
-        }),
-        /**
-         *
-         * @param source {HTMLElement}
-         * @private
-         */
-        _fillContent: function(source){
-            // summary:
-            //		Relocate source contents to templated container node.
-            //		this.containerNode must be able to receive children, or exceptions will be thrown.
-            // tags:
-            //		protected
-            var dest = this.containerNode;
-            if(source && dest){
-                while(source.hasChildNodes()){
-                    dest.appendChild(source.firstChild);
-                }
-            }
-        }
-
-    });
-
-    // key is templateString; object is either string or DOM tree
-    _TemplatedMixin._templateCache = {};
-    _TemplatedMixin.getCachedTemplate = function(templateString, alwaysUseString, doc){
-        // summary:
-        //		Static method to get a template based on the templatePath or
-        //		templateString key
-        // templateString: String
-        //		The template
-        // alwaysUseString: Boolean
-        //		Don't cache the DOM tree for this template, even if it doesn't have any variables
-        // doc: Document?
-        //		The target document.   Defaults to document global if unspecified.
-        // returns: Mixed
-        //		Either string (if there are ${} variables that need to be replaced) or just
-        //		a DOM tree (if the node can be cloned directly)
-
-        // is it already cached?
-        var tmplts = _TemplatedMixin._templateCache;
-        var key = templateString;
-        var cached = tmplts[key];
-        if(cached){
-            try{
-                // if the cached value is an innerHTML string (no ownerDocument) or a DOM tree created within the
-                // current document, then use the current cached value
-                if(!cached.ownerDocument || cached.ownerDocument == (doc || document)){
-                    // string or node of the same document
-                    return cached;
-                }
-            }catch(e){ /* squelch */ } // IE can throw an exception if cached.ownerDocument was reloaded
-            domConstruct.destroy(cached);
-        }
-
-        templateString = _.trim(templateString);
-
-        if(alwaysUseString || templateString.match(/\$\{([^\}]+)\}/g)){
-            // there are variables in the template so all we can do is cache the string
-            return (tmplts[key] = templateString); //String
-        }else{
-            // there are no variables in the template so we can cache the DOM tree
-            var node = domConstruct.toDom(templateString, doc);
-            if(node.nodeType != 1){
-                throw new Error("Invalid template: " + templateString);
-            }
-            return (tmplts[key] = node); //Node
-        }
-    };
-
-    /////////////////////////////////////////////////////////////////
-    //
-    //  Actual Widget base class, adding an API
-    //
-    function createClass_WidgetBase(){
-        var tagAttrs = {};
-        function getAttrs(obj){
-            var ret = {};
-            for(var attr in obj){
-                ret[attr.toLowerCase()] = true;
-            }
-            return ret;
-        }
-        function isEqual(a, b){
-            //	summary:
-            //		Function that determines whether two values are identical,
-            //		taking into account that NaN is not normally equal to itself
-            //		in JS.
-            return a === b || (/* a is NaN */ a !== a && /* b is NaN */ b !== b);
-        }
-        /**
-         * @class module:xide/_base/_Widget
-         */
-        var Module = dcl(null,{
-            _attrPairNames: {}, // shared between all widgets
-            attributeMap: {},
-            declaredClass:'xide/_base/_Widget',
-            on:function(type,handler){
-                return this._on(type,handler);
-            },
-            emit:function(type,args){
-                return this._emit(type,args);
-            },
-            _set: function(/*String*/ name, /*anything*/ value){
-                // summary:
-                //		Helper function to set new value for specified property, and call handlers
-                //		registered with watch() if the value has changed.
-                var oldValue = this[name];
-                this[name] = value;
-                if(this._created && !isEqual(oldValue, value)){
-                    this._watchCallbacks && this._watchCallbacks(name, oldValue, value);
-                    this.emit("attrmodified-" + name, {
-                        detail: {
-                            prevValue: oldValue,
-                            newValue: value
-                        }
-                    });
-                }
-            },
-            /**
-             * Helper function to get value for specified property stored by this._set(),
-             * i.e. for properties with custom setters.  Used mainly by custom getters.
-             *  For example, CheckBox._getValueAttr() calls this._get("value").
-             * @param name {string}
-             * @returns {*}
-             * @private
-             */
-            _get: function( name){
-                // future: return name in this.props ? this.props[name] : this[name];
-                return this[name];
-            },
-            /**
-             *  Helper function for get() and set().
-             *  Caches attribute name values so we don't do the string ops every time.
-             * @param name
-             * @returns {*}
-             * @private
-             */
-            _getAttrNames: function(name){
-                var apn = this._attrPairNames;
-                if(apn[name]){
-                    return apn[name];
-                }
-                var uc = name.replace(/^[a-z]|-[a-zA-Z]/g, function(c){
-                    return c.charAt(c.length - 1).toUpperCase();
-                });
-                return (apn[name] = {
-                    n: name + "Node",
-                    s: "_set" + uc + "Attr", // converts dashes to camel case, ex: accept-charset --> _setAcceptCharsetAttr
-                    g: "_get" + uc + "Attr",
-                    l: uc.toLowerCase()        // lowercase name w/out dashes, ex: acceptcharset
-                });
-            },
-            /**
-             * Set a property on a widget
-             * @description Sets named properties on a widget which may potentially be handled by a setter in the widget.
-             *
-             *		For example, if the widget has properties `foo` and `bar`
-             *		and a method named `_setFooAttr()`, calling
-             *		`myWidget.set("foo", "Howdy!")` would be equivalent to calling
-             *		`widget._setFooAttr("Howdy!")` and `myWidget.set("bar", 3)`
-             *		would be equivalent to the statement `widget.bar = 3;`
-             *
-             *      This is equivalent to calling `set(foo, "Howdy")` and `set(bar, 3)`
-             *
-             *		set() may also be called with a hash of name/value pairs, ex:
-             *
-             *	@example
-             *	myWidget.set({
-                    foo: "Howdy",
-                    bar: 3
-                    });
-             *
-             * @param name {string} The property to set.
-             * @param value {object|null}
-             * @returns {*}
-             */
-            set: function(name, value){
-                if(typeof name === "object"){
-                    for(var x in name){
-                        this.set(x, name[x]);
-                    }
-                    return this;
-                }
-                var names = this._getAttrNames(name),
-                    setter = this[names.s];
-
-                if(_.isFunction(setter)){
-                    // use the explicit setter
-                    setter.apply(this, Array.prototype.slice.call(arguments, 1));
-                }else{
-                    // Mapping from widget attribute to DOMNode/subwidget attribute/value/etc.
-                    // Map according to:
-                    //		1. attributeMap setting, if one exists (TODO: attributeMap deprecated, remove in 2.0)
-                    //		2. _setFooAttr: {...} type attribute in the widget (if one exists)
-                    //		3. apply to focusNode or domNode if standard attribute name, excluding funcs like onClick.
-                    // Checks if an attribute is a "standard attribute" by whether the DOMNode JS object has a similar
-                    // attribute name (ex: accept-charset attribute matches jsObject.acceptCharset).
-                    // Note also that Tree.focusNode() is a function not a DOMNode, so test for that.
-                    var defaultNode = this.focusNode && !lang.isFunction(this.focusNode) ? "focusNode" : "domNode",
-                        tag = this[defaultNode] && this[defaultNode].tagName,
-                        attrsForTag = tag && (tagAttrs[tag] || (tagAttrs[tag] = getAttrs(this[defaultNode]))),
-                        map = name in this.attributeMap ? this.attributeMap[name] :
-                            names.s in this ? this[names.s] :
-                                ((attrsForTag && names.l in attrsForTag && typeof value != "function") ||
-                                /^aria-|^data-|^role$/.test(name)) ? defaultNode : null;
-                    if(map != null){
-                        this._attrToDom(name, value, map);
-                    }
-                    this._set(name, value);
-                }
-                return this;
-            },
-            postCreate:function(){
-            },
-            postMixInProperties:dcl.superCall(function(sup){
-                return function(props){
-                    sup && sup.call(this, props);
-                };
-            }),
-            create: function(params, srcNodeRef){
-                // summary:
-                //		Kick off the life-cycle of a widget
-                // description:
-                //		Create calls a number of widget methods (postMixInProperties, buildRendering, postCreate,
-                //		etc.), some of which of you'll want to override. See http://dojotoolkit.org/reference-guide/dijit/_WidgetBase.html
-                //		for a discussion of the widget creation lifecycle.
-                //
-                //		Of course, adventurous developers could override create entirely, but this should
-                //		only be done as a last resort.
-                // params: Object|null
-                //		Hash of initialization parameters for widget, including scalar values (like title, duration etc.)
-                //		and functions, typically callbacks like onClick.
-                //		The hash can contain any of the widget's properties, excluding read-only properties.
-                // srcNodeRef: DOMNode|String?
-                //		If a srcNodeRef (DOM node) is specified:
-                //
-                //		- use srcNodeRef.innerHTML as my contents
-                //		- if this is a behavioral widget then apply behavior to that srcNodeRef
-                //		- otherwise, replace srcNodeRef with my generated DOM tree
-                // tags:
-                //		private
-
-                // First time widget is instantiated, scan prototype to figure out info about custom setters etc.
-                //this._introspect();
-
-                // store pointer to original DOM tree
-                this.srcNodeRef = $(srcNodeRef)[0];
-
-                // No longer used, remove for 2.0.
-                this._connects = [];
-                this._supportingWidgets = [];
-
-                // this is here for back-compat, remove in 2.0 (but check NodeList-instantiate.html test)
-                if(this.srcNodeRef && this.srcNodeRef.id){
-                    this.id = this.srcNodeRef.id;
-                }
-
-                // mix in our passed parameters
-                if(params){
-                    this.params = params;
-                    utils.mixin(this, params);
-                }
-
-                if(this.postMixInProperties) {
-                    this.postMixInProperties();
-                }
-
-                // Generate an id for the widget if one wasn't specified, or it was specified as id: undefined.
-                // Do this before buildRendering() because it might expect the id to be there.
-                if(!this.id){
-                    this.id = registry.getUniqueId(this.declaredClass.replace(/\//g, "_"));
-                    if(this.params){
-                        // if params contains {id: undefined}, prevent _applyAttributes() from processing it
-                        delete this.params.id;
-                    }
-                }
-
-
-                // The document and <body> node this widget is associated with
-                this.ownerDocument = this.ownerDocument || (this.srcNodeRef ? this.srcNodeRef.ownerDocument : document);
-                this.ownerDocumentBody = $('body')[0];
-                registry.add(this);
-
-                this.buildRendering();
-                if(this.domNode){
-                    // Copy attributes listed in attributeMap into the [newly created] DOM for the widget.
-                    // Also calls custom setters for all attributes with custom setters.
-                    //this._applyAttributes();
-
-                    // If srcNodeRef was specified, then swap out original srcNode for this widget's DOM tree.
-                    // For 2.0, move this after postCreate().  postCreate() shouldn't depend on the
-                    // widget being attached to the DOM since it isn't when a widget is created programmatically like
-                    // new MyWidget({}).	See #11635.
-                    var source = this.srcNodeRef;
-                    if(source && source.parentNode && this.domNode !== source){
-                        source.parentNode.replaceChild(this.domNode, source);
-                    }
-                    // Note: for 2.0 may want to rename widgetId to dojo._scopeName + "_widgetId",
-                    // assuming that dojo._scopeName even exists in 2.0
-                    this.domNode.setAttribute("id", this.id);
-                    if(this.style){
-                        $(this.domNode).css(this.style);
-                    }
-                }
-                this.postCreate();
-                this._created = true;
-            },
-            constructor:function(params,container){
-                this.postscript && this.postscript(params,container);
-            },
-            postscript:function(params,srcNodeRef){
-                return this.create(params, srcNodeRef);
-            },
-            /**
-             *		Returns all direct children of this widget, i.e. all widgets underneath this.containerNode whose parent
-             *		is this widget.   Note that it does not return all descendants, but rather just direct children.
-             *		Analogous to [Node.childNodes](https:*developer.mozilla.org/en-US/docs/DOM/Node.childNodes),
-             *		except containing widgets rather than DOMNodes.
-             *
-             *		The result intentionally excludes internally created widgets (a.k.a. supporting widgets)
-             *		outside of this.containerNode.
-             *
-             *		Note that the array returned is a simple array.  Application code should not assume
-             *		existence of methods like forEach().
-             *
-             * @returns {*}
-             */
-            getChildren: function(){
-                return this.containerNode ? registry.findWidgets(this.containerNode) : []; // dijit/_WidgetBase[]
-            },
-            /**
-             *
-             * @returns {*}
-             */
-            getParent: function(){
-                // summary:
-                //		Returns the parent widget of this widget.
-                return registry.getEnclosingWidget(this.domNode.parentNode);
-            },
-            //////////// DESTROY FUNCTIONS ////////////////////////////////
-            /**
-             * Destroy this widget and its descendants
-             * @description If true, this method will leave the original DOM structure
-             *		alone of descendant Widgets. Note: This will NOT work with
-             *		dijit._TemplatedMixin widgets.
-             * @param preserveDom {boolean}
-             */
-            destroyRecursive: function(preserveDom){
-                this._beingDestroyed = true;
-                this.destroyDescendants(preserveDom);
-                this.destroy(preserveDom);
-            },
-            /**
-             *
-             * @param preserveDom {boolean}. If true, this method will leave the original DOM structure alone.
-             * Note: This will not yet work with _TemplatedMixin widgets
-             */
-            destroy: function(preserveDom){
-                // summary:
-                //		Destroy this widget, but not its descendants.  Descendants means widgets inside of
-                //		this.containerNode.   Will also destroy any resources (including widgets) registered via this.own().
-                //
-                //		This method will also destroy internal widgets such as those created from a template,
-                //		assuming those widgets exist inside of this.domNode but outside of this.containerNode.
-                //
-                //		For 2.0 it's planned that this method will also destroy descendant widgets, so apps should not
-                //		depend on the current ability to destroy a widget without destroying its descendants.   Generally
-                //		they should use destroyRecursive() for widgets with children.
-                this._beingDestroyed = true;
-                // Destroy supporting widgets, but not child widgets under this.containerNode (for 2.0, destroy child widgets
-                // here too).   if() statement is to guard against exception if destroy() called multiple times (see #15815).
-                if(this.domNode){
-                    _.each(registry.findWidgets(this.domNode, this.containerNode), destroy);
-                }
-                this.destroyRendering(preserveDom);
-                registry.remove(this.id);
-                this._destroyed = true;
-                this._emit('destroy');
-            },
-            /**
-             * Destroys the DOM nodes associated with this widget.
-             * @param {boolean} preserveDom. If true, this method will leave the original DOM structure alone during tear-down. Note: this will not work with _Templated widgets yet.
-             */
-            destroyRendering: function(preserveDom){
-                if(this.domNode){
-                    if(preserveDom){
-
-                    }else{
-                        domConstruct.destroy(this.domNode);
-                    }
-                    delete this.domNode;
-                }
-                if(this.srcNodeRef){
-                    if(!preserveDom){
-                        domConstruct.destroy(this.srcNodeRef);
-                    }
-                    delete this.srcNodeRef;
-                }
-            },
-            destroyDescendants: function(/*Boolean?*/ preserveDom){
-                // summary:
-                //		Recursively destroy the children of this widget and their
-                //		descendants.
-                // preserveDom:
-                //		If true, the preserveDom attribute is passed to all descendant
-                //		widget's .destroy() method. Not for use with _Templated
-                //		widgets.
-
-                // get all direct descendants and destroy them recursively
-                _.each(this.getChildren(), function(widget){
-                    if(widget.destroyRecursive){
-                        widget.destroyRecursive(preserveDom);
-                    }
-                });
-            }
-        });
-        return Module;
-
-    }
-
-    var StoreMixin = dcl(null,{
-        wireStore:function(store,updateFn,events){
-            store = store || this.store;
-            var handles = [];
-            events = events || ['update','added','remove','delete'];
-            for (var i = 0; i < events.length; i++) {
-                var event = events[i];
-                var _handle = store.on(event, updateFn.bind(this));
-                handles.push(_handle);
-                this.addHandle && this.addHandle(event,_handle);
-            }
-            return handles;
-        }
-    });
-    var _WidgetClass = createClass_WidgetBase();
-    /////////////////////////////////////////////////////////////////
-    //
-    //  Module exports
-    //
-    //
-    var Module = dcl([_WidgetClass,_TemplatedMixin,_Widget.dcl],{});
-
-    Module.AttachClass = _AttachMixinClass;
-    Module.TemplateClass = _TemplatedMixin;
-    Module.WidgetClass = _WidgetClass;
-    Module.StoreMixin = StoreMixin;
-
-    dcl.chainAfter(Module,"resize");
-    dcl.chainAfter(Module,"destroy");
-    dcl.chainAfter(Module,"startup");
-    return Module;
-});
-define('xide/widgets/TemplatedWidgetBase',[
-    'dcl/dcl',
-    'xide/utils',
-    'xide/_base/_Widget'
-], function (dcl,utils,_XWidget2) {
-    var Implementation = {
-        declaredClass: 'xide.widgets.TemplatedWidgetBase',
-        data: null,
-        delegate: null,
-        didLoad: false,
-        templateString: null,
-        getParent: function () {
-            return this._parent;
-        },
-        debounce: function (methodName, _function, delay, options, now) {
-            return utils.debounce(this, methodName, _function, delay, options, now);
-        },
-        translate: function (value) {
-            return this.localize(value);
-        },
-        _setupTranslations: function () {
-            this._messages = [];
-        },
-        updateTitleNode: function (value) {}
-    };
-    var Module = dcl([_XWidget2],Implementation);
-    dcl.chainAfter(Module,'startup');
-    dcl.chainAfter(Module,'destroy');
-    return Module;
-});
-/** @module xgrid/Layout **/
-define('xgrid/Layout',[
-    "xdojo/declare",
-    'xide/utils',
-    'xide/widgets/TemplatedWidgetBase',
-    'xide/registry',
-    'xide/$'
-], function (declare, utils, TemplatedWidgetBase, registry,$) {
-    var template = '<div tabindex="-1" attachTo="template" class="grid-template" style="width: 100%;height: 100%;overflow: hidden;position: relative;padding: 0px;margin: 0px">'+
-        '<div tabindex="-1" attachTo="header" class="grid-header row" style="width: 100%;height: auto"></div>'+
-        '<div tabindex="0" attachTo="grid" class="grid-body row"></div>'+
-        '<div attachTo="footer" class="grid-footer" style="position: absolute;bottom: 0px;width: 100%"></div>'+
-    '</div>';
-    /**
-     *
-     * @class module:xgrid/Layout
-     */
-    var Implementation = {
-        template: null,
-        attachDirect: true,
-        destroy: function () {
-            //important,remove us from our temp. template.
-            this.template && this.template.remove(this) && utils.destroy(this.template,true,this);
-            this.inherited(arguments);
-        },
-        getTemplateNode: function () {
-            return this.template.domNode;
-        },
-        getHeaderNode: function () {
-            return this.template.header;
-        },
-        getBodyNode: function () {
-            return this.template.grid;
-        },
-        getFooterNode: function () {
-            return this.template.footer;
-        },
-        resize: function () {
-            this.inherited(arguments);
-            var thiz = this,
-                mainNode = thiz.template  ? thiz.template.domNode : this.domNode,
-                isRerooted = false;
-
-            if(this.__masterPanel){
-                mainNode = this.__masterPanel.containerNode;
-                isRerooted= true;
-            }
-            var totalHeight = $(mainNode).height();
-            var template = thiz.template;
-            if(!template){
-                return;
-            }
-            var $header =$(template.header);
-            var topHeight = $header ? $header.height() : 0;
-            var _toolbarHeight = this._toolbar ? this._toolbar._height : 0;
-            if(_toolbarHeight>0 && topHeight===0){
-                topHeight +=_toolbarHeight;
-            }
-            if(_toolbarHeight && $header){
-                $header.css('height','auto');
-            }
-            var footerHeight = template.footer ? $(template.footer).height() : 0;
-            var finalHeight = totalHeight - topHeight - (footerHeight);
-
-            if (finalHeight > 50) {
-                $(template.grid).height(finalHeight + 'px');
-                isRerooted && $(template.domNode).width($(mainNode).width());
-            } else {
-                $(template.grid).height('inherited');
-            }
-
-
-        },
-        buildRendering: function () {
-            if (this.template) {
-                return;
-            }
-            this._domNode = this.domNode;
-            var templated = utils.addWidget(TemplatedWidgetBase, {
-                templateString: template,
-                declaredClass: 'xgrid/_BaseParent_' + this.declaredClass
-            }, null, this.domNode, true);
-
-            $(templated.domNode).attr('tabIndex', -1);
-
-            this.template = templated;
-            this.header = templated.header;
-            this.footer = templated.footer;
-            this.gridBody = templated.grid;
-            this.domNode = templated.grid;
-            this.id = this.template.id;
-            this.domNode.id = this.id;
-            templated.domNode.id = this.id;
-            registry._hash[this.id] = this;
-            templated.add(this);
-            return this.inherited(arguments);
-        }
-    };
-
-    //package via declare
-    var _class = declare('xgrid.Layout', null, Implementation);
-    _class.Implementation = Implementation;
-    return _class;
-});
-
-define('xgrid/Focus',[
-    "xdojo/declare",
-    "xide/types",
-    "xide/utils"
-], function (declare,types,utils) {
-
-    var Implementation = {
-        _focused:false,
-        _detectFocus:null,
-        _detectBlur:null,
-        destroy:function(){
-            this.inherited(arguments);
-            window.removeEventListener('focus', this._detectFocus, true);
-            window.removeEventListener('blur', this._detectBlur, true);
-        },
-        _onBlur:function(){
-        },
-        set:function(what,value){
-            if(what=='focused'){
-                this._onFocusChanged(value);
-              }
-            return this.inherited(arguments);
-        },
-        _onFocusChanged:function(focused,type){
-            if(this._focused && !focused){
-                this._onBlur();
-            }
-            if(!this._focused && focused){
-                this._emit(types.EVENTS.ON_VIEW_SHOW,this);
-            }
-            this._focused = focused;
-            this.highlight  && this.highlight(focused);
-        },
-        getFocused:function(domNode){
-            if(this._focusedNode){
-                var row = this.row(this._focusedNode);
-                if(row){
-                    return row[domNode? 'element' : 'data' ];
-                }
-            }
-            return null;
-        },
-        startup:function(){
-            this.inherited(arguments);
-            var thiz = this,
-                node = thiz.domNode.parentNode;
-
-
-            //@TODO: /active=true
-            this.headerNode.tabIndex=-1;
-            this._focused  = true;
-        }
-
-    };
-    //package via declare
-    var _class = declare('xgrid.Focus',null,Implementation);
-    _class.Implementation = Implementation;
-    return _class;
-});
-/** @module xgrid/Clipboard **/
-define('xgrid/Clipboard',[
-    "xdojo/declare",
-    'xide/types'
-], function (declare,types) {
-
-    var Implementation = {
-        runAction:function(action){
-            switch (action.command){
-                case types.ACTION.CLIPBOARD_COPY:{
-                    this.clipboardCopy();
-                    this.refreshActions();
-                    return true;
-                }
-                case types.ACTION.CLIPBOARD_PASTE:{
-                    return this.clipboardPaste();
-                }
-                case types.ACTION.CLIPBOARD_CUT:{
-                    this.clipboardCut();
-                    return true;
-                }
-            }
-            return this.inherited(arguments);
-        },
-        clipboardPaste:function(){
-            return this.inherited(arguments);
-        },
-        /**
-         * Clipboard/Copy action
-         */
-
-        clipboardCopy:function(){
-            this.currentCutSelection=null;
-            this.currentCopySelection=this.getSelection();
-            this.publish(types.EVENTS.ON_CLIPBOARD_COPY,{
-                selection:this.currentCopySelection,
-                owner:this,
-                type:this.itemType
-            });
-        },
-        clipboardCut:function(){
-            this.currentCopySelection = null;
-            this.currentCutSelection = this.getSelection();
-        },
-        getClipboardActions:function(addAction){
-            var thiz = this,
-                actions = [],
-                ACTION = types.ACTION;
-
-            function _selection(){
-                var selection = thiz.getSelection();
-                if (!selection || !selection.length) {
-                    return null;
-                }
-                var item = selection[0];
-                if(!item){
-                    console.error('have no item');
-                    return null;
-                }
-                return selection;
-            }
-
-            function isItem() {
-                var selection = _selection();
-                if (!selection) {
-                    return true;
-                }
-                return false;
-            }
-
-            function disable(){
-                switch (this.title){
-                    case 'Cut':
-                    case 'Copy':{
-                        return isItem()!==false;
-                    }
-                    case 'Paste':{
-                        return thiz.currentCopySelection==null;
-                    }
-                }
-                return false;
-            }
-            function _createEntry(label,command,icon,keyCombo) {
-                actions.push(thiz.createAction({
-                    label: label,
-                    command: command,
-                    icon: icon,
-                    tab: 'Home',
-                    group: 'Clipboard',
-                    keycombo: keyCombo,
-                    mixin: {
-                        addPermission:true,
-                        quick:true
-                    },
-                    shouldDisable:disable
-                }));
-            }
-            _createEntry('Copy',ACTION.CLIPBOARD_COPY,'fa-copy','ctrl c');
-            _createEntry('Paste',ACTION.CLIPBOARD_PASTE,'fa-paste','ctrl v');
-            _createEntry('Cut',ACTION.CLIPBOARD_CUT,'fa-cut','ctrl x');
-            return actions;
-        }
-    };
-
-    //package via declare
-    var _class = declare('xgrid.Clipboard',null,Implementation);
-    _class.Implementation = Implementation;
-
-    return _class;
-});
 /** @module xide/model/Path */
 define('xide/model/Path',[
     "xide/utils",
@@ -10910,6 +4320,442 @@ define('xide/model/Path',[
     });
     Path.EMPTY = new Path("");
     return Path;
+});
+/** @module xaction/DefaultActions **/
+define('xaction/DefaultActions',[
+    "dcl/dcl",
+    'dcl/inherited',
+    "xdojo/declare",
+    'xide/types',
+    'xide/utils',
+    'xlang/i18'
+], function (dcl,inherited,declare,types,utils,i18) {
+    /**
+     * @mixin module:xide/action/DefaultActions
+     */
+    var Module = declare("xaction/DefaultActions", null , {});
+    /**
+     *
+     * @param title
+     * @param command
+     * @param group
+     * @param icon
+     * @param handler
+     * @param accelKey
+     * @param keyCombo
+     * @param keyProfile
+     * @param keyTarget
+     * @param keyScope
+     * @param mixin
+     * @returns {{title: *, command: *, group: *, icon: *, handler: *, accelKey: *, keyCombo: *, keyProfile: *, keyTarget: *, keyScope: *}}
+     */
+    Module.createActionParameters=function(title, command, group, icon, handler, accelKey, keyCombo, keyProfile, keyTarget, keyScope,mixin){
+        return {
+            title:title,
+            command: command,
+            group: group,
+            icon: icon,
+            handler: handler,
+            accelKey: accelKey,
+            keyCombo: keyCombo,
+            keyProfile: keyProfile,
+            keyTarget: keyTarget,
+            keyScope: keyScope,
+            mixin:mixin
+        };
+    };
+    /**
+     *
+     * @param label
+     * @param command
+     * @param icon
+     * @param keycombo
+     * @param tab
+     * @param group
+     * @param filterGroup
+     * @param onCreate
+     * @param handler
+     * @param mixin
+     * @param shouldShow
+     * @param shouldDisable
+     * @param container
+     * @returns {*}
+     */
+    var createAction = function(label,command,icon,keycombo,tab,group,filterGroup,onCreate,handler,mixin,shouldShow,shouldDisable,container){
+        if(keycombo) {
+            if (_.isString(keycombo)) {
+                keycombo = [keycombo];
+            }
+        }
+
+        mixin = utils.mixin({
+            filterGroup:filterGroup || "item|view",
+            tab:tab||'File',
+            onCreate: onCreate || function (action){},
+            shouldShow:shouldShow||function(){return true;},
+            shouldDisable:shouldDisable||function(){return false;}
+        },mixin);
+
+        var _action = Module.createActionParameters(
+            label,
+            command,
+            group || 'File',//Group
+            icon, handler || null, "", keycombo, null, container, null, mixin);
+
+        utils.mixin(_action,mixin);
+
+        return _action;
+    };
+
+    /**
+     * Find action in permission
+     * @param what
+     * @returns {boolean}
+     */
+    function hasAction(permissions,what){
+        return _.contains(permissions,what);
+    }
+
+    /**
+     * After action default handler, trys:
+     * - this::onAfterAction
+     * - emit onAfterAction
+     *
+     * @param dfdResult
+     * @param event
+     * @param action
+     * @private
+     */
+    function _afterAction(dfdResult,event,action) {
+        var who = this;
+        // call onAfterAction with this results
+        var onAfterActionDfd = null;
+        who.onAfterAction && (onAfterActionDfd = who.onAfterAction(action, dfdResult, event));
+
+        who._emit && who._emit('onAfterAction', {
+            action: action,
+            result: dfdResult,
+            source: who,
+            afterAction: onAfterActionDfd
+        });
+    }
+    /**
+     * Default handler, does
+     * - try this::runAction || action#handler
+     * - call afterAction
+     *
+     * As last cal
+     * @param action {module:xaction/ActionModel}
+     * @param event
+     */
+    function defaultHandler(action,event){
+        var actionDfd,
+            who = this;
+
+        who && who.onBeforeAction && who.onBeforeAction(action);
+        if(who.runAction){
+            actionDfd = who.runAction.apply(who,[action,null,event]);
+        }else if(action.handler){
+            actionDfd = action.handler.apply(who,[action,null,event]);
+        }
+        if(actionDfd && actionDfd.then){
+            actionDfd.then(function(actionResult){
+                _afterAction.apply(who,[actionResult,event,action]);
+            });
+
+        }else{
+            _afterAction.apply(who,[actionDfd,event,action]);
+        }
+        return actionDfd;
+    }
+
+    /**
+     *
+     * @param permissions
+     * @param grid
+     * @param owner
+     * @returns {Array}
+     */
+    function getDefaultActions(permissions,grid,owner){
+        /**
+         *
+         * @param selection
+         * @param reference
+         * @param visibility
+         * @returns {boolean}
+         */
+        function shouldDisableDefaultEmptySelection(selection,reference,visibility){
+            selection = selection || grid ? grid.getSelection() : [];
+
+            if(!selection || !selection.length){
+                return true;
+            }
+            return false;
+        }
+        /**
+         *
+         * @param selection
+         * @param reference
+         * @param visibility
+         * @returns {boolean}
+         */
+        function shouldDisableDefaultFileOnly(selection,reference,visibility){
+
+            if(shouldDisableDefaultEmptySelection.apply(this,arguments)){
+                return true;
+            }
+            selection = selection || grid ? grid.getSelection() : [];
+
+            if(selection && selection[0].isDir === true){
+                return true;
+            }
+            return false;
+        }
+
+        var root = 'File/',
+            thiz = this,
+            renderActions = [],
+            VISIBILITY = types.ACTION_VISIBILITY,
+            result = [],
+            ACTION = types.ACTION,
+            ACTION_ICON = types.ACTION_ICON,
+            creator = owner || grid;
+
+        /**
+         *
+         * @param label
+         * @param command
+         * @param icon
+         * @param keycombo
+         * @param tab
+         * @param group
+         * @param filterGroup
+         * @param onCreate
+         * @param handler
+         * @param mixin
+         * @param shouldShow
+         * @param shouldDisable
+         */
+        function addAction(label,command,icon,keycombo,tab,group,filterGroup,onCreate,handler,mixin,shouldShow,shouldDisable){
+            var action = null;
+            mixin = mixin || {};
+            utils.mixin(mixin,{owner:owner || grid});
+
+            if(mixin.addPermission || hasAction(permissions,command)){
+
+                handler = handler || defaultHandler;
+
+                action = createAction(label,command,icon,keycombo,tab,group,filterGroup,onCreate,handler,mixin,shouldShow,shouldDisable,grid.domNode);
+
+                if(action) {
+                    if (owner && owner.addAction) {
+                        owner.addAction(null, action);
+                    }
+                    result.push(action);
+                }
+            }
+        }
+        if(hasAction(permissions, ACTION.CLIPBOARD) && grid.getClipboardActions){
+            result.push(creator.createAction({
+                label: 'Clipboard',
+                command: 'Edit/Clipboard',
+                icon: 'fa-clipboard',
+                tab: 'Edit',
+                group: 'Clipboard',
+                mixin:{
+                    addPermission:true,
+                    dynamic:true,
+                    quick:true
+                },
+                onCreate:function(action){
+                    action.setVisibility(VISIBILITY.RIBBON,{
+                        expand:true,
+                        tab:"File"
+                    });
+                }
+            }));
+
+            result = result.concat(grid.getClipboardActions(addAction));
+        }
+
+        result.push(creator.createAction({
+            label: 'Show',
+            command: 'View/Show',
+            icon: 'fa-eye',
+            tab: 'View',
+            group: 'Show',
+            mixin:{
+                addPermission:true,
+                dynamic:true
+            },
+            onCreate:function(action){
+                action.setVisibility(VISIBILITY.RIBBON,{
+                    expand:true
+                });
+            }
+        }));
+
+
+        if(hasAction(permissions,ACTION.LAYOUT) && grid.getRendererActions){
+            result = result.concat(grid.getRendererActions());
+        }
+
+        if(hasAction(permissions,ACTION.COLUMNS) && grid.getColumnHiderActions){
+            result = result.concat(grid.getColumnHiderActions(permissions));
+        }
+        ///////////////////////////////////////
+        //
+        //  Open/Edit
+        //
+        //
+        result.push(creator.createAction({
+            label: 'Edit',
+            command: 'File/Edit',
+            icon: ACTION_ICON.EDIT,
+            tab: 'Home',
+            group: 'Open',
+            keycombo: ['f4', 'enter','dblclick'],
+            mixin:{
+                quick:true
+            },
+            shouldDisable:shouldDisableDefaultFileOnly
+        }));
+
+
+        ///////////////////////////////////////
+        //
+        //  Organize
+        //
+        result.push(creator.createAction({
+            label: 'Delete',
+            command: 'File/Delete',
+            icon: ACTION_ICON.DELETE,
+            tab: 'Home',
+            group: 'Organize',
+            keycombo: ['f8','delete'],
+            mixin:{
+                quick:true
+            },
+            shouldDisable:shouldDisableDefaultEmptySelection
+        }));
+
+        addAction('Rename','File/Rename','fa-edit',['f2'],'Home','Organize','item',null,null,null,null,shouldDisableDefaultEmptySelection);
+
+        result.push(creator.createAction({
+            label: 'Reload',
+            command: 'File/Reload',
+            icon: ACTION_ICON.RELOAD,
+            tab: 'Home',
+            group: 'File',
+            keycombo: ['ctrl l'],
+            mixin:{
+                quick:true
+            }
+        }));
+        addAction('Create archive','File/Compress',ACTION_ICON.COMPRESS,['ctrl z'],'Home','Organize','item|view',null,null,null,null,shouldDisableDefaultEmptySelection);
+
+        ///////////////////////////////////////
+        //
+        //  File
+        //
+        addAction('Extract','File/Extract',ACTION_ICON.EXTRACT,['ctrl e'],'Home','File','item|view',null,null,null,null,function(){
+            return true;
+            //return shouldDisableDefaultFileOnly.apply(this,arguments);
+        });
+
+        result.push(creator.createAction({
+            label: 'Download',
+            command: 'File/Download',
+            icon: ACTION_ICON.DOWNLOAD,
+            tab: 'Home',
+            group: 'File',
+            keycombo: ['ctrl down'],
+            mixin:{
+                quick:true
+            }
+        }));
+
+        //////////////////////////////////////////
+        //
+        //  New
+        //
+        if(hasAction(permissions,ACTION.NEW_DIRECTORY)|| hasAction(permissions,ACTION.NEW_FILE)) {
+
+            addAction('New','File/New','fa-magic',null,'Home','New','item|view',null,null,{},null,null);
+/*
+            result.push(creator.createAction({
+                label: 'New',
+                command: 'File/New',
+                icon: 'fa-magic',
+                tab: 'Home',
+                group: 'File',
+                keycombo: ['ctrl down'],
+                mixin:{
+                    quick:true
+                }
+            }));*/
+
+        }
+        addAction('New Folder',ACTION.NEW_DIRECTORY,'fa-folder',['f7'],'Home','New','item|view',null,null,{quick:true},null,null);
+        addAction('New File',ACTION.NEW_FILE,'el-icon-file',['ctrl f4'],'Home','New','item|view',null,null,{quick:true},null,null);
+
+
+        //////////////////////////////////////////
+        //
+        //  Preview
+        //
+        if(hasAction(permissions,ACTION.PREVIEW)) {
+            result.push(creator.createAction({
+                label: 'Preview',
+                command: 'File/Preview',
+                icon: 'fa-eye',
+                tab: 'Home',
+                group: 'Open',
+                keycombo: ['f3'],
+                mixin:{
+                    quick:true
+                },
+                shouldDisable:shouldDisableDefaultFileOnly
+            }));
+        }
+
+        ///////////////////////////////////////
+        //
+        //  Selection
+        //
+        if(hasAction(permissions,ACTION.SELECTION)) {
+            result.push(createAction('Select', 'File/Select', 'fa-hand-o-up', null, 'Home', 'Select', 'item|view', function(action){
+                action.setVisibility(VISIBILITY.RIBBON,{
+                    expand:true
+                });
+            }, null, null, null, null,grid.domNode));
+
+            var _mixin = {
+                    owner:owner || grid
+                },
+                container = grid.domNode;
+
+            result.push(createAction('Select all', 'File/Select/All', 'fa-th', ['ctrl a'], 'Home', 'Select', 'item|view', null, function(){
+                grid.selectAll();
+            }, _mixin, null, null,container));
+
+            result.push(createAction('Select none', 'File/Select/None', 'fa-square-o', 'ctrl d', 'Home', 'Select', 'item|view', null, function(){
+                grid.deselectAll();
+            }, _mixin, null, null,container));
+
+            result.push(createAction('Invert selection', 'File/Select/Invert', 'fa-square', ['ctrl i'], 'Home', 'Select', 'item|view', null, function(){
+                grid.invertSelection();
+            }, _mixin, null, null,container));
+        }
+        return result;
+    }
+
+    Module.createAction = createAction;
+    Module.hasAction = hasAction;
+    Module.getDefaultActions = getDefaultActions;
+    Module.defaultHandler = defaultHandler;
+
+    return Module;
 });
 define('dstore/QueryMethod',[], function () {
 	/*=====
@@ -12088,106 +5934,104 @@ define('dstore/Memory',[
 	});
 });
 
-define('xide/encoding/_base',[], function () {
-	//	These functions are 32-bit word-based.  See _sha-64 for 64-bit word ops.
-	var base = {};
+define('xide/encoding/_base',[
+	"dojo/_base/lang"
 
-	base.outputTypes = {
+], function(lang){
+
+	//	These functions are 32-bit word-based.  See _sha-64 for 64-bit word ops.
+	var base = {};//lang.getObject("dojox.encoding.digests", true);
+
+	base.outputTypes={
 		// summary:
 		//		Enumeration for input and output encodings.
-		Base64: 0,
-		Hex: 1,
-		String: 2,
-		Raw: 3
+		Base64:0, Hex:1, String:2, Raw:3
 	};
 
 	//	word-based addition
-	base.addWords = function ( /* word */ a, /* word */ b) {
+	base.addWords=function(/* word */a, /* word */b){
 		// summary:
 		//		add a pair of words together with rollover
-		var l = (a & 0xFFFF) + (b & 0xFFFF);
-		var m = (a >> 16) + (b >> 16) + (l >> 16);
-		return (m << 16) | (l & 0xFFFF); //	word
+		var l=(a&0xFFFF)+(b&0xFFFF);
+		var m=(a>>16)+(b>>16)+(l>>16);
+		return (m<<16)|(l&0xFFFF);	//	word
 	};
 
 	//	word-based conversion method, for efficiency sake;
 	//	most digests operate on words, and this should be faster
 	//	than the encoding version (which works on bytes).
-	var chrsz = 8; //	16 for Unicode
-	var mask = (1 << chrsz) - 1;
+	var chrsz=8;	//	16 for Unicode
+	var mask=(1<<chrsz)-1;
 
-	base.stringToWord = function ( /* string */ s) {
+	base.stringToWord=function(/* string */s){
 		// summary:
 		//		convert a string to a word array
-		var wa = [];
-		for (var i = 0, l = s.length * chrsz; i < l; i += chrsz) {
-			wa[i >> 5] |= (s.charCodeAt(i / chrsz) & mask) << (i % 32);
+		var wa=[];
+		for(var i=0, l=s.length*chrsz; i<l; i+=chrsz){
+			wa[i>>5]|=(s.charCodeAt(i/chrsz)&mask)<<(i%32);
 		}
-		return wa; //	word[]
+		return wa;	//	word[]
 	};
 
-	base.wordToString = function ( /* word[] */ wa) {
+	base.wordToString=function(/* word[] */wa){
 		// summary:
 		//		convert an array of words to a string
-		var s = [];
-		for (var i = 0, l = wa.length * 32; i < l; i += chrsz) {
-			s.push(String.fromCharCode((wa[i >> 5] >>> (i % 32)) & mask));
+		var s=[];
+		for(var i=0, l=wa.length*32; i<l; i+=chrsz){
+			s.push(String.fromCharCode((wa[i>>5]>>>(i%32))&mask));
 		}
-		return s.join(""); //	string
+		return s.join("");	//	string
 	};
 
-	base.wordToHex = function ( /* word[] */ wa) {
+	base.wordToHex=function(/* word[] */wa){
 		// summary:
 		//		convert an array of words to a hex tab
-		var h = "0123456789abcdef",
-			s = [];
-		for (var i = 0, l = wa.length * 4; i < l; i++) {
-			s.push(h.charAt((wa[i >> 2] >> ((i % 4) * 8 + 4)) & 0xF) + h.charAt((wa[i >> 2] >> ((i % 4) * 8)) & 0xF));
+		var h="0123456789abcdef", s=[];
+		for(var i=0, l=wa.length*4; i<l; i++){
+			s.push(h.charAt((wa[i>>2]>>((i%4)*8+4))&0xF)+h.charAt((wa[i>>2]>>((i%4)*8))&0xF));
 		}
-		return s.join(""); //	string
+		return s.join("");	//	string
 	};
 
-	base.wordToBase64 = function ( /* word[] */ wa) {
+	base.wordToBase64=function(/* word[] */wa){
 		// summary:
 		//		convert an array of words to base64 encoding, should be more efficient
 		//		than using dojox.encoding.base64
-		var p = "=",
-			tab = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/",
-			s = [];
-		for (var i = 0, l = wa.length * 4; i < l; i += 3) {
-			var t = (((wa[i >> 2] >> 8 * (i % 4)) & 0xFF) << 16) | (((wa[i + 1 >> 2] >> 8 * ((i + 1) % 4)) & 0xFF) << 8) | ((wa[i + 2 >> 2] >> 8 * ((i + 2) % 4)) & 0xFF);
-			for (var j = 0; j < 4; j++) {
-				if (i * 8 + j * 6 > wa.length * 32) {
+		var p="=", tab="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/", s=[];
+		for(var i=0, l=wa.length*4; i<l; i+=3){
+			var t=(((wa[i>>2]>>8*(i%4))&0xFF)<<16)|(((wa[i+1>>2]>>8*((i+1)%4))&0xFF)<<8)|((wa[i+2>>2]>>8*((i+2)%4))&0xFF);
+			for(var j=0; j<4; j++){
+				if(i*8+j*6>wa.length*32){
 					s.push(p);
 				} else {
-					s.push(tab.charAt((t >> 6 * (3 - j)) & 0x3F));
+					s.push(tab.charAt((t>>6*(3-j))&0x3F));
 				}
 			}
 		}
-		return s.join(""); //	string
+		return s.join("");	//	string
 	};
 
 	//	convert to UTF-8
-	base.stringToUtf8 = function (input) {
+	base.stringToUtf8 = function(input){
 		var output = "";
 		var i = -1;
 		var x, y;
 
-		while (++i < input.length) {
+		while(++i < input.length){
 			x = input.charCodeAt(i);
 			y = i + 1 < input.length ? input.charCodeAt(i + 1) : 0;
-			if (0xD800 <= x && x <= 0xDBFF && 0xDC00 <= y && y <= 0xDFFF) {
+			if(0xD800 <= x && x <= 0xDBFF && 0xDC00 <= y && y <= 0xDFFF){
 				x = 0x10000 + ((x & 0x03FF) << 10) + (y & 0x03FF);
 				i++;
 			}
 
-			if (x <= 0x7F)
+			if(x <= 0x7F)
 				output += String.fromCharCode(x);
-			else if (x <= 0x7FF)
+			else if(x <= 0x7FF)
 				output += String.fromCharCode(0xC0 | ((x >>> 6) & 0x1F), 0x80 | (x & 0x3F));
-			else if (x <= 0xFFFF)
+			else if(x <= 0xFFFF)
 				output += String.fromCharCode(0xE0 | ((x >>> 12) & 0x0F), 0x80 | ((x >>> 6) & 0x3F), 0x80 | (x & 0x3F));
-			else if (x <= 0x1FFFFF)
+			else if(x <= 0x1FFFFF)
 				output += String.fromCharCode(0xF0 | ((x >>> 18) & 0x07), 0x80 | ((x >>> 12) & 0x3F), 0x80 | ((x >>> 6) & 0x3F), 0x80 | (x & 0x3F));
 		}
 		return output;
@@ -12195,6 +6039,7 @@ define('xide/encoding/_base',[], function () {
 
 	return base;
 });
+
 define('xide/encoding/MD5',["./_base"], function(base) {
 
 /*	A port of Paul Johnstone's MD5 implementation
@@ -12366,6 +6211,19 @@ define('xide/encoding/MD5',["./_base"], function(base) {
 	};
 
 	return base.MD5;
+});
+
+/** @module xide/lodash **/
+define('xide/lodash',[],function(){
+
+    /**
+     * temp. wanna be shim for lodash til dojo-2/loader lands here
+     */
+    if(typeof _ !=="undefined"){
+        return _;
+    }else{
+        console.error('error loading lodash',global['_']);
+    }
 });
 
 define('xide/data/_Base',[
@@ -12630,5566 +6488,6 @@ define('xide/data/Memory',[
     });
 });
 
-define('dstore/Tree',[
-	'dojo/_base/declare'
-	/*=====, 'dstore/Store'=====*/
-], function (declare /*=====, Store=====*/) {
-	return declare(null, {
-		constructor: function () {
-			this.root = this;
-		},
-
-		mayHaveChildren: function (object) {
-			// summary:
-			//		Check if an object may have children
-			// description:
-			//		This method is useful for eliminating the possibility that an object may have children,
-			//		allowing collection consumers to determine things like whether to render UI for child-expansion
-			//		and whether a query is necessary to retrieve an object's children.
-			// object:
-			//		The potential parent
-			// returns: boolean
-
-			return 'hasChildren' in object ? object.hasChildren : true;
-		},
-
-		getRootCollection: function () {
-			// summary:
-			//		Get the collection of objects with no parents
-			// returns: dstore/Store.Collection
-
-			return this.root.filter({ parent: null });
-		},
-
-		getChildren: function (object) {
-			// summary:
-			//		Get a collection of the children of the provided parent object
-			// object:
-			//		The parent object
-			// returns: dstore/Store.Collection
-
-			return this.root.filter({ parent: this.getIdentity(object) });
-		}
-	});
-});
-
-/** @module xide/data/TreeMemory **/
-define('xide/data/TreeMemory',[
-    "dojo/_base/declare",
-    'xide/data/Memory',
-    'dstore/Tree',
-    'dojo/Deferred',
-    'dstore/QueryResults'
-], function (declare, Memory, Tree, Deferred, QueryResults) {
-
-    /**
-     * @class module:xide/data/TreeMemory
-     * @deprecated
-     * @extends module:xide/data/_Base
-     * @extends module:dstore/Tree
-     */
-    return declare('xide.data.TreeMemory', [Memory, Tree], {
-        _state: {
-            filter: null
-        },
-        parentProperty: 'parentId',
-        reset: function () {
-            this._state.filter = null;
-            this.resetQueryLog();
-        },
-        resetQueryLog: function () {
-            this.queryLog = [];
-        },
-        fetchRange: function () {
-            // dstore/Memory#fetchRange always uses fetchSync, which we aren't extending,
-            // so we need to extend this as well.
-            var results = this._fetchRange(arguments);
-            return new QueryResults(results.then(function (data) {
-                return data;
-            }), {
-                totalLength: results.then(function (data) {
-                    return data.length;
-                })
-            });
-        },
-        filter: function (data) {
-            var _res = this.inherited(arguments);
-            this._state.filter = data;
-            return _res;
-        },
-        _fetchRange: function (kwArgs) {
-            var deferred = new Deferred();
-            var _res = this.fetchRangeSync(kwArgs);
-            if (this._state.filter) {
-                //the parent query
-                if (this._state.filter['parent']) {
-                    var _item = this.getSync(this._state.filter[this.parentProperty]);
-                    if (_item) {
-                        this.reset();
-                        var _query = {};
-                        if (this.getChildrenSync) {
-                            _res = this.getChildrenSync(_item);
-                        } else {
-                            _query[this.parentProperty] = _item[this.idProperty];
-                            _res = this.root.query(_query);
-                        }
-                    }
-                }
-
-
-                //the group query
-                if (this._state && this._state.filter && this._state.filter['group']) {
-                    var _items = this.getSync(this._state.filter.parent);
-                    if (_item) {
-                        this.reset();
-                        _res = _item.items;
-                    }
-                }
-            }
-            deferred.resolve(_res);
-            return deferred;
-        },
-        getChildren: function (object) {
-            var filter = {};
-            filter[this.parentProperty] = this.getIdentity(object);
-            return this.root.filter(filter);
-        },
-        children: function (parent) {
-            var all = this.root.data, out = [];
-            for (var i = 0; i < all.length; i++) {
-                var obj = all[i];
-                if (obj[this.parentProperty] == parent[this.idProperty]) {
-                    out.push(obj);
-                }
-            }
-            return all;
-        },
-        mayHaveChildren: function (parent) {
-            if (parent._mayHaveChildren === false) {
-                return false;
-            }
-            return true;
-        }
-    });
-});
-
-/** @module xide/data/ObservableStore **/
-define('xide/data/ObservableStore',[
-    "dojo/_base/declare",
-    "xide/mixins/EventedMixin",
-    "xide/lodash"
-], function (declare, EventedMixin, _) {
-    /**
-     * Mixin to deal with dmodel
-     * @class module:xide/data/ObservableStore
-     * @lends module:xide/data/_Base
-     * @lends module:dstore/Store
-     * @lends module:xide/data/Memory
-     */
-    return declare('xide/data/Observable', EventedMixin, {
-        /**
-         * @type {boolean} Toggle to mute notifications during batch operations.
-         */
-        _ignoreChangeEvents: true,
-        /**
-         * @type {Array<String>} List of default properties to be observed by dmodel.property.observe.
-         */
-        observedProperties: [],
-        /**
-         * Get/Set toggle to prevent notifications for mass store operations. Without there will be performance drops.
-         * @param silent {boolean|null}
-         */
-        silent: function (silent) {
-            if (silent === undefined) {
-                return this._ignoreChangeEvents;
-            }
-            if (silent === true || silent === false && silent !== this._ignoreChangeEvents) {
-                this._ignoreChangeEvents = silent;
-            }
-        },
-        /**
-         * XIDE Override and extend putSync for adding the _store property and observe a new item's properties.
-         * @param item
-         * @param publish
-         * @returns {*}
-         */
-        putSync: function (item, publish) {
-            this.silent(!publish);
-            var res = this.inherited(arguments);
-            var self = this;
-            publish !== false && this.emit('added', res);
-            res && !res._store && Object.defineProperty(res, '_store', {
-                get: function () {
-                    return self;
-                }
-            });
-            this._observe(res);
-            this.silent(false);
-            return res;
-        },
-        /**
-         * Extend and override removeSync to silence notifications during batch operations.
-         * @param id {string}
-         * @param silent {boolean|null}
-         * @returns {*}
-         */
-        removeSync: function (id, silent) {
-            this.silent(silent);
-            var _item = this.getSync(id);
-            _item && _item.onRemove && _item.onRemove();
-            var res = this.inherited(arguments);
-            this.silent(false);
-            return res;
-        },
-        /**
-         *
-         * @param item
-         * @param property
-         * @param value
-         * @param source
-         * @private
-         */
-        _onItemChanged: function (item, property, value, source) {
-            if (this._ignoreChangeEvents) {
-                return;
-            }
-            var args = {
-                target: item,
-                property: property,
-                value: value,
-                source: source
-            };
-            this.emit('update', args);
-            item.onItemChanged && item.onItemChanged(args);
-        },
-        /**
-         * Observe an item's properties specified in this.observedProperties and item.observed, called upon putSync.
-         * @param item {module:xide/data/Model}
-         * @private
-         */
-        _observe: function (item) {
-            var props = this.observedProperties;
-            item.observed && (props = props.concat(item.observed));
-            _.each(props, function (property) {
-                item.property && item.property(property).observe(function (value) {
-                    this._onItemChanged(item, property, value, this);
-                }.bind(this));
-            }.bind(this));
-        },
-        /**
-         * Override setData to bring in dmodel's observe for new items.
-         * @param data {object[]}
-         * @returns {*}
-         */
-        setData: function (data) {
-            var res = this.inherited(arguments);
-            this.silent(true);
-            data && _.each(data, this._observe, this);
-            this.silent(false);
-            return res;
-        }
-    });
-});
-define('dstore/Trackable',[
-	'dojo/_base/lang',
-	'dojo/_base/declare',
-	'dojo/aspect',
-	'dojo/when',
-	'dojo/promise/all',
-	'dojo/_base/array',
-	'dojo/on'
-	/*=====, './api/Store' =====*/
-], function (lang, declare, aspect, when, whenAll, arrayUtil, on /*=====, Store =====*/) {
-
-	// module:
-	//		dstore/Trackable
-	var revision = 0;
-
-	function createRange(newStart, newEnd) {
-		return {
-			start: newStart,
-			count: newEnd - newStart
-		};
-	}
-
-	function registerRange(ranges, newStart, newEnd) {
-		for (var i = ranges.length - 1; i >= 0; --i) {
-			var existingRange = ranges[i],
-				existingStart = existingRange.start,
-				existingEnd = existingStart + existingRange.count;
-
-			if (newStart > existingEnd) {
-				// existing range completely precedes new range. we are done.
-				ranges.splice(i + 1, 0, createRange(newStart, newEnd));
-				return;
-			} else if (newEnd >= existingStart) {
-				// the ranges overlap and must be merged into a single range
-				newStart = Math.min(newStart, existingStart);
-				newEnd = Math.max(newEnd, existingEnd);
-				ranges.splice(i, 1);
-			}
-		}
-
-		ranges.unshift(createRange(newStart, newEnd));
-	}
-
-	function unregisterRange(ranges, start, end) {
-		for (var i = 0, range; (range = ranges[i]); ++i) {
-			var existingStart = range.start,
-				existingEnd = existingStart + range.count;
-
-			if (start <= existingStart) {
-				if (end >= existingEnd) {
-					// The existing range is within the forgotten range
-					ranges.splice(i, 1);
-				} else {
-					// The forgotten range overlaps the beginning of the existing range
-					range.start = end;
-					range.count = existingEnd - range.start;
-
-					// Since the forgotten range ends before the existing range,
-					// there are no more ranges to update, and we are done
-					return;
-				}
-			} else if (start < existingEnd) {
-				if (end > existingStart) {
-					// The forgotten range is within the existing range
-					ranges.splice(i, 1, createRange(existingStart, start), createRange(end, existingEnd));
-
-					// We are done because the existing range bounded the forgotten range
-					return;
-				} else {
-					// The forgotten range overlaps the end of the existing range
-					range.count = start - range.start;
-				}
-			}
-		}
-	}
-
-	var trackablePrototype = {
-		track: function () {
-			var store = this.store || this;
-
-			// monitor for updates by listening to these methods
-			var handles = [];
-			var eventTypes = {add: 1, update: 1, 'delete': 1};
-			// register to listen for updates
-			for (var type in eventTypes) {
-				handles.push(
-					this.on(type, (function (type) {
-						return function (event) {
-							notify(type, event);
-						};
-					})(type))
-				);
-			}
-
-			function makeFetch() {
-				return function () {
-					var self = this;
-					var fetchResults = this.inherited(arguments);
-					when(fetchResults, function (results) {
-						results = self._results = results.slice();
-						if (self._partialResults) {
-							// clean this up, as we don't need this anymore
-							self._partialResults = null;
-						}
-						self._ranges = [];
-						registerRange(self._ranges, 0, results.length);
-					});
-					return fetchResults;
-				};
-			}
-			function makeFetchRange() {
-				return function (kwArgs) {
-					var self = this,
-						start = kwArgs.start,
-						end = kwArgs.end,
-						fetchResults = this.inherited(arguments);
-					// only use this if we don't have all the data
-					if (!this._results) {
-						when(fetchResults, function (results) {
-							return when(results.totalLength, function (totalLength) {
-								var partialResults = self._partialResults || (self._partialResults = []);
-								end = Math.min(end, start + results.length);
-
-								partialResults.length = totalLength;
-
-								// copy the new ranged data into the parent partial data set
-								var spliceArgs = [ start, end - start ].concat(results);
-								partialResults.splice.apply(partialResults, spliceArgs);
-								registerRange(self._ranges, start, end);
-
-								return results;
-							});
-						});
-					}
-					return fetchResults;
-				};
-			}
-
-			// delegate rather than call _createSubCollection because we are not ultimately creating
-			// a new collection, just decorating an existing collection with item index tracking.
-			// If we use _createSubCollection, it will return a new collection that may exclude
-			// important, defining properties from the tracked collection.
-			var observed = declare.safeMixin(lang.delegate(this), {
-				_ranges: [],
-
-				fetch: makeFetch(),
-				fetchRange: makeFetchRange(),
-
-				releaseRange: function (start, end) {
-					if (this._partialResults) {
-						unregisterRange(this._ranges, start, end);
-
-						for (var i = start; i < end; ++i) {
-							delete this._partialResults[i];
-						}
-					}
-				},
-
-				on: function (type, listener) {
-					var self = this,
-						inheritedOn = this.getInherited(arguments);
-					return on.parse(observed, type, listener, function (target, type) {
-						return type in eventTypes ?
-							aspect.after(observed, 'on_tracked' + type, listener, true) :
-							inheritedOn.call(self, type, listener);
-					});
-				},
-
-				tracking: {
-					remove: function () {
-						while (handles.length > 0) {
-							handles.pop().remove();
-						}
-
-						this.remove = function () {};
-					}
-				},
-				// make sure track isn't called twice
-				track: null
-			});
-			if (this.fetchSync) {
-				// only add these if we extending a sync-capable store
-				declare.safeMixin(observed, {
-					fetchSync: makeFetch(),
-					fetchRangeSync: makeFetchRange()
-				});
-
-				// we take the presence of fetchSync to indicate that the results can be
-				// retrieved cheaply, and then we can just automatically fetch and start
-				// tracking results
-				observed.fetchSync();
-			}
-
-			// Create a function that applies all queriers in the query log
-			// in order to determine whether a new or updated item belongs
-			// in the results and at what position.
-			var queryExecutor;
-			arrayUtil.forEach(this.queryLog, function (entry) {
-				var existingQuerier = queryExecutor,
-					querier = entry.querier;
-
-				if (querier) {
-					queryExecutor = existingQuerier
-						? function (data) { return querier(existingQuerier(data)); }
-						: querier;
-				}
-			});
-
-			var defaultEventProps = {
-					'add': { index: undefined },
-					'update': { previousIndex: undefined, index: undefined },
-					'delete': { previousIndex: undefined }
-				},
-				findObject = function (data, id, start, end) {
-					start = start !== undefined ? start : 0;
-					end = end !== undefined ? end : data.length;
-					for (var i = start; i < end; ++i) {
-						if (store.getIdentity(data[i]) === id) {
-							return i;
-						}
-					}
-					return -1;
-				};
-
-			function notify(type, event) {
-
-				revision++;
-				var target = event.target;
-				event = lang.delegate(event, defaultEventProps[type]);
-
-				when(observed._results || observed._partialResults, function (resultsArray) {
-					/* jshint maxcomplexity: 32 */
-
-					function emitEvent() {
-						// TODO: Eventually we will want to aggregate all the listener events
-						// in an event turn, but we will wait until we have a reliable, performant queueing
-						// mechanism for this (besides setTimeout)
-						var method = observed['on_tracked' + type];
-						method && method.call(observed, event);
-					}
-
-					if (!resultsArray) {
-						// without data, we have no way to determine the indices effected by the change,
-						// so just pass along the event and return.
-						emitEvent();
-						return;
-					}
-
-					var i, j, l, ranges = observed._ranges, range;
-					/*if(++queryRevision != revision){
-						throw new Error('Query is out of date, you must observe() the' +
-						' query prior to any data modifications');
-					}*/
-
-					var targetId = 'id' in event ? event.id : store.getIdentity(target);
-					var removedFrom = -1,
-						removalRangeIndex = -1,
-						insertedInto = -1,
-						insertionRangeIndex = -1;
-					if (type === 'delete' || type === 'update') {
-						// remove the old one
-						for (i = 0; removedFrom === -1 && i < ranges.length; ++i) {
-							range = ranges[i];
-							for (j = range.start, l = j + range.count; j < l; ++j) {
-								var object = resultsArray[j];
-								// often ids can be converted strings (if they are used as keys in objects),
-								// so we do a coercive equality check
-								/* jshint eqeqeq: false */
-								if (store.getIdentity(object) == targetId) {
-									removedFrom = event.previousIndex = j;
-									removalRangeIndex = i;
-									resultsArray.splice(removedFrom, 1);
-
-									range.count--;
-									for (j = i + 1; j < ranges.length; ++j) {
-										ranges[j].start--;
-									}
-
-									break;
-								}
-							}
-						}
-					}
-
-					if (type === 'add' || type === 'update') {
-						if (queryExecutor) {
-							// with a queryExecutor, we can determine the correct sorted index for the change
-
-							if (queryExecutor([target]).length) {
-								var begin = 0,
-									end = ranges.length - 1,
-									sampleArray,
-									candidateIndex = -1,
-									sortedIndex,
-									adjustedIndex;
-								while (begin <= end && insertedInto === -1) {
-									// doing a binary search for the containing range
-									i = begin + Math.round((end - begin) / 2);
-									range = ranges[i];
-
-									sampleArray = resultsArray.slice(range.start, range.start + range.count);
-
-									if ('beforeId' in event) {
-										candidateIndex = event.beforeId === null
-											? sampleArray.length
-											: findObject(sampleArray, event.beforeId);
-									}
-
-									if (candidateIndex === -1) {
-										// If the original index came from this range, put back in the original slot
-										// so it doesn't move unless it needs to (relying on a stable sort below)
-										if (removedFrom >= Math.max(0, range.start - 1)
-											&& removedFrom <= (range.start + range.count)) {
-											candidateIndex = removedFrom;
-										} else {
-											candidateIndex = store.defaultNewToStart ? 0 : sampleArray.length;
-										}
-									}
-									sampleArray.splice(candidateIndex, 0, target);
-
-									sortedIndex = arrayUtil.indexOf(queryExecutor(sampleArray), target);
-									adjustedIndex = range.start + sortedIndex;
-
-									if (sortedIndex === 0 && range.start !== 0) {
-										end = i - 1;
-									} else if (sortedIndex >= (sampleArray.length - 1) &&
-											adjustedIndex < resultsArray.length) {
-										begin = i + 1;
-									} else {
-										insertedInto = adjustedIndex;
-										insertionRangeIndex = i;
-									}
-								}
-								if (insertedInto === -1 && begin > 0 && begin < ranges.length) {
-									var betweenRanges = true;
-								}
-							}
-						} else {
-							// we don't have a queryExecutor, so we can't provide any information
-							// about where it was inserted or moved to. If it is an update, we leave
-							// its position alone. otherwise, we at least indicate a new object
-
-							var range,
-								possibleRangeIndex = -1;
-							if ('beforeId' in event) {
-								if (event.beforeId === null) {
-									insertedInto = resultsArray.length;
-									possibleRangeIndex = ranges.length - 1;
-								} else {
-									for (i = 0, l = ranges.length; insertionRangeIndex === -1 && i < l; ++i) {
-										range = ranges[i];
-
-										insertedInto = findObject(
-											resultsArray,
-											event.beforeId,
-											range.start,
-											range.start + range.count
-										);
-
-										if (insertedInto !== -1) {
-											insertionRangeIndex = i;
-										}
-									}
-								}
-							} else {
-								if (type === 'update') {
-									insertedInto = removedFrom;
-									insertionRangeIndex = removalRangeIndex;
-								} else {
-									if (store.defaultNewToStart) {
-										insertedInto = 0;
-										possibleRangeIndex = 0;
-									} else {
-										// default to the bottom
-										insertedInto = resultsArray.length;
-										possibleRangeIndex = ranges.length - 1;
-									}
-								}
-							}
-
-							if (possibleRangeIndex !== -1 && insertionRangeIndex === -1) {
-								range = ranges[possibleRangeIndex];
-								if (range && range.start <= insertedInto
-									&& insertedInto <= (range.start + range.count)) {
-									insertionRangeIndex = possibleRangeIndex;
-								}
-							}
-						}
-
-						// an item only truly has a known index if it is in a known range
-						if (insertedInto > -1 && insertionRangeIndex > -1) {
-							event.index = insertedInto;
-							resultsArray.splice(insertedInto, 0, target);
-
-							// update the count and start of the appropriate ranges
-							ranges[insertionRangeIndex].count++;
-							for (i = insertionRangeIndex + 1; i < ranges.length; ++i) {
-								ranges[i].start++;
-							}
-						} else if (betweenRanges) {
-							// the begin index will be after the inserted item, and is
-							// where we can begin incrementing start values
-							event.beforeIndex = ranges[begin].start;
-							for (i = begin; i < ranges.length; ++i) {
-								ranges[i].start++;
-							}
-						}
-					}
-					// update the total
-					event.totalLength = resultsArray.length;
-
-					emitEvent();
-				});
-			}
-
-			return observed;
-		}
-	};
-
-	var Trackable =  declare(null, trackablePrototype);
-
-	Trackable.create = function (target, properties) {
-		// create a delegate of an existing store with trackability functionality mixed in
-		target = declare.safeMixin(lang.delegate(target), trackablePrototype);
-		declare.safeMixin(target, properties);
-		return target;
-	};
-	return Trackable;
-});
-
-define('xide/utils/ObjectUtils',[
-    'xide/utils',
-    'require',
-    "dojo/Deferred",
-    'xide/lodash'
-], function (utils, require, Deferred, lodash) {
-    var _debug = false;
-    "use strict";
-
-    utils.delegate = (function () {
-        // boodman/crockford delegation w/ cornford optimization
-        function TMP() {
-        }
-
-        return function (obj, props) {
-            TMP.prototype = obj;
-            var tmp = new TMP();
-            TMP.prototype = null;
-            if (props) {
-                lang._mixin(tmp, props);
-            }
-            return tmp; // Object
-        };
-    })();
-
-    /////////////////////////////////////////////////////////////////////////////////////////////
-    //
-    //  Loader utils
-    //
-    //////////////////////////////////////////////////////////////////////////////////////////////
-    utils.debounce = function (who, methodName, _function, delay, options, now, args) {
-        var _place = who[methodName + '_debounced'];
-        if (!_place) {
-            _place = who[methodName + '_debounced'] = lodash.debounce(_function, delay, options);
-        }
-        if (now === true) {
-            if (!who[methodName + '_debouncedFirst']) {
-                who[methodName + '_debouncedFirst'] = true;
-                _function.apply(who, args);
-            }
-        }
-        return _place();
-    };
-
-
-    utils.pluck = function (items, prop) {
-        return lodash.map(items, prop);
-    };
-
-    /**
-     * Trigger downloadable file
-     * @param filename
-     * @param text
-     */
-    utils.download = function (filename, text) {
-        var element = document.createElement('a');
-        text = lodash.isString(text) ? text : JSON.stringify(text, null, 2);
-        element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
-        element.setAttribute('download', filename);
-        element.style.display = 'none';
-        document.body.appendChild(element);
-        element.click();
-        document.body.removeChild(element);
-    };
-
-    /**
-     * Ask require registry at this path
-     * @param mixed
-     * @returns {*}
-     */
-    utils.hasObject = function (mixed) {
-        var result = null;
-        var _re = require;
-        try {
-            result = _re(mixed);
-        } catch (e) {
-            console.error('error in utils.hasObject ', e);
-        }
-        return result;
-    };
-    /**
-     * Safe require.toUrl
-     * @param mid {string}
-     */
-    utils.toUrl = function (mid) {
-        var _require = require;
-        //make sure cache bust is off otherwise it appends ?time
-        _require({
-            cacheBust: null,
-            waitSeconds: 5
-        });
-        return _require.toUrl(mid);
-    }
-    /**
-     * Returns a module by module path
-     * @param mixed {String|Object}
-     * @param _default {Object} default object
-     * @returns {Object|Promise}
-     */
-    utils.getObject = function (mixed, _default) {
-        var result = null;
-        if (utils.isString(mixed)) {
-            var _re = require;
-            try {
-                result = _re(mixed);
-            } catch (e) {
-                _debug && console.warn('utils.getObject::require failed for ' + mixed);
-            }
-            //not a loaded module yet
-            try {
-                if (!result) {
-                    var deferred = new Deferred();
-                    //try loader
-                    result = _re([
-                        mixed
-                    ], function (module) {
-                        deferred.resolve(module);
-                    });
-                    return deferred.promise;
-                }
-            } catch (e) {
-                _debug && console.error('error in requiring ' + mixed, e);
-            }
-            return result;
-
-        } else if (utils.isObject(mixed)) {
-            return mixed;//reflect
-        }
-        return result !== null ? result : _default;
-    };
-
-
-    /////////////////////////////////////////////////////////////////////////////////////////////
-    //
-    //  True object utils
-    //
-    //////////////////////////////////////////////////////////////////////////////////////////////
-    utils.toArray = function (obj) {
-        var result = [];
-        for (var c in obj) {
-            result.push({
-                name: c,
-                value: obj[c]
-            });
-        }
-        return result;
-    };
-    /**
-     * Array to object conversion
-     * @param arr
-     * @returns {Object}
-     */
-    utils.toObject = function (arr, lodash) {
-        if (!arr) {
-            return {};
-        }
-        if (lodash !== false) {
-            return lodash.object(lodash.map(arr, lodash.values));
-        } else {
-            //CI related back compat hack
-            if (utils.isObject(arr) && arr[0]) {
-                return arr[0];
-            }
-
-            var rv = {};
-            for (var i = 0; i < arr.length; ++i) {
-                rv[i] = arr[i];
-            }
-            return rv;
-        }
-    };
-
-    /**
-     * Gets an object property by string, eg: utils.byString(someObj, 'part3[0].name');
-     * @deprecated, see objectAtPath below
-     * @param o {Object}    : the object
-     * @param s {String}    : the path within the object
-     * @param defaultValue {Object|String|Number} : an optional default value
-     * @returns {*}
-     */
-    utils.byString = function (o, s, defaultValue) {
-        s = s.replace(/\[(\w+)\]/g, '.$1'); // convert indexes to properties
-        s = s.replace(/^\./, '');           // strip a leading dot
-        var a = s.split('.');
-        while (a.length) {
-            var n = a.shift();
-            if (n in o) {
-                o = o[n];
-            } else {
-                return;
-            }
-        }
-        return o;
-    };
-
-    /////////////////////////////////////////////////////////////////////////////////////////////
-    //
-    //  Object path
-    //
-    //////////////////////////////////////////////////////////////////////////////////////////////
-    /**
-     * Internals
-     */
-
-        //cache
-    var toStr = Object.prototype.toString,
-        _hasOwnProperty = Object.prototype.hasOwnProperty;
-
-    /**
-     * @private
-     * @param type
-     * @returns {*}
-     */
-    function toString(type) {
-        return toStr.call(type);
-    }
-
-    /**
-     * @private
-     * @param key
-     * @returns {*}
-     */
-    function getKey(key) {
-        var intKey = parseInt(key, 10);
-        if (intKey.toString() === key) {
-            return intKey;
-        }
-        return key;
-    }
-
-    /**
-     * internal set value at path in object
-     * @private
-     * @param obj
-     * @param path
-     * @param value
-     * @param doNotReplace
-     * @returns {*}
-     */
-    function set(obj, path, value, doNotReplace) {
-        if (lodash.isNumber(path)) {
-            path = [path];
-        }
-        if (lodash.isEmpty(path)) {
-            return obj;
-        }
-        if (lodash.isString(path)) {
-            return set(obj, path.split('.').map(getKey), value, doNotReplace);
-        }
-        var currentPath = path[0];
-
-        if (path.length === 1) {
-            var oldVal = obj[currentPath];
-            if (oldVal === void 0 || !doNotReplace) {
-                obj[currentPath] = value;
-            }
-            return oldVal;
-        }
-
-        if (obj[currentPath] === void 0) {
-            //check if we assume an array
-            if (lodash.isNumber(path[1])) {
-                obj[currentPath] = [];
-            } else {
-                obj[currentPath] = {};
-            }
-        }
-        return set(obj[currentPath], path.slice(1), value, doNotReplace);
-    }
-
-    /**
-     * deletes an property by a path
-     * @param obj
-     * @param path
-     * @returns {*}
-     */
-    function del(obj, path) {
-        if (lodash.isNumber(path)) {
-            path = [path];
-        }
-        if (lodash.isEmpty(obj)) {
-            return void 0;
-        }
-
-        if (lodash.isEmpty(path)) {
-            return obj;
-        }
-        if (lodash.isString(path)) {
-            return del(obj, path.split('.'));
-        }
-
-        var currentPath = getKey(path[0]);
-        var oldVal = obj[currentPath];
-
-        if (path.length === 1) {
-            if (oldVal !== void 0) {
-                if (lodash.isArray(obj)) {
-                    obj.splice(currentPath, 1);
-                } else {
-                    delete obj[currentPath];
-                }
-            }
-        } else {
-            if (obj[currentPath] !== void 0) {
-                return del(obj[currentPath], path.slice(1));
-            }
-        }
-        return obj;
-    }
-
-    /**
-     * Private helper class
-     * @private
-     * @type {{}}
-     */
-    var objectPath = {};
-
-    objectPath.has = function (obj, path) {
-        if (lodash.isEmpty(obj)) {
-            return false;
-        }
-        if (lodash.isNumber(path)) {
-            path = [path];
-        } else if (lodash.isString(path)) {
-            path = path.split('.');
-        }
-
-        if (lodash.isEmpty(path) || path.length === 0) {
-            return false;
-        }
-
-        for (var i = 0; i < path.length; i++) {
-            var j = path[i];
-            if ((lodash.isObject(obj) || lodash.isArray(obj)) && _hasOwnProperty.call(obj, j)) {
-                obj = obj[j];
-            } else {
-                return false;
-            }
-        }
-
-        return true;
-    };
-
-    /**
-     * Define private public 'ensure exists'
-     * @param obj
-     * @param path
-     * @param value
-     * @returns {*}
-     */
-    objectPath.ensureExists = function (obj, path, value) {
-        return set(obj, path, value, true);
-    };
-
-    /**
-     * Define private public 'set'
-     * @param obj
-     * @param path
-     * @param value
-     * @param doNotReplace
-     * @returns {*}
-     */
-    objectPath.set = function (obj, path, value, doNotReplace) {
-        return set(obj, path, value, doNotReplace);
-    };
-
-    /**
-     Define private public 'insert'
-     * @param obj
-     * @param path
-     * @param value
-     * @param at
-     */
-    objectPath.insert = function (obj, path, value, at) {
-        var arr = objectPath.get(obj, path);
-        at = ~~at;
-        if (!lodash.isArray(arr)) {
-            arr = [];
-            objectPath.set(obj, path, arr);
-        }
-        arr.splice(at, 0, value);
-    };
-
-    /**
-     * Define private public 'empty'
-     * @param obj
-     * @param path
-     * @returns {*}
-     */
-    objectPath.empty = function (obj, path) {
-        if (lodash.isEmpty(path)) {
-            return obj;
-        }
-        if (lodash.isEmpty(obj)) {
-            return void 0;
-        }
-
-        var value, i;
-        if (!(value = objectPath.get(obj, path))) {
-            return obj;
-        }
-
-        if (lodash.isString(value)) {
-            return objectPath.set(obj, path, '');
-        } else if (lodash.isBoolean(value)) {
-            return objectPath.set(obj, path, false);
-        } else if (lodash.isNumber(value)) {
-            return objectPath.set(obj, path, 0);
-        } else if (lodash.isArray(value)) {
-            value.length = 0;
-        } else if (lodash.isObject(value)) {
-            for (i in value) {
-                if (_hasOwnProperty.call(value, i)) {
-                    delete value[i];
-                }
-            }
-        } else {
-            return objectPath.set(obj, path, null);
-        }
-    };
-
-    /**
-     * Define private public 'push'
-     * @param obj
-     * @param path
-     */
-    objectPath.push = function (obj, path /*, values */) {
-        var arr = objectPath.get(obj, path);
-        if (!lodash.isArray(arr)) {
-            arr = [];
-            objectPath.set(obj, path, arr);
-        }
-        arr.push.apply(arr, Array.prototype.slice.call(arguments, 2));
-    };
-
-    /**
-     * Define private public 'coalesce'
-     * @param obj
-     * @param paths
-     * @param defaultValue
-     * @returns {*}
-     */
-    objectPath.coalesce = function (obj, paths, defaultValue) {
-        var value;
-        for (var i = 0, len = paths.length; i < len; i++) {
-            if ((value = objectPath.get(obj, paths[i])) !== void 0) {
-                return value;
-            }
-        }
-        return defaultValue;
-    };
-
-    /**
-     * Define private public 'get'
-     * @param obj
-     * @param path
-     * @param defaultValue
-     * @returns {*}
-     */
-    objectPath.get = function (obj, path, defaultValue) {
-        if (lodash.isNumber(path)) {
-            path = [path];
-        }
-        if (lodash.isEmpty(path)) {
-            return obj;
-        }
-        if (lodash.isEmpty(obj)) {
-            //lodash doesnt seem to work with html nodes
-            if (obj && obj.innerHTML === null) {
-                return defaultValue;
-            }
-        }
-        if (lodash.isString(path)) {
-            return objectPath.get(obj, path.split('.'), defaultValue);
-        }
-        var currentPath = getKey(path[0]);
-        if (path.length === 1) {
-            if (obj && obj[currentPath] === void 0) {
-                return defaultValue;
-            }
-            if (obj) {
-                return obj[currentPath];
-            }
-        }
-        if (!obj) {
-            return defaultValue;
-        }
-        return objectPath.get(obj[currentPath], path.slice(1), defaultValue);
-    };
-
-    /**
-     * Define private public 'del'
-     * @param obj
-     * @param path
-     * @returns {*}
-     */
-    objectPath.del = function (obj, path) {
-        return del(obj, path);
-    };
-    /////////////////////////////////////////////////////////////////////////////////////////////
-    //
-    //  Object path public xide/utils mixin
-    //
-    //////////////////////////////////////////////////////////////////////////////////////////////
-    /**
-     *  Returns a value by a give object path
-     *
-     *  //works also with arrays
-     *    objectPath.get(obj, "a.c.1");  //returns "f"
-     *    objectPath.get(obj, ["a","c","1"]);  //returns "f"
-     *
-     * @param obj {object}
-     * @param path {string}
-     * @param _default {object|null}
-     * @returns {*}
-     */
-    utils.getAt = function (obj, path, _default) {
-        return objectPath.get(obj, path, _default);
-    };
-
-    /**
-     * Sets a value in an object/array at a given path.
-     * @example
-     *
-     * utils.setAt(obj, "a.h", "m"); // or utils.setAt(obj, ["a","h"], "m");
-     *
-     * //set will create intermediate object/arrays
-     * objectPath.set(obj, "a.j.0.f", "m");
-     *
-     * @param obj{Object|Array}
-     * @param path {string}
-     * @param value {mixed}
-     * @returns {Object|Array}
-     */
-    utils.setAt = function (obj, path, value) {
-        return objectPath.set(obj, path, value);
-    };
-
-    /**
-     * Returns there is anything at given path within an object/array.
-     * @param obj
-     * @param path
-     */
-    utils.hasAt = function (obj, path) {
-        return objectPath.has(obj, path);
-    };
-
-    /**
-     * Ensures at given path, otherwise _default will be placed
-     * @param obj
-     * @param path
-     * @returns {*}
-     */
-    utils.ensureAt = function (obj, path, _default) {
-        return objectPath.ensureExists(obj, path, _default);
-    };
-    /**
-     * Deletes at given path
-     * @param obj
-     * @param path
-     * @returns {*}
-     */
-    utils.deleteAt = function (obj, path) {
-        return objectPath.del(obj, path);
-    };
-
-    /**
-     *
-     * @param to
-     * @param from
-     * @returns {*}
-     */
-    utils.merge = function (to, from) {
-        for (var n in from) {
-            if (typeof to[n] != 'object') {
-                to[n] = from[n];
-            } else if (typeof from[n] == 'object') {
-                to[n] = utils.merge(to[n], from[n]);
-            }
-        }
-
-        return to;
-    };
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //
-    //  Dojo's most wanted
-    //
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    /**
-     * Clones objects (including DOM nodes) and all children.
-     * Warning: do not clone cyclic structures.
-     * @param src {*} The object to clone.
-     * @returns {*}
-     */
-    utils.clone = function (src) {
-        if (!src || typeof src != "object" || utils.isFunction(src)) {
-            // null, undefined, any non-object, or function
-            return src; // anything
-        }
-        if (src.nodeType && "cloneNode" in src) {
-            // DOM Node
-            return src.cloneNode(true); // Node
-        }
-        if (src instanceof Date) {
-            // Date
-            return new Date(src.getTime()); // Date
-        }
-        if (src instanceof RegExp) {
-            // RegExp
-            return new RegExp(src); // RegExp
-        }
-        var r, i, l;
-        if (utils.isArray(src)) {
-            // array
-            r = [];
-            for (i = 0, l = src.length; i < l; ++i) {
-                if (i in src) {
-                    r.push(utils.clone(src[i]));
-                }
-            }
-            // we don't clone functions for performance reasons
-            // }else if(d.isFunction(src)){
-            // // function
-            // r = function(){ return src.apply(this, arguments); };
-        } else {
-            // generic objects
-            r = src.constructor ? new src.constructor() : {};
-        }
-        return utils._mixin(r, src, utils.clone);
-    };
-
-    /**
-     * Copies/adds all properties of source to dest; returns dest.
-     * @description All properties, including functions (sometimes termed "methods"), excluding any non-standard extensions
-     * found in Object.prototype, are copied/added to dest. Copying/adding each particular property is
-     * delegated to copyFunc (if any); copyFunc defaults to the Javascript assignment operator if not provided.
-     * Notice that by default, _mixin executes a so-called "shallow copy" and aggregate types are copied/added by reference.
-     * @param dest {object} The object to which to copy/add all properties contained in source.
-     * @param source {object} The object from which to draw all properties to copy into dest.
-     * @param copyFunc {function} The process used to copy/add a property in source; defaults to the Javascript assignment operator.
-     * @returns {object} dest, as modified
-     * @private
-     */
-    utils._mixin = function (dest, source, copyFunc) {
-        var name, s, i, empty = {};
-        for (name in source) {
-            // the (!(name in empty) || empty[name] !== s) condition avoids copying properties in "source"
-            // inherited from Object.prototype.	 For example, if dest has a custom toString() method,
-            // don't overwrite it with the toString() method that source inherited from Object.prototype
-            s = source[name];
-            if (!(name in dest) || (dest[name] !== s && (!(name in empty) || empty[name] !== s))) {
-                dest[name] = copyFunc ? copyFunc(s) : s;
-            }
-        }
-
-        return dest; // Object
-    };
-    /**
-     * Copies/adds all properties of one or more sources to dest; returns dest.
-     * @param dest {object} The object to which to copy/add all properties contained in source. If dest is falsy, then
-     * a new object is manufactured before copying/adding properties begins.
-     *
-     * @param sources One of more objects from which to draw all properties to copy into dest. sources are processed
-     * left-to-right and if more than one of these objects contain the same property name, the right-most
-     * value "wins".
-     *
-     * @returns {object} dest, as modified
-     *
-     * @example
-     * make a shallow copy of an object
-     * var copy = utils.mixin({}, source);
-     *
-     * @example
-     *
-     * many class constructors often take an object which specifies
-     *        values to be configured on the object. In this case, it is
-     *        often simplest to call `lang.mixin` on the `this` object:
-     *        declare("acme.Base", null, {
-    *			constructor: function(properties){
-    *				//property configuration:
-    *				lang.mixin(this, properties);
-    *				console.log(this.quip);
-    *			},
-    *			quip: "I wasn't born yesterday, you know - I've seen movies.",
-    *			* ...
-    *		});
-     *
-     *        //create an instance of the class and configure it
-     *        var b = new acme.Base({quip: "That's what it does!" });
-     *
-     */
-    utils.mixin = function (dest, sources) {
-        if (sources) {
-            if (!dest) {
-                dest = {};
-            }
-            var l = arguments.length;
-            for (var i = 1; i < l; i++) {
-                utils._mixin(dest, arguments[i]);
-            }
-            return dest; // Object
-        }
-        return dest;
-    };
-
-    /**
-     * Clone object keys
-     * @param defaults
-     * @returns {{}}
-     */
-    utils.cloneKeys = function (defaults, skipEmpty) {
-        var result = {};
-        for (var _class in defaults) {
-            if (skipEmpty === true && !(_class in defaults)) {
-                continue;
-            }
-            result[_class] = defaults[_class];
-        }
-        return result;
-    };
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //
-    //  STD
-    /**
-     *
-     * @param what
-     * @returns {*}
-     */
-    utils.isArray = function (what) {
-        return lodash.isArray(what);
-    };
-    /**
-     *
-     * @param what
-     * @returns {*}
-     */
-    utils.isObject = function (what) {
-        return lodash.isObject(what);
-    };
-    /**
-     *
-     * @param what
-     * @returns {*}
-     */
-    utils.isString = function (what) {
-        return lodash.isString(what);
-    };
-    /**
-     *
-     * @param what
-     * @returns {*}
-     */
-    utils.isNumber = function (what) {
-        return lodash.isNumber(what);
-    };
-    /**
-     * Return true if it is a Function
-     * @param it
-     * @returns {*}
-     */
-    utils.isFunction = function (it) {
-        return lodash.isFunction(it);
-    };
-    return utils;
-});
-define('xide/cache/Circular',[], function () {
-
-    function CircularBuffer(capacity){
-        if(!(this instanceof CircularBuffer))return new CircularBuffer(capacity);
-        if(typeof capacity=="object"&&
-            Array.isArray(capacity["_buffer"])&&
-            typeof capacity._capacity=="number"&&
-            typeof capacity._first=="number"&&
-            typeof capacity._size=="number"){
-            for(var prop in capacity){
-                if(capacity.hasOwnProperty(prop))this[prop]=capacity[prop];
-            }
-        } else {
-            if(typeof capacity!="number"||capacity%1!=0||capacity<1)
-                throw new TypeError("Invalid capacity");
-            this._buffer=new Array(capacity);
-            this._capacity=capacity;
-            this._first=0;
-            this._size=0;
-        }
-    }
-    CircularBuffer.prototype = {
-        size: function () {
-            return this._size;
-        },
-        capacity: function () {
-            return this._capacity;
-        },
-        enq: function (value) {
-            if (this._first > 0)this._first--; else this._first = this._capacity - 1;
-            this._buffer[this._first] = value;
-            if (this._size < this._capacity)this._size++;
-        },
-        push: function (value) {
-            if (this._size == this._capacity) {
-                this._buffer[this._first] = value;
-                this._first = (this._first + 1) % this._capacity;
-            } else {
-                this._buffer[(this._first + this._size) % this._capacity] = value;
-                this._size++;
-            }
-        },
-        deq: function () {
-            if (this._size == 0)throw new RangeError("dequeue on empty buffer");
-            var value = this._buffer[(this._first + this._size - 1) % this._capacity];
-            this._size--;
-            return value;
-        },
-        pop: function () {
-            return this.deq();
-        },
-        shift: function () {
-            if (this._size == 0)throw new RangeError("shift on empty buffer");
-            var value = this._buffer[this._first];
-            if (this._first == this._capacity - 1)this._first = 0; else this._first++;
-            this._size--;
-            return value;
-        },
-        get: function (start, end) {
-            if (this._size == 0 && start == 0 && (end == undefined || end == 0))return [];
-            if (typeof start != "number" || start % 1 != 0 || start < 0)throw new TypeError("Invalid start");
-            if (start >= this._size)throw new RangeError("Index past end of buffer: " + start);
-
-            if (end == undefined)return this._buffer[(this._first + start) % this._capacity];
-
-            if (typeof end != "number" || end % 1 != 0 || end < 0)throw new TypeError("Invalid end");
-            if (end >= this._size)throw new RangeError("Index past end of buffer: " + end);
-
-            if (this._first + start >= this._capacity) {
-                //make sure first+start and first+end are in a normal range
-                start -= this._capacity; //becomes a negative number
-                end -= this._capacity;
-            }
-            if (this._first + end < this._capacity)
-                return this._buffer.slice(this._first + start, this._first + end + 1);
-            else
-                return this._buffer.slice(this._first + start, this._capacity).concat(this._buffer.slice(0, this._first + end + 1 - this._capacity));
-        },
-        toarray: function () {
-            if (this._size == 0)return [];
-            return this.get(0, this._size - 1);
-        }
-    };
-
-    return CircularBuffer;
-});
-/** @module xaction/Action **/
-define('xaction/Action',[
-    'dcl/dcl',
-    'xide/model/Base',
-    'xide/types',
-    'xide/utils/ObjectUtils',
-    'xide/utils',
-    'xide/mixins/EventedMixin',
-    'xide/cache/Circular'
-], function (dcl, Base, types, ObjectUtils, utils, EventedMixin, Circular) {
-
-    var Cache = null;//new Circular(100);
-    /***
-     * Extend the core types for action visibility(main menu,...) options/enums:
-     * 1. 'Main menu',
-     * 2. 'Context menu'
-     * 3. 'Action toolbar'
-     * 4. 'Property view'
-     */
-    utils.mixin(types, {
-        /**
-         * ActionVisibility
-         * @enum module:xide/types/ACTION_VISIBILITY
-         * @memberOf module:xide/types
-         */
-        ACTION_VISIBILITY: {
-            /**
-             * Enable visibility in main menu, which does
-             * render actions in a menu bar whereby 'sub' levels
-             * are rendered as sub level menus.
-             *
-             * @default null, means not visible. Actually in xjs its 1/0/{}
-             * @type {int|Object|xaction/Action}
-             * @constant
-             */
-            MAIN_MENU: 'MAIN_MENU',
-
-            /**
-             * Enable visivibilty in context menu.
-             *
-             * Different to the main menu, all actions
-             * are 'flatted'. The action's group field
-             * will auto-create separators among these
-             * groups.
-             *
-             * @default null, means not visible. Actually in xjs its 1/0/{}
-             * @type {int|Object|xaction/Action}
-             * @constant
-             */
-            CONTEXT_MENU: 'CONTEXT_MENU',
-
-            QUICK_LAUNCH: 'QUICK_LAUNCH',
-
-            /**
-             * Enable visivibilty in primary action toolbar.
-             *
-             * Same as in the "Context Menu", actions will
-             * rendered out flat, just the label is being removed.
-             *
-             * @default null, means not visible. Actually in xjs its 1/0/{}
-             * @type {int|Object|xaction/Action}
-             * @constant
-             */
-            ACTION_TOOLBAR: 'ACTION_TOOLBAR',
-
-            /**
-             * Enable visibility in an item's property view (if such exists).
-             *
-             * Same as in the "Context Menu", actions will
-             * rendered out flat, just the label is being removed.
-             *
-             * @default null, means not visible. Actually in xjs its 1/0/{}
-             * @type {int|Object|xaction/Action}
-             * @constant
-             */
-            PROPERTY_VIEW: 'PROPERTY_VIEW',
-
-            /**
-             * Enable visibility the ribbon toolbar (if such exists).
-             *
-             * Same as in the "Context Menu", actions will
-             * rendered out flat, just the label is being removed.
-             *
-             * @default null, means not visible. Actually in xjs its 1/0/{}
-             * @type {int|Object|xaction/Action}
-             * @constant
-             */
-            RIBBON: 'RIBBON',
-
-            /**
-             * A mixin to be used whilst creating the widget
-             * @type {object}
-             */
-            widgetArgs: null,
-
-            /**
-             * Util for the constructor yo create a visibilty. A visibility is a key/value store where the
-             * key is ACTION_VISIBILITY
-             * and its value is stored in this.ACTION_VISIBILITY_val ! Thus you'r accessing this store in a doc-friendly
-             * and enum like function
-             * @example
-             *  this.getVisibility(types.ACTION_VISIBILITY.MAIN_MENU)'     *
-             *
-             * the returning value is of type {object}, or {integer(1|0)}
-             * @type {function}
-             * @returns {module:xide/types/ACTION_VISIBILITY}
-             */
-            factory: function () {
-
-                var _in = arguments[1] || utils.clone(types.ACTION_VISIBILITY),
-                    _args = arguments;
-
-                //
-                // A mode when we have the arguments like (1,1,1,2).
-                //  This clones types.ACTION_VISIBILITY and blends in an integer mask
-
-                if (_args[0].length > 0 && _.isNumber(_args[0][0])) {
-
-                    var _FlagArgs = _args[0],
-                        _val = null,
-                        _index = 0;
-
-                    //integer case, sets this[propIndex] to something
-                    _.each(_in, function (index, prop) {
-                        if (typeof _in[prop] !== 'function') {
-                            if (_index < _FlagArgs.length) {
-                                //set the value per key but preserve the actualy key by storing
-                                //the value in a new key_val field
-                                _in[prop + '_val'] = _FlagArgs[_index];
-                            }
-                        }
-                        _index++;
-                    });
-                }
-
-                // A modus when we have the arguments like (MAIN_MENU,something). set value in this.ENUM_val
-                if (_.isString(_args[0][0])) {
-                    if (_args[0][2] === true) {
-                        utils.mixin(_in[_args[0][0] + '_val'], _args[0][2]);
-                    } else {
-                        _in[_args[0][0] + '_val'] = _args[0][1];
-                        return _in;
-                    }
-                    return _args[1];
-                }
-                return _in;
-            }
-        }
-    });
-    types.ACTION_VISIBILITY_ALL = 'ACTION_VISIBILITY_ALL';
-    /**
-     * Basic model to represent an 'action'. Its just a structure
-     * object with some factory methods and built-in store to have
-     * versions of it self per 'ACTION_VISIBILITY' which may alter
-     * rendering for such visibility.
-     *
-     * Please read {@link module:xide/types}
-     *
-     * @class module:xaction/Action
-     * @augments xide/model/Base
-     */
-    var Module = dcl([Base.dcl, EventedMixin.dcl], {
-        declaredClass: "xaction/Action",
-        disabled: false,
-        destroy: function () {
-            if (Cache && Cache.size() < 100) {
-                delete this._properties;
-                delete this._visibility;
-                delete this.keyboardMappings;
-                delete this.group;
-                delete this.tab;
-                delete this.owner;
-                delete this.item;
-                delete this.icon;
-                delete this.actionType;
-                delete this.label;
-                delete this.title;
-                delete this.type;
-                delete this.onCreate;
-                delete this.onChange;
-                delete this.addPermission;
-                delete this._store;
-                delete this.parameters;
-                delete this.handler;
-                Cache.push(this);
-            }
-        },
-        /**
-         * Turn on/off this action
-         * @type {boolean}
-         * @default true
-         */
-        enabled: true,
-        /**
-         * The object or bean we're up to. This is mostly the user's selection.
-         * @type {Object|Object[]|Array}
-         */
-        object: null,
-        /**
-         * Show/hide this action in ui
-         * @member show {boolean}
-         */
-        show: true,
-        /**
-         * A group for this action. This is being used in interface only.
-         * @type {string|Object=}
-         */
-        group: '',
-        /**
-         * A comma separated list of bean types. This specifies on which bean types
-         * this action can be applied
-         * @type {string|Object=}
-         */
-        types: '',
-        /**
-         * A identifier of a command within a "bean action context". This should be human readable.
-         * Remember, this is being used for populating menu items in toolbars.
-         * @example "Edit/Copy", "Views/Log" and so forth
-         * @type {string|integer}
-         */
-        command: null,
-        /**
-         * Icon class. You can use font-awesome, dijit icon classes or Elusive icons
-         * @type {string}
-         * @default fa-play
-         */
-        icon: 'fa-play',
-        /**
-         * An event key when the action is performed. This will be published automatically when this action
-         * is performed.
-         * @type {string|null}
-         * @default null
-         */
-        event: null,
-        /**
-         * The function to be invoked
-         * @type {function|null}
-         */
-        handler: null,
-        /**
-         * The tab (visual)
-         * @type {string|null}
-         * @default null
-         */
-        tab: null,
-
-        /**
-         * A store to override per visibility an action attributes like label, icon, renderer, handler
-         * or whatever this action needs. This acts as store per VISIBILITY "Zone" as descried in the enumerations. Its
-         * one simple object or single integer store.
-         *
-         * This storage must be fast as its used in mouse-over, don't use any dojo/dstore or whatever fancy stuff; the
-         * operations in the consumer side are already heavy enough (loadash 'group' and 'sort' come up to 5000 calls for
-         * just 10 actions)
-         *
-         * @see {module:xide/types/ACTION_VISIBILITY}
-         * @type {xide/types/ACTION_VISIBILITY}
-         * @augments {xide/types/ACTION_VISIBILITY}
-         * @default null
-         * @property
-         * @member
-         *
-         * @example
-         * {
-         *      MAIN_MENU:"MAIN_MENU",
-         *      MAIN_MENU_val:0
-         *      //or MAIN_MENU_val:1
-         *      ACTION_TOOLBAR:"ACTION_TOOLBAR",
-         *      ACTION_TOOLBAR_val:{
-         *          icon:"fa or el or dijit", //supports font-awesome, elusive or dojo/dijit
-         *          label:"" // in some cases like an action bar you may override this per visibility to hide a label 
-         *      }
-         * }
-         *
-         */
-        visibility_: null,
-        /**
-         * An action might contain a value. For instance the action might toggle
-         * a checkbox...
-         *
-         * @type {object|*|null}
-         */
-        value: null,
-        /**
-         * Sets visibility options per visibility type.
-         *
-         * @param {mixed} arguments will blend a number of integers into a copy of
-         * xide/types/ACTION_VISIBILITY. Be aware of the exact order!
-         * @example
-         *
-         *
-         //Example 1. : set the visibility per type
-         setVisibility(1,1,0);// will result in:
-         {
-                 MAIN_MENU:1,
-                 CONTEXT_MENU:1,
-                 ACTION_TOOLBAR:0
-         }
-
-         //Example 2. : set the visibility per type. @TODO:specify merge filter bits
-         setVisibility(types.ACTION_VISIBILITY.MAIN_MENU,{
-                label:null  //don't show a label
-            });
-
-         */
-        setVisibility: function () {
-            if (arguments.length == 2 && _.isString(arguments[0]) && arguments[0] == types.ACTION_VISIBILITY_ALL) {
-                var _obj = arguments[1],
-                    _vis = types.ACTION_VISIBILITY,
-                    thiz = this;
-
-                //track vis key in all
-                [_vis.MAIN_MENU, _vis.ACTION_TOOLBAR, _vis.CONTEXT_MENU, _vis.RIBBON].forEach(function (vis) {
-                    thiz.setVisibility(vis, utils.cloneKeys(_obj, false));
-                });
-                return this;
-
-            }
-            var _args = _.isArray(arguments[0]) ? arguments[0] : arguments;
-            this.visibility_ = types.ACTION_VISIBILITY.factory(_args, this.visibility_);
-            return this;
-        },
-        /**
-         * Visibility getter
-         * @param key
-         * @returns {module:xide/types/ACTION_VISIBILITY}
-         */
-        getVisibility: function (key) {
-            if (!this.visibility_) {
-                this.setVisibility(types.ACTION_VISIBILITY_ALL, {});
-            }
-            if (this.visibility_) {
-                if (this.visibility_[key + '_val'] == null) {
-                    this.visibility_[key + '_val'] = {
-                        vis: key
-                    };
-                }
-                return this.visibility_[key + '_val'];
-            }
-            return {};
-        },
-        /**
-         *
-         * @param _visibility
-         * @param who
-         * @param newItem
-         * @returns {boolean}
-         */
-        shouldDestroyWidget: function (_visibility, who, newItem) {
-            var visibility = this.getVisibility != null ? this.getVisibility(_visibility) : null;
-            var destroy = true;
-            if (visibility && visibility.permanent) {
-                destroy = !(_.isFunction(visibility.permanent) ? visibility.permanent(this, who, newItem) : visibility.permanent);
-            }
-            return destroy;
-        }
-
-    });
-    /**
-     * Static factory
-     * @param label {string}
-     * @param icon
-     * @param command
-     * @param permanent
-     * @param operation
-     * @param btypes
-     * @param group
-     * @param visibility
-     * @param register
-     * @param handler
-     * @param mixin
-     * @static
-     * @memberOf xaction/Action
-     *
-     * @example for queuing a clip board action:
-     *
-     *  var _copyAction  = Action.create('Copy', 'fa-copy', 'Edit/Copy', true, types.OPERATION_INT.CLIPBOARD_COPY, types.ITEM_TYPE.FILE, 'clipboard', null, true, _clipboardManager);
-     *  _copy.accelKey = 'CTRL+C';
-     *
-     * @returns {module:xaction/Action}
-     */
-    Module.create = function (label, icon, command, permanent, operation, btypes, group, visibility, register, handler, mixin) {
-        var _action = null;
-
-        var _args = {
-            permanent: permanent,
-            command: command,
-            icon: icon,
-            label: label,
-            owner: this,
-            types: btypes,
-            operation: operation,
-            group: group,
-            handler: handler,
-            title: label
-        };
-        if (Cache && Cache.size()) {
-            _action = Cache.deq(0);
-            //console.log('re-use');
-            utils.mixin(_action, _args);
-        } else {
-            //console.log('-create!');
-            _action = new Module(_args);
-        }
-        /*
-         var VISIBILITY = types.ACTION_VISIBILITY,
-         VISIBILITIES = [
-         VISIBILITY.ACTION_TOOLBAR,
-         VISIBILITY.RIBBON,
-         VISIBILITY.MAIN_MENU,
-         VISIBILITY.CONTEXT_MENU
-         ];
-         */
-        utils.mixin(_action, mixin);
-        return _action;
-    };
-    /**
-     * Simple wrapper for action.create
-     * @param label {string}
-     * @param icon
-     * @param command
-     * @param group
-     * @param handler
-     * @param mixin
-     * @returns {module:xaction/Action}
-     */
-    Module.createDefault = function (label, icon, command, group, handler, mixin) {
-        return Module.create(label, icon, command, false, null, null, group || 'nogroup', null, false, handler, mixin);
-    };
-    return Module;
-});
-
-define('xide/data/Model',[
-    'dcl/dcl',
-    'dojo/Deferred',
-    'dojo/aspect',
-    'dojo/when',
-    'xide/utils'
-], function (dcl,Deferred, aspect, when,utils) {
-
-
-    function getSchemaProperty(object, key) {
-        // this function will retrieve the individual property definition
-        // from the schema, for the provided object and key
-        var definition = object.schema[key];
-        if (definition !== undefined && !(definition instanceof Property)) {
-            definition = new Property(definition);
-            definition._parent = object;
-        }
-        if (definition) {
-            definition.name = key;
-        }
-        return definition;
-    }
-
-    function validate(object, key) {
-        /*
-         // this performs validation, delegating validation, and coercion
-         // handling to the property definitions objects.
-         var hasOwnPropertyInstance,
-         property = object.hasOwnProperty('_properties') && object._properties[key];
-
-         hasOwnPropertyInstance = property;
-
-         if (!property) {
-         // or, if we don't our own property object, we inherit from the schema
-         property = getSchemaProperty(object, key);
-         if (property && property.validate) {
-         property = lang.delegate(property, {
-         _parent: object,
-         key: key
-         });
-         }
-         }
-
-         if (property && property.validate) {
-         return when(property.validate(), function (isValid) {
-         if (!isValid) {
-         // errors, so don't perform set
-         if (!hasOwnPropertyInstance) {
-         // but we do need to store our property
-         // instance if we don't have our own
-         (object.hasOwnProperty('_properties') ?
-         object._properties :
-         object._properties = new Hidden())[key] = property;
-         }
-         }
-         return isValid;
-         });
-         }
-         */
-        return true;
-    }
-
-    function whenEach(iterator) {
-        // this is responsible for collecting values from an iterator,
-        // and waiting for the results if promises are returned, returning
-        // a new promise represents the eventual completion of all the promises
-        // this will consistently preserve a sync (non-promise) return value if all
-        // sync values are provided
-        var deferred;
-        var remaining = 1;
-        // start the iterator
-        iterator(function (value, callback, key) {
-            if (value && value.then) {
-                // it is a promise, have to wait for it
-                remaining++;
-                if (!deferred) {
-                    // make sure we have a deferred
-                    deferred = new Deferred();
-                }
-                value.then(function (value) {
-                    // result received, call callback, and then indicate another item is done
-                    doneItem(callback(value, key));
-                }).then(null, deferred.reject);
-            } else {
-                // not a promise, just a direct sync callback
-                callback(value, key);
-            }
-        });
-        if (deferred) {
-            // if we have a deferred, decrement one more time
-            doneItem();
-            return deferred.promise;
-        }
-        function doneItem() {
-            // called for each promise as it is completed
-            remaining--;
-            if (!remaining) {
-                // all done
-                deferred.resolve();
-            }
-        }
-    }
-    var slice = [].slice;
-    var Model = dcl(null,{
-        declaredClass:'xide/data/Model',
-        //	summary:
-        //		A base class for modelled data objects.
-
-        //	schema: Object | dstore/Property
-        //		A hash map where the key corresponds to a property definition.
-        //		This can be a string corresponding to a JavaScript
-        //		primitive values (string, number, boolean), a constructor, a
-        //		null (to allow any type), or a Property object with more advanced
-        //		definitions.
-        schema: {},
-
-        //	additionalProperties: boolean
-        //		This indicates whether properties are allowed that are not
-        //		defined in the schema.
-        additionalProperties: true,
-
-        //	_scenario: string
-        //		The scenario that is used to determine which validators should
-        //		apply to this model. There are two standard values for _scenario,
-        //		"insert" and "update", but it can be set to any arbitrary value
-        //		for more complex validation scenarios.
-        _scenario: 'update',
-
-        constructor: function (options) {
-            this.init(options);
-        },
-
-        refresh:function(silent,property){
-            var _store = this._store;
-            _store && _store.refreshItem(this,silent,property);
-        },
-        getStore:function(){
-            return this._store;
-        },
-        getParent:function(){
-            return this._store.getSync(this[this._store['parentProperty']]);
-        },
-        init: function (values) {
-            // if we are being constructed, we default to the insert scenario
-            this._scenario = 'insert';
-            // copy in the default values
-            values = this._setValues(values);
-            // set any defaults
-            for (var key in this.schema) {
-                var definition = this.schema[key];
-                if (definition && typeof definition === 'object' && 'default' in definition &&
-                    !values.hasOwnProperty(key)) {
-                    var defaultValue = definition['default'];
-                    values[key] = typeof defaultValue === 'function' ? defaultValue.call(this) : defaultValue;
-                }
-            }
-        },
-
-        _setValues: function (values) {
-            return utils.mixin(this, values);
-        },
-
-        _getValues: function () {
-            return this._values || this;
-        },
-
-        save: function (/*Object*/ options) {
-            //	summary:
-            //		Saves this object, calling put or add on the attached store.
-            //	options.skipValidation:
-            //		Normally, validation is performed to ensure that the object
-            //		is not invalid before being stored. Set `skipValidation` to
-            //		true to skip it.
-            //	returns: any
-
-            var object = this;
-            return when((options && options.skipValidation) ? true : this.validate(), function (isValid) {
-                if (!isValid) {
-                    throw object.createValidationError(object.errors);
-                }
-                var scenario = object._scenario;
-                // suppress any non-date from serialization output
-                object.prepareForSerialization();
-                return object._store && when(object._store[scenario === 'insert' ? 'add' : 'put'](object),
-                        function (returned) {
-                            // receive any updates from the server
-                            object.set(returned);
-                            object._scenario = 'update';
-                            return object;
-                        });
-            });
-        },
-
-        remove: function () {
-            var store = this._store;
-            return store.remove(store.getIdentity(this));
-        },
-
-        prepareForSerialization: function () {
-            //	summary:
-            //		This method is responsible for cleaing up any properties on the instance
-            //		object to ensure it can easily be serialized (by JSON.stringify at least)
-            this._scenario = undefined;
-            if (this._inherited) {
-                this._inherited.toJSON = toJSONHidden;
-            }
-        },
-
-        createValidationError: function (errors) {
-            //	summary:
-            //		This is called when a save is attempted and a validation error was found.
-            //		This can be overriden with locale-specific messages
-            //	errors:
-            //		Errors that were found in validation
-            return new Error('Validation error');
-        },
-
-        property: function (/*String...*/ key, nextKey) {
-            //	summary:
-            //		Gets a new reactive property object, representing the present and future states
-            //		of the provided property. The returned property object gives access to methods for changing,
-            //		retrieving, and observing the property value, any validation errors, and property metadata.
-            //	key: String...
-            //		The name of the property to retrieve. Multiple key arguments can be provided
-            //		nested property access.
-
-            // create the properties object, if it doesn't exist yet
-            var properties = this.hasOwnProperty('_properties') ? this._properties :
-                (this._properties = new Hidden());
-            var property = properties[key];
-            // if it doesn't exist, create one, delegated from the schema's property definition
-            // (this gives an property instance, owning the current property value and listeners,
-            // while inheriting metadata from the schema's property definitions)
-            if (!property) {
-                property = getSchemaProperty(this, key);
-                // delegate, or just create a new instance if no schema definition exists
-                property = properties[key] = property ? utils.delegate(property) : new Property();
-                property.name = key;
-                // give it the correct initial value
-                property._parent = this;
-            }
-            if (nextKey) {
-                // go to the next property, if there are multiple
-                return property.property.apply(property, slice.call(arguments, 1));
-            }
-            return property;
-        },
-
-        get: function (/*string*/ key) {
-            // TODO: add listener parameter back in
-            //	summary:
-            //		Standard get() function to retrieve the current value
-            //		of a property, augmented with the ability to listen
-            //		for future changes
-
-            var property, definition = this.schema[key];
-            // now we need to see if there is a custom get involved, or if we can just
-            // shortcut to retrieving the property value
-            definition = property || this.schema[key];
-            if (definition && definition.valueOf &&
-                (definition.valueOf !== simplePropertyValueOf || definition.hasCustomGet)) {
-                // we have custom get functionality, need to create at least a temporary property
-                // instance
-                property = property || (this.hasOwnProperty('_properties') && this._properties[key]);
-                if (!property) {
-                    // no property instance, so we create a temporary one
-                    property = utils.delegate(getSchemaProperty(this, key), {
-                        name: key,
-                        _parent: this
-                    });
-                }
-                // let the property instance handle retrieving the value
-                return property.valueOf();
-            }
-            // default action of just retrieving the property value
-            return this._getValues()[key];
-        },
-
-        set: function (/*string*/ key, /*any?*/ value) {
-            //	summary:
-            //		Only allows setting keys that are defined in the schema,
-            //		and remove any error conditions for the given key when
-            //		its value is set.
-            if (typeof key === 'object') {
-                startOperation();
-                try {
-                    for (var i in key) {
-                        value = key[i];
-                        if (key.hasOwnProperty(i) && !(value && value.toJSON === toJSONHidden)) {
-                            this.set(i, value);
-                        }
-                    }
-                } finally {
-                    endOperation();
-                }
-                return;
-            }
-            var definition = this.schema[key];
-            if (!definition && !this.additionalProperties) {
-                // TODO: Shouldn't this throw an error instead of just giving a warning?
-                return console.warn('Schema does not contain a definition for', key);
-            }
-            var property = this.hasOwnProperty('_properties') && this._properties[key];
-            if (!property &&
-                // we need a real property instance if it is an object or if we have a custom put method
-                ((value && typeof value === 'object') ||
-                (definition && definition.put !== simplePropertyPut))) {
-                property = this.property(key);
-            }
-            if (property) {
-                // if the property instance exists, use this to do the set
-                property.put(value);
-            } else {
-                if (definition && definition.coerce) {
-                    // if a schema definition exists, and has a coerce method,
-                    // we can use without creating a new instance
-                    value = definition.coerce(value);
-                }
-                // we can shortcut right to just setting the object property
-                this._getValues()[key] = value;
-                // check to see if we should do validation
-                if (definition && definition.validateOnSet !== false) {
-                    validate(this, key);
-                }
-            }
-
-            return value;
-        },
-
-        observe: function (/*string*/ key, /*function*/ listener, /*object*/ options) {
-            //	summary:
-            //		Registers a listener for any changes in the specified property
-            //	key:
-            //		The name of the property to listen to
-            //	listener:
-            //		Function to be called for each change
-            //	options.onlyFutureUpdates
-            //		If this is true, it won't call the listener for the current value,
-            //		just future updates. If this is true, it also won't return
-            //		a new reactive object
-            return this.property(key).observe(listener, options);
-        },
-
-        validate: function (/*string[]?*/ fields) {
-            //	summary:
-            //		Validates the current object.
-            //	fields:
-            //		If provided, only the fields listed in the array will be
-            //		validated.
-            //	returns: boolean | dojo/promise/Promise
-            //		A boolean or a promise that resolves to a boolean indicating whether
-            //		or not the model is in a valid state.
-
-            /*
-             var object = this,
-             isValid = true,
-             errors = [],
-             fieldMap;
-
-             if (fields) {
-             fieldMap = {};
-             for (var i = 0; i < fields.length; i++) {
-             fieldMap[i] = true;
-             }
-             }
-             return when(whenEach(function (whenItem) {
-             // iterate through the keys in the schema.
-             // note that we will always validate every property, regardless of when it fails,
-             // and we will execute all the validators immediately (async validators will
-             // run in parallel)
-             for (var key in object.schema) {
-             // check to see if we are allowed to validate this key
-             if (!fieldMap || (fieldMap.hasOwnProperty(key))) {
-             // run validation
-             whenItem(validate(object, key), function (isValid, key) {
-             if (!isValid) {
-             notValid(key);
-             }
-             }, key);
-             }
-             }
-             }), function () {
-             object.set('errors', isValid ? undefined : errors);
-             // it wasn't async, so we just return the synchronous result
-             return isValid;
-             });
-             function notValid(key) {
-             // found an error, mark valid state and record the errors
-             isValid = false;
-             errors.push.apply(errors, object.property(key).errors);
-             }
-             */
-        },
-
-        isValid: function () {
-            //	summary:
-            //		Returns whether or not there are currently any errors on
-            //		this model due to validation failures. Note that this does
-            //		not run validation but merely returns the result of any
-            //		prior validation.
-            //	returns: boolean
-
-            var isValid = true,
-                key;
-
-            for (key in this.schema) {
-                var property = this.hasOwnProperty('_properties') && this._properties[key];
-                if (property && property.errors && property.errors.length) {
-                    isValid = false;
-                }
-            }
-            return isValid;
-        }
-    });
-
-    //xhack: make dstore happy
-    Model.createSubclass=function(mixins, props){
-        var sub = dcl([this].concat(mixins), props || {});
-        sub.extend = function(props){
-            utils.mixin(this.prototype,props);
-            return this;
-        }
-        return sub;
-    }
-    // define the start and end markers of an operation, so we can
-    // fire notifications at the end of the operation, by default
-    function startOperation() {
-        setCallDepth++;
-    }
-    function endOperation() {
-        // if we are ending this operation, start executing the queue
-        if (setCallDepth < 2 && onEnd) {
-            onEnd();
-            onEnd = null;
-        }
-        setCallDepth--;
-    }
-    var setCallDepth = 0;
-    var callbackQueue;
-    var onEnd;
-    // the default nextTurn executes at the end of the current operation
-    // The intent with this function is that it could easily be replaced
-    // with something like setImmediate, setTimeout, or nextTick to provide
-    // next turn handling
-    (Model.nextTurn = function (callback) {
-        // set the callback for the end of the current operation
-        onEnd = callback;
-    }).atEnd = true;
-
-    var Reactive = dcl(Model, {
-        //	summary:
-        //		A reactive object is a data model that can contain a value,
-        //		and notify listeners of changes to that value, in the future.
-        observe: function (/*function*/ listener, /*object*/ options) {
-            //	summary:
-            //		Registers a listener for any changes in the current value
-            //	listener:
-            //		Function to be called for each change
-            //	options.onlyFutureUpdates
-            //		If this is true, it won't call the listener for the current value,
-            //		just future updates. If this is true, it also won't return
-            //		a new reactive object
-
-            var reactive;
-            if (typeof listener === 'string') {
-                // a property key was provided, use the Model's method
-                console.error('fff');
-                return this.inherited(arguments);
-            }
-            if (!options || !options.onlyFutureUpdates) {
-                // create a new reactive to contain the results of the execution
-                // of the provided function
-                reactive = new Reactive();
-                if (this._has()) {
-                    // we need to notify of the value of the present (as well as future)
-                    reactive.value = listener(this.valueOf());
-                }
-            }
-            // add to the listeners
-            var handle = this._addListener(function (value) {
-                var result = listener(value);
-                if (reactive) {
-                    // TODO: once we have a real notification API again, call that, instead
-                    // of requesting a change
-                    reactive.put(result);
-                }
-            });
-            if (reactive) {
-                reactive.remove = handle.remove;
-                return reactive;
-            } else {
-                return handle;
-            }
-        },
-
-        //	validateOnSet: boolean
-        //		Indicates whether or not to perform validation when properties
-        //		are modified.
-        //		This can provided immediate feedback and on the success
-        //		or failure of a property modification. And Invalid property
-        //		values will be rejected. However, if you are
-        //		using asynchronous validation, invalid property values will still
-        //		be set.
-        validateOnSet: false,
-
-        //	validators: Array
-        //		An array of additional validators to apply to this property
-        validators: null,
-
-        _addListener: function (listener) {
-            // add a listener for the property change event
-            return aspect.after(this, 'onchange', listener, true);
-        },
-
-        valueOf: function () {
-            return this._get();
-        },
-
-        _get: function () {
-            return this.value;
-        },
-
-        _has: function () {
-            return this.hasOwnProperty('value');
-        },
-        setValue: function (value) {
-            //	summary:
-            //		This method is responsible for storing the value. This can
-            //		be overriden to define a custom setter
-            //	value: any
-            //		The value to be stored
-            //	parent: Object
-            //		The parent object of this propery
-            this.value = value;
-        },
-
-        put: function (/*any*/ value) {
-            //	summary:
-            //		Indicates a new value for this reactive object
-
-            // notify all the listeners of this object, that the value has changed
-            var oldValue = this._get();
-            value = this.coerce(value);
-            if (this.errors) {
-                // clear any errors
-                this.set('errors', undefined);
-            }
-            var property = this;
-            // call the setter and wait for it
-            startOperation();
-            return when(this.setValue(value, this._parent), function (result) {
-                if (result !== undefined) {
-                    // allow the setter to change the value
-                    value = result;
-                }
-                // notify listeners
-                if (property.onchange) {
-                    // queue the callback
-                    property._queueChange(property.onchange, oldValue);
-                }
-                // if this was set to an object (or was an object), we need to notify.
-                // update all the sub-property objects, so they can possibly notify their
-                // listeners
-                var key,
-                    hasOldObject = oldValue && typeof oldValue === 'object' && !(oldValue instanceof Array),
-                    hasNewObject = value && typeof value === 'object' && !(value instanceof Array);
-                if (hasOldObject || hasNewObject) {
-                    // we will iterate through the properties recording the changes
-                    var changes = {};
-                    if (hasOldObject) {
-                        oldValue = oldValue._getValues ? oldValue._getValues() : oldValue;
-                        for (key in oldValue) {
-                            changes[key] = {old: oldValue[key]};
-                        }
-                    }
-                    if (hasNewObject) {
-                        value = value._getValues ? value._getValues() : value;
-                        for (key in value) {
-                            (changes[key] = changes[key] || {}).value = value[key];
-                        }
-                    }
-                    property._values = hasNewObject && value;
-                    for (key in changes) {
-                        // now for each change, we can notify the property object
-                        var change = changes[key];
-                        var subProperty = property._properties && property._properties[key];
-                        if (subProperty && subProperty.onchange) {
-                            // queue the callback
-                            subProperty._queueChange(subProperty.onchange, change.old);
-                        }
-                    }
-                }
-                if (property.validateOnSet) {
-                    property.validate();
-                }
-                endOperation();
-            });
-        },
-
-        coerce: function (value) {
-            //	summary:
-            //		Given an input value, this method is responsible
-            //		for converting it to the appropriate type for storing on the object.
-
-            var type = this.type;
-            if (type) {
-                if (type === 'string') {
-                    value = '' + value;
-                }
-                else if (type === 'number') {
-                    value = +value;
-                }
-                else if (type === 'boolean') {
-                    // value && value.length check is because dijit/_FormMixin
-                    // returns an array for checkboxes; an array coerces to true,
-                    // but an empty array should be set as false
-                    value = (value === 'false' || value === '0' || value instanceof Array && !value.length) ?
-                        false : !!value;
-                }
-                else if (typeof type === 'function' && !(value instanceof type)) {
-                    /* jshint newcap: false */
-                    value = new type(value);
-                }
-            }
-            return value;
-        },
-
-        addError: function (error) {
-            //	summary:
-            //		Add an error to the current list of validation errors
-            //	error: String
-            //		Error to add
-            this.set('errors', (this.errors || []).concat([error]));
-        },
-
-        checkForErrors: function (value) {
-            //	summary:
-            //		This method can be implemented to simplify validation.
-            //		This is called with the value, and this method can return
-            //		an array of any errors that were found. It is recommended
-            //		that you call this.inherited(arguments) to permit any
-            //		other validators to perform validation
-            //	value:
-            //		This is the value to validate.
-            var errors = [];
-            if (this.type && !(typeof this.type === 'function' ? (value instanceof this.type) :
-                    (this.type === typeof value))) {
-                errors.push(value + ' is not a ' + this.type);
-            }
-
-            if (this.required && !(value != null && value !== '')) {
-                errors.push('required, and it was not present');
-            }
-            return errors;
-        },
-
-        validate: function () {
-            //	summary:
-            //		This method is responsible for validating this particular
-            //		property instance.
-            var property = this;
-            var model = this._parent;
-            var validators = this.validators;
-            var value = this.valueOf();
-            var totalErrors = [];
-
-            return when(whenEach(function (whenItem) {
-                // iterator through any validators (if we have any)
-                if (validators) {
-                    for (var i = 0; i < validators.length; i++) {
-                        whenItem(validators[i].checkForErrors(value, property, model), addErrors);
-                    }
-                }
-                // check our own validation
-                whenItem(property.checkForErrors(value, property, model), addErrors);
-                function addErrors(errors) {
-                    if (errors) {
-                        // if we have an array of errors, add it to the total of all errors
-                        totalErrors.push.apply(totalErrors, errors);
-                    }
-                }
-            }), function () {
-                if (totalErrors.length) {
-                    // errors exist
-                    property.set('errors', totalErrors);
-                    return false;
-                }
-                // no errors, valid value, if there were errors before, remove them
-                if(property.get('errors') !== undefined){
-                    property.set('errors', undefined);
-                }
-                return true;
-            });
-        },
-        _queueChange: function (callback, oldValue) {
-            // queue up a notification callback
-            if (!callback._queued) {
-                // make sure we only queue up once before it is called by flagging it
-                callback._queued = true;
-                var reactive = this;
-                // define a function for when it is called that will clear the flag
-                // and provide the correct args
-                var dispatch = function () {
-                    callback._queued = false;
-                    callback.call(reactive, reactive._get(), oldValue);
-                };
-
-                if (callbackQueue) {
-                    // we already have a waiting queue of callbacks, add our callback
-                    callbackQueue.push(dispatch);
-                }
-                if (!callbackQueue) {
-                    // no waiting queue, check to see if we have a custom nextTurn
-                    // or we are in an operation
-                    if (!Model.nextTurn.atEnd || setCallDepth > 0) {
-                        // create the queue (starting with this callback)
-                        callbackQueue = [dispatch];
-                        // define the callback executor for the next turn
-                        Model.nextTurn(function () {
-                            // pull out all the callbacks
-                            for (var i = 0; i < callbackQueue.length; i++) {
-                                // call each one
-                                callbackQueue[i]();
-                            }
-                            // clear it
-                            callbackQueue = null;
-                        });
-                    } else {
-                        // no set call depth, so just immediately execute
-                        dispatch();
-                    }
-                }
-            }
-        },
-        toJSON: function () {
-            return this._values || this;
-        }
-    });
-    // a function that returns a function, to stop JSON serialization of an
-    // object
-    function toJSONHidden() {
-        return toJSONHidden;
-    }
-    // An object that will be hidden from JSON serialization
-    var Hidden = function () {};
-    Hidden.prototype.toJSON = toJSONHidden;
-    var Property = Model.Property = dcl(Reactive, {
-        //	summary:
-        //		A Property represents a time-varying property value on an object,
-        //		along with meta-data. One can listen to changes in this value (through
-        //		receive), as well as access and monitor metadata, like default values,
-        //		validation information, required status, and any validation errors.
-
-        //	value: any
-        //		This represents the value of this property, which can be
-        //		monitored for changes and validated
-
-        init: function (options) {
-            // handle simple definitions
-            if (typeof options === 'string' || typeof options === 'function') {
-                options = {type: options};
-            }
-            // and/or mixin any provided properties
-            if (options) {
-                utils.mixin(this, options);
-            }
-        },
-
-        _get: function () {
-            return this._parent._getValues()[this.name];
-        },
-        _has: function () {
-            return this.name in this._parent._getValues();
-        },
-        setValue: function (value, parent) {
-            parent._getValues()[this.name] = value;
-        }
-    });
-    var simplePropertyValueOf = Property.prototype.valueOf;
-    var simplePropertyPut = Property.prototype.put;
-    return Model;
-});
-/** @module xide/data/Source **/
-define('xide/data/Source',[
-    'dcl/dcl',
-    "dojo/_base/declare",
-    'xide/utils',
-    'xide/lodash'
-], function (dcl, declare, utils, lodash) {
-
-    var _debug = true;
-    /**
-     * @class module:xide/data/Source
-     * @augments module:xide/data/Model
-     */
-    var Implementation = {
-        /**
-         * @type {Array<module:xide/data/Reference>|null}
-         */
-        _references: null,
-        /**
-         * @type {module:xide/data/Reference|null}
-         */
-        _originReference: null,
-        /**
-         * @type {module:xide/data/_Base|null} The store.
-         */
-        _store: null,
-        onReferenceUpdate: function () {
-        },
-        onReferenceRemoved: function () {
-        },
-        onReferenceDelete: function () {
-        },
-        updateReference: function () {
-        },
-        destroy: function () {
-            this._references = null;
-        },
-        getReferences: function () {
-            return this._references ? utils.pluck(this._references, 'item') : [];
-        },
-        hasReference: function (source) {
-            return lodash.find(this._references, {item: source});
-        },
-        addReference: function (reference, settings, addSource) {
-            !this._references && (this._references = []);
-            if (this.hasReference(reference)) {
-                _debug && console.warn('already have reference');
-                return;
-            }
-            this._references.push({
-                item: reference,
-                settings: settings
-            });
-            if (settings && settings.onDelete) {
-                if (reference._store) {
-                    reference._store.on('delete', function (evt) {
-                        if (evt.target == reference) {
-                            this._store.removeSync(this[this._store.idProperty]);
-                            this._references.remove(evt.target);
-                        }
-                    }.bind(this));
-                }
-            }
-            if (addSource) {
-                if (reference.addSource) {
-                    reference.addSource(this, settings);
-                }
-            }
-        },
-        removeReference: function (Reference) {
-            this._references && lodash.each(this._references, function (ref) {
-                if (ref && ref.item == Reference) {
-                    this._references && this._references.remove(ref);
-                    return true;
-                }
-            }, this);
-        },
-        updateReferences: function (args) {
-            var property = args.property,
-                value = args.value;
-
-            if (!this._references) {
-                this._references = [];
-            }
-            for (var i = 0; i < this._references.length; i++) {
-                var link = this._references[i],
-                    item = link.item,
-                    settings = link.settings,
-                    store = item._store;
-
-                if (this._originReference == item) {
-                    continue;
-                }
-                if (args.property && settings.properties && settings.properties[args.property]) {
-                    if (store) {
-                        store.silent(true);
-                    }
-                    try {
-                        if (item.onSourceChanged) {
-                            item.onSourceChanged(property, value, args.type);
-                        } else {
-                            item.set(property, value);
-                        }
-
-                    } catch (e) {
-                        _debug && console.error('error updating reference! ' + e, e);
-                    }
-                    if (store) {
-                        store.silent(false);
-                        store.emit('update', {target: item});
-                    }
-                }
-            }
-        },
-        constructor: function (properties) {
-            this._references = [];
-            utils.mixin(this, properties);
-        },
-        onItemChanged: function (args) {
-            this.updateReferences(args);
-        }
-    };
-    //exports for declare & dcl
-    var Module = declare('xgrid.data.Source', null, Implementation);
-    Module.dcl = dcl(null, Implementation);
-    Module.Implementation = Implementation;
-    return Module;
-});
-
-/** module:xaction/ActionModel **/
-define('xaction/ActionModel',[
-    "dcl/dcl",
-    'xaction/Action',
-    'xide/data/Model',
-    "xide/data/Source",
-    'xide/model/Path',
-    'xide/utils'
-], function (dcl, Action, Model, Source, Path, utils) {
-    var debug = false;
-    var count = 0;
-    /**
-     * @class module:xaction/ActionModel
-     * @extends module:xide/data/Source
-     * @extends module:xaction/Action
-     * @extends module:xide/mixins/EventedMixin
-     */
-    return dcl([Action, Model, Source.dcl], {
-        filterGroup: "item|view",
-        keyboardMappings: null,
-        bindWidgetProperties: [
-            //2-way bindings for these props:
-            'value',
-            'icon',
-            'disabled'
-        ],
-        items: null,
-        onRemove: function () {
-            _.invoke(this.getReferences(), 'destroy');
-            this.keyboardMappings && _.invoke(this.keyboardMappings, "destroy");
-            this.destroy();
-        },
-        shouldShow: function () {
-            return true;
-        },
-        shouldDisable: function () {
-            return false;
-        },
-        updateReference: function (selection, reference, visibility) {
-            reference.set('disabled', this.shouldDisable(selection, reference, visibility));
-            if (this.icon !== null && reference.icon !== null && this.icon !== reference.icon) {
-                reference.set('icon', this.icon);
-            }
-            if (this.value !== null && reference.value !== null && this.value !== reference.value) {
-                reference.set('value', this.value);
-            }
-        },
-        refreshReferences: function (property, value) {
-            _.each(this.getReferences(), function (ref) {
-                ref.set(property, value);
-            }, this);
-        },
-        refresh: function (selection) {
-            this._emit('refresh', {
-                action: this,
-                selection: selection
-            });
-            _.each(this.getReferences(), function (ref) {
-                this.updateReference(selection, ref, ref.visibility);
-            }, this);
-        },
-        setProperty: function (key, value, updateReferences) {
-            return this.set(key, value);
-        },
-        complete: function () {
-            this.items = this.getChildren();
-        },
-        getParent: function () {
-            var segments = this.command.split('/');
-            if (segments.length > 1) {
-                return this._store.getSync(segments.slice(0, segments.length - 1).join('/'));
-            }
-        },
-        getParentCommand: function () {
-            var segments = this.command.split('/');
-            if (segments.length > 1) {
-                return segments.slice(0, segments.length - 1).join('/');
-            }
-        },
-        getSegments: function (command) {
-            return command.split('/');
-        },
-        getRoot: function () {
-            return this.command.split('/')[0];
-        },
-        getItemsAtBranch: function (items, path) {
-            return new Path(path).getChildren(utils.pluck(items, 'command'), false);
-        },
-        getChildren: function () {
-            var children = this.getItemsAtBranch(this._store.getAll(), this.command),
-                self = this;
-
-            //return an action from both stores
-            function getAction(command) {
-                return self._store.getSync(command);
-            }
-
-            //command strings to actions
-            function toActions(paths) {
-                var result = [];
-                _.each(paths, function (path) {
-                    result.push(getAction(path));
-                });
-                return result;
-            }
-
-            /*
-            return lodash.map(this.getItemsAtBranch(this._store.getAll(), this.command),function(paths){
-                return lodash.map(paths,function(path){
-                    this._store.getSync(path);
-                },this)
-            },this)
-            */
-            return toActions(children);
-        },
-        /**
-         * @TODO: remove back compat
-         * @param evt {object}
-         * @param evt.parent {widget}
-         * @param evt.widget {widget}
-         * @param evt.visibility {string}
-         * @private
-         */
-        _onWidgetCreated: function (evt) {
-            if (evt.widget.addSource) {
-                this.addReference(evt.widget, {
-                    properties: {
-                        "value": true
-                    }
-                }, true);
-            } else {
-                debug && console.warn('widget is not a reference! ', evt);
-            }
-        }
-    });
-});
-/** @module xaction/ActionStore **/
-define('xaction/ActionStore',[
-    "xdojo/declare",
-    'xide/data/TreeMemory',
-    'xide/utils',
-    'xide/data/ObservableStore',
-    'dstore/Trackable',
-    'xaction/ActionModel'
-], function (declare, TreeMemory, utils, ObservableStore, Trackable, ActionModel) {
-    /**
-     * Default properties to be observed (in ObservableStore)
-     * @type {string[]}
-     */
-    var DEFAULT_ACTION_PROPERTIES = [
-        "value",
-        "icon",
-        "disabled",
-        "enabled"
-    ];
-
-    /**
-     * Default factory
-     * @param composer
-     * @param bases
-     * @param Model
-     * @param defaults
-     * @param mixin
-     * @returns {*}
-     */
-    function createClass(composer, bases, Model, defaults, mixin) {
-        /**
-         * @class module:xaction/ActionStore
-         */
-        return (composer || declare)(bases || [TreeMemory, Trackable, ObservableStore], utils.mixin({
-            idProperty: 'command',
-            declaredClass: "xaction/ActionStore",
-            Model: Model || ActionModel,
-            renderers: null,
-            observedProperties: defaults || DEFAULT_ACTION_PROPERTIES,
-            getAll: function () {
-                return this.data;
-            },
-            addRenderer: function (renderer) {
-                !this.renderers && (this.renderers = []);
-                !_.contains(this.renderers, renderer) && this.renderers.push(renderer);
-            }
-        }, mixin));
-    }
-
-    var Module = createClass(null, null, null, null, null);
-    Module.createDefault = function (args) {
-        return new Module(args);
-    };
-    Module.createClass = createClass;
-    Module.DEFAULT_ACTION_PROPERTIES = DEFAULT_ACTION_PROPERTIES;
-    return Module;
-});
-
-/** @module xide/Keyboard **/
-define('xide/Keyboard',[
-    'xdojo/declare',
-    'dcl/dcl',
-    'dojo/_base/lang',
-    'xide/types',
-    'xide/utils/ObjectUtils'    //possibly not loaded yet
-], function (declare, dcl, lang, types, utils) {
-
-    /**
-     * First things first, mixin KEYBOARD_FLAGS into core types.
-     */
-    utils.mixin(types, {
-        /**
-         * KEYBOARD_EVENT describes all possible events a subscriber can listen to.
-         *
-         * @enum module:xide/types/KEYBOARD_EVENT
-         * @memberOf module:xide/types
-         */
-        KEYBOARD_EVENT: {
-            /**
-             * Add a custom callback for a key-up event.
-             *
-             * @default null, not required.
-             * @type {function}
-             * @constant
-             */
-            UP: 'on_keyup',
-            /**
-             * Add a custom callback for a key-dow event.
-             *
-             * @default null, not required.
-             * @type {function}
-             * @constant
-             */
-            DOWN: 'on_keydown',
-            /**
-             * Add a custom callback for a release event. This is similar to keyup, but will fire once
-             * when ALL of the keys of a combo have been released. If you're unsure, you probably want to
-             * ignore this and use UP.
-             *
-             * @default null, not required.
-             * @type {function}
-             * @constant
-             */
-            RELEASE: 'on_release'
-        }
-    });
-
-    /**
-     * Define a public struct for a 'keyboard - mapping
-     */
-    utils.mixin(types, {
-
-        /**
-         * KEYBOARD_MAPPING
-         *
-         * Keys accepted in human readable format as 'shift s', see the full map:
-         *
-         _modifier_event_mapping =
-         "cmd"   : "metaKey"
-         "ctrl"  : "ctrlKey"
-         "shift" : "shiftKey"
-         "alt"   : "altKey"
-
-         _keycode_alternate_names =
-         "escape"        : "esc"
-         "control"       : "ctrl"
-         "command"       : "cmd"
-         "break"         : "pause"
-         "windows"       : "cmd"
-         "option"        : "alt"
-         "caps_lock"     : "caps"
-         "apostrophe"    : "\'"
-         "semicolon"     : ";"
-         "tilde"         : "~"
-         "accent"        : "`"
-         "scroll_lock"   : "scroll"
-         "num_lock"      : "num"
-
-         _keycode_shifted_keys =
-         "/"     : "?"
-         "."     : ">"
-         ","     : "<"
-         "\'"    : "\""
-         ";"     : ":"
-         "["     : "{"
-     "]"     : "}"
-         "\\"    : "|"
-         "`"     : "~"
-         "="     : "+"
-         "-"     : "_"
-         "1"     : "!"
-         "2"     : "@"
-         "3"     : "#"
-         "4"     : "$"
-         "5"     : "%"
-         "6"     : "^"
-         "7"     : "&"
-         "8"     : "*"
-         "9"     : "("
-         "0"     : ")"
-
-         _keycode_dictionary =
-         0   : "\\"          # Firefox reports this keyCode when shift is held
-         8   : "backspace"
-         9   : "tab"
-         12  : "num"
-         13  : "enter"
-         16  : "shift"
-         17  : "ctrl"
-         18  : "alt"
-         19  : "pause"
-         20  : "caps"
-         27  : "esc"
-         32  : "space"
-         33  : "pageup"
-         34  : "pagedown"
-         35  : "end"
-         36  : "home"
-         37  : "left"
-         38  : "up"
-         39  : "right"
-         40  : "down"
-         44  : "print"
-         45  : "insert"
-         46  : "delete"
-         48  : "0"
-         49  : "1"
-         50  : "2"
-         51  : "3"
-         52  : "4"
-         53  : "5"
-         54  : "6"
-         55  : "7"
-         56  : "8"
-         57  : "9"
-         65  : "a"
-         66  : "b"
-         67  : "c"
-         68  : "d"
-         69  : "e"
-         70  : "f"
-         71  : "g"
-         72  : "h"
-         73  : "i"
-         74  : "j"
-         75  : "k"
-         76  : "l"
-         77  : "m"
-         78  : "n"
-         79  : "o"
-         80  : "p"
-         81  : "q"
-         82  : "r"
-         83  : "s"
-         84  : "t"
-         85  : "u"
-         86  : "v"
-         87  : "w"
-         88  : "x"
-         89  : "y"
-         90  : "z"
-         91  : "cmd"
-         92  : "cmd"
-         93  : "cmd"
-         96  : "num_0"
-         97  : "num_1"
-         98  : "num_2"
-         99  : "num_3"
-         100 : "num_4"
-         101 : "num_5"
-         102 : "num_6"
-         103 : "num_7"
-         104 : "num_8"
-         105 : "num_9"
-         106 : "num_multiply"
-         107 : "num_add"
-         108 : "num_enter"
-         109 : "num_subtract"
-         110 : "num_decimal"
-         111 : "num_divide"
-         112 : "f1"
-         113 : "f2"
-         114 : "f3"
-         115 : "f4"
-         116 : "f5"
-         117 : "f6"
-         118 : "f7"
-         119 : "f8"
-         120 : "f9"
-         121 : "f10"
-         122 : "f11"
-         123 : "f12"
-         124 : "print"
-         144 : "num"
-         145 : "scroll"
-         186 : ";"
-         187 : "="
-         188 : ","
-         189 : "-"
-         190 : "."
-         191 : "/"
-         192 : "`"
-         219 : "["
-         220 : "\\"
-         221 : "]"
-         222 : "\'"
-         223 : "`"
-         224 : "cmd"
-         225 : "alt"
-         # Opera weirdness
-         57392   : "ctrl"
-         63289   : "num"
-         # Firefox weirdness
-         59 : ";"
-         61 : "-"
-         173 : "="
-
-         *
-         * @class module:xide/types/KEYBOARD_MAPPING
-         * @memberOf module:xide/types
-         */
-
-        /**
-         * KEYBOARD_MAPPING is defines keyboard mapping struct:
-         *
-         * @memberOf module:xide/types
-         * @class module:xide/types/KEYBOARD_EVENT
-         *
-         */
-        KEYBOARD_MAPPING: {
-            /**
-             * @param keys {string|string[]} the key sequence (see below for the right codes ).
-             * This option can be either an array of strings, or a single space separated string of key names that describe
-             * the keys that make up the combo.
-             */
-            keys: null,
-            /**
-             * @param handler {function|xide/types/KEYBOARD_EVENT} the callback for the key sequence. This can be one
-             * function an structure per keyboard event. Usually its enough to leave this empty. You can also pass this
-             * in the params
-             */
-            handler: null,
-            /**
-             * @param scope {Object|null} the scope in which the handler(s) are excecuted.
-             */
-            scope: null,
-            /**
-             * @param target {HTMLElement|null} the element on the listerner is bound to. Null means global!
-             */
-            target: null,
-            /**
-             * @param type {string|null} the keypress combo type, can be:
-             * simple_combo(keys, on_keydown_callback); // Registers a very basic combo;
-             * counting_combo(keys, on_count_callback); // Registers a counting combo
-             * sequence_combo(keys, callback); // Registers a sequence combo
-             * register_combo(combo_dictionary); // Registers a combo from a dictionary
-             */
-            type: null,
-            /**
-             * @param mixin to override the 'keypress' libraries internal setup for a listener
-             * @default {
-
-                prevent_repeat: false,
-                prevent_default: false,
-                is_unordered: false,
-                is_counting: false,
-                is_exclusive: false,
-                is_solitary: false,
-                is_sequence: false
-            */
-            params: null,
-            /**
-             *
-             * @param mouse {Object|null|true|false} filter to setup an addtional trigger constraint for keyboard
-             * sequence. Example: mouse.before='mousedown' and keys ='ctrl' will fire the handler when the mouse is hold whilst
-             * ctrl key is hold. default:null.
-             *
-             */
-            mouse: {
-                brefore: null,//true
-                after: null//false
-            },
-            eventArgs: null
-        }
-
-    });
-
-    /**
-     * Global array of keypress listeners
-     * @type {Object[]}
-     * @private
-     */
-    var listeners = [];
-    var byNode = {};
-
-    /**
-     * Util to extend a keyboard mapping with control functions per listener. Keyboard mappings can
-     * have multiple key sequences and this will take care about stop(), listen() and destroy().
-     * @param mapping
-     * @param listeners
-     */
-    var addListenerControls = function (mapping, listeners) {
-        mapping.stop = function () {
-            return;
-            //if(listeners && listeners.length) {
-            //    _.invoke(listeners, 'stop_listening');
-            //}
-        };
-        mapping.listen = function () {
-            _.invoke(listeners, 'listen');
-        };
-        mapping.destroy = function () {
-            mapping.stop();
-            _.each(listeners, function (listener) {
-                listener.destroy();
-                listeners.remove(listener);
-                delete byNode[listener.targetId];
-            });
-        };
-        return mapping;
-    };
-
-    /**
-     * Safe link to keypress prototype
-     * @type {Listener|keypress.Listener}
-     * @private
-     */
-    var keypressProto = window ? window['keypress'] ? window.keypress.Listener : null : null;
-    if (!keypressProto) {
-        console.error('you need keypress.min.js installed to use xide/Keyboard');
-    }
-
-    var Implementation = {
-        /**
-         * @member listener {Object[]} all keypress listener instances
-         */
-        _keyboardListeners: null,
-        /**
-         * The default setup for a listener, this is 'keypress' specific.
-         *
-         * @returns {{prevent_repeat: boolean, prevent_default: boolean, is_unordered: boolean, is_counting: boolean, is_exclusive: boolean, is_solitary: boolean, is_sequence: boolean}}
-         */
-        keyPressDefault: function () {
-            return {
-                prevent_repeat: false,
-                prevent_default: true,
-                is_unordered: false,
-                is_counting: false,
-                is_exclusive: false,
-                is_solitary: false,
-                is_sequence: true
-            };
-        },
-        /**
-         * Private listener creation method, accepts multiple key sequences for the same handler.
-         *
-         * @param keys {string|string[]} the key sequence (see below for the right codes ).
-         * This option can be either an array of strings, or a single space separated string of key names that describe
-         * the keys that make up the combo.
-         *
-         * @param params {Object|null} an additional parameter structure to override the default 'keypress' setup.
-         * See this.keyPressDefault
-         *
-         * @param scope {Object|null} the scope in which the handler(s) are excecuted, defaults to 'this' as we are
-         * a mixin.
-         *
-         *
-         * @param type {string|null} the keypress combo type, can be:
-         * simple_combo(keys, on_keydown_callback); // Registers a very basic combo;
-         * counting_combo(keys, on_count_callback); // Registers a counting combo
-         * sequence_combo(keys, callback); // Registers a sequence combo
-         * register_combo(combo_dictionary); // Registers a combo from a dictionary
-         *
-         * @param handler {function|xide/types/KEYBOARD_EVENT} the callback for the key sequence. This can be one
-         * function an structure per keyboard event. Usually its enough to leave this empty. You can also pass this
-         * in the params
-
-         * @param target {HTMLElement|null} the element on the listener is bound to. Null means global!
-         *
-         * @param eventArgs {array|null} Event arguments passed to the handler. Defaults to keyboard event.
-         *
-         * @public
-         */
-        addKeyboardListerner: function (keys, params, type, scope, handler, target, eventArgs) {
-            // prepare keypress args
-            var _defaults = lang.clone(this.keyPressDefault());
-            //mixin override
-            utils.mixin(_defaults, params);
-
-            // defaults
-            _defaults['this'] = _defaults['this'] || scope || this;
-
-            // use simple_combo as default
-            type = type || 'simple_combo';
-
-            //normalize to array
-            keys = !_.isArray(keys) ? [keys] : keys;
-
-            var _listeners = [],
-                ignore = ['ctrl s', 'ctrl l', 'ctrl r', 'ctrl w', 'ctrl f4', 'shift f4', 'alt tab', 'ctrl tab'];
-
-            _.each(keys, function (key_seq) {
-                var targetId = target && target.id ? target.id : 'global',
-                    wasCached = target ? !!byNode[targetId] : false,
-                    registered = false;
-
-                var listener = byNode[targetId];
-                if(listener && listener["_seq"+key_seq]){
-                    registered = true;
-                }
-
-                if(!registered) {
-                    if (!listener) {
-                        listener = new keypressProto(target, _defaults);
-                        listener.targetId = targetId;
-                    }
-
-                    listener["_seq" + key_seq] = true;
-                    listener[type](key_seq, function (e) {
-                        if (e._did) {
-                            return;
-                        }
-                        e._did = true;
-                        var className = e.target.className.toLowerCase();
-                        //skip input fields
-                        if (e.target.tagName!=='BUTTON' && className.indexOf('input') == -1 || className.indexOf('ace_text-input') != -1) {
-                            if (handler && handler.apply) {
-                                handler.apply(_defaults['this'], eventArgs || [e]);
-                                if (ignore.indexOf(key_seq) !== -1) {
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                }
-                            }
-                        }
-                    });
-                    if (byNode[targetId]) {
-
-                    } else {
-                        byNode[targetId] = listener;
-                    }
-
-                    if (!wasCached) {
-                        !this._keyboardListeners && (this._keyboardListeners = []);
-                        //store in local
-                        this._keyboardListeners.push(listener);
-                        //store in global
-                        _listeners.push(listener);
-                    }
-                }
-
-            }, this);
-
-            return _listeners;
-        },
-        /**
-         * Public interface to register a keyboard mapping
-         * @param mapping {xide/types/KEYBOARD_MAPPING}
-         * @returns {xide/types/KEYBOARD_MAPPING}
-         */
-        registerKeyboardMapping: function (mapping) {
-            var listeners = this.addKeyboardListerner(mapping.keys, mapping.params, null, mapping.scope, mapping.handler, mapping.target, mapping.eventArgs);
-            mapping.listeners = listeners;
-            return addListenerControls(mapping, listeners);
-        },
-        destroy:function(){
-            this.inherited && this.inherited(arguments);
-            var targetId = this.id;
-            var listener = byNode[targetId];
-            if(listener){
-                listener.destroy();
-                delete byNode[targetId];
-            }
-        }
-    };
-
-    /**
-     * Generic keyboard handler, using the external 'keypress' Javascript library
-     * which handles keyboard events a bit more elegant and robust, it does allow
-     * registration of keyboard - sequences as 'shift s':
-     * @example
-     *
-     * listener.simple_combo("shift s", function() {
-     *  console.log("You pressed shift and s");
-     * });
-     *
-     * @link http://dmauro.github.io/Keypress/
-     * @link https://github.com/dmauro/Keypress/blob/master/keypress.coffee#L728-864
-     */
-    var _Keyboard = declare("xide/Keyboard", null, Implementation);
-    /**
-     * Static mapping factory
-     * @param keys
-     * @param params
-     * @param type
-     * @param scope
-     * @param handler
-     * @param target
-     * @param eventArgs
-     * @memberOf module:xide/Keyboard
-     * @returns {xide/types/KEYBOARD_MAPPING}
-     */
-    _Keyboard.createMapping = function (keys, params, type, scope, handler, target, eventArgs) {
-        var mapping = utils.clone(types.KEYBOARD_MAPPING);//@TODO: bad copy, uses a ctr followed by a lang.mixin
-        function getHandler(__handler) {
-            return _.isString(__handler) ? lang.hitch(scope, __handler) : __handler;
-        }
-
-        mapping.keys = keys;
-        mapping.params = params || {};
-        mapping.type = type;
-        mapping.scope = scope;
-        mapping.handler = getHandler(handler);
-        mapping.target = target;
-        mapping.eventArgs = eventArgs;
-        mapping.setHandler = function (event, handler) {
-            mapping.params[event] = getHandler(handler);
-            return mapping;
-        };
-        return mapping;
-
-    };
-
-    _Keyboard.defaultMapping = function (keys, handler, params, node, who, args) {
-        return _Keyboard.createMapping(keys, params, null, who, handler, node, args);
-    };
-
-    _Keyboard.dcl = dcl(null, Implementation);
-    _Keyboard.byNode = byNode;
-    _Keyboard.listeners = listeners;
-    return _Keyboard;
-});
-/** @module xaction/DefaultActions **/
-define('xaction/DefaultActions',[
-    "dcl/dcl",
-    'dcl/inherited',
-    "xdojo/declare",
-    'xide/types',
-    'xide/utils',
-    'xlang/i18'
-], function (dcl,inherited,declare,types,utils,i18) {
-    /**
-     * @mixin module:xide/action/DefaultActions
-     */
-    var Module = declare("xaction/DefaultActions", null , {});
-    /**
-     *
-     * @param title
-     * @param command
-     * @param group
-     * @param icon
-     * @param handler
-     * @param accelKey
-     * @param keyCombo
-     * @param keyProfile
-     * @param keyTarget
-     * @param keyScope
-     * @param mixin
-     * @returns {{title: *, command: *, group: *, icon: *, handler: *, accelKey: *, keyCombo: *, keyProfile: *, keyTarget: *, keyScope: *}}
-     */
-    Module.createActionParameters=function(title, command, group, icon, handler, accelKey, keyCombo, keyProfile, keyTarget, keyScope,mixin){
-        return {
-            title:title,
-            command: command,
-            group: group,
-            icon: icon,
-            handler: handler,
-            accelKey: accelKey,
-            keyCombo: keyCombo,
-            keyProfile: keyProfile,
-            keyTarget: keyTarget,
-            keyScope: keyScope,
-            mixin:mixin
-        };
-    };
-    /**
-     *
-     * @param label
-     * @param command
-     * @param icon
-     * @param keycombo
-     * @param tab
-     * @param group
-     * @param filterGroup
-     * @param onCreate
-     * @param handler
-     * @param mixin
-     * @param shouldShow
-     * @param shouldDisable
-     * @param container
-     * @returns {*}
-     */
-    var createAction = function(label,command,icon,keycombo,tab,group,filterGroup,onCreate,handler,mixin,shouldShow,shouldDisable,container){
-        if(keycombo) {
-            if (_.isString(keycombo)) {
-                keycombo = [keycombo];
-            }
-        }
-
-        mixin = utils.mixin({
-            filterGroup:filterGroup || "item|view",
-            tab:tab||'File',
-            onCreate: onCreate || function (action){},
-            shouldShow:shouldShow||function(){return true;},
-            shouldDisable:shouldDisable||function(){return false;}
-        },mixin);
-
-        var _action = Module.createActionParameters(
-            label,
-            command,
-            group || 'File',//Group
-            icon, handler || null, "", keycombo, null, container, null, mixin);
-
-        utils.mixin(_action,mixin);
-
-        return _action;
-    };
-
-    /**
-     * Find action in permission
-     * @param what
-     * @returns {boolean}
-     */
-    function hasAction(permissions,what){
-        return _.contains(permissions,what);
-    }
-
-    /**
-     * After action default handler, trys:
-     * - this::onAfterAction
-     * - emit onAfterAction
-     *
-     * @param dfdResult
-     * @param event
-     * @param action
-     * @private
-     */
-    function _afterAction(dfdResult,event,action) {
-        var who = this;
-        // call onAfterAction with this results
-        var onAfterActionDfd = null;
-        who.onAfterAction && (onAfterActionDfd = who.onAfterAction(action, dfdResult, event));
-
-        who._emit && who._emit('onAfterAction', {
-            action: action,
-            result: dfdResult,
-            source: who,
-            afterAction: onAfterActionDfd
-        });
-    }
-    /**
-     * Default handler, does
-     * - try this::runAction || action#handler
-     * - call afterAction
-     *
-     * As last cal
-     * @param action {module:xaction/ActionModel}
-     * @param event
-     */
-    function defaultHandler(action,event){
-        var actionDfd,
-            who = this;
-
-        who && who.onBeforeAction && who.onBeforeAction(action);
-        if(who.runAction){
-            actionDfd = who.runAction.apply(who,[action,null,event]);
-        }else if(action.handler){
-            actionDfd = action.handler.apply(who,[action,null,event]);
-        }
-        if(actionDfd && actionDfd.then){
-            actionDfd.then(function(actionResult){
-                _afterAction.apply(who,[actionResult,event,action]);
-            });
-
-        }else{
-            _afterAction.apply(who,[actionDfd,event,action]);
-        }
-        return actionDfd;
-    }
-
-    /**
-     *
-     * @param permissions
-     * @param grid
-     * @param owner
-     * @returns {Array}
-     */
-    function getDefaultActions(permissions,grid,owner){
-        /**
-         *
-         * @param selection
-         * @param reference
-         * @param visibility
-         * @returns {boolean}
-         */
-        function shouldDisableDefaultEmptySelection(selection,reference,visibility){
-            selection = selection || grid ? grid.getSelection() : [];
-
-            if(!selection || !selection.length){
-                return true;
-            }
-            return false;
-        }
-        /**
-         *
-         * @param selection
-         * @param reference
-         * @param visibility
-         * @returns {boolean}
-         */
-        function shouldDisableDefaultFileOnly(selection,reference,visibility){
-
-            if(shouldDisableDefaultEmptySelection.apply(this,arguments)){
-                return true;
-            }
-            selection = selection || grid ? grid.getSelection() : [];
-
-            if(selection && selection[0].isDir === true){
-                return true;
-            }
-            return false;
-        }
-
-        var root = 'File/',
-            thiz = this,
-            renderActions = [],
-            VISIBILITY = types.ACTION_VISIBILITY,
-            result = [],
-            ACTION = types.ACTION,
-            ACTION_ICON = types.ACTION_ICON,
-            creator = owner || grid;
-
-        /**
-         *
-         * @param label
-         * @param command
-         * @param icon
-         * @param keycombo
-         * @param tab
-         * @param group
-         * @param filterGroup
-         * @param onCreate
-         * @param handler
-         * @param mixin
-         * @param shouldShow
-         * @param shouldDisable
-         */
-        function addAction(label,command,icon,keycombo,tab,group,filterGroup,onCreate,handler,mixin,shouldShow,shouldDisable){
-            var action = null;
-            mixin = mixin || {};
-            utils.mixin(mixin,{owner:owner || grid});
-
-            if(mixin.addPermission || hasAction(permissions,command)){
-
-                handler = handler || defaultHandler;
-
-                action = createAction(label,command,icon,keycombo,tab,group,filterGroup,onCreate,handler,mixin,shouldShow,shouldDisable,grid.domNode);
-
-                if(action) {
-                    if (owner && owner.addAction) {
-                        owner.addAction(null, action);
-                    }
-                    result.push(action);
-                }
-            }
-        }
-        if(hasAction(permissions, ACTION.CLIPBOARD) && grid.getClipboardActions){
-            result.push(creator.createAction({
-                label: 'Clipboard',
-                command: 'Edit/Clipboard',
-                icon: 'fa-clipboard',
-                tab: 'Edit',
-                group: 'Clipboard',
-                mixin:{
-                    addPermission:true,
-                    dynamic:true,
-                    quick:true
-                },
-                onCreate:function(action){
-                    action.setVisibility(VISIBILITY.RIBBON,{
-                        expand:true,
-                        tab:"File"
-                    });
-                }
-            }));
-
-            result = result.concat(grid.getClipboardActions(addAction));
-        }
-
-        result.push(creator.createAction({
-            label: 'Show',
-            command: 'View/Show',
-            icon: 'fa-eye',
-            tab: 'View',
-            group: 'Show',
-            mixin:{
-                addPermission:true,
-                dynamic:true
-            },
-            onCreate:function(action){
-                action.setVisibility(VISIBILITY.RIBBON,{
-                    expand:true
-                });
-            }
-        }));
-
-
-        if(hasAction(permissions,ACTION.LAYOUT) && grid.getRendererActions){
-            result = result.concat(grid.getRendererActions());
-        }
-
-        if(hasAction(permissions,ACTION.COLUMNS) && grid.getColumnHiderActions){
-            result = result.concat(grid.getColumnHiderActions(permissions));
-        }
-        ///////////////////////////////////////
-        //
-        //  Open/Edit
-        //
-        //
-        result.push(creator.createAction({
-            label: 'Edit',
-            command: 'File/Edit',
-            icon: ACTION_ICON.EDIT,
-            tab: 'Home',
-            group: 'Open',
-            keycombo: ['f4', 'enter','dblclick'],
-            mixin:{
-                quick:true
-            },
-            shouldDisable:shouldDisableDefaultFileOnly
-        }));
-
-
-        ///////////////////////////////////////
-        //
-        //  Organize
-        //
-        result.push(creator.createAction({
-            label: 'Delete',
-            command: 'File/Delete',
-            icon: ACTION_ICON.DELETE,
-            tab: 'Home',
-            group: 'Organize',
-            keycombo: ['f8','delete'],
-            mixin:{
-                quick:true
-            },
-            shouldDisable:shouldDisableDefaultEmptySelection
-        }));
-
-        addAction('Rename','File/Rename','fa-edit',['f2'],'Home','Organize','item',null,null,null,null,shouldDisableDefaultEmptySelection);
-
-        result.push(creator.createAction({
-            label: 'Reload',
-            command: 'File/Reload',
-            icon: ACTION_ICON.RELOAD,
-            tab: 'Home',
-            group: 'File',
-            keycombo: ['ctrl l'],
-            mixin:{
-                quick:true
-            }
-        }));
-        addAction('Create archive','File/Compress',ACTION_ICON.COMPRESS,['ctrl z'],'Home','Organize','item|view',null,null,null,null,shouldDisableDefaultEmptySelection);
-
-        ///////////////////////////////////////
-        //
-        //  File
-        //
-        addAction('Extract','File/Extract',ACTION_ICON.EXTRACT,['ctrl e'],'Home','File','item|view',null,null,null,null,function(){
-            return true;
-            //return shouldDisableDefaultFileOnly.apply(this,arguments);
-        });
-
-        result.push(creator.createAction({
-            label: 'Download',
-            command: 'File/Download',
-            icon: ACTION_ICON.DOWNLOAD,
-            tab: 'Home',
-            group: 'File',
-            keycombo: ['ctrl down'],
-            mixin:{
-                quick:true
-            }
-        }));
-
-        //////////////////////////////////////////
-        //
-        //  New
-        //
-        if(hasAction(permissions,ACTION.NEW_DIRECTORY)|| hasAction(permissions,ACTION.NEW_FILE)) {
-
-            addAction('New','File/New','fa-magic',null,'Home','New','item|view',null,null,{},null,null);
-/*
-            result.push(creator.createAction({
-                label: 'New',
-                command: 'File/New',
-                icon: 'fa-magic',
-                tab: 'Home',
-                group: 'File',
-                keycombo: ['ctrl down'],
-                mixin:{
-                    quick:true
-                }
-            }));*/
-
-        }
-        addAction('New Folder',ACTION.NEW_DIRECTORY,'fa-folder',['f7'],'Home','New','item|view',null,null,{quick:true},null,null);
-        addAction('New File',ACTION.NEW_FILE,'el-icon-file',['ctrl f4'],'Home','New','item|view',null,null,{quick:true},null,null);
-
-
-        //////////////////////////////////////////
-        //
-        //  Preview
-        //
-        if(hasAction(permissions,ACTION.PREVIEW)) {
-            result.push(creator.createAction({
-                label: 'Preview',
-                command: 'File/Preview',
-                icon: 'fa-eye',
-                tab: 'Home',
-                group: 'Open',
-                keycombo: ['f3'],
-                mixin:{
-                    quick:true
-                },
-                shouldDisable:shouldDisableDefaultFileOnly
-            }));
-        }
-
-        ///////////////////////////////////////
-        //
-        //  Selection
-        //
-        if(hasAction(permissions,ACTION.SELECTION)) {
-            result.push(createAction('Select', 'File/Select', 'fa-hand-o-up', null, 'Home', 'Select', 'item|view', function(action){
-                action.setVisibility(VISIBILITY.RIBBON,{
-                    expand:true
-                });
-            }, null, null, null, null,grid.domNode));
-
-            var _mixin = {
-                    owner:owner || grid
-                },
-                container = grid.domNode;
-
-            result.push(createAction('Select all', 'File/Select/All', 'fa-th', ['ctrl a'], 'Home', 'Select', 'item|view', null, function(){
-                grid.selectAll();
-            }, _mixin, null, null,container));
-
-            result.push(createAction('Select none', 'File/Select/None', 'fa-square-o', 'ctrl d', 'Home', 'Select', 'item|view', null, function(){
-                grid.deselectAll();
-            }, _mixin, null, null,container));
-
-            result.push(createAction('Invert selection', 'File/Select/Invert', 'fa-square', ['ctrl i'], 'Home', 'Select', 'item|view', null, function(){
-                grid.invertSelection();
-            }, _mixin, null, null,container));
-        }
-        return result;
-    }
-
-    Module.createAction = createAction;
-    Module.hasAction = hasAction;
-    Module.getDefaultActions = getDefaultActions;
-    Module.defaultHandler = defaultHandler;
-
-    return Module;
-});
-define('xaction/ActionProvider',[
-    "xdojo/declare",
-    'dcl/dcl',
-    "xide/types",
-    "xide/utils",
-    "xide/model/Path",
-    'xaction/ActionStore',
-    'xaction/Action',
-    'xide/Keyboard',
-    'xide/mixins/EventedMixin',
-    'xaction/DefaultActions',
-    'xide/lodash'
-], function (declare, dcl, types, utils, Path, ActionStore, Action, Keyboard, EventedMixin, DefaultActions,_) {
-
-    var Implementation = {
-        /**
-         * @type module:xaction/ActionStore
-         */
-        actionStore: null,
-        actions: null,
-        allowActionOverride: true,
-        sortGroups: function (groups, groupMap) {
-            groups = groups.sort(function (a, b) {
-                if (groupMap[a] != null && groupMap[b] != null) {
-                    var orderA = groupMap[a];
-                    var orderB = groupMap[b];
-                    return orderB - orderA;
-                }
-                return 100;
-            });
-            return groups;
-        },
-        getItemsAtBranch: function (items, path) {
-            return new Path(path).getChildren(_.map(items, 'command'), false);
-        },
-        /////////////////////////////////////////////////////
-        //
-        //  Store Based Extension -
-        //
-        /////////////////////////////////////////////////////
-        /**
-         * Update all actions referencing widgets
-         */
-        refreshActions: function () {
-            var allActions = this.getActions();
-            for (var i = 0; i < allActions.length; i++) {
-                var action = allActions[i];
-                if (action.refresh) {
-                    action.refresh();
-                }
-            }
-        },
-        getAction: function (mixed) {
-            if (_.isString(mixed)) {
-                return this.getActionStore().getSync(mixed);
-            }
-            return mixed;
-        },
-        clearActions: function () {
-            var store = this.getActionStore(),
-                actions = store ? store.query() : [];
-
-            _.each(actions, function (action) {
-                action && store.removeSync(action.command);
-            });
-            store && store.setData([]);
-        },
-        destroy: function () {
-            this.clearActions();
-            return this.inherited(arguments);
-        },
-        /**
-         *
-         * @param title
-         * @param command
-         * @param group
-         * @param icon
-         * @param handler
-         * @param accelKey
-         * @param keyCombo
-         * @param keyProfile
-         * @param keyTarget
-         * @param keyScope
-         * @param mixin
-         * @returns {xaction/Action}
-         */
-        __createAction: function (title, command, group, icon, handler, accelKey, keyCombo, keyProfile, keyTarget, keyScope, mixin) {
-            icon = icon || types.ACTION_ICON[command];
-            var args = {accelKey: accelKey};
-            utils.mixin(args, mixin);
-            var action = Action.createDefault(title, icon, command, group, handler, args);
-            if (keyCombo) {
-                var keyboardMappings;
-                if (this.keyboardMappings) {
-                    keyboardMappings = this.keyboardMappings;
-                } else {
-                    action.keyboardMappings = keyboardMappings = [];
-                }
-                var mapping = Keyboard.defaultMapping(keyCombo, handler, keyProfile || types.KEYBOARD_PROFILE.DEFAULT, keyTarget, keyScope, [action]);
-                mapping = this.registerKeyboardMapping(mapping);
-                keyboardMappings.push(mapping);
-                action.keyboardMappings = keyboardMappings;
-            }
-            return action;
-        },
-        updateAction: function (action, what, value) {
-            action = action || this.getAction(action);
-            if (action) {
-                action.set(what, value);
-                setTimeout(function () {
-                    action.getReferences().forEach(function (ref) {
-                        ref.set(what, value);
-                    });
-                }, 100);
-            }
-        },
-        _completeActions: function (actions) {
-            var result = [];
-            var keyTarget = this.getKeyTarget ? this.getKeyTarget() : null;
-            for (var i = 0; i < actions.length; i++) {
-                var config = actions[i],
-                    action;
-
-                if (!config) {
-                    continue;
-                }
-
-                if (!(config instanceof Action)) {
-                    action = this.__createAction(
-                        config.title,
-                        config.command,
-                        config.group,
-                        config.icon,
-                        config.handler,
-                        config.accelKey,
-                        config.keyCombo,
-                        config.keyProfile,
-                        keyTarget || config.keyTarget,
-                        config.keyScope,
-                        config.mixin);
-
-                    action.parameters = config;
-                } else {
-                    action = config;
-                }
-                this._addAction(result, action);
-            }
-            if (this.keyboardMappings) {
-                console.error('have mappings');
-            }
-            _.each(this.keyboardMappings, function (mapping) {
-                this.registerKeyboardMapping(mapping);
-            }, this);
-            return result;
-        },
-        createActionStore: function () {
-            if (!this.actionStore) {
-                var _actions = this._completeActions(this.actions || []);
-                this.actionStore = new ActionStore({
-                    id: utils.createUUID(),
-                    data: _actions,
-                    observedProperties: [
-                        "value",
-                        "icon",
-                        "label"
-                    ],
-                    tabOrder: this.tabOrder,
-                    groupOrder: this.groupOrder,
-                    tabSettings: this.tabSettings,
-                    menuOrder: this.menuOrder
-                });
-            }
-            return this.actionStore;
-        },
-        /**
-         * Get all actions via query from Action store
-         * @param mixed
-         * @param allowCache
-         * @returns {*}
-         */
-        getActions: function (mixed, allowCache) {
-            if (!mixed && allowCache !== false && this.__actions) {
-                return this.__actions;
-            }
-            var query = mixed;
-            //no query or function given
-            if (!mixed) {
-                query = {
-                    command: /\S+/
-                };
-            }
-            this.__actions = this.getActionStore().query(query);
-            return this.__actions;
-
-        },
-        /**
-         * Safe getter for action store
-         * @returns {*}
-         */
-        getActionStore: function () {
-            return this.createActionStore();
-        },
-        /**
-         * Create action store upon construction
-         */
-        postMixInProperties: function () {
-            this.inherited && this.inherited(arguments);
-            this.createActionStore();
-        },
-        addActions: function (actions) {
-            var store = this.getActionStore();
-            if (!store['subscribedToUpdates_' + this.id]) {
-                store['subscribedToUpdates_' + this.id] = true;
-                this.addHandle('update', store.on('update', function (evt) {
-                    var action = evt.target;
-                    if (action._isCreating || !evt.property) {
-                        return;
-                    }
-                    if (action && action.onChange) {
-                        action.onChange(evt.property, evt.value, action);
-                    }
-
-                }));
-            }
-            var result = [];
-            this._emit('onAddActions', {
-                actions: actions,
-                permissions: this.permissions,
-                store: store
-            });
-
-            //remove existing
-            this.allowActionOverride && _.each(actions, function (action) {
-                if (action) {
-                    var existing = store.getSync(action.command);
-                    if (existing) {
-                        store.removeSync(existing.command);
-                    }
-                }
-            });
-            actions = this._completeActions(actions);
-
-            _.each(actions, function (action) {
-                if (this.allowActionOverride && store.getSync(action.command)) {
-                    store.removeSync(action.command);
-                }
-                var _action = store.putSync(action);
-                result.push(_action);
-                _action._isCreating = true;
-                _action.onCreate && _action.onCreate(_action);
-                this._emit('onAddAction', _action);
-                _action._isCreating = false;
-            }.bind(this));
-            return result;
-
-        },
-        /**
-         *
-         * @param label
-         * @param command
-         * @param icon
-         * @param props
-         * @param mixin
-         * @returns {*}
-         */
-        createActionShort: function (label, command, icon, props, mixin) {
-            return this.createAction(_.extend({
-                label: label,
-                command: command,
-                icon: icon,
-                mixin: props && props.mixin ? props.mixin : mixin
-            }, props));
-        },
-        /**
-         *
-         * @param options
-         * @returns {*}
-         */
-        createAction2: function (options) {
-            var thiz = this,
-                action = null,
-                mixin = options.mixin || {},
-                owner = options.owner || mixin.owner || thiz,
-                permissions = options.permissions || this.permissions || [],
-                command = options.command,
-                keycombo = options.keycombo,
-                label = options.label,
-                icon = options.icon,
-                tab = options.tab,
-                group = options.group,
-                filterGroup = options.filterGroup,
-                onCreate = options.onCreate,
-                handler = options.handler,
-                container = options.container || thiz.domNode,
-                shouldShow = options.shouldShow,
-                shouldDisable = options.shouldDisable;
-
-            utils.mixin(mixin, {
-                owner: owner,
-                onChange: options.onChange
-
-            });
-
-            if (mixin.addPermission || DefaultActions.hasAction(permissions, command)) {
-
-                handler = handler || DefaultActions.defaultHandler;
-                if (keycombo) {
-                    if (_.isString(keycombo)) {
-                        keycombo = [keycombo];
-                    }
-                    mixin.tooltip = keycombo.join('<br/>').toUpperCase();
-                }
-
-                action = DefaultActions.createAction(label, command, icon, keycombo, tab, group, filterGroup, onCreate, handler, mixin, shouldShow, shouldDisable, container || thiz.domNode);
-                if (owner && action && owner.addAction) {
-                    owner.addAction(null, action);
-                }
-                return action;
-            }
-        },
-        /**
-         * Create Action
-         * @param label
-         * @param command
-         * @param icon
-         * @param keycombo
-         * @param tab
-         * @param group
-         * @param filterGroup
-         * @param onCreate
-         * @param handler
-         * @param mixin
-         * @param shouldShow
-         * @param shouldDisable
-         * @param permissions
-         * @param container
-         * @param owner
-         * @returns {*}
-         */
-        createAction: function (label, command, icon, keycombo, tab, group, filterGroup, onCreate, handler, mixin, shouldShow, shouldDisable, permissions, container, owner) {
-            if (arguments.length == 1) {
-                return this.createAction2(arguments[0]);
-            }
-            var thiz = this,
-                action = null;
-
-            mixin = mixin || {};
-            utils.mixin(mixin, {owner: owner || thiz});
-
-            if (mixin.addPermission || DefaultActions.hasAction(permissions, command)) {
-                if (!handler) {
-                    handler = function (action) {
-                        this.runAction && this.runAction.apply(this, [action]);
-                    };
-                }
-                keycombo && _.isString(keycombo) && (keycombo = [keycombo]);
-
-                action = DefaultActions.createAction(label, command, icon, keycombo, tab, group, filterGroup, onCreate, handler, mixin, shouldShow, shouldDisable, container || thiz.domNode);
-
-                if (owner && action && owner.addAction) {
-                    owner.addAction(null, action);
-                }
-                return action;
-            }
-        },
-        addAction: function (where, action) {
-            var actions = where || [];
-            var eventCallbackResult = this._emit('addAction', action);
-            if (eventCallbackResult === false) {
-                return false;
-            } else if (_.isObject(eventCallbackResult)) {
-                utils.mixin(action, eventCallbackResult);
-            }
-            actions.push(action);
-            return true;
-        },
-        /**
-         *
-         * @param where
-         * @param action
-         * @returns {boolean}
-         */
-        _addAction: function (where, action) {
-            var actions = where || [],
-                eventCallbackResult = this._emit('addAction', action);
-
-            if (eventCallbackResult === false) {
-                return false;
-            } else if (utils.isObject(eventCallbackResult)) {
-                utils.mixin(action, eventCallbackResult);
-            }
-            actions.push(action);
-            return true;
-        },
-        hasAction: function (action) {
-            return DefaultActions.hasAction(this.permissions, action);
-        }
-    };
-
-    /**
-     * Provides tools to deal with 'actions' (xaction/Action). This is the model part for actions which is being used
-     * always together with the render part(xide/widgets/EventedMixin) in a subclass.
-     *
-     * @class module:xide/mixins/ActionProvider
-     * @extends module:xide/mixins/EventedMixin
-     */
-    var Module = declare("xaction/ActionProvider", [EventedMixin, Keyboard], Implementation);
-    Module.dcl = dcl([EventedMixin.dcl, Keyboard.dcl], Implementation);
-    return Module;
-});
-
-define('xide/console',[], function () {
-    return typeof window !=='undefined' ? window.console : typeof global !=='undefined' ? global.console : {
-
-    }
-});
-/** module xgrid/actions **/
-define('xgrid/Actions',[
-    "xdojo/declare",
-    'xide/types',
-    'xaction/ActionProvider',
-    'xaction/DefaultActions',
-    'xide/lodash',
-    'xide/$',
-    'xide/console'
-], function (declare, types, ActionProvider, DefaultActions, _, $, console) {
-    var _debug = false;
-    /**
-     * @class module:xgrid/Actions
-     * @lends module:xide/mixins/EventedMixin
-     *
-     * All about actions:
-     * 1. implements std before and after actions:
-     * 1.1 on onAfterAction its restoring focus and selection automatically
-     * 2. handles and forwards click, contextmenu and onAddActions     *
-     */
-    var Implementation = {
-        _ActionContextState: null,
-        onActivateActionContext: function (context, e) {
-            return;
-            /*
-            var state = this._ActionContextState;
-            if (this._isRestoring) {
-                return;
-            }
-            this._isRestoring = true;
-            if (e != null && e.selection && state) {
-                state.selection = e != null ? e.selection : state.selection;
-            }
-            var self = this;
-            _debug && console.log('onActivateActionContext', e);
-            //@TODO Fixme
-
-                var dfd = self._restoreSelection(state, 0, false, 'onActivateActionContext');
-                if (dfd && dfd.then) {
-                    dfd.then(function (e) {
-                        self._isRestoring = false;
-                    });
-                } else {
-                    self._isRestoring = false;
-                }
-
-                */
-        },
-        onDeactivateActionContext: function (context, event) {
-            //_debug && console.log('onDeactivateActionContext ' + this.id, event);
-            //this._ActionContextState = this._preserveSelection();
-        },
-        /**
-         * Callback when action is performed:before (xide/widgets/_MenuMixin)
-         * @param action {module:xaction/Action}
-         */
-        onBeforeAction: function (action) {
-        },
-        /**
-         * Callback when action is performed: after (xide/widgets/_MenuMixin)
-         *
-         * @TODO Run the post selection only when we are active!
-         *
-         *
-         * @param action {module:xaction/Action}
-         */
-        onAfterAction: function (action, actionDfdResult) {
-            action = this.getAction(action);
-            _debug && console.log('on after ' + action.command, actionDfdResult);
-            if (actionDfdResult != null) {
-                if (_.isObject(actionDfdResult)) {
-                    // post work: selection & focus
-                    var select = actionDfdResult.select,
-                        focus = actionDfdResult.focus || true;
-                    if (select) {
-                        var options = {
-                            append: actionDfdResult.append,
-                            focus: focus,
-                            delay: actionDfdResult.delay || 1,
-                            expand: actionDfdResult.expand
-                        };
-                        //focus == true ? null : this.focus();
-                        return this.select(select, null, true, options);
-                    }
-                }
-            }
-            this._emit(types.EVENTS.ON_AFTER_ACTION, action);
-        },
-        hasPermission: function (permission) {
-            return DefaultActions.hasAction(this.permissions, permission);
-        },
-        /**
-         *
-         * @param where
-         * @param action
-         * @returns {boolean}
-         */
-        addAction: function (where, action) {
-            if (action.keyCombo && _.isArray(action.keyCombo)) {
-                if (action.keyCombo.indexOf('dblclick') !== -1) {
-                    var thiz = this;
-                    function handler(e) {
-                        // @TODO: weird dblclick event duplicate in xgrid/Actions
-                        if (e._inp) {
-                            return;
-                        }
-                        e._inp = true;
-                        var row = thiz.row(e);
-                        row && thiz.runAction(action, row.data);
-                    }
-                    this.addHandle('dbclick', this.on('dblclick', handler));
-                }
-            }
-            return this.inherited(arguments);
-        },
-        /**
-         * Callback when selection changed, refreshes all actions
-         * @param evt
-         * @private
-         */
-        _onSelectionChanged: function (evt) {
-            this.inherited(arguments);
-            this.refreshActions();
-        },
-        ////////////////////////////////////////////////////////////////////////////
-        //
-        //  Original ActionMixin
-        //
-        ///////////////////////////////////////////////////////////////////////////
-        /**
-         *
-         * @param provider
-         * @param target
-         */
-        updateActions: function (provider, target) {
-            var actions,
-                actionsFiltered,
-                selection = this.getSelection();
-
-            if (provider && target) {
-                actions = provider.getItemActions();
-                actionsFiltered = this._filterActions(selection, actions, provider);
-                target.setItemActions({}, actionsFiltered);
-            }
-        },
-        startup: function () {
-            if (this._started) {
-                return;
-            }
-            var thiz = this;
-            thiz.domNode.tabIndex = -1;
-            function clickHandler(evt) {
-                //container
-                if (evt && evt.target) {
-                    var $target = $(evt.target);
-                    if ($target.hasClass('dgrid-content') || $target.hasClass('dgrid-extra')) {
-                        thiz.select([], null, false);
-                        thiz.deselectAll();
-                        if (evt.type !== 'contextmenu') {
-                            setTimeout(function () {
-                                thiz.domNode.focus();
-                                document.activeElement = thiz.domNode;
-                                $(thiz.domNode).focus();
-                            }, 1);
-                        }
-                    }
-                }
-            }
-            this.on("contextmenu", clickHandler.bind(this));
-            this._on('selectionChanged', function (evt) {
-                this._onSelectionChanged(evt);
-            }.bind(this));
-
-            this._on('onAddActions', function (evt) {
-                var actions = evt.actions,
-                    action = types.ACTION.HEADER;
-
-                if (!thiz.getAction(action)) {
-                    actions.push(thiz.createAction({
-                        label: 'Header',
-                        command: action,
-                        icon: 'fa-hdd-o',
-                        tab: 'View',
-                        group: 'Show',
-                        mixin: {
-                            actionType: 'multiToggle'
-                        },
-                        onCreate: function (action) {
-                            action.set('value', thiz.showHeader);
-                        },
-                        onChange: function (property, value) {
-                            thiz._setShowHeader(value);
-                            thiz.showHeader = value;
-                            thiz.onAfterAction(types.ACTION.HEADER);
-                        }
-                    }));
-                }
-            });
-            return this.inherited(arguments);
-        }
-    };
-    //package via declare
-    var _class = declare('xgrid.Actions', ActionProvider, Implementation);
-    _class.Implementation = Implementation;
-    return _class;
-});
-/** @module xgrid/types **/
-define('xgrid/typesLite',[
-    "xdojo/declare",
-    'xide/types',
-    'xgrid/Selection',
-    'xgrid/Keyboard',
-    'xgrid/ColumnHider',
-    'xide/mixins/EventedMixin',
-    'dgrid/OnDemandGrid',
-    'xgrid/Defaults',
-    'xgrid/Layout',
-    'xgrid/Focus',
-    'xgrid/ListRenderer',
-    'xgrid/Clipboard',
-    'xgrid/Actions',
-    'xlang/i18'
-], function (declare,types,
-             Selection,_GridKeyboardSelection,ColumnHider,
-             EventedMixin, OnDemandGrid,Defaults,Layout,Focus,
-             ListRenderer,
-             Clipboard,Actions,i18)
-{
-    /**
-     * Grid Bases
-     * @enum module:xgrid/types/GRID_BASES
-     * @memberOf module:xgrid/types
-     */
-    types.GRID_BASES = {
-        GRID: OnDemandGrid,
-        LAYOUT:Layout,
-        DEFAULTS: Defaults,
-        RENDERER: ListRenderer,
-        EVENTED: EventedMixin,
-        FOCUS:Focus,
-        i18:i18
-    };
-    /**
-     * Default Grid Options
-     * @deprecated
-     * @enum module:xgrid/types/DEFAULT_GRID_OPTIONS
-     * @memberOf module:xgrid/types
-     */
-    types.DEFAULT_GRID_OPTIONS = {
-        /**
-         * Instruct the grid to add jQuery theme classes
-         * @default true
-         * @type {bool}
-         * @constant
-         */
-        USE_JQUERY_CSS: false,
-        /**
-         * Behaviour flag to deselect an item when its already selected
-         * @default true
-         * @type {bool}
-         * @constant
-         */
-        DESELECT_SELECTED: true,
-        /**
-         * Behaviour flag to clear selection when clicked on the container node
-         * @default true
-         * @type {bool}
-         * @constant
-         */
-        CLEAR_SELECTION_ON_CLICK: true,
-        /**
-         * Item actions
-         * @default true
-         * @type {object}
-         * @constant
-         */
-        ITEM_ACTIONS: {},
-        /**
-         * Grid actions (sort, hide column, layout)
-         * @default true
-         * @type {object}
-         * @constant
-         */
-        GRID_ACTIONS: {},
-        /**
-         * Publish selection change globally
-         * @default true
-         * @type {boolean}
-         * @constant
-         */
-        PUBLISH_SELECTION: false
-    };
-    /**
-     * Grid option keys
-     * @enum module:xgrid/types/GRID_OPTION
-     * @memberOf module:xgrid/types
-     */
-    types.GRID_OPTION = {
-        /**
-         * Instruct the grid to add jQuery theme classes
-         * @default true
-         * @type {string}
-         * @constant
-         */
-        USE_JQUERY_CSS: 'USE_JQUERY_CSS',
-        /**
-         * Behaviour flag to deselect an item when its already selected
-         * @default true
-         * @type {string}
-         * @constant
-         */
-        DESELECT_SELECTED: 'DESELECT_SELECTED',
-        /**
-         * Behaviour flag to deselect an item when its already selected
-         * @default true
-         * @type {string}
-         * @constant
-         */
-        CLEAR_SELECTION_ON_CLICK:'CLEAR_SELECTION_ON_CLICK',
-        /**
-         * Actions
-         * @default true
-         * @type {string}
-         * @constant
-         */
-        ITEM_ACTIONS:'ITEM_ACTIONS',
-        /**
-         * Actions
-         * @default true
-         * @type {string}
-         * @constant
-         */
-        GRID_ACTIONS:'GRID_ACTIONS'
-    };
-    /**
-     * All grid default features
-     * @enum module:xgrid/types/GRID_DEFAULT_FEATURES
-     * @memberOf module:xgrid/types
-     */
-    types.DEFAULT_GRID_FEATURES_LITE = {
-        SELECTION: {
-            CLASS: Selection,
-            IMPLEMENTATION: {},
-            CLASSES: null
-        },
-        KEYBOARD_SELECTION: {
-            CLASS: _GridKeyboardSelection,
-            IMPLEMENTATION: {},
-            CLASSES: null
-        },
-        COLUMN_HIDER: {
-            CLASS: ColumnHider,
-            IMPLEMENTATION: {},
-            CLASSES: null
-        }
-
-    };
-    /**
-     * All Grid Features for easy access
-     * @enum module:xgrid/types/GRID_FEATURES
-     * @memberOf module:xgrid/types
-     */
-    types.GRID_FEATURES_LITE = {
-        SELECTION: {
-            CLASS: Selection,
-            IMPLEMENTATION: {},
-            CLASSES: null
-        },
-        KEYBOARD_SELECTION: {
-            CLASS: _GridKeyboardSelection,
-            IMPLEMENTATION: {},
-            CLASSES: null
-        },
-        ACTIONS: {
-            CLASS: Actions,
-            IMPLEMENTATION: {},
-            CLASSES: null
-        },
-        CLIPBOARD:{
-            CLASS:Clipboard,
-            IMPLEMENTATION:{},
-            CLASSES:null
-        },
-        COLUMN_HIDER: {
-            CLASS: ColumnHider,
-            IMPLEMENTATION: {},
-            CLASSES: null
-        }
-    };
-    return declare(null,[],{});
-});
-/** @module xgrid/Base **/
-define('xgrid/BaseLite',[
-    "xdojo/declare",
-    'xide/types',
-    'xgrid/typesLite',
-    'xide/utils/ObjectUtils',   //possibly not loaded yet
-    'xide/utils',
-    'dgrid/OnDemandGrid',
-    'xgrid/Defaults',
-    'xgrid/Layout',
-    'xgrid/Focus',
-    'xgrid/ListRenderer',
-    'xgrid/ThumbRenderer',
-    'xgrid/TreeRenderer',
-    'dgrid/util/misc'
-], function (declare,types,
-             xTypes,ObjectUtils,utils,
-             OnDemandGrid,Defaults,Layout,Focus,
-             ListRenderer,ThumbRenderer,TreeRenderer,
-             miscUtil){
-
-    var BASE_CLASSES = ['EVENTED','GRID','EDITOR','RENDERER','DEFAULTS','LAYOUT','FOCUS','i18'];
-    var DEFAULT_GRID_FEATURES = types.DEFAULT_GRID_FEATURES_LITE;
-    var GRID_BASES = types.GRID_BASES;
-    var DEFAULT_GRID_OPTIONS = types.DEFAULT_GRID_OPTIONS;
-
-    /**
-     * Short hand version of declare.classFactory for our base grid
-     * @param name
-     * @param bases
-     * @param extraClasses
-     * @param implementation
-     * @private
-     * @returns {*}
-     */
-    function classFactory(name, bases, extraClasses,implementation) {
-        return declare.classFactory(name, bases, extraClasses, implementation,GRID_BASES);
-    }
-    /**
-     * Default implementation
-     * @class module:xgrid/Base
-     * @extends module:dgrid/List
-     * @extends module:xide/mixins/EventedMixin
-     */
-    var Implementation = {
-        _isHighlighting:false,
-        _featureMap:{},
-        options: utils.clone(types.DEFAULT_GRID_OPTIONS),
-        getContextMenu:function(){},
-        getToolbar:function(){},
-        /**
-         * Returns true if there is anything rendered.
-         * @param item {obj|null}
-         * @returns {boolean}
-         */
-        isRendered:function(item){
-            if(!item){
-                return this.bodyNode!=null;
-            }
-            item = this._normalize(item);
-            var collection = this.collection;
-            if(item){
-                var itemData = item.data;
-                var idProp = collection['idProperty'];
-                var nodes = this.getRows(true);
-                if(nodes) {
-                    for (var i = 0; i < nodes.length; i++) {
-                        var node = nodes[i];
-                        var row = this.row(node);
-                        if (row && row.data && row.data && itemData && row.data[idProp] === itemData[idProp]) {
-                            return true;
-                        }
-                    }
-                }
-
-            }
-            return false;
-        },
-        /**
-         * highlightRow in dgrid/List leaks and is anyway not needed.
-         */
-        highlightRow:function(){},
-        getParent:function(){
-            return this._parent;
-        },
-        get:function(what){
-            var parent = this.getParent();
-            if(what==='iconClass') {
-                //docker:
-                if (parent && parent.icon) {
-                    return parent.icon();
-                }
-            }
-            return this.inherited(arguments);
-        },
-        set:function(what,value){
-            var parent = this.getParent();
-            if(what==='iconClass'){
-                var _set = parent.set;
-                if(_set) {
-                    _set.apply(parent, [what, value]);
-                }else if(parent && parent.icon){
-                    parent.icon(value);
-                    return true;
-                }
-            }
-            if(what==='title' && value && parent){
-                var _set = parent.set;
-                if(_set){
-                    _set.apply(parent,[what,value]);
-                }else if(parent && parent.title){
-                    parent.title(value);
-                }
-            }
-
-            if(what==='loading'){            
-                this.__loading = value;
-                if(parent){
-                    //docker:
-                    if(parent.startLoading) {
-                        var icon = parent._options.icon;
-                        if (value === true) {
-                            parent.startLoading('', 0.5);
-                            parent.icon('fa-spinner fa-spin');
-                        } else {
-                            parent.finishLoading();
-                            parent.icon(icon);
-                        }
-                        return true;
-                    }else if(parent.set){
-                        parent.set('loading',value);
-                    }
-                }
-            }
-            return this.inherited(arguments);
-        },
-        runAction:function(action){
-            if(action.command==types.ACTION.HEADER){
-                this._setShowHeader(!this.showHeader);
-            }
-            return this.inherited(arguments);
-        },
-        highlight:function(highlight){
-            var node = $(this.domNode.parentNode);
-            if(highlight){
-                if(this._isHighlighting){
-                    return;
-                }
-                this._isHighlighting = true;
-                node.addClass('highlight');
-            }else{
-
-                this._isHighlighting=false;
-                node.removeClass('highlight');
-            }
-        },
-        getState:function(state) {
-            state = this.inherited(arguments) || {};
-            state.showHeader = this.showHeader;
-            return state;
-        },
-        postMixInProperties: function () {
-            var state = this.state;
-            if (state) {
-                this.showHeader = state.showHeader;
-            }
-            return this.inherited(arguments);
-        },
-        renderArray:function(array){
-            if(this.__loading){
-                return [];
-            }
-            this._lastData = array;            
-            return this.inherited(arguments);
-        },
-        getData:function(){
-            return this._lastData;
-        },
-        refreshItem:function(item,silent){
-            if (silent) {
-                this._muteSelectionEvents = true;
-            }
-            this.collection.emit('update', {
-                target: item
-            });
-            if (silent) {
-                this._muteSelectionEvents = false;
-            }
-        },
-        onShow:function(){
-            this._emit(types.EVENTS.ON_VIEW_SHOW,this);
-            return this.inherited(arguments);
-        },
-        isActive:function(testNode){
-            return utils.isDescendant(this.domNode,testNode || document.activeElement);
-        },
-        _showHeader:function(show){
-            $(this.domNode).find('.dgrid-header').each(function(i,el){
-                $(el).css('display',show ? '' : 'none' );
-            });
-
-            $(this.domNode).find('.dgrid-scroller').each(function(i,el){
-                $(el).css('margin-top',show ? 26 : 0 );
-            });
-
-        },
-        destroy:function(){
-            this._emit('destroy',this);
-            return this.inherited(arguments);
-        },
-        hasFeature:function(name){
-            return _contains(['name'],_.keys(this._featureMap));
-        },
-        /**
-         * Return current row's elements or data
-         * @param domNodes {boolean} return dom instead of data. Default false.
-         * @param filterFunction
-         * @returns {*}
-         */
-        getRows:function(domNodes,filterFunction){
-            var result = [],
-                self = this;
-            var nodes = $(self.domNode).find('.dgrid-row');
-            _.each(nodes,function(node){
-                var _row = self.row(node);
-                if(_row && _row.element){
-                    result.push(_row[domNodes ? 'element' : 'data']);
-                }
-            });
-            if (filterFunction) {
-                return result.filter(filterFunction);
-            }
-            return result;
-        },
-        startup:function(){
-            var result = this.inherited(arguments);
-            if(this.columns) {
-                _.each(this.columns,function(column){
-                    if (column.width) {
-                        this.styleColumn(parseInt(column.id), 'width:' + column.width);
-                    }
-                },this);
-            }
-
-            var self = this;
-            this.showExtraSpace && this.on('dgrid-refresh-complete',function(){
-                var rows = self.getRows();
-                var _extra = $(self.contentNode).find('.dgrid-extra');
-                if(!rows.length){
-                    return;
-                }
-
-                if(!_extra.length){
-                    _extra = $('<div class="dgrid-extra" style="width:100%;height:80px"></div>');
-                    $(self.contentNode).append(_extra);
-                    _extra.on('click',function(){
-                        self.deselectAll();
-                    });
-                    _extra.on('contextmenu',function(){
-                        self.deselectAll();
-                    })
-                }
-            });
-
-            return result;
-        },
-        removeRow:function(){
-            var res = this.inherited(arguments);
-            var self = this;
-            if(this.showExtraSpace) {
-                var rows = self.getRows();
-                var _extra = $(self.contentNode).find('.dgrid-extra');
-                if (!rows.length) {
-                    _extra.remove();
-                }
-            }
-            return res;
-        }
-    };
-    /**
-     * Create root class with declare and default implementation
-     */
-    var _default = declare('xgrid.DefaultLite', null, Implementation);
-
-    /**
-     * 2-dim array search
-     * @param left {string[]}
-     * @param keys {string[]}
-     * @returns {boolean}
-     * @private
-     */
-    function _contains(left, keys) {
-        return keys.some(function (v) {
-            return left.indexOf(v) >= 0;
-        });
-    }
-
-    /**
-     * Find default keys in a feature struct and recompse user feature
-     * @param feature {object} feature struct
-     * @param defaultFeature {object}
-     * @returns {object} recomposed feature
-     */
-    function getFeature(feature, defaultFeature) {
-        //is new feature, return the mix of default props and customized version
-        if (_contains(['CLASS','CLASSES','IMPLEMENTATION'],_.keys(feature))) {
-            return utils.mixin(utils.cloneKeys(defaultFeature),feature);
-        }
-        return defaultFeature;
-    }
-
-    /**
-     * Grid class factory
-     * @param name {string} A name for the class created
-     * @param baseClass {object} the actual implementation (default root class, declared above)
-     * @param features {object} the feature map override
-     * @param gridClasses {object} the base grid classes map override
-     * @param args {object} root class override
-     * @param _defaultBases {object}
-     * @memberOf module:xgrid/Base
-     * @returns {module:xgrid/Base}
-     */
-    function createGridClass(name, baseClass, features, gridClasses, args,_defaultBases) {
-        var _isNewBaseClass = false;
-        baseClass = baseClass || _default;
-        //simple case, no base class and no features
-        if (!baseClass && !features) {
-            return _default;
-        }
-        if (baseClass) {
-            _isNewBaseClass = _contains(BASE_CLASSES,_.keys(gridClasses));
-            var defaultBases = utils.cloneKeys(_defaultBases || GRID_BASES);
-            if (_isNewBaseClass) {
-                utils.mixin(defaultBases, gridClasses);
-                //remove empty
-                defaultBases = _.pick(defaultBases, _.identity);
-            }
-            //recompose base class
-            baseClass = classFactory(name, defaultBases, [_default], baseClass);
-        }
-
-        var newFeatures = [],
-            featureMap = {};
-
-        //case: base class and features
-        if (baseClass && features) {
-            var _defaultFeatures = utils.cloneKeys(DEFAULT_GRID_FEATURES);
-            utils.mixin(_defaultFeatures, features);
-
-            for (var featureName in _defaultFeatures) {
-                var feature = _defaultFeatures[featureName];
-                if (!_defaultFeatures[featureName]) {
-                    continue;
-                }
-                var newFeature = null;
-                if (feature === true) {
-                    //is a base feature
-                    newFeature = DEFAULT_GRID_FEATURES[featureName];
-                } else if (DEFAULT_GRID_FEATURES[featureName]) {
-                    //is new/extra feature
-                    newFeature = getFeature(feature, DEFAULT_GRID_FEATURES[featureName]);
-                } else {
-                    //go on
-                    newFeature = feature;
-                }
-                if (newFeature) {
-                    var featureClass = classFactory(featureName, newFeature['CLASSES'] || [], [newFeature['CLASS']], newFeature['IMPLEMENTATION']);
-                    newFeatures.push(featureClass);
-                    featureMap[featureName]=featureClass;
-                }
-            }
-            //recompose
-            if (newFeatures.length > 0) {
-                baseClass = classFactory(name, [baseClass], newFeatures, args);
-            }
-            //complete
-            baseClass.prototype._featureMap = featureMap;
-        }
-        return baseClass;
-    }
-
-
-    var Module = createGridClass('xgrid/Base',{
-            options: utils.clone(DEFAULT_GRID_OPTIONS)
-        },
-        //features
-        {
-            SELECTION: true,
-            KEYBOARD_SELECTION: true,
-            PAGINATION: false,
-            COLUMN_HIDER: false
-        },
-        //bases, no modification
-        null,
-        {
-
-        });
-
-    Module.createGridClass = createGridClass;
-
-    //track defaults on module
-    Module.classFactory = classFactory;
-    Module.DEFAULT_GRID_FEATURES = DEFAULT_GRID_FEATURES;
-    Module.DEFAULT_GRID_BASES = GRID_BASES;
-    Module.DEFAULT_GRID_OPTIONS = DEFAULT_GRID_OPTIONS;
-    Module.DEFAULT_GRID_OPTION_KEYS = types.DEFAULT_GRID_OPTION_KEYS;
-
-    return Module;
-
-});
-/** @module xgrid/Grid **/
-define('xgrid/GridLite',[
-    'dojo/_base/declare',
-    'xide/types',
-    './BaseLite'
-],function (declare,types,Base) {
-    /**
-     *
-     * Please read {@link module:xgrid/types}
-     *
-     * @class module:xgrid/Grid
-     * @augments module:xgrid/Base
-     */
-    var grid = declare('xgrid/Grid',Base,{});
-
-    grid.createGridClass = Base.createGridClass;
-
-    //track defaults on module
-    grid.classFactory = Base.classFactory;
-    grid.DEFAULT_GRID_FEATURES = types.DEFAULT_GRID_FEATURES_LITE;
-    grid.DEFAULT_GRID_BASES = Base.DEFAULT_GRID_BASES;
-    grid.DEFAULT_GRID_OPTIONS = types.DEFAULT_GRID_OPTIONS;
-    grid.DEFAULT_GRID_OPTION_KEYS = types.DEFAULT_GRID_OPTION_KEYS;
-
-    return grid;
-});
-/** @module xgrid/MultiRenderer **/
-define('xgrid/MultiRenderer',[
-    "xdojo/declare",
-    'xide/types',
-    'xgrid/Renderer',
-    'dojo/_base/kernel'
-], function (declare, types, Renderer,dojo) {
-    /**
-     * @class module:xgrid/MultiRenderer
-     * @extends module:xgrid/Renderer
-     */
-    var Implementation = {
-        renderers: null,
-        selectedRenderer: null,
-        lastRenderer: null,
-        rendererActionRootCommand: 'View/Layout',
-        runAction:function(action){
-            action = this.getAction(action);
-            if(action.command.indexOf(this.rendererActionRootCommand)!==-1){
-                var parentAction = action.getParent ?  action.getParent() : null;
-                action._originEvent = 'change';
-                this.setRenderer(action.value);
-                if(parentAction) {
-                    parentAction.set('icon', action.get('icon'));
-                    var rendererActions = parentAction.getChildren();
-                    _.each(rendererActions, function (child) {
-                        child._oldIcon && child.set('icon', child._oldIcon);
-                    });
-                }
-                action.set && action.set('icon', 'fa-check');
-                return true;
-            }
-            return this.inherited(arguments);
-        },
-        /**
-         * Impl. set state
-         * @param state
-         * @returns {object|null}
-         */
-        setState:function(state){
-            var renderer = state.selectedRenderer ? dojo.getObject(state.selectedRenderer) : null;
-            if(renderer){
-                this.setRenderer(renderer);
-                this.set('collection',this.collection.getDefaultCollection());
-
-            }
-            return this.inherited(arguments);
-        },
-        /**
-         * Impl. get state
-         * @param state
-         * @returns {object}
-         */
-        getState:function(state){
-            state = this.inherited(arguments) || {};
-            if(this.selectedRenderer) {
-                state.selectedRenderer = this.getSelectedRenderer.declaredClass;
-            }
-            return state;
-        },
-        getRendererActions: function (_renderers, actions) {
-            var root = this.rendererActionRootCommand,
-                thiz = this,
-                renderActions = [],
-                renderers = _renderers || this.getRenderers(),
-                VISIBILITY = types.ACTION_VISIBILITY,
-                index = 1;
-
-            actions = actions || [];
-
-            //root
-            renderActions.push(this.createAction({
-                label: 'Layout',
-                command: root,
-                icon: 'fa-laptop',
-                tab: 'View',
-                group: 'Layout',
-                mixin:{
-                    closeOnClick:false
-                },
-                onCreate:function(action){
-                    action.value = thiz.selectedRenderer;
-
-                    action.setVisibility(VISIBILITY.ACTION_TOOLBAR, false).
-                    setVisibility(VISIBILITY.RIBBON,{expand:true});
-                }
-            }));
-            /**
-             *
-             * @param col
-             * @private
-             */
-            function createEntry(label, icon, Renderer) {
-                var selected = Renderer == thiz.selectedRenderer;
-                /*
-                var mapping = {
-                    "change":{
-                        //action to widget mapping
-                        input:ActionValueWidget.createTriggerSetting('value','checked',function(event,value,mapping){
-                            //return this.actionValue;
-                            return value;
-                        }),
-
-                        //widget to action mapping
-                        output:utils.mixin(ActionValueWidget.createTriggerSetting('checked','value',function(){
-                            return this.actionValue;
-                        }),{
-                            ignore:function(event,value){
-                                return value === false;
-                            }
-                        })
-                    }
-                };
-                */
-
-                /*
-                var widgetArgs = {
-                    actionValue:Renderer,
-                    mapping:mapping,
-                    checked: selected,
-                    label:label
-                };
-                */
-
-                var keycombo = 'shift f' + index;
-                index++;
-
-                var _renderer = Renderer;
-                var _action = null;
-                var ACTION = null;
-
-                _action = thiz.createAction({
-                    label: label,
-                    command: root + '/' + label,
-                    icon: icon,
-                    tab: 'View',
-                    group: 'Layout',
-                    mixin:{
-                        value:Renderer,
-                        addPermission:true,
-                        closeOnClick:false
-                    },
-                    keycombo:[keycombo],
-                    onCreate:function(action){
-                        action._oldIcon = icon;
-                        action.actionType = types.ACTION_TYPE.SINGLE_TOGGLE;
-                        //action.set('value',Renderer);
-                        action.value = Renderer;
-                        /*
-                        var _visibilityMixin = {
-                            widgetArgs: {
-                                actionValue:Renderer,
-                                mapping:mapping,
-                                group: thiz.id+'_renderer_all',
-                                checked: selected,
-                                label:label,
-                                iconClass: null,
-                                title:'test'
-                            }
-                        };
-                        action.setVisibility(types.ACTION_VISIBILITY_ALL,_visibilityMixin);
-                        */
-
-                    }
-                });
-                renderActions.push(_action);
-                return renderActions;
-            }
-
-            _.each(renderers,function (Renderer) {
-                var impl = Renderer.Implementation || Renderer.prototype;
-                if (impl._getLabel) {
-                    createEntry(impl._getLabel(), impl._getIcon(), Renderer);
-                }
-            });
-            return renderActions;
-        },
-        getSelectedRenderer:function(){
-            return this.selectedRenderer.prototype;
-        },
-        startup: function () {
-            var thiz = this;
-            this._on('onAddGridActions', function (evt) {
-                var renderActions = thiz.getRendererActions(thiz.getRenderers(), evt.actions);
-                renderActions.forEach(function (action) {
-                    evt.actions.push(action);
-                });
-            });
-            this.inherited(arguments);
-            //add new root class
-            this.selectedRenderer && $(this.domNode).addClass(this.getSelectedRenderer()._getLabel());
-        },
-        getRenderers: function () {
-            return this.renderers;
-        },
-        setRenderer: function (renderer,_focus) {
-            //track focus and selection
-            var self = this,
-                selection = self.getSelection(),
-                focused = self.getFocused(),
-                selected = self.getSelectedRenderer();
-
-            var args = {
-                'new': renderer,
-                'old': self.selectedRenderer
-            };
-            var node$ = $(this.domNode);
-            //remove renderer root css class
-            node$.removeClass(selected._getLabel());
-            //call renderer API
-            selected.deactivateRenderer.apply(this, args);
-
-            //tell everyone
-            this._emit('onChangeRenderer', args);
-
-            //update locals
-            this.lastRenderer = this.selectedRenderer;
-            this.selectedRenderer = renderer;
-
-            //?
-            this.selectedRendererClass = renderer.prototype.declaredClass;
-
-            //add new root class
-            node$.addClass(renderer.prototype._getLabel());
-
-            //call  API
-            renderer.prototype.activateRenderer.apply(this, args);
-
-            //reset store
-            this.collection.reset();
-
-            //refresh, then restore sel/focus
-            var refresh = this.refresh();
-
-            refresh && refresh.then && refresh.then(function(){
-                self._emit('onChangedRenderer', args);
-            });
-            return refresh;
-        }
-    };
-
-
-    /**
-     * Forward custom renderer method
-     * @param who
-     * @param method
-     */
-    function forward(who,method){
-        Implementation[method]=function(){
-            var parent = this.getSelectedRenderer();
-            if (parent[method]) {
-                return parent[method].apply(this, arguments);
-            }
-            return this.inherited(arguments);
-        };
-    }
-
-    //@TODO: this should be all public methods in dgrid/List ?
-    _.each(['row','removeRow','renderRow','insertRow','activateRenderer','deactivateRenderer'],function(method){
-        forward(Implementation,method);
-    });
-
-
-    //package via declare
-    var _class = declare('xgrid.MultiRenderer', null, Implementation);
-    _class.Implementation = Implementation;
-
-    return _class;
-});
 define('xide/editor/Registry',[
     'dcl/dcl',
     'xdojo/declare',
@@ -18575,6 +6873,451 @@ define('xide/editor/Default',[
     return _class;
 
 });
+/** module:xide/registry **/
+define('xide/registry',[
+	"dojo/_base/array", // array.forEach array.map
+	"dojo/_base/window", // win.body
+    "xdojo/has"
+], function(array, win, has){
+	/**
+	 * @TODOS:
+	 * - add namespaces
+	 * - remove window
+	 * - augment consumer API
+	 * - use std array
+	 * - add framework constraint
+	 * - move dom api out of here
+	 * - define widget.id better
+	 * - add search by class
+     */
+	var _widgetTypeCtr = {}, hash = {};
+	var registry =  {
+		// summary:
+		//		Registry of existing widget on page, plus some utility methods.
+
+		// length: Number
+		//		Number of registered widgets
+		length: 0,
+		add: function(widget){
+			// summary:
+			//		Add a widget to the registry. If a duplicate ID is detected, a error is thrown.
+			// widget: dijit/_WidgetBase
+			//		Any dijit/_WidgetBase subclass.
+			if(this._hash[widget.id]){
+                if(has('xblox')) {
+                    this.remove(widget.id);
+                    this.add(widget);
+                }else{
+                    throw new Error("Tried to register widget with id==" + widget.id + " but that id is already registered");
+                }
+			}
+			hash[widget.id] = widget;
+			this.length++;
+		},
+		/**
+		 * Remove a widget from the registry. Does not destroy the widget; simply
+		 * removes the reference.
+		 * @param id
+         */
+		remove: function(id){
+			if(hash[id]){
+				delete hash[id];
+				this.length--;
+			}
+		},
+		/**
+		 *
+		 * @param id {String|Widget}
+		 * @returns {String|Widget}
+         */
+		byId: function( id){
+			// summary:
+			//		Find a widget by it's id.
+			//		If passed a widget then just returns the widget.
+			return typeof id == "string" ? hash[id] : id;	// dijit/_WidgetBase
+		},
+		byNode: function(/*DOMNode*/ node){
+			// summary:
+			//		Returns the widget corresponding to the given DOMNode
+			return hash[node.getAttribute("widgetId")]; // dijit/_WidgetBase
+		},
+
+		/**
+		 * Convert registry into a true Array
+		 * @example:
+		 *	Work with the widget .domNodes in a real Array
+		 *	array.map(registry.toArray(), function(w){ return w.domNode; });
+		 * @returns {obj[]}
+         */
+		toArray: function(){
+			return _.values(_.mapKeys(hash, function(value, key) { value.id = key; return value; }));
+		},
+		/**
+		 * Generates a unique id for a given widgetType
+		 * @param widgetType {string}
+		 * @returns {string}
+         */
+		getUniqueId: function(widgetType){
+			var id;
+			do{
+				id = widgetType + "_" +
+					(widgetType in _widgetTypeCtr ?
+						++_widgetTypeCtr[widgetType] : _widgetTypeCtr[widgetType] = 0);
+			}while(hash[id]);
+			return id;
+		},
+		/**
+		 * Search subtree under root returning widgets found.
+		 * Doesn't search for nested widgets (ie, widgets inside other widgets).
+		 * @param root {HTMLElement} Node to search under.
+		 * @param skipNode {HTMLElement} If specified, don't search beneath this node (usually containerNode).
+         * @returns {Array}
+         */
+		findWidgets: function(root, skipNode){
+			var outAry = [];
+			function getChildrenHelper(root){
+				for(var node = root.firstChild; node; node = node.nextSibling){
+					if(node.nodeType == 1){
+						var widgetId = node.getAttribute("widgetId");
+						if(widgetId){
+							var widget = hash[widgetId];
+							if(widget){	// may be null on page w/multiple dojo's loaded
+								outAry.push(widget);
+							}
+						}else if(node !== skipNode){
+							getChildrenHelper(node);
+						}
+					}
+				}
+			}
+			getChildrenHelper(root);
+			return outAry;
+		},
+		_destroyAll: function(){
+			// summary:
+			//		Code to destroy all widgets and do other cleanup on page unload
+
+			// Clean up focus manager lingering references to widgets and nodes
+			// Destroy all the widgets, top down
+			_.each(registry.findWidgets(win.body()),function(widget){
+				// Avoid double destroy of widgets like Menu that are attached to <body>
+				// even though they are logically children of other widgets.
+				if(!widget._destroyed){
+					if(widget.destroyRecursive){
+						widget.destroyRecursive();
+					}else if(widget.destroy){
+						widget.destroy();
+					}
+				}
+			});
+		},
+		getEnclosingWidget: function(/*DOMNode*/ node){
+			// summary:
+			//		Returns the widget whose DOM tree contains the specified DOMNode, or null if
+			//		the node is not contained within the DOM tree of any widget
+			while(node){
+				var id = node.nodeType == 1 && node.getAttribute("widgetId");
+				if(id){
+					return hash[id];
+				}
+				node = node.parentNode;
+			}
+			return null;
+		},
+
+		// In case someone needs to access hash.
+		// Actually, this is accessed from WidgetSet back-compatibility code
+		_hash: hash
+	};
+	return registry;
+});
+
+/** @module xide/widgets/_Widget **/
+define('xide/widgets/_Widget',[
+    'xdojo/declare',
+    'dcl/dcl',
+    'xide/utils',
+    'xide/mixins/EventedMixin',
+    'xide/registry',
+    'xlang/i18'
+], function (declare,dcl,utils,EventedMixin,registry,i18) {
+    var forwardMethods = ['resize'];
+    function _resize(what){
+        try {
+            if (typeof what['resize'] === "function" && what._started) {
+                what['resize'].apply(what,arguments);
+            }else{
+                console.warn('widget has no resize or is not started yet ' + what.declaredClass,[what,what.resize]);
+            }
+        }catch(e){
+            logError(e,'error resizing sub widget ' + what.id + ' class:'+what.declaredClass);
+        }
+    }
+
+    function forward(method,args){
+        _.each(this._widgets,function(what){
+            if (what && typeof what[method] === "function") {
+                what[method].apply(what,args);
+            }
+        },this);
+    }
+
+    function set(prop,value){
+        _.each(this._widgets,function(what){
+            if (what && what[prop]) {
+                what[prop] = value;
+            }
+        },this);
+    }
+
+    /**
+     * @class module:xide/widgets/_Widget
+     */
+    var Implementation = {
+        _widgets:null,
+        __eventHandles:null,
+        _isResizing:false,
+        cssClass:'',
+        /**
+         * @type {module:xide/manager/ContextBase}
+         */
+        ctx:null,
+        /**
+         *
+         * @returns {module:xide/manager/ContextBase}
+         */
+        getContext:function(){
+            return this.ctx;
+        },
+        onResizeBegin:function(){
+            this._isResizing=true;
+            _.each(this._widgets,function(what){
+                what && (what._isResizing=true);
+            },this);
+        },
+        onResizeEnd:function(){
+            this._isResizing=false;
+            _.each(this._widgets,function(what){
+                what && (what._isResizing=false);
+            },this);
+        },
+        _toWidget:function(element){
+            if(element && element.id){
+                var widget = registry.byId(element.id);
+                if(widget){
+                    return widget;
+                }
+            }
+            return null;
+        },
+        parentByClass :function(className,max){
+            var i = 0,
+                element = this.domNode,
+                widget = null;
+            max = max || 20;
+            while (!widget && i < max && element) {
+                if (element) {
+                    var _widget = this._toWidget(element);
+                    if(_widget && _widget.declaredClass){
+                        if(_widget.declaredClass === className){
+                            widget = _widget;
+                        }
+                    }
+                    element = element.parentNode;
+                }
+                i++;
+            }
+            return widget;
+        },
+        _startWidgets:function(){
+            var result = false;
+            if(this._widgets) {
+                for (var i = 0; i < this._widgets.length; i++) {
+                    var w = this._widgets[i];
+                    if (w && !w._started && w.startup) {
+                        w.startup();
+                        w._started = true;
+                        result = true;
+                        w._emit('startup');
+                    }
+                }
+            }
+            return result;
+        },
+        _createForward:function(method){
+            var self = this;
+            if(!this[method]){
+                this[method] = function(){
+                    for (var i = 0; i < self._widgets.length; i++) {
+                        var w = self._widgets[i];
+                        w[method] && w[method]();
+                    }
+                };
+            }
+        },
+        onShow:function(){
+            if(this._widgets){
+                this._startWidgets();
+                for (var i = 0; i < this._widgets.length; i++) {
+                    var w = this._widgets[i];
+                    if(w && w!==this) {
+                        w._showing=true;
+                        w.open = true;
+                        w.onShow && w.onShow();
+                        w._emit && w._emit('show',{});
+
+                    }
+                }
+            }
+        },
+        onHide:function(){
+            if(this._widgets){
+                for (var i = 0; i < this._widgets.length; i++) {
+                    var w = this._widgets[i];
+                    
+                    if(!w){
+                        console.warn('invalid widget');
+                    }else {
+                        if(w!==this){
+                            w._showing = false;
+                            w.open = false;
+                            w.onHide && w.onHide();
+                            try{
+                                w._emit && w._emit('hide',{});
+                            }catch(e){
+                                logError(e,'error emitting on-hide');
+                            }
+
+                        }
+                    }
+                }
+            }
+        },
+        _getChildren:function(){
+            return this._widgets;
+        },
+        debounce:function(methodName,_function,delay,options,now){
+            return utils.debounce(this,methodName,_function,delay,options,now);
+        },
+        __addHandler:function(element,type,handler){
+            if(!element){
+                return;
+            }
+            handler = _.isString(handler) ? this[handler] ? this[handler] : null : handler;
+            var self = this;
+
+            if(typeof handler ==='function'){
+                return this.__on(element,type,null,function(){
+                    handler.apply(self,arguments);
+                });
+            }
+            return false;
+        },
+        _shouldResizeWidgets:function(){
+            return true;
+        },
+        resize:function(){
+            var _args = arguments;
+            this.inherited && this.inherited(_args);
+            if(this.shouldResizeWidgets && this.shouldResizeWidgets()===false){
+                return;
+            }
+            //if(this._isResizing ===true){return;}
+            if(this._widgets){
+                for (var i = 0; i < this._widgets.length; i++) {
+                    var what = this._widgets[i];
+                    if (what) {
+                        what.resizeToParent && utils.resizeTo(what, this, true, true);
+                        if (what && typeof what['resize'] === "function" && what._started) {
+                            what['resize'].apply(what, _args);
+                        }
+                    }
+                }
+            }
+        },
+        destroy:function(){
+            this.inherited && this.inherited(arguments);
+            var _widgets = this._widgets;
+            if (_widgets) {
+                for (var i = 0; i < _widgets.length; i++) {
+                    var widget = _widgets[i];
+                    if (widget && widget != this && widget._destroyed !== true) {
+                        utils.destroy(widget);
+                    }
+                }
+                delete this._widgets;
+                this._widgets = null;
+            }
+            if(this.domNode) {
+                registry.remove(this.domNode.id);
+                utils.destroy(this.domNode);
+            }
+            this._destroyed = true;
+        },
+        onAdded:function(){
+        },
+        /**
+         *
+         * @param mixed
+         * @param options
+         * @param parent
+         * @param startup
+         * @param select
+         * @param extension
+         * @returns {*}
+         */
+        add:function(mixed,options,parent,startup,select,extension){
+            if(mixed==this){
+                return mixed;
+            }
+            !this._widgets && (this._widgets = []);
+
+            var widgets = this._widgets;
+            if(_.isNumber(options)){
+                options = null;
+            }
+            if(options!==null && !_.isObject(options)){
+                options ={};
+            }
+            var result = null;
+
+            _.isEmpty(options) && (options=null);
+
+            var _parent = parent || ( parent!==false ? this.containerNode || this.domNode : null);
+
+            //case 1: instance or object
+            if((mixed && !options && !parent) || (!options && !parent && !startup && !select && !extension)){
+                widgets.indexOf(mixed)==-1 && (widgets.push(mixed));
+                return mixed;
+
+            //case 2: proto
+            }else if(mixed && options){
+                result = utils.addWidget(mixed,options,this,_parent,startup,null,null,select,extension);
+                widgets.push(result);
+            }
+            return result;
+        },
+        remove:function(mixed){
+            this._widgets && this._widgets.remove(mixed);
+        },
+        buildRendering:function() {
+            this.inherited && this.inherited(arguments);
+            var node = utils.getNode(this);
+            node && this.cssClass && $(node).addClass(this.cssClass);
+            node && this.style && $(node).attr('style',this.style);
+        }
+    };
+
+    var _Widget = dcl([EventedMixin.dcl,i18.dcl],Implementation);
+    var Module = declare('xide/widgets/_Widget',i18,Implementation);
+    Module.Implmentation = Implementation;
+    Module.dcl = _Widget;
+    dcl.chainAfter(_Widget,'destroy');
+    dcl.chainAfter(_Widget,'onResizeBegin');
+    dcl.chainAfter(_Widget,'onResizeEnd');
+    return Module;
+});
+
 define('xide/_Popup',[
     'dcl/dcl'
 ],function (dcl){
@@ -18611,184 +7354,197 @@ define('xide/views/_Dialog',[
     'dojo/Deferred',
     'xide/_Popup'
 
-], function (dcl, types,
-    utils, EventedMixin,
-    _Widget, Deferred, _Popup
+], function (dcl,types,
+             utils, EventedMixin,
+             _Widget,Deferred,_Popup
 ) {
 
 
 
-        var ctx = window.sctx,
-            root;
+    var ctx = window.sctx,
+        root;
 
-        var _BootstrapDialog = typeof BootstrapDialog !== 'undefined' ? BootstrapDialog : {};
+    var _BootstrapDialog  = typeof BootstrapDialog !=='undefined' ? BootstrapDialog : {};
 
-        var Module = dcl([_Widget.dcl, EventedMixin.dcl], {
-            declaredClass: 'xide/views/_Dialog',
-            //message: null,
-            cssClass: 'bootstrap3-dialog',
-            containerClass: '',
-            type: types.DIALOG_TYPE.WARNING,
-            size: types.DIALOG_SIZE.SIZE_WIDE,
-            //defaultOptions:_BootstrapDialog.defaultOptions,
-            dlg: null,
-            bodyCSS: null,
-            okButtonClass: 'btn-danger',
-            startDfd: null,
-            _ready: false,
-            getData: function () {
-                return null;
-            },
-            getInstance: function (args) {
-                this.defaultOptions = typeof BootstrapDialog !== 'undefined' ? BootstrapDialog.defaultOptions : {};
+    var Module = dcl([_Widget.dcl,EventedMixin.dcl],{
+        declaredClass:'xide/views/_Dialog',
+        //message: null,
+        cssClass:'bootstrap3-dialog',
+        containerClass:'',
+        type: types.DIALOG_TYPE.WARNING,
+        size: types.DIALOG_SIZE.SIZE_WIDE,
+        //defaultOptions:_BootstrapDialog.defaultOptions,
+        dlg:null,
+        bodyCSS:null,
+        okButtonClass:'btn-danger',
+        startDfd:null,
+        _ready:false,
+        getData:function(){
+            return null;
+        },
+        getInstance:function(args){
 
-                if (this.dlg) {
-                    return this.dlg;
-                }
-                args = this.buildArgs(args);
-                var instance = new _BootstrapDialog(args),
-                    oldRealize = instance.realize,
-                    self = this;
+            this.defaultOptions  = typeof BootstrapDialog !=='undefined' ? BootstrapDialog.defaultOptions : {};
 
-                if (!instance) {
-                    console.error('BootstrapDialog not loaded, abort');
-                    return;
-                }
-                instance.realize = function () {
-                    oldRealize.apply(instance, null);
-                    self.buildRendering(instance);
-                    $.each(args.buttons, function (index, button) {
-                        var $button = instance.getButton(button.id);
-                        if ($button && button.focus == true) {
-                            $button.addClass('active');
-                        }
-                    });
+            if(this.dlg){
+                return this.dlg;
+            }
 
-                    $(instance.$modalDialog).draggable({ handle: ".modal-header" });
-                }
-                instance.owner = this;
-                this.dlg = instance;
-                return instance;
+            args = this.buildArgs(args);
 
-            },
-            buildRendering: function (dlg) {
-                this.containerNode = this.domNode = dlg.$modalBody[0];
-                dlg.$modalBody.addClass(this.containerClass);
-                this.bodyCSS && dlg.$modalBody.css(this.bodyCSS);
-            },
-            onshown: function (dlg) {
-                dlg.owner.resize();
-                dlg.owner.onShow.apply(dlg.owner, []);
-                var zIndexBackdrop = window.__nextZ ? window.__nextZ(1) : 1040;
-                var zIndexModal = window.__nextZ ? window.__nextZ() : 1050;
+            var instance = new _BootstrapDialog(args),
+                oldRealize = instance.realize,
+                self = this;
 
-                dlg.$modal.css('z-index', zIndexBackdrop);
-                dlg.$modalDialog.css('z-index', zIndexModal);
+            if(!instance){
+                console.error('BootstrapDialog not loaded, abort');
+                return;
+            }
 
-                this._ready = true;
-            },
-            onReady: function () {
-                var self = this;
-                setTimeout(function () {
-                    self._ready = true;
-                }, 100);
-
-            },
-            startup: function () {
-                var dlg = this.getInstance();
-            },
-            destroy: function () {
-                this.dlg && this.dlg.close();
-            },
-            show: function (args) {
-                var self = this;
-                if (!this.startDfd) {
-                    this.startDfd = new Deferred();
-                    this.startDfd.then(function () {
-                        self.onReady();
-                    });
-                }
-                var dlg = this.getInstance(args);
-                dlg.open();
-                setTimeout(function () {
-                    self._ready = true;
-                }, 1000);
-                return this.startDfd;
-            },
-
-            getButtons: function () {
-                var thiz = this;
-                var buttons = [{
-                    icon: 'fa-check',
-                    label: thiz.localize('Ok'),
-                    cssClass: thiz.okButtonClass || 'btn-primary',
-                    hotkey: 13, // Enter.
-                    autospin: false,
-                    focus: true,
-                    id: utils.createUUID(),
-                    action: function (dialogRef) {
-                        if (!thiz._ready) {
-                            return;
-                        }
-                        dialogRef.close(false);
-                        try {
-                            dialogRef.owner.onOk(thiz.getData());
-                        } catch (e) {
-                            console.error('Error in dlg ok:', e);
-                        }
+            instance.realize = function(){
+                oldRealize.apply(instance,null);
+                self.buildRendering(instance);
+                $.each(args.buttons, function (index, button) {
+                    var $button = instance.getButton(button.id);
+                    if($button && button.focus==true){
+                        $button.addClass('active');
                     }
-                },
-                {
-                    icon: 'glyphicon glyphicon-check',
-                    label: thiz.localize('CANCEL'),
-                    cssClass: 'btn-info',
-                    autospin: false,
-                    id: utils.createUUID(),
-                    action: function (dialogRef) {
-                        dialogRef.close();
-                        dialogRef.owner.onCancel();
-                    }
-
-                }
-                ];
-
-                return buttons;
-
-            },
-            buildArgs: function (args) {
-                args = args || this.defaultOptions || {};
-                utils.mixin(args, {
-                    type: this.type,
-                    size: this.size,
-                    message: this.message,
-                    title: this.title,
-                    buttons: this.buttons,
-                    onOk: this.onOk,
-                    onCancel: this.onCancel,
-                    onShow: this.onShow,
-                    onshown: this.onshown
-                    //defaultOptions:_BootstrapDialog.defaultOptions,
                 });
-                args.title = this.localize(args.title)
-                return args;
+
+                $(instance.$modalDialog).draggable({ handle: ".modal-header" });
+            }
+
+            instance.owner = this;
+
+
+            this.dlg = instance;
+
+            return instance;
+
+        },
+        buildRendering:function(dlg){
+            this.containerNode= this.domNode = dlg.$modalBody[0];
+            dlg.$modalBody.addClass(this.containerClass);
+            this.bodyCSS && dlg.$modalBody.css(this.bodyCSS);
+        },
+        onshown:function(dlg){
+            dlg.owner.resize();
+            dlg.owner.onShow.apply(dlg.owner,[]);
+            var zIndexBackdrop = window.__nextZ ? window.__nextZ(1) : 1040;
+            var zIndexModal = window.__nextZ ? window.__nextZ() : 1050;
+
+            dlg.$modal.css('z-index',zIndexBackdrop);
+            dlg.$modalDialog.css('z-index',zIndexModal);
+
+            this._ready = true;
+        },
+        onReady:function(){
+            var self = this;
+            setTimeout(function(){
+                self._ready = true;
+            },100);
+
+        },
+        startup:function(){
+            var dlg = this.getInstance();
+        },
+        destroy:function(){
+            this.dlg && this.dlg.close();
+        },
+        show:function(args){
+
+            var self=this;
+
+            if(!this.startDfd){
+                this.startDfd = new Deferred();
+                this.startDfd.then(function(){
+                    self.onReady();
+                });
+            }
+
+            var dlg = this.getInstance(args);
+
+            dlg.open();
+
+            setTimeout(function(){
+                self._ready=true;
+            },1000);
+
+            return this.startDfd;
+
+        },
+
+        getButtons:function(){
+
+            var thiz = this;
+
+            var buttons = [{
+                icon: 'fa-check',
+                label: thiz.localize('Ok'),
+                cssClass: thiz.okButtonClass || 'btn-primary',
+                hotkey: 13, // Enter.
+                autospin: false,
+                focus:true,
+                id:utils.createUUID(),
+                action: function(dialogRef) {
+                    if(!thiz._ready){
+                        return;
+                    }
+                    dialogRef.close(false);
+                    dialogRef.owner.onOk(thiz.getData());
+                }
             },
-            constructor: function (args) {
-                this.buttons = this.getButtons();
-                utils.mixin(this, args);
-            },
-            onOk: function () { },
-            onCancel: function () { }
-        });
+            {
+                icon: 'glyphicon glyphicon-check',
+                label: thiz.localize('CANCEL'),
+                cssClass: 'btn-info',
+                autospin: false,
+                id:utils.createUUID(),
+                action: function (dialogRef) {
+                    dialogRef.close();
+                    dialogRef.owner.onCancel();
+                }
 
-        dcl.chainAfter(Module, "onReady");
-        dcl.chainAfter(Module, "onOk");
-        dcl.chainAfter(Module, "onCancel");
-        dcl.chainAfter(Module, "resize");
+            }
+            ];
 
+            return buttons;
 
-        return Module;
-
+        },
+        buildArgs:function(args){
+            args = args || this.defaultOptions || {};
+            utils.mixin(args,{
+                type: this.type,
+                size: this.size,
+                message:this.message,
+                title:this.title,
+                buttons:this.buttons,
+                onOk:this.onOk,
+                onCancel:this.onCancel,
+                onShow:this.onShow,
+                onshown:this.onshown
+                //defaultOptions:_BootstrapDialog.defaultOptions,
+            });
+            args.title = this.localize(args.title)
+            return args;
+        },
+        constructor:function(args){
+            this.buttons = this.getButtons();
+            utils.mixin(this,args);
+        },
+        onOk:function(){},
+        onCancel:function(){}
     });
+
+    dcl.chainAfter(Module, "onReady");
+    dcl.chainAfter(Module, "onOk");
+    dcl.chainAfter(Module, "onCancel");
+    dcl.chainAfter(Module, "resize");
+
+
+    return Module;
+
+});
 /** @module xfile/views/FileOperationDialog **/
 define('xfile/views/FileOperationDialog',[
     "dcl/dcl",
@@ -20093,6 +8849,725 @@ define('xfile/views/FilePreview',[
     return filePreviewClass;
 
 });
+/**
+ * @module xide/_base/_Widget
+ */
+define('xide/_base/_Widget',[
+    'dcl/dcl',
+    "dcl/inherited",
+    'xide/widgets/_Widget',
+    "xide/utils",
+    "dojo/string",
+    "dojo/_base/lang",
+    "xide/registry",
+    "dojo/cache",
+    "dojo/dom-construct",
+    'xide/lodash',
+    'xide/$'
+], function (dcl,inherited,_Widget,utils,string,lang,registry,cache,domConstruct,_,$) {
+
+    function destroy(w,preserveDom){
+        if(w.destroyRecursive){
+            w.destroyRecursive(preserveDom);
+        }else if(w.destroy){
+            w.destroy(preserveDom);
+        }
+    }
+
+    /////////////////////////////////////////////////////////////////
+    //
+    //  Attach Mixin Class
+    //
+    var attachAttribute = 'attachTo';
+    /**
+     *		Mixin for widgets to attach to dom nodes and setup events via
+     *		convenient data-dojo-attach-point and data-dojo-attach-event DOM attributes.
+     *
+     *		Superclass of _TemplatedMixin, and can also be used standalone when templates are pre-rendered on the
+     *		server.
+     *
+     *		Does not [yet] handle widgets like ContentPane with this.containerNode set.   It should skip
+     *		scanning for data-dojo-attach-point and data-dojo-attach-event inside this.containerNode, but it
+     *		doesn't.
+
+
+     * _attachPoints: [private] String[]
+     *		List of widget attribute names associated with data-dojo-attach-point=... in the
+     *		template, ex: ["containerNode", "labelNode"]
+     _attachPoints: [],
+
+     * _attachEvents: [private] Handle[]
+     *		List of connections associated with data-dojo-attach-event=... in the
+     *		template
+     _attachEvents: [],
+
+     * attachScope: [public] Object
+     *		Object to which attach points and events will be scoped.  Defaults
+     *		to 'this'.
+     attachScope: undefined,
+     */
+    var _AttachMixinClass = dcl(null, {
+        __attachAsjQueryObject:true,
+        __attachViaAddChild:true,
+        __stopAtContainerNode:false,
+        _started:false,
+        //attachDirect:true,
+        declaredClass:"xide/_base/_AttachMixin",
+        cssClass:'',
+        /**
+         * Attach to DOM nodes marked with special attributes.
+         */
+        buildRendering: function(){
+            this._attachPoints = [];
+            // recurse through the node, looking for, and attaching to, our
+            // attachment points and events, which should be defined on the template node.
+            this._attachTemplateNodes(this.domNode);
+            this._beforeFillContent();		// hook for _WidgetsInTemplateMixin
+            this.cssClass && this.domNode && $(this.domNode).addClass(this.cssClass);
+        },
+        _beforeFillContent: function(){},
+        /**
+         * Iterate through the dom nodes and attach functions and nodes accordingly.
+         * @description Map widget properties and functions to the handlers specified in
+         *		the dom node and it's descendants. This function iterates over all
+         *		nodes and looks for these properties:
+         *	    - attachTo
+         * @param rootNode {HTMLElement}
+         **/
+        _attachTemplateNodes: function(rootNode){
+            // DFS to process all nodes except those inside of this.containerNode
+            var node = rootNode;
+            while(true){
+                if  (
+                    node.nodeType == 1 &&
+                    ( this._processTemplateNode(node,function(n,p){return n.getAttribute(p);},this._attach)) &&
+                    node.firstChild
+                ){
+                    node = node.firstChild;
+                }else{
+                    if(node == rootNode){
+                        return;
+                    }
+                    while(!node.nextSibling){
+                        node = node.parentNode;
+                        if(node == rootNode){
+                            return;
+                        }
+                    }
+                    node = node.nextSibling;
+                }
+            }
+        },
+
+        _processTemplateNode: function(baseNode, getAttrFunc, attachFunc){
+            // summary:
+            //		Process data-dojo-attach-point and data-dojo-attach-event for given node or widget.
+            //		Returns true if caller should process baseNode's children too.
+            var ret = true;
+
+            // Process data-dojo-attach-point
+            var _attachScope = this.attachScope || this,
+                attachPoint = getAttrFunc(baseNode, attachAttribute);
+
+            if(attachPoint){
+                var point, points = attachPoint.split(/\s*,\s*/);
+                while((point = points.shift())){
+                    if(_.isArray(_attachScope[point])){
+                        _attachScope[point].push(baseNode);
+                    }else{
+                        _attachScope[point] = baseNode;
+                        this.__attachAsjQueryObject &&  (_attachScope['$'+point] = $(baseNode));
+                    }
+                    ret = this.__stopAtContainerNode ? (point != "containerNode") : ret;
+                    this._attachPoints.push(point);
+                }
+            }
+            return ret;
+        },
+        /**
+         * Detach and clean up the attachments made in _attachtempalteNodes.
+         * @private
+         */
+        _detachTemplateNodes: function() {
+            // Delete all attach points to prevent IE6 memory leaks.
+            var _attachScope = this.attachScope || this;
+            _.each(this._attachPoints, function(point){
+                delete _attachScope[point];
+            });
+            this._attachPoints = [];
+        },
+        destroyRendering: function(){
+            this._detachTemplateNodes();
+            this.inherited && this.inherited(arguments);
+        },
+        startup:dcl.superCall(function(sup) {
+            return function () {
+                var res = null;
+                if(sup){
+                    res = sup.call(this);
+                }
+                this._started=true;
+                return res;
+            };
+        })
+    });
+    /////////////////////////////////////////////////////////////////
+    //
+    //  Templated Mixin Class
+    //
+    //
+    var _TemplatedMixin = dcl(_AttachMixinClass, {
+        declaredClass:"xide/_base/_TemplatedMixin",
+        // summary:
+        //		Mixin for widgets that are instantiated from a template
+        // templateString: [protected] String
+        //		A string that represents the widget template.
+        //		Use in conjunction with dojo.cache() to load from a file.
+        templateString: null,
+        // templatePath: [protected deprecated] String
+        //		Path to template (HTML file) for this widget relative to dojo.baseUrl.
+        //		Deprecated: use templateString with require([... "dojo/text!..."], ...) instead
+        templatePath: null,
+        // skipNodeCache: [protected] Boolean
+        //		If using a cached widget template nodes poses issues for a
+        //		particular widget class, it can set this property to ensure
+        //		that its template is always re-built from a string
+        _skipNodeCache: false,
+        /*=====
+         // _rendered: Boolean
+         //		Not normally use, but this flag can be set by the app if the server has already rendered the template,
+         //		i.e. already inlining the template for the widget into the main page.   Reduces _TemplatedMixin to
+         //		just function like _AttachMixin.
+         _rendered: false,
+         =====*/
+        _stringRepl: function(tmpl){
+            // summary:
+            //		Does substitution of ${foo} type properties in template string
+            // tags:
+            //		private
+            var className = this.declaredClass, _this = this;
+            // Cache contains a string because we need to do property replacement
+            // do the property replacement
+            return string.substitute(tmpl, this, function(value, key){
+                if(key.charAt(0) == '!'){ value = lang.getObject(key.substr(1), false, _this); }
+                if(typeof value == "undefined"){
+                    var error = new Error(className+" template:"+key)
+                    logError(error);
+                } // a debugging aide
+                if(value == null){ return ""; }
+
+                // Substitution keys beginning with ! will skip the transform step,
+                // in case a user wishes to insert unescaped markup, e.g. ${!foo}
+                return key.charAt(0) == "!" ? value : this._escapeValue("" + value);
+            }, this);
+        },
+        _escapeValue: function(/*String*/ val){
+            // summary:
+            //		Escape a value to be inserted into the template, either into an attribute value
+            //		(ex: foo="${bar}") or as inner text of an element (ex: <span>${foo}</span>)
+
+            // Safer substitution, see heading "Attribute values" in
+            // http://www.w3.org/TR/REC-html40/appendix/notes.html#h-B.3.2
+            // and also https://www.owasp.org/index.php/XSS_%28Cross_Site_Scripting%29_Prevention_Cheat_Sheet#RULE_.231_-_HTML_Escape_Before_Inserting_Untrusted_Data_into_HTML_Element_Content
+            return val.replace(/["'<>&]/g, function(val){
+                return {
+                    "&": "&amp;",
+                    "<": "&lt;",
+                    ">": "&gt;",
+                    "\"": "&quot;",
+                    "'": "&#x27;"
+                }[val];
+            });
+        },
+        /*
+         * @description Construct the UI for this widget from a template, setting this.domNode.
+         */
+        buildRendering: dcl.superCall(function(sup){
+            return function(){
+                if(!this._rendered){
+                    if(!this.templateString){
+                        this.templateString = cache(this.templatePath, {sanitize: true});
+                    }
+                    // Lookup cached version of template, and download to cache if it
+                    // isn't there already.  Returns either a DomNode or a string, depending on
+                    // whether or not the template contains ${foo} replacement parameters.
+                    var cached = _TemplatedMixin.getCachedTemplate(this.templateString, this._skipNodeCache, this.ownerDocument);
+                    var node;
+                    if(_.isString(cached)){
+                        node =  $(this._stringRepl(cached))[0];
+                        if(node.nodeType != 1){
+                            // Flag common problems such as templates with multiple top level nodes (nodeType == 11)
+                            throw new Error("Invalid template: " + cached);
+                        }
+                    }else{
+                        // if it's a node, all we have to do is clone it
+                        node = cached.cloneNode(true);
+                    }
+                    this.domNode = node;
+                }
+
+                // Call down to _WidgetBase.buildRendering() to get base classes assigned
+                sup.call(this, arguments);
+                if(!this._rendered){
+                    this._fillContent(this.srcNodeRef);
+                }
+                this._rendered = true;
+                if(this.domNode && this.declaredClass){
+                    $(this.domNode).addClass(utils.replaceAll('/','.',this.declaredClass));
+                }
+            };
+        }),
+        /**
+         *
+         * @param source {HTMLElement}
+         * @private
+         */
+        _fillContent: function(source){
+            // summary:
+            //		Relocate source contents to templated container node.
+            //		this.containerNode must be able to receive children, or exceptions will be thrown.
+            // tags:
+            //		protected
+            var dest = this.containerNode;
+            if(source && dest){
+                while(source.hasChildNodes()){
+                    dest.appendChild(source.firstChild);
+                }
+            }
+        }
+
+    });
+
+    // key is templateString; object is either string or DOM tree
+    _TemplatedMixin._templateCache = {};
+    _TemplatedMixin.getCachedTemplate = function(templateString, alwaysUseString, doc){
+        // summary:
+        //		Static method to get a template based on the templatePath or
+        //		templateString key
+        // templateString: String
+        //		The template
+        // alwaysUseString: Boolean
+        //		Don't cache the DOM tree for this template, even if it doesn't have any variables
+        // doc: Document?
+        //		The target document.   Defaults to document global if unspecified.
+        // returns: Mixed
+        //		Either string (if there are ${} variables that need to be replaced) or just
+        //		a DOM tree (if the node can be cloned directly)
+
+        // is it already cached?
+        var tmplts = _TemplatedMixin._templateCache;
+        var key = templateString;
+        var cached = tmplts[key];
+        if(cached){
+            try{
+                // if the cached value is an innerHTML string (no ownerDocument) or a DOM tree created within the
+                // current document, then use the current cached value
+                if(!cached.ownerDocument || cached.ownerDocument == (doc || document)){
+                    // string or node of the same document
+                    return cached;
+                }
+            }catch(e){ /* squelch */ } // IE can throw an exception if cached.ownerDocument was reloaded
+            domConstruct.destroy(cached);
+        }
+
+        templateString = _.trim(templateString);
+
+        if(alwaysUseString || templateString.match(/\$\{([^\}]+)\}/g)){
+            // there are variables in the template so all we can do is cache the string
+            return (tmplts[key] = templateString); //String
+        }else{
+            // there are no variables in the template so we can cache the DOM tree
+            var node = domConstruct.toDom(templateString, doc);
+            if(node.nodeType != 1){
+                throw new Error("Invalid template: " + templateString);
+            }
+            return (tmplts[key] = node); //Node
+        }
+    };
+
+    /////////////////////////////////////////////////////////////////
+    //
+    //  Actual Widget base class, adding an API
+    //
+    function createClass_WidgetBase(){
+        var tagAttrs = {};
+        function getAttrs(obj){
+            var ret = {};
+            for(var attr in obj){
+                ret[attr.toLowerCase()] = true;
+            }
+            return ret;
+        }
+        function isEqual(a, b){
+            //	summary:
+            //		Function that determines whether two values are identical,
+            //		taking into account that NaN is not normally equal to itself
+            //		in JS.
+            return a === b || (/* a is NaN */ a !== a && /* b is NaN */ b !== b);
+        }
+        /**
+         * @class module:xide/_base/_Widget
+         */
+        var Module = dcl(null,{
+            _attrPairNames: {}, // shared between all widgets
+            attributeMap: {},
+            declaredClass:'xide/_base/_Widget',
+            on:function(type,handler){
+                return this._on(type,handler);
+            },
+            emit:function(type,args){
+                return this._emit(type,args);
+            },
+            _set: function(/*String*/ name, /*anything*/ value){
+                // summary:
+                //		Helper function to set new value for specified property, and call handlers
+                //		registered with watch() if the value has changed.
+                var oldValue = this[name];
+                this[name] = value;
+                if(this._created && !isEqual(oldValue, value)){
+                    this._watchCallbacks && this._watchCallbacks(name, oldValue, value);
+                    this.emit("attrmodified-" + name, {
+                        detail: {
+                            prevValue: oldValue,
+                            newValue: value
+                        }
+                    });
+                }
+            },
+            /**
+             * Helper function to get value for specified property stored by this._set(),
+             * i.e. for properties with custom setters.  Used mainly by custom getters.
+             *  For example, CheckBox._getValueAttr() calls this._get("value").
+             * @param name {string}
+             * @returns {*}
+             * @private
+             */
+            _get: function( name){
+                // future: return name in this.props ? this.props[name] : this[name];
+                return this[name];
+            },
+            /**
+             *  Helper function for get() and set().
+             *  Caches attribute name values so we don't do the string ops every time.
+             * @param name
+             * @returns {*}
+             * @private
+             */
+            _getAttrNames: function(name){
+                var apn = this._attrPairNames;
+                if(apn[name]){
+                    return apn[name];
+                }
+                var uc = name.replace(/^[a-z]|-[a-zA-Z]/g, function(c){
+                    return c.charAt(c.length - 1).toUpperCase();
+                });
+                return (apn[name] = {
+                    n: name + "Node",
+                    s: "_set" + uc + "Attr", // converts dashes to camel case, ex: accept-charset --> _setAcceptCharsetAttr
+                    g: "_get" + uc + "Attr",
+                    l: uc.toLowerCase()        // lowercase name w/out dashes, ex: acceptcharset
+                });
+            },
+            /**
+             * Set a property on a widget
+             * @description Sets named properties on a widget which may potentially be handled by a setter in the widget.
+             *
+             *		For example, if the widget has properties `foo` and `bar`
+             *		and a method named `_setFooAttr()`, calling
+             *		`myWidget.set("foo", "Howdy!")` would be equivalent to calling
+             *		`widget._setFooAttr("Howdy!")` and `myWidget.set("bar", 3)`
+             *		would be equivalent to the statement `widget.bar = 3;`
+             *
+             *      This is equivalent to calling `set(foo, "Howdy")` and `set(bar, 3)`
+             *
+             *		set() may also be called with a hash of name/value pairs, ex:
+             *
+             *	@example
+             *	myWidget.set({
+                    foo: "Howdy",
+                    bar: 3
+                    });
+             *
+             * @param name {string} The property to set.
+             * @param value {object|null}
+             * @returns {*}
+             */
+            set: function(name, value){
+                if(typeof name === "object"){
+                    for(var x in name){
+                        this.set(x, name[x]);
+                    }
+                    return this;
+                }
+                var names = this._getAttrNames(name),
+                    setter = this[names.s];
+
+                if(_.isFunction(setter)){
+                    // use the explicit setter
+                    setter.apply(this, Array.prototype.slice.call(arguments, 1));
+                }else{
+                    // Mapping from widget attribute to DOMNode/subwidget attribute/value/etc.
+                    // Map according to:
+                    //		1. attributeMap setting, if one exists (TODO: attributeMap deprecated, remove in 2.0)
+                    //		2. _setFooAttr: {...} type attribute in the widget (if one exists)
+                    //		3. apply to focusNode or domNode if standard attribute name, excluding funcs like onClick.
+                    // Checks if an attribute is a "standard attribute" by whether the DOMNode JS object has a similar
+                    // attribute name (ex: accept-charset attribute matches jsObject.acceptCharset).
+                    // Note also that Tree.focusNode() is a function not a DOMNode, so test for that.
+                    var defaultNode = this.focusNode && !lang.isFunction(this.focusNode) ? "focusNode" : "domNode",
+                        tag = this[defaultNode] && this[defaultNode].tagName,
+                        attrsForTag = tag && (tagAttrs[tag] || (tagAttrs[tag] = getAttrs(this[defaultNode]))),
+                        map = name in this.attributeMap ? this.attributeMap[name] :
+                            names.s in this ? this[names.s] :
+                                ((attrsForTag && names.l in attrsForTag && typeof value != "function") ||
+                                /^aria-|^data-|^role$/.test(name)) ? defaultNode : null;
+                    if(map != null){
+                        this._attrToDom(name, value, map);
+                    }
+                    this._set(name, value);
+                }
+                return this;
+            },
+            postCreate:function(){
+            },
+            postMixInProperties:dcl.superCall(function(sup){
+                return function(props){
+                    sup && sup.call(this, props);
+                };
+            }),
+            create: function(params, srcNodeRef){
+                // summary:
+                //		Kick off the life-cycle of a widget
+                // description:
+                //		Create calls a number of widget methods (postMixInProperties, buildRendering, postCreate,
+                //		etc.), some of which of you'll want to override. See http://dojotoolkit.org/reference-guide/dijit/_WidgetBase.html
+                //		for a discussion of the widget creation lifecycle.
+                //
+                //		Of course, adventurous developers could override create entirely, but this should
+                //		only be done as a last resort.
+                // params: Object|null
+                //		Hash of initialization parameters for widget, including scalar values (like title, duration etc.)
+                //		and functions, typically callbacks like onClick.
+                //		The hash can contain any of the widget's properties, excluding read-only properties.
+                // srcNodeRef: DOMNode|String?
+                //		If a srcNodeRef (DOM node) is specified:
+                //
+                //		- use srcNodeRef.innerHTML as my contents
+                //		- if this is a behavioral widget then apply behavior to that srcNodeRef
+                //		- otherwise, replace srcNodeRef with my generated DOM tree
+                // tags:
+                //		private
+
+                // First time widget is instantiated, scan prototype to figure out info about custom setters etc.
+                //this._introspect();
+
+                // store pointer to original DOM tree
+                this.srcNodeRef = $(srcNodeRef)[0];
+
+                // No longer used, remove for 2.0.
+                this._connects = [];
+                this._supportingWidgets = [];
+
+                // this is here for back-compat, remove in 2.0 (but check NodeList-instantiate.html test)
+                if(this.srcNodeRef && this.srcNodeRef.id){
+                    this.id = this.srcNodeRef.id;
+                }
+
+                // mix in our passed parameters
+                if(params){
+                    this.params = params;
+                    utils.mixin(this, params);
+                }
+
+                if(this.postMixInProperties) {
+                    this.postMixInProperties();
+                }
+
+                // Generate an id for the widget if one wasn't specified, or it was specified as id: undefined.
+                // Do this before buildRendering() because it might expect the id to be there.
+                if(!this.id){
+                    this.id = registry.getUniqueId(this.declaredClass.replace(/\//g, "_"));
+                    if(this.params){
+                        // if params contains {id: undefined}, prevent _applyAttributes() from processing it
+                        delete this.params.id;
+                    }
+                }
+
+
+                // The document and <body> node this widget is associated with
+                this.ownerDocument = this.ownerDocument || (this.srcNodeRef ? this.srcNodeRef.ownerDocument : document);
+                this.ownerDocumentBody = $('body')[0];
+                registry.add(this);
+
+                this.buildRendering();
+                if(this.domNode){
+                    // Copy attributes listed in attributeMap into the [newly created] DOM for the widget.
+                    // Also calls custom setters for all attributes with custom setters.
+                    //this._applyAttributes();
+
+                    // If srcNodeRef was specified, then swap out original srcNode for this widget's DOM tree.
+                    // For 2.0, move this after postCreate().  postCreate() shouldn't depend on the
+                    // widget being attached to the DOM since it isn't when a widget is created programmatically like
+                    // new MyWidget({}).	See #11635.
+                    var source = this.srcNodeRef;
+                    if(source && source.parentNode && this.domNode !== source){
+                        source.parentNode.replaceChild(this.domNode, source);
+                    }
+                    // Note: for 2.0 may want to rename widgetId to dojo._scopeName + "_widgetId",
+                    // assuming that dojo._scopeName even exists in 2.0
+                    this.domNode.setAttribute("id", this.id);
+                    if(this.style){
+                        $(this.domNode).css(this.style);
+                    }
+                }
+                this.postCreate();
+                this._created = true;
+            },
+            constructor:function(params,container){
+                this.postscript && this.postscript(params,container);
+            },
+            postscript:function(params,srcNodeRef){
+                return this.create(params, srcNodeRef);
+            },
+            /**
+             *		Returns all direct children of this widget, i.e. all widgets underneath this.containerNode whose parent
+             *		is this widget.   Note that it does not return all descendants, but rather just direct children.
+             *		Analogous to [Node.childNodes](https:*developer.mozilla.org/en-US/docs/DOM/Node.childNodes),
+             *		except containing widgets rather than DOMNodes.
+             *
+             *		The result intentionally excludes internally created widgets (a.k.a. supporting widgets)
+             *		outside of this.containerNode.
+             *
+             *		Note that the array returned is a simple array.  Application code should not assume
+             *		existence of methods like forEach().
+             *
+             * @returns {*}
+             */
+            getChildren: function(){
+                return this.containerNode ? registry.findWidgets(this.containerNode) : []; // dijit/_WidgetBase[]
+            },
+            /**
+             *
+             * @returns {*}
+             */
+            getParent: function(){
+                // summary:
+                //		Returns the parent widget of this widget.
+                return registry.getEnclosingWidget(this.domNode.parentNode);
+            },
+            //////////// DESTROY FUNCTIONS ////////////////////////////////
+            /**
+             * Destroy this widget and its descendants
+             * @description If true, this method will leave the original DOM structure
+             *		alone of descendant Widgets. Note: This will NOT work with
+             *		dijit._TemplatedMixin widgets.
+             * @param preserveDom {boolean}
+             */
+            destroyRecursive: function(preserveDom){
+                this._beingDestroyed = true;
+                this.destroyDescendants(preserveDom);
+                this.destroy(preserveDom);
+            },
+            /**
+             *
+             * @param preserveDom {boolean}. If true, this method will leave the original DOM structure alone.
+             * Note: This will not yet work with _TemplatedMixin widgets
+             */
+            destroy: function(preserveDom){
+                // summary:
+                //		Destroy this widget, but not its descendants.  Descendants means widgets inside of
+                //		this.containerNode.   Will also destroy any resources (including widgets) registered via this.own().
+                //
+                //		This method will also destroy internal widgets such as those created from a template,
+                //		assuming those widgets exist inside of this.domNode but outside of this.containerNode.
+                //
+                //		For 2.0 it's planned that this method will also destroy descendant widgets, so apps should not
+                //		depend on the current ability to destroy a widget without destroying its descendants.   Generally
+                //		they should use destroyRecursive() for widgets with children.
+                this._beingDestroyed = true;
+                // Destroy supporting widgets, but not child widgets under this.containerNode (for 2.0, destroy child widgets
+                // here too).   if() statement is to guard against exception if destroy() called multiple times (see #15815).
+                if(this.domNode){
+                    _.each(registry.findWidgets(this.domNode, this.containerNode), destroy);
+                }
+                this.destroyRendering(preserveDom);
+                registry.remove(this.id);
+                this._destroyed = true;
+                this._emit('destroy');
+            },
+            /**
+             * Destroys the DOM nodes associated with this widget.
+             * @param {boolean} preserveDom. If true, this method will leave the original DOM structure alone during tear-down. Note: this will not work with _Templated widgets yet.
+             */
+            destroyRendering: function(preserveDom){
+                if(this.domNode){
+                    if(preserveDom){
+
+                    }else{
+                        domConstruct.destroy(this.domNode);
+                    }
+                    delete this.domNode;
+                }
+                if(this.srcNodeRef){
+                    if(!preserveDom){
+                        domConstruct.destroy(this.srcNodeRef);
+                    }
+                    delete this.srcNodeRef;
+                }
+            },
+            destroyDescendants: function(/*Boolean?*/ preserveDom){
+                // summary:
+                //		Recursively destroy the children of this widget and their
+                //		descendants.
+                // preserveDom:
+                //		If true, the preserveDom attribute is passed to all descendant
+                //		widget's .destroy() method. Not for use with _Templated
+                //		widgets.
+
+                // get all direct descendants and destroy them recursively
+                _.each(this.getChildren(), function(widget){
+                    if(widget.destroyRecursive){
+                        widget.destroyRecursive(preserveDom);
+                    }
+                });
+            }
+        });
+        return Module;
+
+    }
+
+    var StoreMixin = dcl(null,{
+        wireStore:function(store,updateFn,events){
+            store = store || this.store;
+            var handles = [];
+            events = events || ['update','added','remove','delete'];
+            for (var i = 0; i < events.length; i++) {
+                var event = events[i];
+                var _handle = store.on(event, updateFn.bind(this));
+                handles.push(_handle);
+                this.addHandle && this.addHandle(event,_handle);
+            }
+            return handles;
+        }
+    });
+    var _WidgetClass = createClass_WidgetBase();
+    /////////////////////////////////////////////////////////////////
+    //
+    //  Module exports
+    //
+    //
+    var Module = dcl([_WidgetClass,_TemplatedMixin,_Widget.dcl],{});
+
+    Module.AttachClass = _AttachMixinClass;
+    Module.TemplateClass = _TemplatedMixin;
+    Module.WidgetClass = _WidgetClass;
+    Module.StoreMixin = StoreMixin;
+
+    dcl.chainAfter(Module,"resize");
+    dcl.chainAfter(Module,"destroy");
+    dcl.chainAfter(Module,"startup");
+    return Module;
+});
 /** @module xide/container/_ContainerBase **/
 define('xide/container/_PaneBase',[
     "xdojo/has",
@@ -20761,6 +10236,8 @@ define('xide/views/_CIDialog',[
         bodyCSS: {
             'height': 'auto',
             'min-height': '200px',
+            /*'width':'600px',
+             'min-width':'600px',*/
             'padding': '8px',
             'margin-right': '16px'
         },
@@ -20858,171 +10335,174 @@ define('xide/views/_Panel',[
     'dojo/Deferred',
     'xide/_Popup',
     'xide/registry'
-], function (dcl, types, utils, EventedMixin, _Widget, Deferred, _Popup, registry) {
+], function (dcl, types, utils,EventedMixin,_Widget,Deferred,_Popup,registry) {
 
-    var Module = dcl([_Widget.dcl, EventedMixin.dcl], {
-        containerClass: '',
+    var Module = dcl([_Widget.dcl,EventedMixin.dcl],{
+        containerClass:'',
         type: types.DIALOG_TYPE.WARNING,
         size: types.DIALOG_SIZE.SIZE_WIDE,
-        titleBarClass: '',
-        panel: null,
-        bodyCSS: null,
-        startDfd: null,
-        _ready: false,
-        title: 'No Title',
+        titleBarClass:'',
+        panel:null,
+        bodyCSS:null,
+        startDfd:null,
+        _ready:false,
+        title:'No Title',
         /**
          * jsPanelOptions
          * @link http://beta.jspanel.de/api/#defaults
          * @type {object}
          */
-        options: null,
-        getContentSize: function () {
-            return {
-                width: '600px',
-                height: '500px'
-            }
-        },
-        getDefaultOptions: function (mixin) {
+        options:null,
+        getDefaultOptions:function(mixin){
             var self = this;
             var options = {
-                "contentSize": this.getContentSize(),
-                footerToolbar: [
+                "contentSize": {
+                    width: '600px',
+                    height: '500px'
+                },
+                footerToolbar:[
                     {
-                        item: "<button style='margin-left:5px;' type='button'><span class='...'></span></button>",
-                        event: "click",
+                        item:     "<button style='margin-left:5px;' type='button'><span class='...'></span></button>",
+                        event:    "click",
                         btnclass: "btn btn-danger btn-sm",
-                        btntext: " Cancel",
-                        callback: function (event) {
+                        btntext:  " Cancel",
+                        callback: function( event ){
                             event.data.close();
                             self.onCancel();
                         }
                     },
                     {
-                        item: "<button style='margin-left:5px;' type='button'><span class='...'></span></button>",
-                        event: "click",
+                        item:     "<button style='margin-left:5px;' type='button'><span class='...'></span></button>",
+                        event:    "click",
                         btnclass: "btn btn-primary btn-sm",
-                        btntext: " Ok",
-                        callback: function (event) {
+                        btntext:  " Ok",
+                        callback: function( event ){
                             self.onOk();
                             event.data.close();
                         }
                     }
                 ]
             };
-            utils.mixin(options, mixin);
+            utils.mixin(options,mixin);
             return options;
         },
-        getInstance: function (args) {
-            if (this.panel) {
+        getInstance:function(args){
+            if(this.panel){
                 return this.panel;
             }
             _Popup.nextZ(3);
             var self = this;
             this.panel = $.jsPanel(utils.mixin({
-                zi: _Popup.nextZ(),
+                zi:_Popup.nextZ(),
                 position: {
                     left: 200,
                     top: 100
                 },
                 title: self.title || 'jsPanel theme info',
                 theme: self.theme || 'bootstrap-default',
-                onmaximized: function () {
+                onmaximized:function(){
                     self.resize();
                 },
-                onnormalized: function () {
+                onnormalized:function(){
                     self.resize();
                 },
-                onbeforeclose: function () {
+                onbeforeclose:function(){
                     self.destroy(false);
                 },
                 callback: function (panel) {
+
                     self.domNode = this.content[0];
+
                     var thiz = this;
-                    self.onshown(this, this.content[0]).then(function () {
+
+                    self.onshown(this,this.content[0]).then(function(){
+
                         thiz.content.addClass(self.containerClass);
-                        thiz.content.css('tabIndex', 1);
+                        thiz.content.css('tabIndex',1);
                         thiz.header.addClass(self.type);
                         thiz.footer.addClass('modal-footer');
                         var newZ = _Popup.nextZ();
                         panel.css("z-index", newZ);
-                        panel.attr('tabIndex', 1);
+                        panel.attr('tabIndex',1);
                         panel.keyup(function (event) {
-                            if (event.which === 27) {
+                            if(event.which === 27){
                                 self.destroy(true);
                             }
                         });
                         panel.focus();
                     });
                 }
-            }, args));
-            this.panel.on("resize", function () {
+            },args));
+            this.panel.on("resize",function(){
                 self.resize();
             });
             return this.panel;
         },
-        onshown: function (panelInstance, content) {
+        onshown:function(panelInstance,content){
             var self = this,
                 head = new Deferred();
-            if (this.onShow) {
-                var result = this.onShow(panelInstance, content, this);
-                function ready(what) {
+
+            if(this.onShow){
+                var result = this.onShow(panelInstance,content,this);
+                function ready(what){
                     self.startDfd.resolve(what);
                     self._ready = true;
                     self.resize();
                     head.resolve(what);
                 }
-                if (result && result.then) {
+                if(result && result.then){
                     result.then(ready);
-                } else if (_.isArray(result)) {
-                    _.each(result, function (widget) {
-                        self.add(widget, null, false);
+                }else if(_.isArray(result)){
+                    _.each(result,function(widget){
+                        self.add(widget,null,false);
                     });
                     ready(result);
-                } else if (!result) {
-                    ready();
                 }
             }
             return head;
         },
-        onReady: function () {
+        onReady:function(){
             var self = this;
-            setTimeout(function () {
+            setTimeout(function(){
                 self._ready = true;
-            }, 100);
+            },100);
         },
-        destroy: function (destroyPanel) {
+        destroy:function(destroyPanel){
             try {
                 destroyPanel !== false && this.panel && this.panel.close();
                 registry.remove(this.panel.id);
                 //destroy
-                if (this.headDfd) {
+                if(this.headDfd){
                     this.headDfd.resolve(false);
                 }
-            } catch (e) {
-                logError(e, 'panel close');
+            }catch(e){
+                logError(e,'panel close');
             }
         },
-        show: function (options) {
-            var self = this;
+        show:function(options){
+            var self=this;
             this.headDfd = new Deferred();
-            if (!this.startDfd) {
+            if(!this.startDfd){
                 this.startDfd = new Deferred();
-                this.startDfd.then(function () {
+                this.startDfd.then(function(){
                     self.onReady();
                 });
             }
+
             this.panel = this.getInstance(options || this.options);
+            //this.panel.id = this.panel[0].id;
+            //registry.add(this.panel);
             return this.headDfd;
         },
-        constructor: function (args) {
+        constructor:function(args){
             args = args || {};
             this.options = args.options || this.options || this.getDefaultOptions();
-            utils.mixin(this, args);
+            utils.mixin(this,args);
         },
-        onOk: function () {
+        onOk:function(){
             this.headDfd.resolve(true);
         },
-        onCancel: function () {
+        onCancel:function(){
             this.headDfd.resolve(false);
         }
     });
@@ -21045,16 +10525,13 @@ define('xide/views/_PanelDialog',[
 
     var Module = dcl(_Panel,{
         containerClass:'CIDialog',
-        getContentSize: function () {
-            return {
-                width: '600px',
-                height: '500px'
-            }
-        },
         getDefaultOptions:function(mixin){
             var self = this;
             var options = {
-                "contentSize": this.getContentSize(),
+                "contentSize": {
+                    width: '600px',
+                    height: '500px'
+                },
                 footerToolbar:[
                     {
                         item:     "<button style='margin-left:5px;' type='button'><span class='...'></span></button>",
@@ -29428,6 +18905,4029 @@ define('xdocker/Splitter2',[
         }
     });
 });
+define('dstore/Tree',[
+	'dojo/_base/declare'
+	/*=====, 'dstore/Store'=====*/
+], function (declare /*=====, Store=====*/) {
+	return declare(null, {
+		constructor: function () {
+			this.root = this;
+		},
+
+		mayHaveChildren: function (object) {
+			// summary:
+			//		Check if an object may have children
+			// description:
+			//		This method is useful for eliminating the possibility that an object may have children,
+			//		allowing collection consumers to determine things like whether to render UI for child-expansion
+			//		and whether a query is necessary to retrieve an object's children.
+			// object:
+			//		The potential parent
+			// returns: boolean
+
+			return 'hasChildren' in object ? object.hasChildren : true;
+		},
+
+		getRootCollection: function () {
+			// summary:
+			//		Get the collection of objects with no parents
+			// returns: dstore/Store.Collection
+
+			return this.root.filter({ parent: null });
+		},
+
+		getChildren: function (object) {
+			// summary:
+			//		Get a collection of the children of the provided parent object
+			// object:
+			//		The parent object
+			// returns: dstore/Store.Collection
+
+			return this.root.filter({ parent: this.getIdentity(object) });
+		}
+	});
+});
+
+/** @module xide/data/TreeMemory **/
+define('xide/data/TreeMemory',[
+    "dojo/_base/declare",
+    'xide/data/Memory',
+    'dstore/Tree',
+    'dojo/Deferred',
+    'dstore/QueryResults'
+], function (declare, Memory, Tree, Deferred, QueryResults) {
+
+    /**
+     * @class module:xide/data/TreeMemory
+     * @deprecated
+     * @extends module:xide/data/_Base
+     * @extends module:dstore/Tree
+     */
+    return declare('xide.data.TreeMemory', [Memory, Tree], {
+        _state: {
+            filter: null
+        },
+        parentProperty: 'parentId',
+        reset: function () {
+            this._state.filter = null;
+            this.resetQueryLog();
+        },
+        resetQueryLog: function () {
+            this.queryLog = [];
+        },
+        fetchRange: function () {
+            // dstore/Memory#fetchRange always uses fetchSync, which we aren't extending,
+            // so we need to extend this as well.
+            var results = this._fetchRange(arguments);
+            return new QueryResults(results.then(function (data) {
+                return data;
+            }), {
+                totalLength: results.then(function (data) {
+                    return data.length;
+                })
+            });
+        },
+        filter: function (data) {
+            var _res = this.inherited(arguments);
+            this._state.filter = data;
+            return _res;
+        },
+        _fetchRange: function (kwArgs) {
+            var deferred = new Deferred();
+            var _res = this.fetchRangeSync(kwArgs);
+            if (this._state.filter) {
+                //the parent query
+                if (this._state.filter['parent']) {
+                    var _item = this.getSync(this._state.filter[this.parentProperty]);
+                    if (_item) {
+                        this.reset();
+                        var _query = {};
+                        if (this.getChildrenSync) {
+                            _res = this.getChildrenSync(_item);
+                        } else {
+                            _query[this.parentProperty] = _item[this.idProperty];
+                            _res = this.root.query(_query);
+                        }
+                    }
+                }
+
+
+                //the group query
+                if (this._state && this._state.filter && this._state.filter['group']) {
+                    var _items = this.getSync(this._state.filter.parent);
+                    if (_item) {
+                        this.reset();
+                        _res = _item.items;
+                    }
+                }
+            }
+            deferred.resolve(_res);
+            return deferred;
+        },
+        getChildren: function (object) {
+            var filter = {};
+            filter[this.parentProperty] = this.getIdentity(object);
+            return this.root.filter(filter);
+        },
+        children: function (parent) {
+            var all = this.root.data, out = [];
+            for (var i = 0; i < all.length; i++) {
+                var obj = all[i];
+                if (obj[this.parentProperty] == parent[this.idProperty]) {
+                    out.push(obj);
+                }
+            }
+            return all;
+        },
+        mayHaveChildren: function (parent) {
+            if (parent._mayHaveChildren === false) {
+                return false;
+            }
+            return true;
+        }
+    });
+});
+
+/** @module xide/data/ObservableStore **/
+define('xide/data/ObservableStore',[
+    "dojo/_base/declare",
+    "xide/mixins/EventedMixin",
+    "xide/lodash"
+], function (declare, EventedMixin, _) {
+    /**
+     * Mixin to deal with dmodel
+     * @class module:xide/data/ObservableStore
+     * @lends module:xide/data/_Base
+     * @lends module:dstore/Store
+     * @lends module:xide/data/Memory
+     */
+    return declare('xide/data/Observable', EventedMixin, {
+        /**
+         * @type {boolean} Toggle to mute notifications during batch operations.
+         */
+        _ignoreChangeEvents: true,
+        /**
+         * @type {Array<String>} List of default properties to be observed by dmodel.property.observe.
+         */
+        observedProperties: [],
+        /**
+         * Get/Set toggle to prevent notifications for mass store operations. Without there will be performance drops.
+         * @param silent {boolean|null}
+         */
+        silent: function (silent) {
+            if (silent === undefined) {
+                return this._ignoreChangeEvents;
+            }
+            if (silent === true || silent === false && silent !== this._ignoreChangeEvents) {
+                this._ignoreChangeEvents = silent;
+            }
+        },
+        /**
+         * XIDE Override and extend putSync for adding the _store property and observe a new item's properties.
+         * @param item
+         * @param publish
+         * @returns {*}
+         */
+        putSync: function (item, publish) {
+            this.silent(!publish);
+            var res = this.inherited(arguments);
+            var self = this;
+            publish !== false && this.emit('added', res);
+            res && !res._store && Object.defineProperty(res, '_store', {
+                get: function () {
+                    return self;
+                }
+            });
+            this._observe(res);
+            this.silent(false);
+            return res;
+        },
+        /**
+         * Extend and override removeSync to silence notifications during batch operations.
+         * @param id {string}
+         * @param silent {boolean|null}
+         * @returns {*}
+         */
+        removeSync: function (id, silent) {
+            this.silent(silent);
+            var _item = this.getSync(id);
+            _item && _item.onRemove && _item.onRemove();
+            var res = this.inherited(arguments);
+            this.silent(false);
+            return res;
+        },
+        /**
+         *
+         * @param item
+         * @param property
+         * @param value
+         * @param source
+         * @private
+         */
+        _onItemChanged: function (item, property, value, source) {
+            if (this._ignoreChangeEvents) {
+                return;
+            }
+            var args = {
+                target: item,
+                property: property,
+                value: value,
+                source: source
+            };
+            this.emit('update', args);
+            item.onItemChanged && item.onItemChanged(args);
+        },
+        /**
+         * Observe an item's properties specified in this.observedProperties and item.observed, called upon putSync.
+         * @param item {module:xide/data/Model}
+         * @private
+         */
+        _observe: function (item) {
+            var props = this.observedProperties;
+            item.observed && (props = props.concat(item.observed));
+            _.each(props, function (property) {
+                item.property && item.property(property).observe(function (value) {
+                    this._onItemChanged(item, property, value, this);
+                }.bind(this));
+            }.bind(this));
+        },
+        /**
+         * Override setData to bring in dmodel's observe for new items.
+         * @param data {object[]}
+         * @returns {*}
+         */
+        setData: function (data) {
+            var res = this.inherited(arguments);
+            this.silent(true);
+            data && _.each(data, this._observe, this);
+            this.silent(false);
+            return res;
+        }
+    });
+});
+define('dstore/Trackable',[
+	'dojo/_base/lang',
+	'dojo/_base/declare',
+	'dojo/aspect',
+	'dojo/when',
+	'dojo/promise/all',
+	'dojo/_base/array',
+	'dojo/on'
+	/*=====, './api/Store' =====*/
+], function (lang, declare, aspect, when, whenAll, arrayUtil, on /*=====, Store =====*/) {
+
+	// module:
+	//		dstore/Trackable
+	var revision = 0;
+
+	function createRange(newStart, newEnd) {
+		return {
+			start: newStart,
+			count: newEnd - newStart
+		};
+	}
+
+	function registerRange(ranges, newStart, newEnd) {
+		for (var i = ranges.length - 1; i >= 0; --i) {
+			var existingRange = ranges[i],
+				existingStart = existingRange.start,
+				existingEnd = existingStart + existingRange.count;
+
+			if (newStart > existingEnd) {
+				// existing range completely precedes new range. we are done.
+				ranges.splice(i + 1, 0, createRange(newStart, newEnd));
+				return;
+			} else if (newEnd >= existingStart) {
+				// the ranges overlap and must be merged into a single range
+				newStart = Math.min(newStart, existingStart);
+				newEnd = Math.max(newEnd, existingEnd);
+				ranges.splice(i, 1);
+			}
+		}
+
+		ranges.unshift(createRange(newStart, newEnd));
+	}
+
+	function unregisterRange(ranges, start, end) {
+		for (var i = 0, range; (range = ranges[i]); ++i) {
+			var existingStart = range.start,
+				existingEnd = existingStart + range.count;
+
+			if (start <= existingStart) {
+				if (end >= existingEnd) {
+					// The existing range is within the forgotten range
+					ranges.splice(i, 1);
+				} else {
+					// The forgotten range overlaps the beginning of the existing range
+					range.start = end;
+					range.count = existingEnd - range.start;
+
+					// Since the forgotten range ends before the existing range,
+					// there are no more ranges to update, and we are done
+					return;
+				}
+			} else if (start < existingEnd) {
+				if (end > existingStart) {
+					// The forgotten range is within the existing range
+					ranges.splice(i, 1, createRange(existingStart, start), createRange(end, existingEnd));
+
+					// We are done because the existing range bounded the forgotten range
+					return;
+				} else {
+					// The forgotten range overlaps the end of the existing range
+					range.count = start - range.start;
+				}
+			}
+		}
+	}
+
+	var trackablePrototype = {
+		track: function () {
+			var store = this.store || this;
+
+			// monitor for updates by listening to these methods
+			var handles = [];
+			var eventTypes = {add: 1, update: 1, 'delete': 1};
+			// register to listen for updates
+			for (var type in eventTypes) {
+				handles.push(
+					this.on(type, (function (type) {
+						return function (event) {
+							notify(type, event);
+						};
+					})(type))
+				);
+			}
+
+			function makeFetch() {
+				return function () {
+					var self = this;
+					var fetchResults = this.inherited(arguments);
+					when(fetchResults, function (results) {
+						results = self._results = results.slice();
+						if (self._partialResults) {
+							// clean this up, as we don't need this anymore
+							self._partialResults = null;
+						}
+						self._ranges = [];
+						registerRange(self._ranges, 0, results.length);
+					});
+					return fetchResults;
+				};
+			}
+			function makeFetchRange() {
+				return function (kwArgs) {
+					var self = this,
+						start = kwArgs.start,
+						end = kwArgs.end,
+						fetchResults = this.inherited(arguments);
+					// only use this if we don't have all the data
+					if (!this._results) {
+						when(fetchResults, function (results) {
+							return when(results.totalLength, function (totalLength) {
+								var partialResults = self._partialResults || (self._partialResults = []);
+								end = Math.min(end, start + results.length);
+
+								partialResults.length = totalLength;
+
+								// copy the new ranged data into the parent partial data set
+								var spliceArgs = [ start, end - start ].concat(results);
+								partialResults.splice.apply(partialResults, spliceArgs);
+								registerRange(self._ranges, start, end);
+
+								return results;
+							});
+						});
+					}
+					return fetchResults;
+				};
+			}
+
+			// delegate rather than call _createSubCollection because we are not ultimately creating
+			// a new collection, just decorating an existing collection with item index tracking.
+			// If we use _createSubCollection, it will return a new collection that may exclude
+			// important, defining properties from the tracked collection.
+			var observed = declare.safeMixin(lang.delegate(this), {
+				_ranges: [],
+
+				fetch: makeFetch(),
+				fetchRange: makeFetchRange(),
+
+				releaseRange: function (start, end) {
+					if (this._partialResults) {
+						unregisterRange(this._ranges, start, end);
+
+						for (var i = start; i < end; ++i) {
+							delete this._partialResults[i];
+						}
+					}
+				},
+
+				on: function (type, listener) {
+					var self = this,
+						inheritedOn = this.getInherited(arguments);
+					return on.parse(observed, type, listener, function (target, type) {
+						return type in eventTypes ?
+							aspect.after(observed, 'on_tracked' + type, listener, true) :
+							inheritedOn.call(self, type, listener);
+					});
+				},
+
+				tracking: {
+					remove: function () {
+						while (handles.length > 0) {
+							handles.pop().remove();
+						}
+
+						this.remove = function () {};
+					}
+				},
+				// make sure track isn't called twice
+				track: null
+			});
+			if (this.fetchSync) {
+				// only add these if we extending a sync-capable store
+				declare.safeMixin(observed, {
+					fetchSync: makeFetch(),
+					fetchRangeSync: makeFetchRange()
+				});
+
+				// we take the presence of fetchSync to indicate that the results can be
+				// retrieved cheaply, and then we can just automatically fetch and start
+				// tracking results
+				observed.fetchSync();
+			}
+
+			// Create a function that applies all queriers in the query log
+			// in order to determine whether a new or updated item belongs
+			// in the results and at what position.
+			var queryExecutor;
+			arrayUtil.forEach(this.queryLog, function (entry) {
+				var existingQuerier = queryExecutor,
+					querier = entry.querier;
+
+				if (querier) {
+					queryExecutor = existingQuerier
+						? function (data) { return querier(existingQuerier(data)); }
+						: querier;
+				}
+			});
+
+			var defaultEventProps = {
+					'add': { index: undefined },
+					'update': { previousIndex: undefined, index: undefined },
+					'delete': { previousIndex: undefined }
+				},
+				findObject = function (data, id, start, end) {
+					start = start !== undefined ? start : 0;
+					end = end !== undefined ? end : data.length;
+					for (var i = start; i < end; ++i) {
+						if (store.getIdentity(data[i]) === id) {
+							return i;
+						}
+					}
+					return -1;
+				};
+
+			function notify(type, event) {
+
+				revision++;
+				var target = event.target;
+				event = lang.delegate(event, defaultEventProps[type]);
+
+				when(observed._results || observed._partialResults, function (resultsArray) {
+					/* jshint maxcomplexity: 32 */
+
+					function emitEvent() {
+						// TODO: Eventually we will want to aggregate all the listener events
+						// in an event turn, but we will wait until we have a reliable, performant queueing
+						// mechanism for this (besides setTimeout)
+						var method = observed['on_tracked' + type];
+						method && method.call(observed, event);
+					}
+
+					if (!resultsArray) {
+						// without data, we have no way to determine the indices effected by the change,
+						// so just pass along the event and return.
+						emitEvent();
+						return;
+					}
+
+					var i, j, l, ranges = observed._ranges, range;
+					/*if(++queryRevision != revision){
+						throw new Error('Query is out of date, you must observe() the' +
+						' query prior to any data modifications');
+					}*/
+
+					var targetId = 'id' in event ? event.id : store.getIdentity(target);
+					var removedFrom = -1,
+						removalRangeIndex = -1,
+						insertedInto = -1,
+						insertionRangeIndex = -1;
+					if (type === 'delete' || type === 'update') {
+						// remove the old one
+						for (i = 0; removedFrom === -1 && i < ranges.length; ++i) {
+							range = ranges[i];
+							for (j = range.start, l = j + range.count; j < l; ++j) {
+								var object = resultsArray[j];
+								// often ids can be converted strings (if they are used as keys in objects),
+								// so we do a coercive equality check
+								/* jshint eqeqeq: false */
+								if (store.getIdentity(object) == targetId) {
+									removedFrom = event.previousIndex = j;
+									removalRangeIndex = i;
+									resultsArray.splice(removedFrom, 1);
+
+									range.count--;
+									for (j = i + 1; j < ranges.length; ++j) {
+										ranges[j].start--;
+									}
+
+									break;
+								}
+							}
+						}
+					}
+
+					if (type === 'add' || type === 'update') {
+						if (queryExecutor) {
+							// with a queryExecutor, we can determine the correct sorted index for the change
+
+							if (queryExecutor([target]).length) {
+								var begin = 0,
+									end = ranges.length - 1,
+									sampleArray,
+									candidateIndex = -1,
+									sortedIndex,
+									adjustedIndex;
+								while (begin <= end && insertedInto === -1) {
+									// doing a binary search for the containing range
+									i = begin + Math.round((end - begin) / 2);
+									range = ranges[i];
+
+									sampleArray = resultsArray.slice(range.start, range.start + range.count);
+
+									if ('beforeId' in event) {
+										candidateIndex = event.beforeId === null
+											? sampleArray.length
+											: findObject(sampleArray, event.beforeId);
+									}
+
+									if (candidateIndex === -1) {
+										// If the original index came from this range, put back in the original slot
+										// so it doesn't move unless it needs to (relying on a stable sort below)
+										if (removedFrom >= Math.max(0, range.start - 1)
+											&& removedFrom <= (range.start + range.count)) {
+											candidateIndex = removedFrom;
+										} else {
+											candidateIndex = store.defaultNewToStart ? 0 : sampleArray.length;
+										}
+									}
+									sampleArray.splice(candidateIndex, 0, target);
+
+									sortedIndex = arrayUtil.indexOf(queryExecutor(sampleArray), target);
+									adjustedIndex = range.start + sortedIndex;
+
+									if (sortedIndex === 0 && range.start !== 0) {
+										end = i - 1;
+									} else if (sortedIndex >= (sampleArray.length - 1) &&
+											adjustedIndex < resultsArray.length) {
+										begin = i + 1;
+									} else {
+										insertedInto = adjustedIndex;
+										insertionRangeIndex = i;
+									}
+								}
+								if (insertedInto === -1 && begin > 0 && begin < ranges.length) {
+									var betweenRanges = true;
+								}
+							}
+						} else {
+							// we don't have a queryExecutor, so we can't provide any information
+							// about where it was inserted or moved to. If it is an update, we leave
+							// its position alone. otherwise, we at least indicate a new object
+
+							var range,
+								possibleRangeIndex = -1;
+							if ('beforeId' in event) {
+								if (event.beforeId === null) {
+									insertedInto = resultsArray.length;
+									possibleRangeIndex = ranges.length - 1;
+								} else {
+									for (i = 0, l = ranges.length; insertionRangeIndex === -1 && i < l; ++i) {
+										range = ranges[i];
+
+										insertedInto = findObject(
+											resultsArray,
+											event.beforeId,
+											range.start,
+											range.start + range.count
+										);
+
+										if (insertedInto !== -1) {
+											insertionRangeIndex = i;
+										}
+									}
+								}
+							} else {
+								if (type === 'update') {
+									insertedInto = removedFrom;
+									insertionRangeIndex = removalRangeIndex;
+								} else {
+									if (store.defaultNewToStart) {
+										insertedInto = 0;
+										possibleRangeIndex = 0;
+									} else {
+										// default to the bottom
+										insertedInto = resultsArray.length;
+										possibleRangeIndex = ranges.length - 1;
+									}
+								}
+							}
+
+							if (possibleRangeIndex !== -1 && insertionRangeIndex === -1) {
+								range = ranges[possibleRangeIndex];
+								if (range && range.start <= insertedInto
+									&& insertedInto <= (range.start + range.count)) {
+									insertionRangeIndex = possibleRangeIndex;
+								}
+							}
+						}
+
+						// an item only truly has a known index if it is in a known range
+						if (insertedInto > -1 && insertionRangeIndex > -1) {
+							event.index = insertedInto;
+							resultsArray.splice(insertedInto, 0, target);
+
+							// update the count and start of the appropriate ranges
+							ranges[insertionRangeIndex].count++;
+							for (i = insertionRangeIndex + 1; i < ranges.length; ++i) {
+								ranges[i].start++;
+							}
+						} else if (betweenRanges) {
+							// the begin index will be after the inserted item, and is
+							// where we can begin incrementing start values
+							event.beforeIndex = ranges[begin].start;
+							for (i = begin; i < ranges.length; ++i) {
+								ranges[i].start++;
+							}
+						}
+					}
+					// update the total
+					event.totalLength = resultsArray.length;
+
+					emitEvent();
+				});
+			}
+
+			return observed;
+		}
+	};
+
+	var Trackable =  declare(null, trackablePrototype);
+
+	Trackable.create = function (target, properties) {
+		// create a delegate of an existing store with trackability functionality mixed in
+		target = declare.safeMixin(lang.delegate(target), trackablePrototype);
+		declare.safeMixin(target, properties);
+		return target;
+	};
+	return Trackable;
+});
+
+define('xide/utils/ObjectUtils',[
+    'xide/utils',
+    'require',
+    "dojo/Deferred",
+    'xide/lodash'
+], function (utils, require, Deferred, lodash) {
+    var _debug = false;
+    "use strict";
+
+    utils.delegate = (function () {
+        // boodman/crockford delegation w/ cornford optimization
+        function TMP() {
+        }
+
+        return function (obj, props) {
+            TMP.prototype = obj;
+            var tmp = new TMP();
+            TMP.prototype = null;
+            if (props) {
+                lang._mixin(tmp, props);
+            }
+            return tmp; // Object
+        };
+    })();
+
+    /////////////////////////////////////////////////////////////////////////////////////////////
+    //
+    //  Loader utils
+    //
+    //////////////////////////////////////////////////////////////////////////////////////////////
+    utils.debounce = function (who, methodName, _function, delay, options, now, args) {
+        var _place = who[methodName + '_debounced'];
+        if (!_place) {
+            _place = who[methodName + '_debounced'] = lodash.debounce(_function, delay, options);
+        }
+        if (now === true) {
+            if (!who[methodName + '_debouncedFirst']) {
+                who[methodName + '_debouncedFirst'] = true;
+                _function.apply(who, args);
+            }
+        }
+        return _place();
+    };
+
+
+    utils.pluck = function (items, prop) {
+        return lodash.map(items, prop);
+    };
+
+    /**
+     * Trigger downloadable file
+     * @param filename
+     * @param text
+     */
+    utils.download = function (filename, text) {
+        var element = document.createElement('a');
+        text = lodash.isString(text) ? text : JSON.stringify(text, null, 2);
+        element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
+        element.setAttribute('download', filename);
+        element.style.display = 'none';
+        document.body.appendChild(element);
+        element.click();
+        document.body.removeChild(element);
+    };
+
+    /**
+     * Ask require registry at this path
+     * @param mixed
+     * @returns {*}
+     */
+    utils.hasObject = function (mixed) {
+        var result = null;
+        var _re = require;
+        try {
+            result = _re(mixed);
+        } catch (e) {
+            console.error('error in utils.hasObject ', e);
+        }
+        return result;
+    };
+    /**
+     * Safe require.toUrl
+     * @param mid {string}
+     */
+    utils.toUrl = function (mid) {
+        var _require = require;
+        //make sure cache bust is off otherwise it appends ?time
+        _require({
+            cacheBust: null,
+            waitSeconds: 5
+        });
+        return _require.toUrl(mid);
+    }
+    /**
+     * Returns a module by module path
+     * @param mixed {String|Object}
+     * @param _default {Object} default object
+     * @returns {Object|Promise}
+     */
+    utils.getObject = function (mixed, _default) {
+        var result = null;
+        if (utils.isString(mixed)) {
+            var _re = require;
+            try {
+                result = _re(mixed);
+            } catch (e) {
+                _debug && console.warn('utils.getObject::require failed for ' + mixed);
+            }
+            //not a loaded module yet
+            try {
+                if (!result) {
+                    var deferred = new Deferred();
+                    //try loader
+                    result = _re([
+                        mixed
+                    ], function (module) {
+                        deferred.resolve(module);
+                    });
+                    return deferred.promise;
+                }
+            } catch (e) {
+                _debug && console.error('error in requiring ' + mixed, e);
+            }
+            return result;
+
+        } else if (utils.isObject(mixed)) {
+            return mixed;//reflect
+        }
+        return result !== null ? result : _default;
+    };
+
+
+    /////////////////////////////////////////////////////////////////////////////////////////////
+    //
+    //  True object utils
+    //
+    //////////////////////////////////////////////////////////////////////////////////////////////
+    utils.toArray = function (obj) {
+        var result = [];
+        for (var c in obj) {
+            result.push({
+                name: c,
+                value: obj[c]
+            });
+        }
+        return result;
+    };
+    /**
+     * Array to object conversion
+     * @param arr
+     * @returns {Object}
+     */
+    utils.toObject = function (arr, lodash) {
+        if (!arr) {
+            return {};
+        }
+        if (lodash !== false) {
+            return lodash.object(lodash.map(arr, lodash.values));
+        } else {
+            //CI related back compat hack
+            if (utils.isObject(arr) && arr[0]) {
+                return arr[0];
+            }
+
+            var rv = {};
+            for (var i = 0; i < arr.length; ++i) {
+                rv[i] = arr[i];
+            }
+            return rv;
+        }
+    };
+
+    /**
+     * Gets an object property by string, eg: utils.byString(someObj, 'part3[0].name');
+     * @deprecated, see objectAtPath below
+     * @param o {Object}    : the object
+     * @param s {String}    : the path within the object
+     * @param defaultValue {Object|String|Number} : an optional default value
+     * @returns {*}
+     */
+    utils.byString = function (o, s, defaultValue) {
+        s = s.replace(/\[(\w+)\]/g, '.$1'); // convert indexes to properties
+        s = s.replace(/^\./, '');           // strip a leading dot
+        var a = s.split('.');
+        while (a.length) {
+            var n = a.shift();
+            if (n in o) {
+                o = o[n];
+            } else {
+                return;
+            }
+        }
+        return o;
+    };
+
+    /////////////////////////////////////////////////////////////////////////////////////////////
+    //
+    //  Object path
+    //
+    //////////////////////////////////////////////////////////////////////////////////////////////
+    /**
+     * Internals
+     */
+
+        //cache
+    var toStr = Object.prototype.toString,
+        _hasOwnProperty = Object.prototype.hasOwnProperty;
+
+    /**
+     * @private
+     * @param type
+     * @returns {*}
+     */
+    function toString(type) {
+        return toStr.call(type);
+    }
+
+    /**
+     * @private
+     * @param key
+     * @returns {*}
+     */
+    function getKey(key) {
+        var intKey = parseInt(key, 10);
+        if (intKey.toString() === key) {
+            return intKey;
+        }
+        return key;
+    }
+
+    /**
+     * internal set value at path in object
+     * @private
+     * @param obj
+     * @param path
+     * @param value
+     * @param doNotReplace
+     * @returns {*}
+     */
+    function set(obj, path, value, doNotReplace) {
+        if (lodash.isNumber(path)) {
+            path = [path];
+        }
+        if (lodash.isEmpty(path)) {
+            return obj;
+        }
+        if (lodash.isString(path)) {
+            return set(obj, path.split('.').map(getKey), value, doNotReplace);
+        }
+        var currentPath = path[0];
+
+        if (path.length === 1) {
+            var oldVal = obj[currentPath];
+            if (oldVal === void 0 || !doNotReplace) {
+                obj[currentPath] = value;
+            }
+            return oldVal;
+        }
+
+        if (obj[currentPath] === void 0) {
+            //check if we assume an array
+            if (lodash.isNumber(path[1])) {
+                obj[currentPath] = [];
+            } else {
+                obj[currentPath] = {};
+            }
+        }
+        return set(obj[currentPath], path.slice(1), value, doNotReplace);
+    }
+
+    /**
+     * deletes an property by a path
+     * @param obj
+     * @param path
+     * @returns {*}
+     */
+    function del(obj, path) {
+        if (lodash.isNumber(path)) {
+            path = [path];
+        }
+        if (lodash.isEmpty(obj)) {
+            return void 0;
+        }
+
+        if (lodash.isEmpty(path)) {
+            return obj;
+        }
+        if (lodash.isString(path)) {
+            return del(obj, path.split('.'));
+        }
+
+        var currentPath = getKey(path[0]);
+        var oldVal = obj[currentPath];
+
+        if (path.length === 1) {
+            if (oldVal !== void 0) {
+                if (lodash.isArray(obj)) {
+                    obj.splice(currentPath, 1);
+                } else {
+                    delete obj[currentPath];
+                }
+            }
+        } else {
+            if (obj[currentPath] !== void 0) {
+                return del(obj[currentPath], path.slice(1));
+            }
+        }
+        return obj;
+    }
+
+    /**
+     * Private helper class
+     * @private
+     * @type {{}}
+     */
+    var objectPath = {};
+
+    objectPath.has = function (obj, path) {
+        if (lodash.isEmpty(obj)) {
+            return false;
+        }
+        if (lodash.isNumber(path)) {
+            path = [path];
+        } else if (lodash.isString(path)) {
+            path = path.split('.');
+        }
+
+        if (lodash.isEmpty(path) || path.length === 0) {
+            return false;
+        }
+
+        for (var i = 0; i < path.length; i++) {
+            var j = path[i];
+            if ((lodash.isObject(obj) || lodash.isArray(obj)) && _hasOwnProperty.call(obj, j)) {
+                obj = obj[j];
+            } else {
+                return false;
+            }
+        }
+
+        return true;
+    };
+
+    /**
+     * Define private public 'ensure exists'
+     * @param obj
+     * @param path
+     * @param value
+     * @returns {*}
+     */
+    objectPath.ensureExists = function (obj, path, value) {
+        return set(obj, path, value, true);
+    };
+
+    /**
+     * Define private public 'set'
+     * @param obj
+     * @param path
+     * @param value
+     * @param doNotReplace
+     * @returns {*}
+     */
+    objectPath.set = function (obj, path, value, doNotReplace) {
+        return set(obj, path, value, doNotReplace);
+    };
+
+    /**
+     Define private public 'insert'
+     * @param obj
+     * @param path
+     * @param value
+     * @param at
+     */
+    objectPath.insert = function (obj, path, value, at) {
+        var arr = objectPath.get(obj, path);
+        at = ~~at;
+        if (!lodash.isArray(arr)) {
+            arr = [];
+            objectPath.set(obj, path, arr);
+        }
+        arr.splice(at, 0, value);
+    };
+
+    /**
+     * Define private public 'empty'
+     * @param obj
+     * @param path
+     * @returns {*}
+     */
+    objectPath.empty = function (obj, path) {
+        if (lodash.isEmpty(path)) {
+            return obj;
+        }
+        if (lodash.isEmpty(obj)) {
+            return void 0;
+        }
+
+        var value, i;
+        if (!(value = objectPath.get(obj, path))) {
+            return obj;
+        }
+
+        if (lodash.isString(value)) {
+            return objectPath.set(obj, path, '');
+        } else if (lodash.isBoolean(value)) {
+            return objectPath.set(obj, path, false);
+        } else if (lodash.isNumber(value)) {
+            return objectPath.set(obj, path, 0);
+        } else if (lodash.isArray(value)) {
+            value.length = 0;
+        } else if (lodash.isObject(value)) {
+            for (i in value) {
+                if (_hasOwnProperty.call(value, i)) {
+                    delete value[i];
+                }
+            }
+        } else {
+            return objectPath.set(obj, path, null);
+        }
+    };
+
+    /**
+     * Define private public 'push'
+     * @param obj
+     * @param path
+     */
+    objectPath.push = function (obj, path /*, values */) {
+        var arr = objectPath.get(obj, path);
+        if (!lodash.isArray(arr)) {
+            arr = [];
+            objectPath.set(obj, path, arr);
+        }
+        arr.push.apply(arr, Array.prototype.slice.call(arguments, 2));
+    };
+
+    /**
+     * Define private public 'coalesce'
+     * @param obj
+     * @param paths
+     * @param defaultValue
+     * @returns {*}
+     */
+    objectPath.coalesce = function (obj, paths, defaultValue) {
+        var value;
+        for (var i = 0, len = paths.length; i < len; i++) {
+            if ((value = objectPath.get(obj, paths[i])) !== void 0) {
+                return value;
+            }
+        }
+        return defaultValue;
+    };
+
+    /**
+     * Define private public 'get'
+     * @param obj
+     * @param path
+     * @param defaultValue
+     * @returns {*}
+     */
+    objectPath.get = function (obj, path, defaultValue) {
+        if (lodash.isNumber(path)) {
+            path = [path];
+        }
+        if (lodash.isEmpty(path)) {
+            return obj;
+        }
+        if (lodash.isEmpty(obj)) {
+            //lodash doesnt seem to work with html nodes
+            if (obj && obj.innerHTML === null) {
+                return defaultValue;
+            }
+        }
+        if (lodash.isString(path)) {
+            return objectPath.get(obj, path.split('.'), defaultValue);
+        }
+        var currentPath = getKey(path[0]);
+        if (path.length === 1) {
+            if (obj && obj[currentPath] === void 0) {
+                return defaultValue;
+            }
+            if (obj) {
+                return obj[currentPath];
+            }
+        }
+        if (!obj) {
+            return defaultValue;
+        }
+        return objectPath.get(obj[currentPath], path.slice(1), defaultValue);
+    };
+
+    /**
+     * Define private public 'del'
+     * @param obj
+     * @param path
+     * @returns {*}
+     */
+    objectPath.del = function (obj, path) {
+        return del(obj, path);
+    };
+    /////////////////////////////////////////////////////////////////////////////////////////////
+    //
+    //  Object path public xide/utils mixin
+    //
+    //////////////////////////////////////////////////////////////////////////////////////////////
+    /**
+     *  Returns a value by a give object path
+     *
+     *  //works also with arrays
+     *    objectPath.get(obj, "a.c.1");  //returns "f"
+     *    objectPath.get(obj, ["a","c","1"]);  //returns "f"
+     *
+     * @param obj {object}
+     * @param path {string}
+     * @param _default {object|null}
+     * @returns {*}
+     */
+    utils.getAt = function (obj, path, _default) {
+        return objectPath.get(obj, path, _default);
+    };
+
+    /**
+     * Sets a value in an object/array at a given path.
+     * @example
+     *
+     * utils.setAt(obj, "a.h", "m"); // or utils.setAt(obj, ["a","h"], "m");
+     *
+     * //set will create intermediate object/arrays
+     * objectPath.set(obj, "a.j.0.f", "m");
+     *
+     * @param obj{Object|Array}
+     * @param path {string}
+     * @param value {mixed}
+     * @returns {Object|Array}
+     */
+    utils.setAt = function (obj, path, value) {
+        return objectPath.set(obj, path, value);
+    };
+
+    /**
+     * Returns there is anything at given path within an object/array.
+     * @param obj
+     * @param path
+     */
+    utils.hasAt = function (obj, path) {
+        return objectPath.has(obj, path);
+    };
+
+    /**
+     * Ensures at given path, otherwise _default will be placed
+     * @param obj
+     * @param path
+     * @returns {*}
+     */
+    utils.ensureAt = function (obj, path, _default) {
+        return objectPath.ensureExists(obj, path, _default);
+    };
+    /**
+     * Deletes at given path
+     * @param obj
+     * @param path
+     * @returns {*}
+     */
+    utils.deleteAt = function (obj, path) {
+        return objectPath.del(obj, path);
+    };
+
+    /**
+     *
+     * @param to
+     * @param from
+     * @returns {*}
+     */
+    utils.merge = function (to, from) {
+        for (var n in from) {
+            if (typeof to[n] != 'object') {
+                to[n] = from[n];
+            } else if (typeof from[n] == 'object') {
+                to[n] = utils.merge(to[n], from[n]);
+            }
+        }
+
+        return to;
+    };
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //
+    //  Dojo's most wanted
+    //
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    /**
+     * Clones objects (including DOM nodes) and all children.
+     * Warning: do not clone cyclic structures.
+     * @param src {*} The object to clone.
+     * @returns {*}
+     */
+    utils.clone = function (src) {
+        if (!src || typeof src != "object" || utils.isFunction(src)) {
+            // null, undefined, any non-object, or function
+            return src; // anything
+        }
+        if (src.nodeType && "cloneNode" in src) {
+            // DOM Node
+            return src.cloneNode(true); // Node
+        }
+        if (src instanceof Date) {
+            // Date
+            return new Date(src.getTime()); // Date
+        }
+        if (src instanceof RegExp) {
+            // RegExp
+            return new RegExp(src); // RegExp
+        }
+        var r, i, l;
+        if (utils.isArray(src)) {
+            // array
+            r = [];
+            for (i = 0, l = src.length; i < l; ++i) {
+                if (i in src) {
+                    r.push(utils.clone(src[i]));
+                }
+            }
+            // we don't clone functions for performance reasons
+            // }else if(d.isFunction(src)){
+            // // function
+            // r = function(){ return src.apply(this, arguments); };
+        } else {
+            // generic objects
+            r = src.constructor ? new src.constructor() : {};
+        }
+        return utils._mixin(r, src, utils.clone);
+    };
+
+    /**
+     * Copies/adds all properties of source to dest; returns dest.
+     * @description All properties, including functions (sometimes termed "methods"), excluding any non-standard extensions
+     * found in Object.prototype, are copied/added to dest. Copying/adding each particular property is
+     * delegated to copyFunc (if any); copyFunc defaults to the Javascript assignment operator if not provided.
+     * Notice that by default, _mixin executes a so-called "shallow copy" and aggregate types are copied/added by reference.
+     * @param dest {object} The object to which to copy/add all properties contained in source.
+     * @param source {object} The object from which to draw all properties to copy into dest.
+     * @param copyFunc {function} The process used to copy/add a property in source; defaults to the Javascript assignment operator.
+     * @returns {object} dest, as modified
+     * @private
+     */
+    utils._mixin = function (dest, source, copyFunc) {
+        var name, s, i, empty = {};
+        for (name in source) {
+            // the (!(name in empty) || empty[name] !== s) condition avoids copying properties in "source"
+            // inherited from Object.prototype.	 For example, if dest has a custom toString() method,
+            // don't overwrite it with the toString() method that source inherited from Object.prototype
+            s = source[name];
+            if (!(name in dest) || (dest[name] !== s && (!(name in empty) || empty[name] !== s))) {
+                dest[name] = copyFunc ? copyFunc(s) : s;
+            }
+        }
+
+        return dest; // Object
+    };
+    /**
+     * Copies/adds all properties of one or more sources to dest; returns dest.
+     * @param dest {object} The object to which to copy/add all properties contained in source. If dest is falsy, then
+     * a new object is manufactured before copying/adding properties begins.
+     *
+     * @param sources One of more objects from which to draw all properties to copy into dest. sources are processed
+     * left-to-right and if more than one of these objects contain the same property name, the right-most
+     * value "wins".
+     *
+     * @returns {object} dest, as modified
+     *
+     * @example
+     * make a shallow copy of an object
+     * var copy = utils.mixin({}, source);
+     *
+     * @example
+     *
+     * many class constructors often take an object which specifies
+     *        values to be configured on the object. In this case, it is
+     *        often simplest to call `lang.mixin` on the `this` object:
+     *        declare("acme.Base", null, {
+    *			constructor: function(properties){
+    *				//property configuration:
+    *				lang.mixin(this, properties);
+    *				console.log(this.quip);
+    *			},
+    *			quip: "I wasn't born yesterday, you know - I've seen movies.",
+    *			* ...
+    *		});
+     *
+     *        //create an instance of the class and configure it
+     *        var b = new acme.Base({quip: "That's what it does!" });
+     *
+     */
+    utils.mixin = function (dest, sources) {
+        if (sources) {
+            if (!dest) {
+                dest = {};
+            }
+            var l = arguments.length;
+            for (var i = 1; i < l; i++) {
+                utils._mixin(dest, arguments[i]);
+            }
+            return dest; // Object
+        }
+        return dest;
+    };
+
+    /**
+     * Clone object keys
+     * @param defaults
+     * @returns {{}}
+     */
+    utils.cloneKeys = function (defaults, skipEmpty) {
+        var result = {};
+        for (var _class in defaults) {
+            if (skipEmpty === true && !(_class in defaults)) {
+                continue;
+            }
+            result[_class] = defaults[_class];
+        }
+        return result;
+    };
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //
+    //  STD
+    /**
+     *
+     * @param what
+     * @returns {*}
+     */
+    utils.isArray = function (what) {
+        return lodash.isArray(what);
+    };
+    /**
+     *
+     * @param what
+     * @returns {*}
+     */
+    utils.isObject = function (what) {
+        return lodash.isObject(what);
+    };
+    /**
+     *
+     * @param what
+     * @returns {*}
+     */
+    utils.isString = function (what) {
+        return lodash.isString(what);
+    };
+    /**
+     *
+     * @param what
+     * @returns {*}
+     */
+    utils.isNumber = function (what) {
+        return lodash.isNumber(what);
+    };
+    /**
+     * Return true if it is a Function
+     * @param it
+     * @returns {*}
+     */
+    utils.isFunction = function (it) {
+        return lodash.isFunction(it);
+    };
+    return utils;
+});
+define('xide/cache/Circular',[], function () {
+
+    function CircularBuffer(capacity){
+        if(!(this instanceof CircularBuffer))return new CircularBuffer(capacity);
+        if(typeof capacity=="object"&&
+            Array.isArray(capacity["_buffer"])&&
+            typeof capacity._capacity=="number"&&
+            typeof capacity._first=="number"&&
+            typeof capacity._size=="number"){
+            for(var prop in capacity){
+                if(capacity.hasOwnProperty(prop))this[prop]=capacity[prop];
+            }
+        } else {
+            if(typeof capacity!="number"||capacity%1!=0||capacity<1)
+                throw new TypeError("Invalid capacity");
+            this._buffer=new Array(capacity);
+            this._capacity=capacity;
+            this._first=0;
+            this._size=0;
+        }
+    }
+    CircularBuffer.prototype = {
+        size: function () {
+            return this._size;
+        },
+        capacity: function () {
+            return this._capacity;
+        },
+        enq: function (value) {
+            if (this._first > 0)this._first--; else this._first = this._capacity - 1;
+            this._buffer[this._first] = value;
+            if (this._size < this._capacity)this._size++;
+        },
+        push: function (value) {
+            if (this._size == this._capacity) {
+                this._buffer[this._first] = value;
+                this._first = (this._first + 1) % this._capacity;
+            } else {
+                this._buffer[(this._first + this._size) % this._capacity] = value;
+                this._size++;
+            }
+        },
+        deq: function () {
+            if (this._size == 0)throw new RangeError("dequeue on empty buffer");
+            var value = this._buffer[(this._first + this._size - 1) % this._capacity];
+            this._size--;
+            return value;
+        },
+        pop: function () {
+            return this.deq();
+        },
+        shift: function () {
+            if (this._size == 0)throw new RangeError("shift on empty buffer");
+            var value = this._buffer[this._first];
+            if (this._first == this._capacity - 1)this._first = 0; else this._first++;
+            this._size--;
+            return value;
+        },
+        get: function (start, end) {
+            if (this._size == 0 && start == 0 && (end == undefined || end == 0))return [];
+            if (typeof start != "number" || start % 1 != 0 || start < 0)throw new TypeError("Invalid start");
+            if (start >= this._size)throw new RangeError("Index past end of buffer: " + start);
+
+            if (end == undefined)return this._buffer[(this._first + start) % this._capacity];
+
+            if (typeof end != "number" || end % 1 != 0 || end < 0)throw new TypeError("Invalid end");
+            if (end >= this._size)throw new RangeError("Index past end of buffer: " + end);
+
+            if (this._first + start >= this._capacity) {
+                //make sure first+start and first+end are in a normal range
+                start -= this._capacity; //becomes a negative number
+                end -= this._capacity;
+            }
+            if (this._first + end < this._capacity)
+                return this._buffer.slice(this._first + start, this._first + end + 1);
+            else
+                return this._buffer.slice(this._first + start, this._capacity).concat(this._buffer.slice(0, this._first + end + 1 - this._capacity));
+        },
+        toarray: function () {
+            if (this._size == 0)return [];
+            return this.get(0, this._size - 1);
+        }
+    };
+
+    return CircularBuffer;
+});
+/** @module xaction/Action **/
+define('xaction/Action',[
+    'dcl/dcl',
+    'xide/model/Base',
+    'xide/types',
+    'xide/utils/ObjectUtils',
+    'xide/utils',
+    'xide/mixins/EventedMixin',
+    'xide/cache/Circular'
+], function (dcl, Base, types, ObjectUtils, utils, EventedMixin, Circular) {
+
+    var Cache = null;//new Circular(100);
+    /***
+     * Extend the core types for action visibility(main menu,...) options/enums:
+     * 1. 'Main menu',
+     * 2. 'Context menu'
+     * 3. 'Action toolbar'
+     * 4. 'Property view'
+     */
+    utils.mixin(types, {
+        /**
+         * ActionVisibility
+         * @enum module:xide/types/ACTION_VISIBILITY
+         * @memberOf module:xide/types
+         */
+        ACTION_VISIBILITY: {
+            /**
+             * Enable visibility in main menu, which does
+             * render actions in a menu bar whereby 'sub' levels
+             * are rendered as sub level menus.
+             *
+             * @default null, means not visible. Actually in xjs its 1/0/{}
+             * @type {int|Object|xaction/Action}
+             * @constant
+             */
+            MAIN_MENU: 'MAIN_MENU',
+
+            /**
+             * Enable visivibilty in context menu.
+             *
+             * Different to the main menu, all actions
+             * are 'flatted'. The action's group field
+             * will auto-create separators among these
+             * groups.
+             *
+             * @default null, means not visible. Actually in xjs its 1/0/{}
+             * @type {int|Object|xaction/Action}
+             * @constant
+             */
+            CONTEXT_MENU: 'CONTEXT_MENU',
+
+            QUICK_LAUNCH: 'QUICK_LAUNCH',
+
+            /**
+             * Enable visivibilty in primary action toolbar.
+             *
+             * Same as in the "Context Menu", actions will
+             * rendered out flat, just the label is being removed.
+             *
+             * @default null, means not visible. Actually in xjs its 1/0/{}
+             * @type {int|Object|xaction/Action}
+             * @constant
+             */
+            ACTION_TOOLBAR: 'ACTION_TOOLBAR',
+
+            /**
+             * Enable visibility in an item's property view (if such exists).
+             *
+             * Same as in the "Context Menu", actions will
+             * rendered out flat, just the label is being removed.
+             *
+             * @default null, means not visible. Actually in xjs its 1/0/{}
+             * @type {int|Object|xaction/Action}
+             * @constant
+             */
+            PROPERTY_VIEW: 'PROPERTY_VIEW',
+
+            /**
+             * Enable visibility the ribbon toolbar (if such exists).
+             *
+             * Same as in the "Context Menu", actions will
+             * rendered out flat, just the label is being removed.
+             *
+             * @default null, means not visible. Actually in xjs its 1/0/{}
+             * @type {int|Object|xaction/Action}
+             * @constant
+             */
+            RIBBON: 'RIBBON',
+
+            /**
+             * A mixin to be used whilst creating the widget
+             * @type {object}
+             */
+            widgetArgs: null,
+
+            /**
+             * Util for the constructor yo create a visibilty. A visibility is a key/value store where the
+             * key is ACTION_VISIBILITY
+             * and its value is stored in this.ACTION_VISIBILITY_val ! Thus you'r accessing this store in a doc-friendly
+             * and enum like function
+             * @example
+             *  this.getVisibility(types.ACTION_VISIBILITY.MAIN_MENU)'     *
+             *
+             * the returning value is of type {object}, or {integer(1|0)}
+             * @type {function}
+             * @returns {module:xide/types/ACTION_VISIBILITY}
+             */
+            factory: function () {
+
+                var _in = arguments[1] || utils.clone(types.ACTION_VISIBILITY),
+                    _args = arguments;
+
+                //
+                // A mode when we have the arguments like (1,1,1,2).
+                //  This clones types.ACTION_VISIBILITY and blends in an integer mask
+
+                if (_args[0].length > 0 && _.isNumber(_args[0][0])) {
+
+                    var _FlagArgs = _args[0],
+                        _val = null,
+                        _index = 0;
+
+                    //integer case, sets this[propIndex] to something
+                    _.each(_in, function (index, prop) {
+                        if (typeof _in[prop] !== 'function') {
+                            if (_index < _FlagArgs.length) {
+                                //set the value per key but preserve the actualy key by storing
+                                //the value in a new key_val field
+                                _in[prop + '_val'] = _FlagArgs[_index];
+                            }
+                        }
+                        _index++;
+                    });
+                }
+
+                // A modus when we have the arguments like (MAIN_MENU,something). set value in this.ENUM_val
+                if (_.isString(_args[0][0])) {
+                    if (_args[0][2] === true) {
+                        utils.mixin(_in[_args[0][0] + '_val'], _args[0][2]);
+                    } else {
+                        _in[_args[0][0] + '_val'] = _args[0][1];
+                        return _in;
+                    }
+                    return _args[1];
+                }
+                return _in;
+            }
+        }
+    });
+    types.ACTION_VISIBILITY_ALL = 'ACTION_VISIBILITY_ALL';
+    /**
+     * Basic model to represent an 'action'. Its just a structure
+     * object with some factory methods and built-in store to have
+     * versions of it self per 'ACTION_VISIBILITY' which may alter
+     * rendering for such visibility.
+     *
+     * Please read {@link module:xide/types}
+     *
+     * @class module:xaction/Action
+     * @augments xide/model/Base
+     */
+    var Module = dcl([Base.dcl, EventedMixin.dcl], {
+        declaredClass: "xaction/Action",
+        disabled: false,
+        destroy: function () {
+            if (Cache && Cache.size() < 100) {
+                delete this._properties;
+                delete this._visibility;
+                delete this.keyboardMappings;
+                delete this.group;
+                delete this.tab;
+                delete this.owner;
+                delete this.item;
+                delete this.icon;
+                delete this.actionType;
+                delete this.label;
+                delete this.title;
+                delete this.type;
+                delete this.onCreate;
+                delete this.onChange;
+                delete this.addPermission;
+                delete this._store;
+                delete this.parameters;
+                delete this.handler;
+                Cache.push(this);
+            }
+        },
+        /**
+         * Turn on/off this action
+         * @type {boolean}
+         * @default true
+         */
+        enabled: true,
+        /**
+         * The object or bean we're up to. This is mostly the user's selection.
+         * @type {Object|Object[]|Array}
+         */
+        object: null,
+        /**
+         * Show/hide this action in ui
+         * @member show {boolean}
+         */
+        show: true,
+        /**
+         * A group for this action. This is being used in interface only.
+         * @type {string|Object=}
+         */
+        group: '',
+        /**
+         * A comma separated list of bean types. This specifies on which bean types
+         * this action can be applied
+         * @type {string|Object=}
+         */
+        types: '',
+        /**
+         * A identifier of a command within a "bean action context". This should be human readable.
+         * Remember, this is being used for populating menu items in toolbars.
+         * @example "Edit/Copy", "Views/Log" and so forth
+         * @type {string|integer}
+         */
+        command: null,
+        /**
+         * Icon class. You can use font-awesome, dijit icon classes or Elusive icons
+         * @type {string}
+         * @default fa-play
+         */
+        icon: 'fa-play',
+        /**
+         * An event key when the action is performed. This will be published automatically when this action
+         * is performed.
+         * @type {string|null}
+         * @default null
+         */
+        event: null,
+        /**
+         * The function to be invoked
+         * @type {function|null}
+         */
+        handler: null,
+        /**
+         * The tab (visual)
+         * @type {string|null}
+         * @default null
+         */
+        tab: null,
+
+        /**
+         * A store to override per visibility an action attributes like label, icon, renderer, handler
+         * or whatever this action needs. This acts as store per VISIBILITY "Zone" as descried in the enumerations. Its
+         * one simple object or single integer store.
+         *
+         * This storage must be fast as its used in mouse-over, don't use any dojo/dstore or whatever fancy stuff; the
+         * operations in the consumer side are already heavy enough (loadash 'group' and 'sort' come up to 5000 calls for
+         * just 10 actions)
+         *
+         * @see {module:xide/types/ACTION_VISIBILITY}
+         * @type {xide/types/ACTION_VISIBILITY}
+         * @augments {xide/types/ACTION_VISIBILITY}
+         * @default null
+         * @property
+         * @member
+         *
+         * @example
+         * {
+         *      MAIN_MENU:"MAIN_MENU",
+         *      MAIN_MENU_val:0
+         *      //or MAIN_MENU_val:1
+         *      ACTION_TOOLBAR:"ACTION_TOOLBAR",
+         *      ACTION_TOOLBAR_val:{
+         *          icon:"fa or el or dijit", //supports font-awesome, elusive or dojo/dijit
+         *          label:"" // in some cases like an action bar you may override this per visibility to hide a label 
+         *      }
+         * }
+         *
+         */
+        visibility_: null,
+        /**
+         * An action might contain a value. For instance the action might toggle
+         * a checkbox...
+         *
+         * @type {object|*|null}
+         */
+        value: null,
+        /**
+         * Sets visibility options per visibility type.
+         *
+         * @param {mixed} arguments will blend a number of integers into a copy of
+         * xide/types/ACTION_VISIBILITY. Be aware of the exact order!
+         * @example
+         *
+         *
+         //Example 1. : set the visibility per type
+         setVisibility(1,1,0);// will result in:
+         {
+                 MAIN_MENU:1,
+                 CONTEXT_MENU:1,
+                 ACTION_TOOLBAR:0
+         }
+
+         //Example 2. : set the visibility per type. @TODO:specify merge filter bits
+         setVisibility(types.ACTION_VISIBILITY.MAIN_MENU,{
+                label:null  //don't show a label
+            });
+
+         */
+        setVisibility: function () {
+            if (arguments.length == 2 && _.isString(arguments[0]) && arguments[0] == types.ACTION_VISIBILITY_ALL) {
+                var _obj = arguments[1],
+                    _vis = types.ACTION_VISIBILITY,
+                    thiz = this;
+
+                //track vis key in all
+                [_vis.MAIN_MENU, _vis.ACTION_TOOLBAR, _vis.CONTEXT_MENU, _vis.RIBBON].forEach(function (vis) {
+                    thiz.setVisibility(vis, utils.cloneKeys(_obj, false));
+                });
+                return this;
+
+            }
+            var _args = _.isArray(arguments[0]) ? arguments[0] : arguments;
+            this.visibility_ = types.ACTION_VISIBILITY.factory(_args, this.visibility_);
+            return this;
+        },
+        /**
+         * Visibility getter
+         * @param key
+         * @returns {module:xide/types/ACTION_VISIBILITY}
+         */
+        getVisibility: function (key) {
+            if (!this.visibility_) {
+                this.setVisibility(types.ACTION_VISIBILITY_ALL, {});
+            }
+            if (this.visibility_) {
+                if (this.visibility_[key + '_val'] == null) {
+                    this.visibility_[key + '_val'] = {
+                        vis: key
+                    };
+                }
+                return this.visibility_[key + '_val'];
+            }
+            return {};
+        },
+        /**
+         *
+         * @param _visibility
+         * @param who
+         * @param newItem
+         * @returns {boolean}
+         */
+        shouldDestroyWidget: function (_visibility, who, newItem) {
+            var visibility = this.getVisibility != null ? this.getVisibility(_visibility) : null;
+            var destroy = true;
+            if (visibility && visibility.permanent) {
+                destroy = !(_.isFunction(visibility.permanent) ? visibility.permanent(this, who, newItem) : visibility.permanent);
+            }
+            return destroy;
+        }
+
+    });
+    /**
+     * Static factory
+     * @param label {string}
+     * @param icon
+     * @param command
+     * @param permanent
+     * @param operation
+     * @param btypes
+     * @param group
+     * @param visibility
+     * @param register
+     * @param handler
+     * @param mixin
+     * @static
+     * @memberOf xaction/Action
+     *
+     * @example for queuing a clip board action:
+     *
+     *  var _copyAction  = Action.create('Copy', 'fa-copy', 'Edit/Copy', true, types.OPERATION_INT.CLIPBOARD_COPY, types.ITEM_TYPE.FILE, 'clipboard', null, true, _clipboardManager);
+     *  _copy.accelKey = 'CTRL+C';
+     *
+     * @returns {module:xaction/Action}
+     */
+    Module.create = function (label, icon, command, permanent, operation, btypes, group, visibility, register, handler, mixin) {
+        var _action = null;
+
+        var _args = {
+            permanent: permanent,
+            command: command,
+            icon: icon,
+            label: label,
+            owner: this,
+            types: btypes,
+            operation: operation,
+            group: group,
+            handler: handler,
+            title: label
+        };
+        if (Cache && Cache.size()) {
+            _action = Cache.deq(0);
+            //console.log('re-use');
+            utils.mixin(_action, _args);
+        } else {
+            //console.log('-create!');
+            _action = new Module(_args);
+        }
+        /*
+         var VISIBILITY = types.ACTION_VISIBILITY,
+         VISIBILITIES = [
+         VISIBILITY.ACTION_TOOLBAR,
+         VISIBILITY.RIBBON,
+         VISIBILITY.MAIN_MENU,
+         VISIBILITY.CONTEXT_MENU
+         ];
+         */
+        utils.mixin(_action, mixin);
+        return _action;
+    };
+    /**
+     * Simple wrapper for action.create
+     * @param label {string}
+     * @param icon
+     * @param command
+     * @param group
+     * @param handler
+     * @param mixin
+     * @returns {module:xaction/Action}
+     */
+    Module.createDefault = function (label, icon, command, group, handler, mixin) {
+        return Module.create(label, icon, command, false, null, null, group || 'nogroup', null, false, handler, mixin);
+    };
+    return Module;
+});
+
+define('xide/data/Model',[
+    'dcl/dcl',
+    'dojo/Deferred',
+    'dojo/aspect',
+    'dojo/when',
+    'xide/utils'
+], function (dcl,Deferred, aspect, when,utils) {
+
+
+    function getSchemaProperty(object, key) {
+        // this function will retrieve the individual property definition
+        // from the schema, for the provided object and key
+        var definition = object.schema[key];
+        if (definition !== undefined && !(definition instanceof Property)) {
+            definition = new Property(definition);
+            definition._parent = object;
+        }
+        if (definition) {
+            definition.name = key;
+        }
+        return definition;
+    }
+
+    function validate(object, key) {
+        /*
+         // this performs validation, delegating validation, and coercion
+         // handling to the property definitions objects.
+         var hasOwnPropertyInstance,
+         property = object.hasOwnProperty('_properties') && object._properties[key];
+
+         hasOwnPropertyInstance = property;
+
+         if (!property) {
+         // or, if we don't our own property object, we inherit from the schema
+         property = getSchemaProperty(object, key);
+         if (property && property.validate) {
+         property = lang.delegate(property, {
+         _parent: object,
+         key: key
+         });
+         }
+         }
+
+         if (property && property.validate) {
+         return when(property.validate(), function (isValid) {
+         if (!isValid) {
+         // errors, so don't perform set
+         if (!hasOwnPropertyInstance) {
+         // but we do need to store our property
+         // instance if we don't have our own
+         (object.hasOwnProperty('_properties') ?
+         object._properties :
+         object._properties = new Hidden())[key] = property;
+         }
+         }
+         return isValid;
+         });
+         }
+         */
+        return true;
+    }
+
+    function whenEach(iterator) {
+        // this is responsible for collecting values from an iterator,
+        // and waiting for the results if promises are returned, returning
+        // a new promise represents the eventual completion of all the promises
+        // this will consistently preserve a sync (non-promise) return value if all
+        // sync values are provided
+        var deferred;
+        var remaining = 1;
+        // start the iterator
+        iterator(function (value, callback, key) {
+            if (value && value.then) {
+                // it is a promise, have to wait for it
+                remaining++;
+                if (!deferred) {
+                    // make sure we have a deferred
+                    deferred = new Deferred();
+                }
+                value.then(function (value) {
+                    // result received, call callback, and then indicate another item is done
+                    doneItem(callback(value, key));
+                }).then(null, deferred.reject);
+            } else {
+                // not a promise, just a direct sync callback
+                callback(value, key);
+            }
+        });
+        if (deferred) {
+            // if we have a deferred, decrement one more time
+            doneItem();
+            return deferred.promise;
+        }
+        function doneItem() {
+            // called for each promise as it is completed
+            remaining--;
+            if (!remaining) {
+                // all done
+                deferred.resolve();
+            }
+        }
+    }
+    var slice = [].slice;
+    var Model = dcl(null,{
+        declaredClass:'xide/data/Model',
+        //	summary:
+        //		A base class for modelled data objects.
+
+        //	schema: Object | dstore/Property
+        //		A hash map where the key corresponds to a property definition.
+        //		This can be a string corresponding to a JavaScript
+        //		primitive values (string, number, boolean), a constructor, a
+        //		null (to allow any type), or a Property object with more advanced
+        //		definitions.
+        schema: {},
+
+        //	additionalProperties: boolean
+        //		This indicates whether properties are allowed that are not
+        //		defined in the schema.
+        additionalProperties: true,
+
+        //	_scenario: string
+        //		The scenario that is used to determine which validators should
+        //		apply to this model. There are two standard values for _scenario,
+        //		"insert" and "update", but it can be set to any arbitrary value
+        //		for more complex validation scenarios.
+        _scenario: 'update',
+
+        constructor: function (options) {
+            this.init(options);
+        },
+
+        refresh:function(silent,property){
+            var _store = this._store;
+            _store && _store.refreshItem(this,silent,property);
+        },
+        getStore:function(){
+            return this._store;
+        },
+        getParent:function(){
+            return this._store.getSync(this[this._store['parentProperty']]);
+        },
+        init: function (values) {
+            // if we are being constructed, we default to the insert scenario
+            this._scenario = 'insert';
+            // copy in the default values
+            values = this._setValues(values);
+            // set any defaults
+            for (var key in this.schema) {
+                var definition = this.schema[key];
+                if (definition && typeof definition === 'object' && 'default' in definition &&
+                    !values.hasOwnProperty(key)) {
+                    var defaultValue = definition['default'];
+                    values[key] = typeof defaultValue === 'function' ? defaultValue.call(this) : defaultValue;
+                }
+            }
+        },
+
+        _setValues: function (values) {
+            return utils.mixin(this, values);
+        },
+
+        _getValues: function () {
+            return this._values || this;
+        },
+
+        save: function (/*Object*/ options) {
+            //	summary:
+            //		Saves this object, calling put or add on the attached store.
+            //	options.skipValidation:
+            //		Normally, validation is performed to ensure that the object
+            //		is not invalid before being stored. Set `skipValidation` to
+            //		true to skip it.
+            //	returns: any
+
+            var object = this;
+            return when((options && options.skipValidation) ? true : this.validate(), function (isValid) {
+                if (!isValid) {
+                    throw object.createValidationError(object.errors);
+                }
+                var scenario = object._scenario;
+                // suppress any non-date from serialization output
+                object.prepareForSerialization();
+                return object._store && when(object._store[scenario === 'insert' ? 'add' : 'put'](object),
+                        function (returned) {
+                            // receive any updates from the server
+                            object.set(returned);
+                            object._scenario = 'update';
+                            return object;
+                        });
+            });
+        },
+
+        remove: function () {
+            var store = this._store;
+            return store.remove(store.getIdentity(this));
+        },
+
+        prepareForSerialization: function () {
+            //	summary:
+            //		This method is responsible for cleaing up any properties on the instance
+            //		object to ensure it can easily be serialized (by JSON.stringify at least)
+            this._scenario = undefined;
+            if (this._inherited) {
+                this._inherited.toJSON = toJSONHidden;
+            }
+        },
+
+        createValidationError: function (errors) {
+            //	summary:
+            //		This is called when a save is attempted and a validation error was found.
+            //		This can be overriden with locale-specific messages
+            //	errors:
+            //		Errors that were found in validation
+            return new Error('Validation error');
+        },
+
+        property: function (/*String...*/ key, nextKey) {
+            //	summary:
+            //		Gets a new reactive property object, representing the present and future states
+            //		of the provided property. The returned property object gives access to methods for changing,
+            //		retrieving, and observing the property value, any validation errors, and property metadata.
+            //	key: String...
+            //		The name of the property to retrieve. Multiple key arguments can be provided
+            //		nested property access.
+
+            // create the properties object, if it doesn't exist yet
+            var properties = this.hasOwnProperty('_properties') ? this._properties :
+                (this._properties = new Hidden());
+            var property = properties[key];
+            // if it doesn't exist, create one, delegated from the schema's property definition
+            // (this gives an property instance, owning the current property value and listeners,
+            // while inheriting metadata from the schema's property definitions)
+            if (!property) {
+                property = getSchemaProperty(this, key);
+                // delegate, or just create a new instance if no schema definition exists
+                property = properties[key] = property ? utils.delegate(property) : new Property();
+                property.name = key;
+                // give it the correct initial value
+                property._parent = this;
+            }
+            if (nextKey) {
+                // go to the next property, if there are multiple
+                return property.property.apply(property, slice.call(arguments, 1));
+            }
+            return property;
+        },
+
+        get: function (/*string*/ key) {
+            // TODO: add listener parameter back in
+            //	summary:
+            //		Standard get() function to retrieve the current value
+            //		of a property, augmented with the ability to listen
+            //		for future changes
+
+            var property, definition = this.schema[key];
+            // now we need to see if there is a custom get involved, or if we can just
+            // shortcut to retrieving the property value
+            definition = property || this.schema[key];
+            if (definition && definition.valueOf &&
+                (definition.valueOf !== simplePropertyValueOf || definition.hasCustomGet)) {
+                // we have custom get functionality, need to create at least a temporary property
+                // instance
+                property = property || (this.hasOwnProperty('_properties') && this._properties[key]);
+                if (!property) {
+                    // no property instance, so we create a temporary one
+                    property = utils.delegate(getSchemaProperty(this, key), {
+                        name: key,
+                        _parent: this
+                    });
+                }
+                // let the property instance handle retrieving the value
+                return property.valueOf();
+            }
+            // default action of just retrieving the property value
+            return this._getValues()[key];
+        },
+
+        set: function (/*string*/ key, /*any?*/ value) {
+            //	summary:
+            //		Only allows setting keys that are defined in the schema,
+            //		and remove any error conditions for the given key when
+            //		its value is set.
+            if (typeof key === 'object') {
+                startOperation();
+                try {
+                    for (var i in key) {
+                        value = key[i];
+                        if (key.hasOwnProperty(i) && !(value && value.toJSON === toJSONHidden)) {
+                            this.set(i, value);
+                        }
+                    }
+                } finally {
+                    endOperation();
+                }
+                return;
+            }
+            var definition = this.schema[key];
+            if (!definition && !this.additionalProperties) {
+                // TODO: Shouldn't this throw an error instead of just giving a warning?
+                return console.warn('Schema does not contain a definition for', key);
+            }
+            var property = this.hasOwnProperty('_properties') && this._properties[key];
+            if (!property &&
+                // we need a real property instance if it is an object or if we have a custom put method
+                ((value && typeof value === 'object') ||
+                (definition && definition.put !== simplePropertyPut))) {
+                property = this.property(key);
+            }
+            if (property) {
+                // if the property instance exists, use this to do the set
+                property.put(value);
+            } else {
+                if (definition && definition.coerce) {
+                    // if a schema definition exists, and has a coerce method,
+                    // we can use without creating a new instance
+                    value = definition.coerce(value);
+                }
+                // we can shortcut right to just setting the object property
+                this._getValues()[key] = value;
+                // check to see if we should do validation
+                if (definition && definition.validateOnSet !== false) {
+                    validate(this, key);
+                }
+            }
+
+            return value;
+        },
+
+        observe: function (/*string*/ key, /*function*/ listener, /*object*/ options) {
+            //	summary:
+            //		Registers a listener for any changes in the specified property
+            //	key:
+            //		The name of the property to listen to
+            //	listener:
+            //		Function to be called for each change
+            //	options.onlyFutureUpdates
+            //		If this is true, it won't call the listener for the current value,
+            //		just future updates. If this is true, it also won't return
+            //		a new reactive object
+            return this.property(key).observe(listener, options);
+        },
+
+        validate: function (/*string[]?*/ fields) {
+            //	summary:
+            //		Validates the current object.
+            //	fields:
+            //		If provided, only the fields listed in the array will be
+            //		validated.
+            //	returns: boolean | dojo/promise/Promise
+            //		A boolean or a promise that resolves to a boolean indicating whether
+            //		or not the model is in a valid state.
+
+            /*
+             var object = this,
+             isValid = true,
+             errors = [],
+             fieldMap;
+
+             if (fields) {
+             fieldMap = {};
+             for (var i = 0; i < fields.length; i++) {
+             fieldMap[i] = true;
+             }
+             }
+             return when(whenEach(function (whenItem) {
+             // iterate through the keys in the schema.
+             // note that we will always validate every property, regardless of when it fails,
+             // and we will execute all the validators immediately (async validators will
+             // run in parallel)
+             for (var key in object.schema) {
+             // check to see if we are allowed to validate this key
+             if (!fieldMap || (fieldMap.hasOwnProperty(key))) {
+             // run validation
+             whenItem(validate(object, key), function (isValid, key) {
+             if (!isValid) {
+             notValid(key);
+             }
+             }, key);
+             }
+             }
+             }), function () {
+             object.set('errors', isValid ? undefined : errors);
+             // it wasn't async, so we just return the synchronous result
+             return isValid;
+             });
+             function notValid(key) {
+             // found an error, mark valid state and record the errors
+             isValid = false;
+             errors.push.apply(errors, object.property(key).errors);
+             }
+             */
+        },
+
+        isValid: function () {
+            //	summary:
+            //		Returns whether or not there are currently any errors on
+            //		this model due to validation failures. Note that this does
+            //		not run validation but merely returns the result of any
+            //		prior validation.
+            //	returns: boolean
+
+            var isValid = true,
+                key;
+
+            for (key in this.schema) {
+                var property = this.hasOwnProperty('_properties') && this._properties[key];
+                if (property && property.errors && property.errors.length) {
+                    isValid = false;
+                }
+            }
+            return isValid;
+        }
+    });
+
+    //xhack: make dstore happy
+    Model.createSubclass=function(mixins, props){
+        var sub = dcl([this].concat(mixins), props || {});
+        sub.extend = function(props){
+            utils.mixin(this.prototype,props);
+            return this;
+        }
+        return sub;
+    }
+    // define the start and end markers of an operation, so we can
+    // fire notifications at the end of the operation, by default
+    function startOperation() {
+        setCallDepth++;
+    }
+    function endOperation() {
+        // if we are ending this operation, start executing the queue
+        if (setCallDepth < 2 && onEnd) {
+            onEnd();
+            onEnd = null;
+        }
+        setCallDepth--;
+    }
+    var setCallDepth = 0;
+    var callbackQueue;
+    var onEnd;
+    // the default nextTurn executes at the end of the current operation
+    // The intent with this function is that it could easily be replaced
+    // with something like setImmediate, setTimeout, or nextTick to provide
+    // next turn handling
+    (Model.nextTurn = function (callback) {
+        // set the callback for the end of the current operation
+        onEnd = callback;
+    }).atEnd = true;
+
+    var Reactive = dcl(Model, {
+        //	summary:
+        //		A reactive object is a data model that can contain a value,
+        //		and notify listeners of changes to that value, in the future.
+        observe: function (/*function*/ listener, /*object*/ options) {
+            //	summary:
+            //		Registers a listener for any changes in the current value
+            //	listener:
+            //		Function to be called for each change
+            //	options.onlyFutureUpdates
+            //		If this is true, it won't call the listener for the current value,
+            //		just future updates. If this is true, it also won't return
+            //		a new reactive object
+
+            var reactive;
+            if (typeof listener === 'string') {
+                // a property key was provided, use the Model's method
+                console.error('fff');
+                return this.inherited(arguments);
+            }
+            if (!options || !options.onlyFutureUpdates) {
+                // create a new reactive to contain the results of the execution
+                // of the provided function
+                reactive = new Reactive();
+                if (this._has()) {
+                    // we need to notify of the value of the present (as well as future)
+                    reactive.value = listener(this.valueOf());
+                }
+            }
+            // add to the listeners
+            var handle = this._addListener(function (value) {
+                var result = listener(value);
+                if (reactive) {
+                    // TODO: once we have a real notification API again, call that, instead
+                    // of requesting a change
+                    reactive.put(result);
+                }
+            });
+            if (reactive) {
+                reactive.remove = handle.remove;
+                return reactive;
+            } else {
+                return handle;
+            }
+        },
+
+        //	validateOnSet: boolean
+        //		Indicates whether or not to perform validation when properties
+        //		are modified.
+        //		This can provided immediate feedback and on the success
+        //		or failure of a property modification. And Invalid property
+        //		values will be rejected. However, if you are
+        //		using asynchronous validation, invalid property values will still
+        //		be set.
+        validateOnSet: false,
+
+        //	validators: Array
+        //		An array of additional validators to apply to this property
+        validators: null,
+
+        _addListener: function (listener) {
+            // add a listener for the property change event
+            return aspect.after(this, 'onchange', listener, true);
+        },
+
+        valueOf: function () {
+            return this._get();
+        },
+
+        _get: function () {
+            return this.value;
+        },
+
+        _has: function () {
+            return this.hasOwnProperty('value');
+        },
+        setValue: function (value) {
+            //	summary:
+            //		This method is responsible for storing the value. This can
+            //		be overriden to define a custom setter
+            //	value: any
+            //		The value to be stored
+            //	parent: Object
+            //		The parent object of this propery
+            this.value = value;
+        },
+
+        put: function (/*any*/ value) {
+            //	summary:
+            //		Indicates a new value for this reactive object
+
+            // notify all the listeners of this object, that the value has changed
+            var oldValue = this._get();
+            value = this.coerce(value);
+            if (this.errors) {
+                // clear any errors
+                this.set('errors', undefined);
+            }
+            var property = this;
+            // call the setter and wait for it
+            startOperation();
+            return when(this.setValue(value, this._parent), function (result) {
+                if (result !== undefined) {
+                    // allow the setter to change the value
+                    value = result;
+                }
+                // notify listeners
+                if (property.onchange) {
+                    // queue the callback
+                    property._queueChange(property.onchange, oldValue);
+                }
+                // if this was set to an object (or was an object), we need to notify.
+                // update all the sub-property objects, so they can possibly notify their
+                // listeners
+                var key,
+                    hasOldObject = oldValue && typeof oldValue === 'object' && !(oldValue instanceof Array),
+                    hasNewObject = value && typeof value === 'object' && !(value instanceof Array);
+                if (hasOldObject || hasNewObject) {
+                    // we will iterate through the properties recording the changes
+                    var changes = {};
+                    if (hasOldObject) {
+                        oldValue = oldValue._getValues ? oldValue._getValues() : oldValue;
+                        for (key in oldValue) {
+                            changes[key] = {old: oldValue[key]};
+                        }
+                    }
+                    if (hasNewObject) {
+                        value = value._getValues ? value._getValues() : value;
+                        for (key in value) {
+                            (changes[key] = changes[key] || {}).value = value[key];
+                        }
+                    }
+                    property._values = hasNewObject && value;
+                    for (key in changes) {
+                        // now for each change, we can notify the property object
+                        var change = changes[key];
+                        var subProperty = property._properties && property._properties[key];
+                        if (subProperty && subProperty.onchange) {
+                            // queue the callback
+                            subProperty._queueChange(subProperty.onchange, change.old);
+                        }
+                    }
+                }
+                if (property.validateOnSet) {
+                    property.validate();
+                }
+                endOperation();
+            });
+        },
+
+        coerce: function (value) {
+            //	summary:
+            //		Given an input value, this method is responsible
+            //		for converting it to the appropriate type for storing on the object.
+
+            var type = this.type;
+            if (type) {
+                if (type === 'string') {
+                    value = '' + value;
+                }
+                else if (type === 'number') {
+                    value = +value;
+                }
+                else if (type === 'boolean') {
+                    // value && value.length check is because dijit/_FormMixin
+                    // returns an array for checkboxes; an array coerces to true,
+                    // but an empty array should be set as false
+                    value = (value === 'false' || value === '0' || value instanceof Array && !value.length) ?
+                        false : !!value;
+                }
+                else if (typeof type === 'function' && !(value instanceof type)) {
+                    /* jshint newcap: false */
+                    value = new type(value);
+                }
+            }
+            return value;
+        },
+
+        addError: function (error) {
+            //	summary:
+            //		Add an error to the current list of validation errors
+            //	error: String
+            //		Error to add
+            this.set('errors', (this.errors || []).concat([error]));
+        },
+
+        checkForErrors: function (value) {
+            //	summary:
+            //		This method can be implemented to simplify validation.
+            //		This is called with the value, and this method can return
+            //		an array of any errors that were found. It is recommended
+            //		that you call this.inherited(arguments) to permit any
+            //		other validators to perform validation
+            //	value:
+            //		This is the value to validate.
+            var errors = [];
+            if (this.type && !(typeof this.type === 'function' ? (value instanceof this.type) :
+                    (this.type === typeof value))) {
+                errors.push(value + ' is not a ' + this.type);
+            }
+
+            if (this.required && !(value != null && value !== '')) {
+                errors.push('required, and it was not present');
+            }
+            return errors;
+        },
+
+        validate: function () {
+            //	summary:
+            //		This method is responsible for validating this particular
+            //		property instance.
+            var property = this;
+            var model = this._parent;
+            var validators = this.validators;
+            var value = this.valueOf();
+            var totalErrors = [];
+
+            return when(whenEach(function (whenItem) {
+                // iterator through any validators (if we have any)
+                if (validators) {
+                    for (var i = 0; i < validators.length; i++) {
+                        whenItem(validators[i].checkForErrors(value, property, model), addErrors);
+                    }
+                }
+                // check our own validation
+                whenItem(property.checkForErrors(value, property, model), addErrors);
+                function addErrors(errors) {
+                    if (errors) {
+                        // if we have an array of errors, add it to the total of all errors
+                        totalErrors.push.apply(totalErrors, errors);
+                    }
+                }
+            }), function () {
+                if (totalErrors.length) {
+                    // errors exist
+                    property.set('errors', totalErrors);
+                    return false;
+                }
+                // no errors, valid value, if there were errors before, remove them
+                if(property.get('errors') !== undefined){
+                    property.set('errors', undefined);
+                }
+                return true;
+            });
+        },
+        _queueChange: function (callback, oldValue) {
+            // queue up a notification callback
+            if (!callback._queued) {
+                // make sure we only queue up once before it is called by flagging it
+                callback._queued = true;
+                var reactive = this;
+                // define a function for when it is called that will clear the flag
+                // and provide the correct args
+                var dispatch = function () {
+                    callback._queued = false;
+                    callback.call(reactive, reactive._get(), oldValue);
+                };
+
+                if (callbackQueue) {
+                    // we already have a waiting queue of callbacks, add our callback
+                    callbackQueue.push(dispatch);
+                }
+                if (!callbackQueue) {
+                    // no waiting queue, check to see if we have a custom nextTurn
+                    // or we are in an operation
+                    if (!Model.nextTurn.atEnd || setCallDepth > 0) {
+                        // create the queue (starting with this callback)
+                        callbackQueue = [dispatch];
+                        // define the callback executor for the next turn
+                        Model.nextTurn(function () {
+                            // pull out all the callbacks
+                            for (var i = 0; i < callbackQueue.length; i++) {
+                                // call each one
+                                callbackQueue[i]();
+                            }
+                            // clear it
+                            callbackQueue = null;
+                        });
+                    } else {
+                        // no set call depth, so just immediately execute
+                        dispatch();
+                    }
+                }
+            }
+        },
+        toJSON: function () {
+            return this._values || this;
+        }
+    });
+    // a function that returns a function, to stop JSON serialization of an
+    // object
+    function toJSONHidden() {
+        return toJSONHidden;
+    }
+    // An object that will be hidden from JSON serialization
+    var Hidden = function () {};
+    Hidden.prototype.toJSON = toJSONHidden;
+    var Property = Model.Property = dcl(Reactive, {
+        //	summary:
+        //		A Property represents a time-varying property value on an object,
+        //		along with meta-data. One can listen to changes in this value (through
+        //		receive), as well as access and monitor metadata, like default values,
+        //		validation information, required status, and any validation errors.
+
+        //	value: any
+        //		This represents the value of this property, which can be
+        //		monitored for changes and validated
+
+        init: function (options) {
+            // handle simple definitions
+            if (typeof options === 'string' || typeof options === 'function') {
+                options = {type: options};
+            }
+            // and/or mixin any provided properties
+            if (options) {
+                utils.mixin(this, options);
+            }
+        },
+
+        _get: function () {
+            return this._parent._getValues()[this.name];
+        },
+        _has: function () {
+            return this.name in this._parent._getValues();
+        },
+        setValue: function (value, parent) {
+            parent._getValues()[this.name] = value;
+        }
+    });
+    var simplePropertyValueOf = Property.prototype.valueOf;
+    var simplePropertyPut = Property.prototype.put;
+    return Model;
+});
+/** @module xide/data/Source **/
+define('xide/data/Source',[
+    'dcl/dcl',
+    "dojo/_base/declare",
+    'xide/utils',
+    'xide/lodash'
+], function (dcl, declare, utils, lodash) {
+
+    var _debug = true;
+    /**
+     * @class module:xide/data/Source
+     * @augments module:xide/data/Model
+     */
+    var Implementation = {
+        /**
+         * @type {Array<module:xide/data/Reference>|null}
+         */
+        _references: null,
+        /**
+         * @type {module:xide/data/Reference|null}
+         */
+        _originReference: null,
+        /**
+         * @type {module:xide/data/_Base|null} The store.
+         */
+        _store: null,
+        onReferenceUpdate: function () {
+        },
+        onReferenceRemoved: function () {
+        },
+        onReferenceDelete: function () {
+        },
+        updateReference: function () {
+        },
+        destroy: function () {
+            this._references = null;
+        },
+        getReferences: function () {
+            return this._references ? utils.pluck(this._references, 'item') : [];
+        },
+        hasReference: function (source) {
+            return lodash.find(this._references, {item: source});
+        },
+        addReference: function (reference, settings, addSource) {
+            !this._references && (this._references = []);
+            if (this.hasReference(reference)) {
+                _debug && console.warn('already have reference');
+                return;
+            }
+            this._references.push({
+                item: reference,
+                settings: settings
+            });
+            if (settings && settings.onDelete) {
+                if (reference._store) {
+                    reference._store.on('delete', function (evt) {
+                        if (evt.target == reference) {
+                            this._store.removeSync(this[this._store.idProperty]);
+                            this._references.remove(evt.target);
+                        }
+                    }.bind(this));
+                }
+            }
+            if (addSource) {
+                if (reference.addSource) {
+                    reference.addSource(this, settings);
+                }
+            }
+        },
+        removeReference: function (Reference) {
+            this._references && lodash.each(this._references, function (ref) {
+                if (ref && ref.item == Reference) {
+                    this._references && this._references.remove(ref);
+                    return true;
+                }
+            }, this);
+        },
+        updateReferences: function (args) {
+            var property = args.property,
+                value = args.value;
+
+            if (!this._references) {
+                this._references = [];
+            }
+            for (var i = 0; i < this._references.length; i++) {
+                var link = this._references[i],
+                    item = link.item,
+                    settings = link.settings,
+                    store = item._store;
+
+                if (this._originReference == item) {
+                    continue;
+                }
+                if (args.property && settings.properties && settings.properties[args.property]) {
+                    if (store) {
+                        store.silent(true);
+                    }
+                    try {
+                        if (item.onSourceChanged) {
+                            item.onSourceChanged(property, value, args.type);
+                        } else {
+                            item.set(property, value);
+                        }
+
+                    } catch (e) {
+                        _debug && console.error('error updating reference! ' + e, e);
+                    }
+                    if (store) {
+                        store.silent(false);
+                        store.emit('update', {target: item});
+                    }
+                }
+            }
+        },
+        constructor: function (properties) {
+            this._references = [];
+            utils.mixin(this, properties);
+        },
+        onItemChanged: function (args) {
+            this.updateReferences(args);
+        }
+    };
+    //exports for declare & dcl
+    var Module = declare('xgrid.data.Source', null, Implementation);
+    Module.dcl = dcl(null, Implementation);
+    Module.Implementation = Implementation;
+    return Module;
+});
+
+/** module:xaction/ActionModel **/
+define('xaction/ActionModel',[
+    "dcl/dcl",
+    'xaction/Action',
+    'xide/data/Model',
+    "xide/data/Source",
+    'xide/model/Path',
+    'xide/utils'
+], function (dcl, Action, Model, Source, Path, utils) {
+    var debug = false;
+    var count = 0;
+    /**
+     * @class module:xaction/ActionModel
+     * @extends module:xide/data/Source
+     * @extends module:xaction/Action
+     * @extends module:xide/mixins/EventedMixin
+     */
+    return dcl([Action, Model, Source.dcl], {
+        filterGroup: "item|view",
+        keyboardMappings: null,
+        bindWidgetProperties: [
+            //2-way bindings for these props:
+            'value',
+            'icon',
+            'disabled'
+        ],
+        items: null,
+        onRemove: function () {
+            _.invoke(this.getReferences(), 'destroy');
+            this.keyboardMappings && _.invoke(this.keyboardMappings, "destroy");
+            this.destroy();
+        },
+        shouldShow: function () {
+            return true;
+        },
+        shouldDisable: function () {
+            return false;
+        },
+        updateReference: function (selection, reference, visibility) {
+            reference.set('disabled', this.shouldDisable(selection, reference, visibility));
+            if (this.icon !== null && reference.icon !== null && this.icon !== reference.icon) {
+                reference.set('icon', this.icon);
+            }
+            if (this.value !== null && reference.value !== null && this.value !== reference.value) {
+                reference.set('value', this.value);
+            }
+        },
+        refreshReferences: function (property, value) {
+            _.each(this.getReferences(), function (ref) {
+                ref.set(property, value);
+            }, this);
+        },
+        refresh: function (selection) {
+            this._emit('refresh', {
+                action: this,
+                selection: selection
+            });
+            _.each(this.getReferences(), function (ref) {
+                this.updateReference(selection, ref, ref.visibility);
+            }, this);
+        },
+        setProperty: function (key, value, updateReferences) {
+            return this.set(key, value);
+        },
+        complete: function () {
+            this.items = this.getChildren();
+        },
+        getParent: function () {
+            var segments = this.command.split('/');
+            if (segments.length > 1) {
+                return this._store.getSync(segments.slice(0, segments.length - 1).join('/'));
+            }
+        },
+        getParentCommand: function () {
+            var segments = this.command.split('/');
+            if (segments.length > 1) {
+                return segments.slice(0, segments.length - 1).join('/');
+            }
+        },
+        getSegments: function (command) {
+            return command.split('/');
+        },
+        getRoot: function () {
+            return this.command.split('/')[0];
+        },
+        getItemsAtBranch: function (items, path) {
+            return new Path(path).getChildren(utils.pluck(items, 'command'), false);
+        },
+        getChildren: function () {
+            var children = this.getItemsAtBranch(this._store.getAll(), this.command),
+                self = this;
+
+            //return an action from both stores
+            function getAction(command) {
+                return self._store.getSync(command);
+            }
+
+            //command strings to actions
+            function toActions(paths) {
+                var result = [];
+                _.each(paths, function (path) {
+                    result.push(getAction(path));
+                });
+                return result;
+            }
+
+            /*
+            return lodash.map(this.getItemsAtBranch(this._store.getAll(), this.command),function(paths){
+                return lodash.map(paths,function(path){
+                    this._store.getSync(path);
+                },this)
+            },this)
+            */
+            return toActions(children);
+        },
+        /**
+         * @TODO: remove back compat
+         * @param evt {object}
+         * @param evt.parent {widget}
+         * @param evt.widget {widget}
+         * @param evt.visibility {string}
+         * @private
+         */
+        _onWidgetCreated: function (evt) {
+            if (evt.widget.addSource) {
+                this.addReference(evt.widget, {
+                    properties: {
+                        "value": true
+                    }
+                }, true);
+            } else {
+                debug && console.warn('widget is not a reference! ', evt);
+            }
+        }
+    });
+});
+/** @module xaction/ActionStore **/
+define('xaction/ActionStore',[
+    "xdojo/declare",
+    'xide/data/TreeMemory',
+    'xide/utils',
+    'xide/data/ObservableStore',
+    'dstore/Trackable',
+    'xaction/ActionModel'
+], function (declare, TreeMemory, utils, ObservableStore, Trackable, ActionModel) {
+    /**
+     * Default properties to be observed (in ObservableStore)
+     * @type {string[]}
+     */
+    var DEFAULT_ACTION_PROPERTIES = [
+        "value",
+        "icon",
+        "disabled",
+        "enabled"
+    ];
+
+    /**
+     * Default factory
+     * @param composer
+     * @param bases
+     * @param Model
+     * @param defaults
+     * @param mixin
+     * @returns {*}
+     */
+    function createClass(composer, bases, Model, defaults, mixin) {
+        /**
+         * @class module:xaction/ActionStore
+         */
+        return (composer || declare)(bases || [TreeMemory, Trackable, ObservableStore], utils.mixin({
+            idProperty: 'command',
+            declaredClass: "xaction/ActionStore",
+            Model: Model || ActionModel,
+            renderers: null,
+            observedProperties: defaults || DEFAULT_ACTION_PROPERTIES,
+            getAll: function () {
+                return this.data;
+            },
+            addRenderer: function (renderer) {
+                !this.renderers && (this.renderers = []);
+                !_.contains(this.renderers, renderer) && this.renderers.push(renderer);
+            }
+        }, mixin));
+    }
+
+    var Module = createClass(null, null, null, null, null);
+    Module.createDefault = function (args) {
+        return new Module(args);
+    };
+    Module.createClass = createClass;
+    Module.DEFAULT_ACTION_PROPERTIES = DEFAULT_ACTION_PROPERTIES;
+    return Module;
+});
+
+/** @module xide/Keyboard **/
+define('xide/Keyboard',[
+    'xdojo/declare',
+    'dcl/dcl',
+    'dojo/_base/lang',
+    'xide/types',
+    'xide/utils/ObjectUtils'    //possibly not loaded yet
+], function (declare, dcl, lang, types, utils) {
+
+    /**
+     * First things first, mixin KEYBOARD_FLAGS into core types.
+     */
+    utils.mixin(types, {
+        /**
+         * KEYBOARD_EVENT describes all possible events a subscriber can listen to.
+         *
+         * @enum module:xide/types/KEYBOARD_EVENT
+         * @memberOf module:xide/types
+         */
+        KEYBOARD_EVENT: {
+            /**
+             * Add a custom callback for a key-up event.
+             *
+             * @default null, not required.
+             * @type {function}
+             * @constant
+             */
+            UP: 'on_keyup',
+            /**
+             * Add a custom callback for a key-dow event.
+             *
+             * @default null, not required.
+             * @type {function}
+             * @constant
+             */
+            DOWN: 'on_keydown',
+            /**
+             * Add a custom callback for a release event. This is similar to keyup, but will fire once
+             * when ALL of the keys of a combo have been released. If you're unsure, you probably want to
+             * ignore this and use UP.
+             *
+             * @default null, not required.
+             * @type {function}
+             * @constant
+             */
+            RELEASE: 'on_release'
+        }
+    });
+
+    /**
+     * Define a public struct for a 'keyboard - mapping
+     */
+    utils.mixin(types, {
+
+        /**
+         * KEYBOARD_MAPPING
+         *
+         * Keys accepted in human readable format as 'shift s', see the full map:
+         *
+         _modifier_event_mapping =
+         "cmd"   : "metaKey"
+         "ctrl"  : "ctrlKey"
+         "shift" : "shiftKey"
+         "alt"   : "altKey"
+
+         _keycode_alternate_names =
+         "escape"        : "esc"
+         "control"       : "ctrl"
+         "command"       : "cmd"
+         "break"         : "pause"
+         "windows"       : "cmd"
+         "option"        : "alt"
+         "caps_lock"     : "caps"
+         "apostrophe"    : "\'"
+         "semicolon"     : ";"
+         "tilde"         : "~"
+         "accent"        : "`"
+         "scroll_lock"   : "scroll"
+         "num_lock"      : "num"
+
+         _keycode_shifted_keys =
+         "/"     : "?"
+         "."     : ">"
+         ","     : "<"
+         "\'"    : "\""
+         ";"     : ":"
+         "["     : "{"
+     "]"     : "}"
+         "\\"    : "|"
+         "`"     : "~"
+         "="     : "+"
+         "-"     : "_"
+         "1"     : "!"
+         "2"     : "@"
+         "3"     : "#"
+         "4"     : "$"
+         "5"     : "%"
+         "6"     : "^"
+         "7"     : "&"
+         "8"     : "*"
+         "9"     : "("
+         "0"     : ")"
+
+         _keycode_dictionary =
+         0   : "\\"          # Firefox reports this keyCode when shift is held
+         8   : "backspace"
+         9   : "tab"
+         12  : "num"
+         13  : "enter"
+         16  : "shift"
+         17  : "ctrl"
+         18  : "alt"
+         19  : "pause"
+         20  : "caps"
+         27  : "esc"
+         32  : "space"
+         33  : "pageup"
+         34  : "pagedown"
+         35  : "end"
+         36  : "home"
+         37  : "left"
+         38  : "up"
+         39  : "right"
+         40  : "down"
+         44  : "print"
+         45  : "insert"
+         46  : "delete"
+         48  : "0"
+         49  : "1"
+         50  : "2"
+         51  : "3"
+         52  : "4"
+         53  : "5"
+         54  : "6"
+         55  : "7"
+         56  : "8"
+         57  : "9"
+         65  : "a"
+         66  : "b"
+         67  : "c"
+         68  : "d"
+         69  : "e"
+         70  : "f"
+         71  : "g"
+         72  : "h"
+         73  : "i"
+         74  : "j"
+         75  : "k"
+         76  : "l"
+         77  : "m"
+         78  : "n"
+         79  : "o"
+         80  : "p"
+         81  : "q"
+         82  : "r"
+         83  : "s"
+         84  : "t"
+         85  : "u"
+         86  : "v"
+         87  : "w"
+         88  : "x"
+         89  : "y"
+         90  : "z"
+         91  : "cmd"
+         92  : "cmd"
+         93  : "cmd"
+         96  : "num_0"
+         97  : "num_1"
+         98  : "num_2"
+         99  : "num_3"
+         100 : "num_4"
+         101 : "num_5"
+         102 : "num_6"
+         103 : "num_7"
+         104 : "num_8"
+         105 : "num_9"
+         106 : "num_multiply"
+         107 : "num_add"
+         108 : "num_enter"
+         109 : "num_subtract"
+         110 : "num_decimal"
+         111 : "num_divide"
+         112 : "f1"
+         113 : "f2"
+         114 : "f3"
+         115 : "f4"
+         116 : "f5"
+         117 : "f6"
+         118 : "f7"
+         119 : "f8"
+         120 : "f9"
+         121 : "f10"
+         122 : "f11"
+         123 : "f12"
+         124 : "print"
+         144 : "num"
+         145 : "scroll"
+         186 : ";"
+         187 : "="
+         188 : ","
+         189 : "-"
+         190 : "."
+         191 : "/"
+         192 : "`"
+         219 : "["
+         220 : "\\"
+         221 : "]"
+         222 : "\'"
+         223 : "`"
+         224 : "cmd"
+         225 : "alt"
+         # Opera weirdness
+         57392   : "ctrl"
+         63289   : "num"
+         # Firefox weirdness
+         59 : ";"
+         61 : "-"
+         173 : "="
+
+         *
+         * @class module:xide/types/KEYBOARD_MAPPING
+         * @memberOf module:xide/types
+         */
+
+        /**
+         * KEYBOARD_MAPPING is defines keyboard mapping struct:
+         *
+         * @memberOf module:xide/types
+         * @class module:xide/types/KEYBOARD_EVENT
+         *
+         */
+        KEYBOARD_MAPPING: {
+            /**
+             * @param keys {string|string[]} the key sequence (see below for the right codes ).
+             * This option can be either an array of strings, or a single space separated string of key names that describe
+             * the keys that make up the combo.
+             */
+            keys: null,
+            /**
+             * @param handler {function|xide/types/KEYBOARD_EVENT} the callback for the key sequence. This can be one
+             * function an structure per keyboard event. Usually its enough to leave this empty. You can also pass this
+             * in the params
+             */
+            handler: null,
+            /**
+             * @param scope {Object|null} the scope in which the handler(s) are excecuted.
+             */
+            scope: null,
+            /**
+             * @param target {HTMLElement|null} the element on the listerner is bound to. Null means global!
+             */
+            target: null,
+            /**
+             * @param type {string|null} the keypress combo type, can be:
+             * simple_combo(keys, on_keydown_callback); // Registers a very basic combo;
+             * counting_combo(keys, on_count_callback); // Registers a counting combo
+             * sequence_combo(keys, callback); // Registers a sequence combo
+             * register_combo(combo_dictionary); // Registers a combo from a dictionary
+             */
+            type: null,
+            /**
+             * @param mixin to override the 'keypress' libraries internal setup for a listener
+             * @default {
+
+                prevent_repeat: false,
+                prevent_default: false,
+                is_unordered: false,
+                is_counting: false,
+                is_exclusive: false,
+                is_solitary: false,
+                is_sequence: false
+            */
+            params: null,
+            /**
+             *
+             * @param mouse {Object|null|true|false} filter to setup an addtional trigger constraint for keyboard
+             * sequence. Example: mouse.before='mousedown' and keys ='ctrl' will fire the handler when the mouse is hold whilst
+             * ctrl key is hold. default:null.
+             *
+             */
+            mouse: {
+                brefore: null,//true
+                after: null//false
+            },
+            eventArgs: null
+        }
+
+    });
+
+    /**
+     * Global array of keypress listeners
+     * @type {Object[]}
+     * @private
+     */
+    var listeners = [];
+    var byNode = {};
+
+    /**
+     * Util to extend a keyboard mapping with control functions per listener. Keyboard mappings can
+     * have multiple key sequences and this will take care about stop(), listen() and destroy().
+     * @param mapping
+     * @param listeners
+     */
+    var addListenerControls = function (mapping, listeners) {
+        mapping.stop = function () {
+            return;
+            //if(listeners && listeners.length) {
+            //    _.invoke(listeners, 'stop_listening');
+            //}
+        };
+        mapping.listen = function () {
+            _.invoke(listeners, 'listen');
+        };
+        mapping.destroy = function () {
+            mapping.stop();
+            _.each(listeners, function (listener) {
+                listener.destroy();
+                listeners.remove(listener);
+                delete byNode[listener.targetId];
+            });
+        };
+        return mapping;
+    };
+
+    /**
+     * Safe link to keypress prototype
+     * @type {Listener|keypress.Listener}
+     * @private
+     */
+    var keypressProto = window ? window['keypress'] ? window.keypress.Listener : null : null;
+    if (!keypressProto) {
+        console.error('you need keypress.min.js installed to use xide/Keyboard');
+    }
+
+    var Implementation = {
+        /**
+         * @member listener {Object[]} all keypress listener instances
+         */
+        _keyboardListeners: null,
+        /**
+         * The default setup for a listener, this is 'keypress' specific.
+         *
+         * @returns {{prevent_repeat: boolean, prevent_default: boolean, is_unordered: boolean, is_counting: boolean, is_exclusive: boolean, is_solitary: boolean, is_sequence: boolean}}
+         */
+        keyPressDefault: function () {
+            return {
+                prevent_repeat: false,
+                prevent_default: true,
+                is_unordered: false,
+                is_counting: false,
+                is_exclusive: false,
+                is_solitary: false,
+                is_sequence: true
+            };
+        },
+        /**
+         * Private listener creation method, accepts multiple key sequences for the same handler.
+         *
+         * @param keys {string|string[]} the key sequence (see below for the right codes ).
+         * This option can be either an array of strings, or a single space separated string of key names that describe
+         * the keys that make up the combo.
+         *
+         * @param params {Object|null} an additional parameter structure to override the default 'keypress' setup.
+         * See this.keyPressDefault
+         *
+         * @param scope {Object|null} the scope in which the handler(s) are excecuted, defaults to 'this' as we are
+         * a mixin.
+         *
+         *
+         * @param type {string|null} the keypress combo type, can be:
+         * simple_combo(keys, on_keydown_callback); // Registers a very basic combo;
+         * counting_combo(keys, on_count_callback); // Registers a counting combo
+         * sequence_combo(keys, callback); // Registers a sequence combo
+         * register_combo(combo_dictionary); // Registers a combo from a dictionary
+         *
+         * @param handler {function|xide/types/KEYBOARD_EVENT} the callback for the key sequence. This can be one
+         * function an structure per keyboard event. Usually its enough to leave this empty. You can also pass this
+         * in the params
+
+         * @param target {HTMLElement|null} the element on the listener is bound to. Null means global!
+         *
+         * @param eventArgs {array|null} Event arguments passed to the handler. Defaults to keyboard event.
+         *
+         * @public
+         */
+        addKeyboardListerner: function (keys, params, type, scope, handler, target, eventArgs) {
+            // prepare keypress args
+            var _defaults = lang.clone(this.keyPressDefault());
+            //mixin override
+            utils.mixin(_defaults, params);
+
+            // defaults
+            _defaults['this'] = _defaults['this'] || scope || this;
+
+            // use simple_combo as default
+            type = type || 'simple_combo';
+
+            //normalize to array
+            keys = !_.isArray(keys) ? [keys] : keys;
+
+            var _listeners = [],
+                ignore = ['ctrl s', 'ctrl l', 'ctrl r', 'ctrl w', 'ctrl f4', 'shift f4', 'alt tab', 'ctrl tab'];
+
+            _.each(keys, function (key_seq) {
+                var targetId = target && target.id ? target.id : 'global',
+                    wasCached = target ? !!byNode[targetId] : false,
+                    registered = false;
+
+                var listener = byNode[targetId];
+                if(listener && listener["_seq"+key_seq]){
+                    registered = true;
+                }
+
+                if(!registered) {
+                    if (!listener) {
+                        listener = new keypressProto(target, _defaults);
+                        listener.targetId = targetId;
+                    }
+
+                    listener["_seq" + key_seq] = true;
+                    listener[type](key_seq, function (e) {
+                        if (e._did) {
+                            return;
+                        }
+                        e._did = true;
+                        var className = e.target.className.toLowerCase();
+                        //skip input fields
+                        if (e.target.tagName!=='BUTTON' && className.indexOf('input') == -1 || className.indexOf('ace_text-input') != -1) {
+                            if (handler && handler.apply) {
+                                handler.apply(_defaults['this'], eventArgs || [e]);
+                                if (ignore.indexOf(key_seq) !== -1) {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                }
+                            }
+                        }
+                    });
+                    if (byNode[targetId]) {
+
+                    } else {
+                        byNode[targetId] = listener;
+                    }
+
+                    if (!wasCached) {
+                        !this._keyboardListeners && (this._keyboardListeners = []);
+                        //store in local
+                        this._keyboardListeners.push(listener);
+                        //store in global
+                        _listeners.push(listener);
+                    }
+                }
+
+            }, this);
+
+            return _listeners;
+        },
+        /**
+         * Public interface to register a keyboard mapping
+         * @param mapping {xide/types/KEYBOARD_MAPPING}
+         * @returns {xide/types/KEYBOARD_MAPPING}
+         */
+        registerKeyboardMapping: function (mapping) {
+            var listeners = this.addKeyboardListerner(mapping.keys, mapping.params, null, mapping.scope, mapping.handler, mapping.target, mapping.eventArgs);
+            mapping.listeners = listeners;
+            return addListenerControls(mapping, listeners);
+        },
+        destroy:function(){
+            this.inherited && this.inherited(arguments);
+            var targetId = this.id;
+            var listener = byNode[targetId];
+            if(listener){
+                listener.destroy();
+                delete byNode[targetId];
+            }
+        }
+    };
+
+    /**
+     * Generic keyboard handler, using the external 'keypress' Javascript library
+     * which handles keyboard events a bit more elegant and robust, it does allow
+     * registration of keyboard - sequences as 'shift s':
+     * @example
+     *
+     * listener.simple_combo("shift s", function() {
+     *  console.log("You pressed shift and s");
+     * });
+     *
+     * @link http://dmauro.github.io/Keypress/
+     * @link https://github.com/dmauro/Keypress/blob/master/keypress.coffee#L728-864
+     */
+    var _Keyboard = declare("xide/Keyboard", null, Implementation);
+    /**
+     * Static mapping factory
+     * @param keys
+     * @param params
+     * @param type
+     * @param scope
+     * @param handler
+     * @param target
+     * @param eventArgs
+     * @memberOf module:xide/Keyboard
+     * @returns {xide/types/KEYBOARD_MAPPING}
+     */
+    _Keyboard.createMapping = function (keys, params, type, scope, handler, target, eventArgs) {
+        var mapping = utils.clone(types.KEYBOARD_MAPPING);//@TODO: bad copy, uses a ctr followed by a lang.mixin
+        function getHandler(__handler) {
+            return _.isString(__handler) ? lang.hitch(scope, __handler) : __handler;
+        }
+
+        mapping.keys = keys;
+        mapping.params = params || {};
+        mapping.type = type;
+        mapping.scope = scope;
+        mapping.handler = getHandler(handler);
+        mapping.target = target;
+        mapping.eventArgs = eventArgs;
+        mapping.setHandler = function (event, handler) {
+            mapping.params[event] = getHandler(handler);
+            return mapping;
+        };
+        return mapping;
+
+    };
+
+    _Keyboard.defaultMapping = function (keys, handler, params, node, who, args) {
+        return _Keyboard.createMapping(keys, params, null, who, handler, node, args);
+    };
+
+    _Keyboard.dcl = dcl(null, Implementation);
+    _Keyboard.byNode = byNode;
+    _Keyboard.listeners = listeners;
+    return _Keyboard;
+});
+define('xaction/ActionProvider',[
+    "xdojo/declare",
+    'dcl/dcl',
+    "xide/types",
+    "xide/utils",
+    "xide/model/Path",
+    'xaction/ActionStore',
+    'xaction/Action',
+    'xide/Keyboard',
+    'xide/mixins/EventedMixin',
+    'xaction/DefaultActions',
+    'xide/lodash'
+], function (declare, dcl, types, utils, Path, ActionStore, Action, Keyboard, EventedMixin, DefaultActions,_) {
+
+    var Implementation = {
+        /**
+         * @type module:xaction/ActionStore
+         */
+        actionStore: null,
+        actions: null,
+        allowActionOverride: true,
+        sortGroups: function (groups, groupMap) {
+            groups = groups.sort(function (a, b) {
+                if (groupMap[a] != null && groupMap[b] != null) {
+                    var orderA = groupMap[a];
+                    var orderB = groupMap[b];
+                    return orderB - orderA;
+                }
+                return 100;
+            });
+            return groups;
+        },
+        getItemsAtBranch: function (items, path) {
+            return new Path(path).getChildren(_.map(items, 'command'), false);
+        },
+        /////////////////////////////////////////////////////
+        //
+        //  Store Based Extension -
+        //
+        /////////////////////////////////////////////////////
+        /**
+         * Update all actions referencing widgets
+         */
+        refreshActions: function () {
+            var allActions = this.getActions();
+            for (var i = 0; i < allActions.length; i++) {
+                var action = allActions[i];
+                if (action.refresh) {
+                    action.refresh();
+                }
+            }
+        },
+        getAction: function (mixed) {
+            if (_.isString(mixed)) {
+                return this.getActionStore().getSync(mixed);
+            }
+            return mixed;
+        },
+        clearActions: function () {
+            var store = this.getActionStore(),
+                actions = store ? store.query() : [];
+
+            _.each(actions, function (action) {
+                action && store.removeSync(action.command);
+            });
+            store && store.setData([]);
+        },
+        destroy: function () {
+            this.clearActions();
+            return this.inherited(arguments);
+        },
+        /**
+         *
+         * @param title
+         * @param command
+         * @param group
+         * @param icon
+         * @param handler
+         * @param accelKey
+         * @param keyCombo
+         * @param keyProfile
+         * @param keyTarget
+         * @param keyScope
+         * @param mixin
+         * @returns {xaction/Action}
+         */
+        __createAction: function (title, command, group, icon, handler, accelKey, keyCombo, keyProfile, keyTarget, keyScope, mixin) {
+            icon = icon || types.ACTION_ICON[command];
+            var args = {accelKey: accelKey};
+            utils.mixin(args, mixin);
+            var action = Action.createDefault(title, icon, command, group, handler, args);
+            if (keyCombo) {
+                var keyboardMappings;
+                if (this.keyboardMappings) {
+                    keyboardMappings = this.keyboardMappings;
+                } else {
+                    action.keyboardMappings = keyboardMappings = [];
+                }
+                var mapping = Keyboard.defaultMapping(keyCombo, handler, keyProfile || types.KEYBOARD_PROFILE.DEFAULT, keyTarget, keyScope, [action]);
+                mapping = this.registerKeyboardMapping(mapping);
+                keyboardMappings.push(mapping);
+                action.keyboardMappings = keyboardMappings;
+            }
+            return action;
+        },
+        updateAction: function (action, what, value) {
+            action = action || this.getAction(action);
+            if (action) {
+                action.set(what, value);
+                setTimeout(function () {
+                    action.getReferences().forEach(function (ref) {
+                        ref.set(what, value);
+                    });
+                }, 100);
+            }
+        },
+        _completeActions: function (actions) {
+            var result = [];
+            var keyTarget = this.getKeyTarget ? this.getKeyTarget() : null;
+            for (var i = 0; i < actions.length; i++) {
+                var config = actions[i],
+                    action;
+
+                if (!config) {
+                    continue;
+                }
+
+                if (!(config instanceof Action)) {
+                    action = this.__createAction(
+                        config.title,
+                        config.command,
+                        config.group,
+                        config.icon,
+                        config.handler,
+                        config.accelKey,
+                        config.keyCombo,
+                        config.keyProfile,
+                        keyTarget || config.keyTarget,
+                        config.keyScope,
+                        config.mixin);
+
+                    action.parameters = config;
+                } else {
+                    action = config;
+                }
+                this._addAction(result, action);
+            }
+            if (this.keyboardMappings) {
+                console.error('have mappings');
+            }
+            _.each(this.keyboardMappings, function (mapping) {
+                this.registerKeyboardMapping(mapping);
+            }, this);
+            return result;
+        },
+        createActionStore: function () {
+            if (!this.actionStore) {
+                var _actions = this._completeActions(this.actions || []);
+                this.actionStore = new ActionStore({
+                    id: utils.createUUID(),
+                    data: _actions,
+                    observedProperties: [
+                        "value",
+                        "icon",
+                        "label"
+                    ],
+                    tabOrder: this.tabOrder,
+                    groupOrder: this.groupOrder,
+                    tabSettings: this.tabSettings,
+                    menuOrder: this.menuOrder
+                });
+            }
+            return this.actionStore;
+        },
+        /**
+         * Get all actions via query from Action store
+         * @param mixed
+         * @param allowCache
+         * @returns {*}
+         */
+        getActions: function (mixed, allowCache) {
+            if (!mixed && allowCache !== false && this.__actions) {
+                return this.__actions;
+            }
+            var query = mixed;
+            //no query or function given
+            if (!mixed) {
+                query = {
+                    command: /\S+/
+                };
+            }
+            this.__actions = this.getActionStore().query(query);
+            return this.__actions;
+
+        },
+        /**
+         * Safe getter for action store
+         * @returns {*}
+         */
+        getActionStore: function () {
+            return this.createActionStore();
+        },
+        /**
+         * Create action store upon construction
+         */
+        postMixInProperties: function () {
+            this.inherited && this.inherited(arguments);
+            this.createActionStore();
+        },
+        addActions: function (actions) {
+            var store = this.getActionStore();
+            if (!store['subscribedToUpdates_' + this.id]) {
+                store['subscribedToUpdates_' + this.id] = true;
+                this.addHandle('update', store.on('update', function (evt) {
+                    var action = evt.target;
+                    if (action._isCreating || !evt.property) {
+                        return;
+                    }
+                    if (action && action.onChange) {
+                        action.onChange(evt.property, evt.value, action);
+                    }
+
+                }));
+            }
+            var result = [];
+            this._emit('onAddActions', {
+                actions: actions,
+                permissions: this.permissions,
+                store: store
+            });
+
+            //remove existing
+            this.allowActionOverride && _.each(actions, function (action) {
+                if (action) {
+                    var existing = store.getSync(action.command);
+                    if (existing) {
+                        store.removeSync(existing.command);
+                    }
+                }
+            });
+            actions = this._completeActions(actions);
+
+            _.each(actions, function (action) {
+                if (this.allowActionOverride && store.getSync(action.command)) {
+                    store.removeSync(action.command);
+                }
+                var _action = store.putSync(action);
+                result.push(_action);
+                _action._isCreating = true;
+                _action.onCreate && _action.onCreate(_action);
+                this._emit('onAddAction', _action);
+                _action._isCreating = false;
+            }.bind(this));
+            return result;
+
+        },
+        /**
+         *
+         * @param label
+         * @param command
+         * @param icon
+         * @param props
+         * @param mixin
+         * @returns {*}
+         */
+        createActionShort: function (label, command, icon, props, mixin) {
+            return this.createAction(_.extend({
+                label: label,
+                command: command,
+                icon: icon,
+                mixin: props && props.mixin ? props.mixin : mixin
+            }, props));
+        },
+        /**
+         *
+         * @param options
+         * @returns {*}
+         */
+        createAction2: function (options) {
+            var thiz = this,
+                action = null,
+                mixin = options.mixin || {},
+                owner = options.owner || mixin.owner || thiz,
+                permissions = options.permissions || this.permissions || [],
+                command = options.command,
+                keycombo = options.keycombo,
+                label = options.label,
+                icon = options.icon,
+                tab = options.tab,
+                group = options.group,
+                filterGroup = options.filterGroup,
+                onCreate = options.onCreate,
+                handler = options.handler,
+                container = options.container || thiz.domNode,
+                shouldShow = options.shouldShow,
+                shouldDisable = options.shouldDisable;
+
+            utils.mixin(mixin, {
+                owner: owner,
+                onChange: options.onChange
+
+            });
+
+            if (mixin.addPermission || DefaultActions.hasAction(permissions, command)) {
+
+                handler = handler || DefaultActions.defaultHandler;
+                if (keycombo) {
+                    if (_.isString(keycombo)) {
+                        keycombo = [keycombo];
+                    }
+                    mixin.tooltip = keycombo.join('<br/>').toUpperCase();
+                }
+
+                action = DefaultActions.createAction(label, command, icon, keycombo, tab, group, filterGroup, onCreate, handler, mixin, shouldShow, shouldDisable, container || thiz.domNode);
+                if (owner && action && owner.addAction) {
+                    owner.addAction(null, action);
+                }
+                return action;
+            }
+        },
+        /**
+         * Create Action
+         * @param label
+         * @param command
+         * @param icon
+         * @param keycombo
+         * @param tab
+         * @param group
+         * @param filterGroup
+         * @param onCreate
+         * @param handler
+         * @param mixin
+         * @param shouldShow
+         * @param shouldDisable
+         * @param permissions
+         * @param container
+         * @param owner
+         * @returns {*}
+         */
+        createAction: function (label, command, icon, keycombo, tab, group, filterGroup, onCreate, handler, mixin, shouldShow, shouldDisable, permissions, container, owner) {
+            if (arguments.length == 1) {
+                return this.createAction2(arguments[0]);
+            }
+            var thiz = this,
+                action = null;
+
+            mixin = mixin || {};
+            utils.mixin(mixin, {owner: owner || thiz});
+
+            if (mixin.addPermission || DefaultActions.hasAction(permissions, command)) {
+                if (!handler) {
+                    handler = function (action) {
+                        this.runAction && this.runAction.apply(this, [action]);
+                    };
+                }
+                keycombo && _.isString(keycombo) && (keycombo = [keycombo]);
+
+                action = DefaultActions.createAction(label, command, icon, keycombo, tab, group, filterGroup, onCreate, handler, mixin, shouldShow, shouldDisable, container || thiz.domNode);
+
+                if (owner && action && owner.addAction) {
+                    owner.addAction(null, action);
+                }
+                return action;
+            }
+        },
+        addAction: function (where, action) {
+            var actions = where || [];
+            var eventCallbackResult = this._emit('addAction', action);
+            if (eventCallbackResult === false) {
+                return false;
+            } else if (_.isObject(eventCallbackResult)) {
+                utils.mixin(action, eventCallbackResult);
+            }
+            actions.push(action);
+            return true;
+        },
+        /**
+         *
+         * @param where
+         * @param action
+         * @returns {boolean}
+         */
+        _addAction: function (where, action) {
+            var actions = where || [],
+                eventCallbackResult = this._emit('addAction', action);
+
+            if (eventCallbackResult === false) {
+                return false;
+            } else if (utils.isObject(eventCallbackResult)) {
+                utils.mixin(action, eventCallbackResult);
+            }
+            actions.push(action);
+            return true;
+        },
+        hasAction: function (action) {
+            return DefaultActions.hasAction(this.permissions, action);
+        }
+    };
+
+    /**
+     * Provides tools to deal with 'actions' (xaction/Action). This is the model part for actions which is being used
+     * always together with the render part(xide/widgets/EventedMixin) in a subclass.
+     *
+     * @class module:xide/mixins/ActionProvider
+     * @extends module:xide/mixins/EventedMixin
+     */
+    var Module = declare("xaction/ActionProvider", [EventedMixin, Keyboard], Implementation);
+    Module.dcl = dcl([EventedMixin.dcl, Keyboard.dcl], Implementation);
+    return Module;
+});
+
 define('xide/mixins/ActionMixin',[
     "dcl/dcl",
     "xdojo/declare",
@@ -33617,6 +27117,290 @@ define('xdocker/Docker2',[
 
     return Module;
 });
+/** @module xgrid/ThumbRenderer **/
+define('xgrid/ThumbRenderer',[
+    "xdojo/declare",
+    'xide/types',
+    'dojo/dom-construct',
+    './Renderer'
+], function (declare,types,domConstruct,Renderer) {
+    /**
+     * The list renderer does nothing since the xgrid/Base is already inherited from
+     * dgrid/OnDemandList and its rendering as list already.
+     *
+     * @class module:xgrid/ThumbRenderer
+     * @extends module:xgrid/Renderer
+     */
+    var Implementation = {
+        isThumbGrid:false,
+        _getLabel:function(){ return "Thumb"; },
+        _getIcon:function(){ return "fa-th-large"; },
+        activateRenderer:function(renderer){
+            this._showHeader(false);
+            this.isThumbGrid = true;
+        },
+        deactivateRenderer:function(renderer){
+            this.isThumbGrid = false;
+        },
+        /**
+         * Override renderRow
+         * @param obj
+         * @returns {*}
+         */
+        renderRow: function (obj) {
+            if (obj.render) {
+                return obj.render(obj, this.inherited);
+            }
+            return domConstruct.create('span', {
+                className: "fileGridCell",
+                innerHTML: '<span class=\"' + 'fa-cube fa-5x' + '\""></span> <div class="name">' + obj.name + '</div>',
+                style: 'color:blue;max-width:200px;float:left;margin:18px;padding:18px;'
+            });
+        }
+    };
+
+    //package via declare
+    var _class = declare('xgrid.ThumbRenderer',[Renderer],Implementation);
+    _class.Implementation = Implementation;
+
+    return _class;
+});
+/** @module xfile/ThumbRenderer **/
+define('xfile/ThumbRenderer',[
+    "xdojo/declare",
+    'xide/utils',
+    'dojo/dom-construct',
+    'xgrid/ThumbRenderer'
+], function (declare,utils,domConstruct,ThumbRenderer) {
+
+    /**
+     * The list renderer does nothing since the xgrid/Base is already inherited from
+     * dgrid/OnDemandList and its rendering as list already.
+     *
+     * @class module:xfile/ThumbRenderer
+     * @extends module:xfile/Renderer
+     */
+    return declare('xfile.ThumbRenderer',[ThumbRenderer],{
+        thumbSize: "400",
+        resizeThumb: true,
+        __type:'thumb',
+        deactivateRenderer:function(){
+            $(this.domNode.parentNode).removeClass('metro');
+            $(this.domNode).css('padding','');
+            this.isThumbGrid = false;
+
+        },
+        activateRenderer:function(){
+            $(this.domNode.parentNode).addClass('metro');
+            $(this.contentNode).css('padding','8px');
+            this.isThumbGrid = true;
+            this.refresh();
+        },
+
+        _renderUpload:function(name,progress,obj){
+
+            progress = parseInt(progress.replace('%',''));
+            if(progress==100){
+                progress = 90;
+            }
+
+            var result = '<div class="tile widget uploadItem"><div class="radial-progress tile widget " data-progress="' + progress + '">'+
+                '<div class="circle">'+
+                '<div class="mask full">'+
+                '<div class="fill"></div>'+
+                '</div>'+
+                '<div class="mask half">'+
+                '<div class="fill"></div>'+
+                '<div class="fill fix"></div>'+
+                '</div>'+
+                '<div class="shadow"></div>'+
+                '</div>'+
+                '<div class="inset">'+
+                '<div class="percentage">'+
+                '<div class="numbers"><span>-</span>';
+
+            for(var i= 0 ; i< 99 ; i++){
+
+                result+=('<span>' + i +'%' + '</span>');
+
+            };
+
+            result+='</div>'+
+                '</div>'+
+                '</div>'+
+                '</div></div>';
+
+            return result;
+
+        },
+        /**
+         * Override renderRow
+         * @param obj
+         * @returns {*}
+         */
+        renderRow: function (obj) {
+            if(obj.isUpload === true){
+                return $(this._renderUpload(obj.name, obj.progress + '%',obj))[0];
+            }
+            if(obj.renderRow){
+                var _res = obj.renderRow.apply(this,[obj]);
+                if(_res){
+                    return _res;
+                }
+            }
+            var thiz = this,
+                div = domConstruct.create('div', {
+                    className: "tile widget"
+                }),
+                icon = obj.icon,
+                no_access = obj.read === false && obj.write === false,
+                isBack = obj.name == '..',
+                directory = obj && !!obj.directory,
+                useCSS = false,
+                label = '',
+                imageClass = 'fa fa-folder fa-5x',
+                isImage = false;
+
+            this._doubleWidthThumbs = true;
+            var iconStyle='text-shadow: 2px 2px 5px rgba(0,0,0,0.3);font-size: 72px;opacity: 0.7';
+            var contentClass = 'icon';
+            if (directory) {
+
+                if (isBack) {
+                    imageClass = 'fa fa-level-up fa-5x itemFolder';
+                    useCSS = true;
+                } else if (!no_access) {
+                    imageClass = 'fa fa-folder fa-5x itemFolder';
+                    useCSS = true;
+                } else {
+                    imageClass = 'fa fa-lock fa-5x itemFolder';
+                    useCSS = true;
+                }
+
+            } else {
+
+                imageClass = 'itemIcon';
+
+                if (no_access) {
+                    imageClass = 'fa fa-lock fa-5x itemFolder';
+                    useCSS = true;
+                } else {
+
+                    if (utils.isImage(obj.path)) {
+
+                        var url = this.getImageUrl(obj);
+                        if (url) {
+                            obj.icon = url;
+                        } else {
+                            obj.icon = thiz.config.REPO_URL + '/' + obj.path;
+                        }
+
+                        imageClass = 'imageFile';
+
+                    } else {
+                        imageClass = 'fa fa-5x ' + utils.getIconClass(obj.path);
+                        useCSS = true;
+                    }
+                }
+
+            }
+
+            label = obj.name;
+
+            var folderContent =  '<span style="' + iconStyle + '" class="fa fa-6x '+imageClass +'"></span>';
+            if (this.hideExtensions) {
+                label = utils.pathinfo(label).filename;
+            }
+
+            if (utils.isImage(obj.path)) {
+
+                var url = this.getImageUrl(obj);
+                if (url) {
+                    obj.icon = url;
+                } else {
+                    obj.icon = thiz.config.REPO_URL + '/' + obj.path;
+                }
+
+                imageClass = '';
+                contentClass = 'image';
+                folderContent = '<div style="" class="tile-content image">' +
+                    '<img class=\"' + imageClass + '\" src="' + obj.icon + '"/>' +
+                    '</div>';
+
+                useCSS = true;
+                isImage = true;
+
+            }
+            var label2 = label + '\n' + obj.modified;
+            var html = '<div title="' + label2 +'" class="tile-content ' + contentClass +'">'+
+                folderContent +
+                '</div>'+
+
+                '<div class="brand opacity">'+
+                '<span class="thumbText text opacity ellipsis" style="">'+
+                label +
+                '</span>'+
+                '</div>';
+
+            if (useCSS) {
+                div.innerHTML = html;
+                return div;
+            }
+
+
+            if (directory) {
+                div.innerHTML = html;
+            } else {
+                div.innerHTML = '<img class=\"' + imageClass + '\" src="' + obj.icon + '"/>&nbsp;<div class="name">' + obj.name + '</div>';
+            }
+            return div;
+
+        },
+        getImageUrl: function (item) {
+            var fileManager = this.ctx.getFileManager();
+            if (fileManager && fileManager) {
+                var params = null;
+                if (this.resizeThumb) {
+                    params = {
+                        width: this.thumbSize
+                    }
+                }
+                return fileManager.getImageUrl(item, null, params);
+            }
+            return null;
+        }
+    });
+});
+define('xide/widgets/TemplatedWidgetBase',[
+    'dcl/dcl',
+    'xide/utils',
+    'xide/_base/_Widget'
+], function (dcl,utils,_XWidget2) {
+    var Implementation = {
+        declaredClass: 'xide.widgets.TemplatedWidgetBase',
+        data: null,
+        delegate: null,
+        didLoad: false,
+        templateString: null,
+        getParent: function () {
+            return this._parent;
+        },
+        debounce: function (methodName, _function, delay, options, now) {
+            return utils.debounce(this, methodName, _function, delay, options, now);
+        },
+        translate: function (value) {
+            return this.localize(value);
+        },
+        _setupTranslations: function () {
+            this._messages = [];
+        },
+        updateTitleNode: function (value) {}
+    };
+    var Module = dcl([_XWidget2],Implementation);
+    dcl.chainAfter(Module,'startup');
+    dcl.chainAfter(Module,'destroy');
+    return Module;
+});
 /** @module xfile/Breadcrumb **/
 define('xfile/Breadcrumb',[
     "dcl/dcl",
@@ -34074,8 +27858,8 @@ define('xfile/views/FilePicker',[
                     "excludeList": "*"
                 };
 
-            var leftStore = this.leftStore || factory.createFileStore(mount, storeOptions, config, storeOptionsMixin, ctx);
-            var rightStore = this.rightStore || factory.createFileStore(mount, storeOptions, config, storeOptionsMixin, ctx);
+            var leftStore = this.leftStore || factory.createFileStore(mount, storeOptions, config, storeOptionsMixin, ctx,storeOptionsMixin);
+            var rightStore = this.rightStore || factory.createFileStore(mount, storeOptions, config, storeOptionsMixin, ctx,storeOptionsMixin);
             var newTabTarget = this.layoutMain;
             var defaultGridArgs = utils.mixin({},utils.clone(this.defaultGridArgs));
             var removePermissions = this.removePermissions;
@@ -34130,8 +27914,8 @@ define('xfile/FileActions',[
     "xide/views/_Dialog",
     "xide/views/_PanelDialog",
     'xfile/views/FilePicker'
-], function (dcl, declare, has, Deferred, utils, types, factory, Path, DefaultActions, Registry, Default, aspect, FileOperationDialog, FilePreview, _CIDialog, _Dialog, _PanelDialog, FilePicker) {
-
+    //"dojo/text!xfile/newscene.html"
+], function (dcl, declare, has, Deferred, utils, types, factory, Path, DefaultActions, Registry, Default, aspect, FileOperationDialog, FilePreview, _CIDialog, _Dialog, _PanelDialog, FilePicker, newscene) {
     var ACTION = types.ACTION;
     var _debug = false;
     var Module = null;
@@ -34186,7 +27970,7 @@ define('xfile/FileActions',[
      * @param Module
      * @returns {*}
      */
-    function createFilePicker(owner, inValue, callback, title, permissions, pickerOptions, dfd, Module) {
+    function createFilePicker(owner, inValue, callback, title, permissions, pickerOptions, dfd, Module, storeOptions) {
         var dlg = new _PanelDialog({
             size: types.DIALOG_SIZE.SIZE_NORMAL,
             getContentSize: function () {
@@ -34216,10 +28000,10 @@ define('xfile/FileActions',[
                     owner: owner,
                     selection: inValue || '.',
                     resizeToParent: true,
-                    storeOptionsMixin: {
+                    storeOptionsMixin: utils.mixin({
                         "includeList": "*,.*",
                         "excludeList": ""
-                    },
+                    }, storeOptions),
                     Module: Module,
                     permissions: permissions || utils.clone(types.DEFAULT_FILE_GRID_PERMISSIONS)
                 }, pickerOptions), this, contentNode, true);
@@ -34498,6 +28282,18 @@ define('xfile/FileActions',[
                 keycombo: ['f6'],
                 shouldDisable: function () {
                     return thiz.getSelectedItem() == null;
+                }
+            }));
+
+            result.push(thiz.createAction({
+                label: 'Create New Scene',
+                command: 'File/New Scene',
+                icon: 'fa-magic',
+                tab: 'Home',
+                group: 'Organize',
+                mixin: {
+                    addPermission: true,
+                    quick: true
                 }
             }));
 
@@ -35425,6 +29221,8 @@ define('xfile/FileActions',[
                 item = this.getCurrentFolder();
             }
             var store = factory.createFileStore(_store.mount, _store.options, _store.config, null, ctx);
+            store.micromatch = _store.micromatch;
+
             var args = utils.mixin({
                 showToolbar: this.showToolbar,
                 collection: store,
@@ -35436,7 +29234,8 @@ define('xfile/FileActions',[
                 permissions: this.permissions,
                 _columns: this._columns,
                 attachDirect: true,
-                registerEditors: this.registerEditors
+                    registerEditors: this.registerEditors,
+                    hideExtensions: this.hideExtensions
             }, this.newTabArgs || {}),
 
                 grid = utils.addWidget(this.getClass(), args, null, tab, false);
@@ -35444,10 +29243,10 @@ define('xfile/FileActions',[
             dfd.resolve();
             grid.set('loading', true);
             store.initRoot().then(function (d) {
-                //console.profileEnd('0');
                 var _dfd = store.getItem(item.path, true);
                 _dfd && _dfd.then(function () {
                     grid.startup();
+                    grid._showHeader(thiz.showHeader);
                     grid.openItem(item).then(function () {
                         grid.set('loading', false);
                         grid.select([0], null, true, {
@@ -35523,6 +29322,102 @@ define('xfile/FileActions',[
             }
 
         },
+        newScene: function () {
+            var dfd = new Deferred();
+            try {
+                var self = this,
+                    currentItem = this.getSelectedItem(),
+                    currentFolder = this.getCurrentFolder(),
+                    startValue = currentItem ? utils.pathinfo(currentItem.path, types.PATH_PARTS.ALL).filename : '',
+                    collection = this.collection;
+
+                startValue = 'my new scene.dhtml';
+
+                var CIS = {
+                        inputs: [
+                            utils.createCI('Name', 13, startValue, {
+                                widget: {
+                                    instant: true,
+                                    validator: function (value) {
+                                        if (currentFolder) {
+                                            return collection.getSync(currentFolder.path + '/' + value) == null &&
+                                                value.length > 0;
+                                        } else {
+                                            return true;
+                                        }
+                                    }
+                                }
+                            })
+                        ]
+                    },
+                    defaultDfdArgs = {
+                        select: currentItem,
+                        focus: true,
+                        append: false
+                    };
+
+                var dlg = new _CIDialog({
+                    cis: CIS,
+                    title: 'Create new scene',
+                    ctx: this.ctx,
+                    size: types.DIALOG_SIZE.SIZE_SMALL,
+                    bodyCSS: {
+                        'height': 'auto',
+                        'min-height': '80px'
+
+                    },
+                    _onError: function (title, suffix, message) {
+                        title = title || this.title;
+                        message = message || this.notificationMessage;
+                        message && message.update({
+                            message: title + this.failedText + (suffix ? '<br/>' + suffix : ''),
+                            type: 'error',
+                            actions: false,
+                            duration: 15000
+                        });
+                        this.onError && this.onError(suffix);
+                    },
+                    onCancel: function () {
+                        dfd.resolve();
+                    },
+                    onOk: function () {
+                        var val = this.getField('name');
+                        if (val == null) {
+                            dfd.resolve(defaultDfdArgs);
+                            return;
+                        }
+                        var currentFolder = self.getCurrentFolder() || {
+                                path: '.'
+                            },
+                            newFolder = currentFolder.path + '/' + val;
+
+
+                        var fileDfd = self.ctx.getFileManager().mkfile(collection.mount, newFolder, newscene, {
+                            checkErrors: true,
+                            returnProm: false
+                        });
+
+                        // call server::mkdir, then reload, then resolve dfd with new newFolder as selection
+                        fileDfd.then(function (data) {
+                            self.runAction(ACTION.RELOAD).then(function () {
+                                collection.getSync(newFolder) && dfd.resolve({
+                                    select: newFolder,
+                                    append: false,
+                                    focus: true
+                                });
+                            });
+                        }, function (e) {
+                            dfd.resolve(defaultDfdArgs);
+                            logError(e, 'error creating directory');
+                        });
+                    }
+                });
+                dlg.show();
+            } catch (e) {
+                logError(e, 'error creating dialog');
+            }
+            return dfd;
+        },
         runAction: function (action, _item) {
             _.isString(action) && (action = this.getAction(action));
             if (!action || !action.command) {
@@ -35553,6 +29448,10 @@ define('xfile/FileActions',[
                 case ACTION_TYPE.EDIT:
                     {
                         return this.openItem(item);
+                    }
+                case 'File/New Scene':
+                    {
+                        return this.newScene(item);
                     }
                 case ACTION_TYPE.NEW_FILE:
                     {
@@ -35673,6 +29572,9 @@ define('xfile/FileActions',[
                         );
                         _wireEditor(editor, editorAction);
                         result.push(editorAction);
+                        if (editor.editorClass && editor.editorClass.getFileActions) {
+                            result = result.concat(editor.editorClass.getFileActions(ctx, item));
+                        }
                     }
                     return result;
                 }
@@ -35739,6 +29641,6240 @@ define('xfile/FileActions',[
     _class.createFilePicker = createFilePicker;
     return _class;
 
+});
+define('dgrid/util/has-css3',[
+	'dojo/has'
+], function (has) {
+	// This module defines feature tests for CSS3 features such as transitions.
+	// The css-transitions, css-transforms, and css-transforms3d has-features
+	// can report either boolean or string:
+	// * false indicates no support
+	// * true indicates prefix-less support
+	// * string indicates the vendor prefix under which the feature is supported
+
+	var cssPrefixes = ['ms', 'O', 'Moz', 'Webkit'];
+
+	function testStyle(element, property) {
+		var style = element.style,
+			i;
+
+		if (property in style) {
+			// Standard, no prefix
+			return true;
+		}
+		property = property.slice(0, 1).toUpperCase() + property.slice(1);
+		for (i = cssPrefixes.length; i--;) {
+			if ((cssPrefixes[i] + property) in style) {
+				// Vendor-specific css property prefix
+				return cssPrefixes[i];
+			}
+		}
+
+		// Otherwise, not supported
+		return false;
+	}
+
+	has.add('css-transitions', function (global, doc, element) {
+		return testStyle(element, 'transitionProperty');
+	});
+
+	has.add('css-transforms', function (global, doc, element) {
+		return testStyle(element, 'transform');
+	});
+
+	has.add('css-transforms3d', function (global, doc, element) {
+		return testStyle(element, 'perspective');
+	});
+
+	has.add('transitionend', function () {
+		// Infer transitionend event name based on CSS transitions has-feature.
+		var tpfx = has('css-transitions');
+		if (!tpfx) {
+			return false;
+		}
+		if (tpfx === true) {
+			return 'transitionend';
+		}
+		return {
+			ms: 'MSTransitionEnd',
+			O: 'oTransitionEnd',
+			Moz: 'transitionend',
+			Webkit: 'webkitTransitionEnd'
+		}[tpfx];
+	});
+
+	return has;
+});
+
+define('dgrid/util/touch',[
+	'dojo/on'
+	//'dojo/query'
+], function (on, query) {
+	// This module exposes useful functions for working with touch devices.
+
+	var util = {
+		// Overridable defaults related to extension events defined below.
+		tapRadius: 10,
+		dbltapTime: 250,
+
+		selector: function (selector, eventType, children) {
+			// summary:
+			//		Reimplementation of on.selector, taking an iOS quirk into account
+			return function (target, listener) {
+				var bubble = eventType.bubble;
+				if (bubble) {
+					// the event type doesn't naturally bubble, but has a bubbling form, use that
+					eventType = bubble;
+				}
+				else if (children !== false) {
+					// for normal bubbling events we default to allowing children of the selector
+					children = true;
+				}
+				return on(target, eventType, function (event) {
+					var eventTarget = event.target;
+
+					// iOS tends to report the text node an event was fired on, rather than
+					// the top-level element; this may end up causing errors in selector engines
+					if (eventTarget.nodeType === 3) {
+						eventTarget = eventTarget.parentNode;
+					}
+
+					// there is a selector, so make sure it matches
+					while (!query.matches(eventTarget, selector, target)) {
+						//debugger;
+						if (eventTarget === target || !children || !(eventTarget = eventTarget.parentNode)) {
+							return;
+						}
+					}
+					return listener.call(eventTarget, event);
+				});
+			};
+		},
+
+		countCurrentTouches: function (evt, node) {
+			// summary:
+			//		Given a touch event and a DOM node, counts how many current touches
+			//		presently lie within that node.  Useful in cases where an accurate
+			//		count is needed but tracking changedTouches won't suffice because
+			//		other handlers stop events from bubbling high enough.
+
+			if (!('touches' in evt)) {
+				// Not a touch event (perhaps called from a mouse event on a
+				// platform supporting touch events)
+				return -1;
+			}
+
+			var i, numTouches, touch;
+			for (i = 0, numTouches = 0; (touch = evt.touches[i]); ++i) {
+				if (node.contains(touch.target)) {
+					++numTouches;
+				}
+			}
+			return numTouches;
+		}
+	};
+
+	function handleTapStart(target, listener, evt, prevent) {
+		// Common function for handling tap detection.
+		// The passed listener will only be fired when and if a touchend is fired
+		// which confirms the overall gesture resembled a tap.
+
+		if (evt.targetTouches.length > 1) {
+			return; // ignore multitouch
+		}
+
+		var start = evt.changedTouches[0],
+			startX = start.screenX,
+			startY = start.screenY;
+
+		prevent && evt.preventDefault();
+
+		var endListener = on(target, 'touchend', function (evt) {
+			var end = evt.changedTouches[0];
+			if (!evt.targetTouches.length) {
+				// only call listener if this really seems like a tap
+				if (Math.abs(end.screenX - startX) < util.tapRadius &&
+						Math.abs(end.screenY - startY) < util.tapRadius) {
+					prevent && evt.preventDefault();
+					listener.call(this, evt);
+				}
+				endListener.remove();
+			}
+		});
+	}
+
+	function tap(target, listener) {
+		// Function usable by dojo/on as a synthetic tap event.
+		return on(target, 'touchstart', function (evt) {
+			handleTapStart(target, listener, evt);
+		});
+	}
+
+	function dbltap(target, listener) {
+		// Function usable by dojo/on as a synthetic double-tap event.
+		var first, timeout;
+
+		return on(target, 'touchstart', function (evt) {
+			if (!first) {
+				// first potential tap: detect as usual, but with specific logic
+				handleTapStart(target, function (evt) {
+					first = evt.changedTouches[0];
+					timeout = setTimeout(function () {
+						first = timeout = null;
+					}, util.dbltapTime);
+				}, evt);
+			}
+			else {
+				handleTapStart(target, function (evt) {
+					// bail out if first was cleared between 2nd touchstart and touchend
+					if (!first) {
+						return;
+					}
+					var second = evt.changedTouches[0];
+					// only call listener if both taps occurred near the same place
+					if (Math.abs(second.screenX - first.screenX) < util.tapRadius &&
+							Math.abs(second.screenY - first.screenY) < util.tapRadius) {
+						timeout && clearTimeout(timeout);
+						first = timeout = null;
+						listener.call(this, evt);
+					}
+				}, evt, true);
+			}
+		});
+	}
+
+	util.tap = tap;
+	util.dbltap = dbltap;
+
+	return util;
+});
+define('dgrid/Tree',[
+	'dojo/_base/declare',
+	'dojo/_base/lang',
+	'dojo/_base/array',
+	'dojo/aspect',
+	'dojo/dom-construct',
+	'dojo/dom-class',
+	'dojo/on',
+	'dojo/query',
+	'dojo/when',
+	'./util/has-css3',
+	'./Grid',
+	'./util/touch'
+], function (declare, lang, arrayUtil, aspect, domConstruct, domClass, on, querySelector, when, has, Grid, touchUtil) {
+
+	return declare(null, {
+		// collapseOnRefresh: Boolean
+		//		Whether to collapse all expanded nodes any time refresh is called.
+		collapseOnRefresh: false,
+
+		// enableTreeTransitions: Boolean
+		//		Enables/disables all expand/collapse CSS transitions.
+		enableTreeTransitions: false,
+
+		// treeIndentWidth: Number
+		//		Width (in pixels) of each level of indentation.
+		treeIndentWidth: 9,
+
+		constructor: function () {
+			this._treeColumnListeners = [];
+		},
+
+		shouldExpand: function (row, level, previouslyExpanded) {
+			// summary:
+			//		Function called after each row is inserted to determine whether
+			//		expand(rowElement, true) should be automatically called.
+			//		The default implementation re-expands any rows that were expanded
+			//		the last time they were rendered (if applicable).
+
+			return previouslyExpanded;
+		},
+
+		expand: function (target, expand, noTransition) {
+			// summary:
+			//		Expands the row corresponding to the given target.
+			// target: Object
+			//		Row object (or something resolvable to one) to expand/collapse.
+			// expand: Boolean?
+			//		If specified, designates whether to expand or collapse the row;
+			//		if unspecified, toggles the current state.
+
+			if (!this._treeColumn) {
+				return;
+			}
+
+			var grid = this,
+				row = target.element ? target : this.row(target),
+				isExpanded = !!this._expanded[row.id],
+				hasTransitionend = has('transitionend'),
+				promise, collection = this.collection;
+
+			target = row.element;
+			if (!target) {
+				return;
+			}
+			target = target.className.indexOf('dgrid-expando-icon') > -1 ? target :
+				querySelector('.dgrid-expando-icon', target)[0];
+
+			noTransition = noTransition || !this.enableTreeTransitions;
+
+			if (target && target.mayHaveChildren && (noTransition || expand !== isExpanded)) {
+				// toggle or set expand/collapsed state based on optional 2nd argument
+				var expanded = expand === undefined ? !this._expanded[row.id] : expand;
+
+				if (collection.spin === true && expand) {
+					domClass.remove(target, 'ui-icon-triangle-1-e');
+					domClass.remove(target, 'ui-icon-triangle-1-se');
+					domClass.add(target, 'fa fa-spinner fa-spin dgrid-cell-loading');
+				} else {
+					domClass.replace(target, 'ui-icon-triangle-1-' + (expanded ? 'se' : 'e'),
+						'ui-icon-triangle-1-' + (expanded ? 'e' : 'se'));
+				}
+
+
+				domClass.toggle(row.element, 'dgrid-row-expanded', expanded);
+				var rowElement = row.element,
+					container = rowElement.connected,
+					containerStyle,
+					scrollHeight,
+					options = {};
+
+				if (!container) {
+					// if the children have not been created, create a container, a preload node and do the
+					// query for the children
+					container = options.container = rowElement.connected =
+						domConstruct.create('div', { className: 'dgrid-tree-container' }, rowElement, 'after');
+
+					var query = function (options) {
+						var childCollection = grid._renderedCollection.getChildren(row.data),
+							results;
+						if (grid.sort) {
+							childCollection = childCollection.sort(grid.sort);
+						}
+						if (childCollection.track && grid.shouldTrackCollection) {
+							container._rows = options.rows = [];
+
+							childCollection = childCollection.track();
+
+							// remember observation handles so they can be removed when the parent row is destroyed
+							container._handles = [
+								childCollection.tracking,
+								grid._observeCollection(childCollection, container, options)
+							];
+						}
+						if ('start' in options) {
+							var rangeArgs = {
+								start: options.start,
+								end: options.start + options.count
+							};
+							results = childCollection.fetchRange(rangeArgs);
+						} else {
+							results = childCollection.fetch();
+						}
+						return results;
+					};
+					// Include level information on query for renderQuery case
+					if ('level' in target) {
+						query.level = target.level;
+					}
+
+					// Add the query to the promise chain
+					if (this.renderQuery) {
+						promise = this.renderQuery(query, options);
+					}
+					else {
+						// If not using OnDemandList, we don't need preload nodes,
+						// but we still need a beforeNode to pass to renderArray,
+						// so create a temporary one
+						var firstChild = domConstruct.create('div', null, container);
+						promise = this._trackError(function () {
+							return grid.renderQueryResults(
+								query(options),
+								firstChild,
+								lang.mixin({ rows: options.rows },
+									'level' in query ? { queryLevel: query.level } : null
+								)
+							).then(function (rows) {
+								domConstruct.destroy(firstChild);
+								return rows;
+							});
+						});
+					}
+
+					if (hasTransitionend) {
+						// Update height whenever a collapse/expand transition ends.
+						// (This handler is only registered when each child container is first created.)
+						on(container, hasTransitionend, this._onTreeTransitionEnd);
+					}
+				}
+
+				// Show or hide all the children.
+
+				container.hidden = !expanded;
+				containerStyle = container.style;
+
+				// make sure it is visible so we can measure it
+				if (!hasTransitionend || noTransition) {
+					containerStyle.display = expanded ? 'block' : 'none';
+					containerStyle.height = '';
+				}
+				else {
+					if (expanded) {
+						containerStyle.display = 'block';
+						scrollHeight = container.scrollHeight;
+						containerStyle.height = '0px';
+					}
+					else {
+						// if it will be hidden we need to be able to give a full height
+						// without animating it, so it has the right starting point to animate to zero
+						domClass.add(container, 'dgrid-tree-resetting');
+						containerStyle.height = container.scrollHeight + 'px';
+					}
+					// Perform a transition for the expand or collapse.
+					setTimeout(function () {
+						domClass.remove(container, 'dgrid-tree-resetting');
+						containerStyle.height =
+							expanded ? (scrollHeight ? scrollHeight + 'px' : 'auto') : '0px';
+					}, 0);
+				}
+
+				// Update _expanded map.
+				if (expanded) {
+					this._expanded[row.id] = true;
+				}
+				else {
+					delete this._expanded[row.id];
+				}
+			}
+			function clear(target) {
+				if (collection.spin === true && target.mayHaveChildren) {
+					domClass.remove(target, 'fa-spin fa-spinner dgrid-cell-loading');
+					domClass.replace(target, 'ui-icon-triangle-1-' + (expanded ? 'se' : 'e'),
+						'ui-icon-triangle-1-' + (expanded ? 'e' : 'se'));
+				}
+			}
+			if (promise && promise.then) {
+				promise.then(function () {
+					clear(target);
+				});
+			} else {
+				clear(target);
+			}
+
+			// Always return a promise
+			return when(promise);
+		},
+
+		_configColumns: function () {
+			var columnArray = this.inherited(arguments);
+
+			// Set up hash to store IDs of expanded rows (here rather than in
+			// _configureTreeColumn so nothing breaks if no column has renderExpando)
+			this._expanded = {};
+
+			for (var i = 0, l = columnArray.length; i < l; i++) {
+				if (columnArray[i].renderExpando) {
+					this._configureTreeColumn(columnArray[i]);
+					break; // Allow only one tree column.
+				}
+			}
+			return columnArray;
+		},
+
+		insertRow: function (object) {
+			var rowElement = this.inherited(arguments);
+
+			// Auto-expand (shouldExpand) considerations
+			var row = this.row(rowElement),
+				expanded = this.shouldExpand(row, this._currentLevel, this._expanded[row.id]);
+
+			if (expanded) {
+				this.expand(rowElement, true, true);
+			}
+
+			if (expanded || (!this.collection.mayHaveChildren || this.collection.mayHaveChildren(object))) {
+				domClass.add(rowElement, 'dgrid-row-expandable');
+			}
+
+			return rowElement; // pass return value through
+		},
+
+		removeRow: function (rowElement, preserveDom) {
+			var connected = rowElement.connected,
+				childOptions = {};
+			if (connected) {
+				if (connected._handles) {
+					arrayUtil.forEach(connected._handles, function (handle) {
+						handle.remove();
+					});
+					delete connected._handles;
+				}
+
+				if (connected._rows) {
+					childOptions.rows = connected._rows;
+				}
+
+				querySelector('>.dgrid-row', connected).forEach(function (element) {
+					this.removeRow(element, true, childOptions);
+				}, this);
+
+				if (connected._rows) {
+					connected._rows.length = 0;
+					delete connected._rows;
+				}
+
+				if (!preserveDom) {
+					domConstruct.destroy(connected);
+				}
+			}
+
+			this.inherited(arguments);
+		},
+
+		_refreshCellFromItem: function (cell, item) {
+			if (!cell.column.renderExpando) {
+				return this.inherited(arguments);
+			}
+
+			this.inherited(arguments, [cell, item, {
+				queryLevel: querySelector('.dgrid-expando-icon', cell.element)[0].level - 1
+			}]);
+		},
+
+		cleanup: function () {
+			this.inherited(arguments);
+
+			if (this.collapseOnRefresh) {
+				// Clear out the _expanded hash on each call to cleanup
+				// (which generally coincides with refreshes, as well as destroy)
+				this._expanded = {};
+			}
+		},
+
+		_destroyColumns: function () {
+			this.inherited(arguments);
+			var listeners = this._treeColumnListeners;
+
+			for (var i = listeners.length; i--;) {
+				listeners[i].remove();
+			}
+			this._treeColumnListeners = [];
+			this._treeColumn = null;
+		},
+
+		_calcRowHeight: function (rowElement) {
+			// Override this method to provide row height measurements that
+			// include the children of a row
+			var connected = rowElement.connected;
+			// if connected, need to consider this in the total row height
+			return this.inherited(arguments) + (connected ? connected.offsetHeight : 0);
+		},
+
+		_configureTreeColumn: function (column) {
+			// summary:
+			//		Adds tree navigation capability to a column.
+
+			var grid = this;
+			var collection = this.collection;
+			var colSelector = '.dgrid-content .dgrid-column-' + column.id;
+			var clicked; // tracks row that was clicked (for expand dblclick event handling)
+
+			this._treeColumn = column;
+			if (!column._isConfiguredTreeColumn) {
+				var originalRenderCell = column.renderCell || this._defaultRenderCell;
+				column._isConfiguredTreeColumn = true;
+				column.renderCell = function (object, value, td, options) {
+					// summary:
+					//		Renders a cell that can be expanded, creating more rows
+
+					if (!collection) {
+						return;
+					}
+
+					var level = Number(options && options.queryLevel) + 1,
+						mayHaveChildren = !collection.mayHaveChildren || collection.mayHaveChildren(object),
+						expando, node;
+
+					level = grid._currentLevel = isNaN(level) ? 0 : level;
+
+					expando = column.renderExpando(level, mayHaveChildren,
+						grid._expanded[collection.getIdentity(object)], object);
+
+					expando.level = level;
+					expando.mayHaveChildren = mayHaveChildren;
+
+					node = originalRenderCell.call(column, object, value, td, options);
+					if (node && node.nodeType) {
+						td.appendChild(expando);
+						td.appendChild(node);
+					}
+					else {
+						td.insertBefore(expando, td.firstChild);
+					}
+				};
+
+				if (typeof column.renderExpando !== 'function') {
+					column.renderExpando = this._defaultRenderExpando;
+				}
+			}
+
+			var treeColumnListeners = this._treeColumnListeners;
+			if (treeColumnListeners.length === 0) {
+				// Set up the event listener once and use event delegation for better memory use.
+				treeColumnListeners.push(this.on(column.expandOn ||
+					'.dgrid-expando-icon:click,' + colSelector + ':dblclick,' + colSelector + ':keydown',
+					function (event) {
+						var row = grid.row(event);
+						if ((!grid.collection.mayHaveChildren || grid.collection.mayHaveChildren(row.data)) &&
+							(event.type !== 'keydown' || event.keyCode === 32) && !(event.type === 'dblclick' &&
+								clicked && clicked.count > 1 && row.id === clicked.id &&
+								event.target.className.indexOf('dgrid-expando-icon') > -1)) {
+							grid.expand(row);
+						}
+
+						// If the expando icon was clicked, update clicked object to prevent
+						// potential over-triggering on dblclick (all tested browsers but IE < 9).
+						if (event.target.className.indexOf('dgrid-expando-icon') > -1) {
+							if (clicked && clicked.id === grid.row(event).id) {
+								clicked.count++;
+							}
+							else {
+								clicked = {
+									id: grid.row(event).id,
+									count: 1
+								};
+							}
+						}
+					})
+				);
+
+				if (has('touch')) {
+					// Also listen on double-taps of the cell.
+					treeColumnListeners.push(this.on(touchUtil.selector(colSelector, touchUtil.dbltap),
+						function () {
+							grid.expand(this);
+						}));
+				}
+			}
+
+			/*
+			 column.renderCell = function (object, value, td, options) {
+			 // summary:
+			 //		Renders a cell that can be expanded, creating more rows
+
+			 var grid = column.grid,
+			 level = Number(options && options.queryLevel) + 1,
+			 mayHaveChildren = !grid.collection.mayHaveChildren || grid.collection.mayHaveChildren(object),
+			 expando, node;
+
+			 level = grid._currentLevel = isNaN(level) ? 0 : level;
+			 expando = column.renderExpando(level, mayHaveChildren,
+			 grid._expanded[grid.collection.getIdentity(object)], object);
+			 expando.level = level;
+			 expando.mayHaveChildren = mayHaveChildren;
+
+			 node = originalRenderCell.call(column, object, value, td, options);
+			 if (node && node.nodeType) {
+			 td.appendChild(expando);
+			 td.appendChild(node);
+			 }
+			 else {
+			 td.insertBefore(expando, td.firstChild);
+			 }
+			 };
+			 *//*
+   if (!column.originalRenderCell)
+   {
+	   column.originalRenderCell = column.renderCell || this._defaultRenderCell;
+	   column.renderCell = function (object, value, td, options) {
+		   // summary:
+		   //              Renders a cell that can be expanded, creating more rows
+		   var grid = column.grid,
+				   level = Number(options && options.queryLevel) + 1,
+				   mayHaveChildren = !grid.collection.mayHaveChildren || grid.collection.mayHaveChildren(object),
+				   expando,
+				   node;
+
+		   level = grid._currentLevel = isNaN(level) ? 0 : level;
+		   expando = column.renderExpando(level, mayHaveChildren,
+				   grid._expanded[grid.collection.getIdentity(object)], object);
+		   expando.level = level;
+		   expando.mayHaveChildren = mayHaveChildren;
+		   node = column.originalRenderCell(object, value, td, options);
+		   if (node && node.nodeType) {
+			   td.appendChild(expando);
+			   td.appendChild(node);
+		   }
+		   else {
+			   td.insertBefore(expando, td.firstChild);
+		   }
+	   };
+   }
+   */
+		},
+
+		_defaultRenderExpando: function (level, hasChildren, expanded) {
+			// summary:
+			//		Default implementation for column.renderExpando.
+			//		NOTE: Called in context of the column definition object.
+			// level: Number
+			//		Level of indentation for this row (0 for top-level)
+			// hasChildren: Boolean
+			//		Whether this item may have children (in most cases this determines
+			//		whether an expando icon should be rendered)
+			// expanded: Boolean
+			//		Whether this item is currently in expanded state
+			// object: Object
+			//		The item that this expando pertains to
+
+			var dir = this.grid.isRTL ? 'right' : 'left',
+				cls = 'dgrid-expando-icon';
+			if (hasChildren) {
+				cls += ' ui-icon ui-icon-triangle-1-' + (expanded ? 'se' : 'e');
+			}
+			return domConstruct.create('div', {
+				className: cls,
+				innerHTML: '&nbsp;',
+				style: 'margin-' + dir + ': ' + (level * this.grid.treeIndentWidth) + 'px; float: ' + dir + ';'
+			});
+		},
+
+		_onNotification: function (rows, event) {
+			if (event.type === 'delete') {
+				delete this._expanded[event.id];
+			}
+			this.inherited(arguments);
+		},
+
+		_onTreeTransitionEnd: function (event) {
+			var container = this,
+				height = this.style.height;
+			if (height) {
+				// After expansion, ensure display is correct;
+				// after collapse, set display to none to improve performance
+				this.style.display = height === '0px' ? 'none' : 'block';
+			}
+
+			// Reset height to be auto, so future height changes (from children
+			// expansions, for example), will expand to the right height.
+			if (event) {
+				// For browsers with CSS transition support, setting the height to
+				// auto or "" will cause an animation to zero height for some
+				// reason, so temporarily set the transition to be zero duration
+				domClass.add(this, 'dgrid-tree-resetting');
+				setTimeout(function () {
+					// Turn off the zero duration transition after we have let it render
+					domClass.remove(container, 'dgrid-tree-resetting');
+				}, 0);
+			}
+			// Now set the height to auto
+			this.style.height = '';
+		}
+	});
+});
+/** @module xgrid/TreeRenderer **/
+define('xgrid/TreeRenderer',[
+    "xdojo/declare",
+    'xgrid/Renderer',
+    'dgrid/Tree',
+    "dojo/keys",
+    "dojo/on",
+    "xide/$"
+], function (declare, Renderer, Tree, keys, on, $) {
+
+    function KEYBOARD_HANDLER(evt) {
+        this.onTreeKey(evt);
+        var thiz = this;
+        if (thiz.isThumbGrid) {
+            return;
+        }
+        if (evt.keyCode == keys.LEFT_ARROW || evt.keyCode == keys.RIGHT_ARROW || evt.keyCode == keys.HOME || evt.keyCode == keys.END) {
+        } else {
+            return;
+        }
+        var target = evt.target;
+        if (target) {
+            if (target.className.indexOf('InputInner') != -1 || target.className.indexOf('input') != -1 || evt.target.type === 'text') {
+                return;
+            }
+        }
+
+        var row = this.row(evt);
+        if (!row || !row.data) {
+            return;
+        }
+        var data = row.data,
+            isExpanded = this._isExpanded(data),
+            store = this.collection,
+            storeItem = store.getSync(data[store.idProperty]);
+
+        //old back compat: var children = data.getChildren ? data.getChildren() :  storeItem && storeItem.children ? null : store.children ? store.children(storeItem) : null;
+        var children = data.getChildren ? data.getChildren() : storeItem && storeItem.children ? storeItem.children : null;
+
+        //xideve hack
+        var wasStoreBased = false;
+        if (children == null && store.getChildrenSync && storeItem) {
+            children = store.getChildrenSync(storeItem);
+            if (children && children.length) {
+                wasStoreBased = true;
+            } else {
+                children = null;
+            }
+        }
+
+        var isFolder = storeItem ? (storeItem.isDir || storeItem.directory || storeItem.group) : false;
+        if (!isFolder && wasStoreBased && children) {
+            isFolder = true;
+        }
+        //xideve hack end
+
+        var firstChild = children ? children[0] : false,
+            focused = this._focusedNode,
+            last = focused ? this.down(focused, children ? children.length : 0, true) : null,
+            loaded = (storeItem._EX === true || storeItem._EX == null);
+
+        var selection = this.getSelection ? this.getSelection() : [storeItem];
+        //var selection2 = this.getSelection ? this._getSelected() : [storeItem];
+
+        var down = this.down(focused, -1, true),
+            up = this.down(focused, 1, true),
+            defaultSelectArgs = {
+                focus: true,
+                append: false,
+                delay: 1
+            };
+
+        if (firstChild && firstChild._reference) {
+            var _b = store.getSync(firstChild._reference);
+            if (_b) {
+                firstChild = _b;
+            }
+        }
+        if (evt.keyCode == keys.END) {
+            if (isExpanded && isFolder && last && last.element !== focused) {
+                this.select(last, null, true, defaultSelectArgs);
+                return;
+            }
+        }
+
+        function expand(what, expand) {
+            _.each(what, function (item) {
+                var _row = thiz.row(item);
+                if (_row && _row.element) {
+                    thiz.expand(_row, expand, true);
+                }
+            });
+        }
+
+        if (evt.keyCode == keys.LEFT_ARROW) {
+            evt.preventDefault();
+            if (data[store.parentField]) {
+                var item = row.data;
+                if (!isExpanded) {
+                    var parent = store.getSync(item[store.parentField]);
+                    var parentRow = parent ? this.row(parent) : null;
+                    //we select the parent only if its rendered at all
+                    if (parent && parentRow.element) {
+                        return this.select([parent], null, true, defaultSelectArgs);
+                    } else {
+                        if (down) {
+                            return this.select(down, null, true, defaultSelectArgs);
+                        } else {
+                            on.emit(this.contentNode, "keydown", { keyCode: 36, force: true });
+                        }
+                    }
+                }
+            }
+            if (row) {
+                if (isExpanded) {
+                    expand(selection, false);
+                } else {
+                    this.select(down, null, true, defaultSelectArgs);
+                }
+            }
+        }
+
+        if (evt.keyCode == keys.RIGHT_ARROW) {
+            evt.preventDefault();
+            // empty folder:
+            if (isFolder && loaded && isExpanded && !firstChild) {
+                //go to next
+                if (up) {
+                    return this.select(up, null, true, defaultSelectArgs);
+                }
+            }
+
+            if (loaded && isExpanded) {
+                firstChild && this.select([firstChild], null, true, defaultSelectArgs);
+            } else {
+                //has children or not loaded yet
+                if (firstChild || !loaded || isFolder) {
+                    expand(selection, true);
+                } else {
+                    //case on an cell without no children: select
+                    up && this.select(up, null, true, defaultSelectArgs);
+                }
+            }
+        }
+    }
+
+    /**
+     *
+     * @class module:xgrid/TreeRenderer
+     * @extends module:xgrid/Renderer
+     */
+    var Implementation = {
+        _expandOnClickHandle: null,
+        _getLabel: function () {
+            return "Tree";
+        },
+        _getIcon: function () {
+            return "fa-tree";
+        },
+        deactivateRenderer: function (renderer) {
+            this._expandOnClickHandle && this._expandOnClickHandle.remove();
+            if (this.expandOnClick) {
+                $(this.domNode).removeClass('openTreeOnClick');
+            }
+        },
+        activateRenderer: function () {
+            this._showHeader(true);
+            if (this.expandOnClick) {
+                this._expandOnClickHandle = this.on("click", this.onTreeClick.bind(this));
+                $(this.domNode).addClass('openTreeOnClick');
+            }
+        },
+        __getParent: function (item) {
+            if (item && item.getParent) {
+                var _parent = item.getParent();
+                if (_parent) {
+                    var row = this.row(_parent);
+                    if (row.element) {
+                        return this.__getParent(_parent);
+                    } else {
+                        return _parent || item;
+                    }
+                }
+            }
+            return item;
+        },
+        /**
+         * @TODO: move to xfile
+         */
+        getCurrentFolder: function () {
+            return this.__getParent(this.getRows()[0]);
+        },
+        _isExpanded: function (item) {
+            return !!this._expanded[this.row(item).id];
+        },
+        onTreeKey: function () {
+            this.inherited(arguments);
+        },
+        onTreeClick: function (e) {
+            if(e.target.className.indexOf('expando')!==-1){
+                return;
+            }
+            var row = this.row(e);
+            row && this.expand(row, !this._isExpanded(row.data), true);
+        },
+        startup: function () {
+            if (this._started) {
+                return;
+            }
+            var res = this.inherited(arguments);
+            this.on("keydown", KEYBOARD_HANDLER.bind(this));
+            if (!this.renderers) {
+                //we are the only renderer
+                this.activateRenderer();
+            }
+            return res;
+        }
+    };
+
+    //package via declare
+    var Module = declare('xgrid.TreeRenderer', [Renderer, Tree], Implementation);
+    Module.Implementation = Implementation;
+    Module.KEYBOARD_HANDLER = KEYBOARD_HANDLER;
+    return Module;
+});
+define('dgrid/Selection',[
+	'dojo/_base/declare',
+	'dojo/dom-class',
+	'dojo/on',
+	'dojo/has',
+	'dojo/aspect',
+	'./List',
+	'dgrid/util/touch',
+	'dojo/query',
+	'dojo/_base/sniff',
+	'dojo/dom'
+], function (declare, domClass, on, has, aspect, List, touchUtil) {
+
+	has.add('dom-comparedocumentposition', function (global, doc, element) {
+		return !!element.compareDocumentPosition;
+	});
+
+	// Add a feature test for the onselectstart event, which offers a more
+	// graceful fallback solution than node.unselectable.
+	has.add('dom-selectstart', typeof document.onselectstart !== 'undefined');
+
+	var ctrlEquiv = has('mac') ? 'metaKey' : 'ctrlKey',
+		hasUserSelect = has('css-user-select'),
+		hasPointer = has('pointer'),
+		hasMSPointer = hasPointer && hasPointer.slice(0, 2) === 'MS',
+		downType = hasPointer ? hasPointer + (hasMSPointer ? 'Down' : 'down') : 'mousedown',
+		upType = hasPointer ? hasPointer + (hasMSPointer ? 'Up' : 'up') : 'mouseup';
+
+	if (hasUserSelect === 'WebkitUserSelect' && typeof document.documentElement.style.msUserSelect !== 'undefined') {
+		// Edge defines both webkit and ms prefixes, rendering feature detects as brittle as UA sniffs...
+		hasUserSelect = false;
+	}
+
+	function makeUnselectable(node, unselectable) {
+		// Utility function used in fallback path for recursively setting unselectable
+		var value = node.unselectable = unselectable ? 'on' : '',
+			elements = node.getElementsByTagName('*'),
+			i = elements.length;
+
+		while (--i) {
+			if (elements[i].tagName === 'INPUT' || elements[i].tagName === 'TEXTAREA') {
+				continue; // Don't prevent text selection in text input fields.
+			}
+			elements[i].unselectable = value;
+		}
+	}
+
+	function setSelectable(grid, selectable) {
+		// Alternative version of dojo/dom.setSelectable based on feature detection.
+
+		// For FF < 21, use -moz-none, which will respect -moz-user-select: text on
+		// child elements (e.g. form inputs).  In FF 21, none behaves the same.
+		// See https://developer.mozilla.org/en-US/docs/CSS/user-select
+		var node = grid.bodyNode,
+			value = selectable ? 'text' : has('ff') < 21 ? '-moz-none' : 'none';
+
+		// In IE10+, -ms-user-select: none will block selection from starting within the
+		// element, but will not block an existing selection from entering the element.
+		// When using a modifier key, IE will select text inside of the element as well
+		// as outside of the element, because it thinks the selection started outside.
+		// Therefore, fall back to other means of blocking selection for IE10+.
+		// Newer versions of Dojo do not even report msUserSelect (see https://github.com/dojo/dojo/commit/7ae2a43).
+		if (hasUserSelect && hasUserSelect !== 'msUserSelect') {
+			node.style[hasUserSelect] = value;
+		}
+		else if (has('dom-selectstart')) {
+			// For browsers that don't support user-select but support selectstart (IE<10),
+			// we can hook up an event handler as necessary.  Since selectstart bubbles,
+			// it will handle any child elements as well.
+			// Note, however, that both this and the unselectable fallback below are
+			// incapable of preventing text selection from outside the targeted node.
+			if (!selectable && !grid._selectstartHandle) {
+				grid._selectstartHandle = on(node, 'selectstart', function (evt) {
+					var tag = evt.target && evt.target.tagName;
+
+					// Prevent selection except where a text input field is involved.
+					if (tag !== 'INPUT' && tag !== 'TEXTAREA') {
+						evt.preventDefault();
+					}
+				});
+			}
+			else if (selectable && grid._selectstartHandle) {
+				grid._selectstartHandle.remove();
+				delete grid._selectstartHandle;
+			}
+		}
+		else {
+			// For browsers that don't support either user-select or selectstart (Opera),
+			// we need to resort to setting the unselectable attribute on all nodes
+			// involved.  Since this doesn't automatically apply to child nodes, we also
+			// need to re-apply it whenever rows are rendered.
+			makeUnselectable(node, !selectable);
+			if (!selectable && !grid._unselectableHandle) {
+				grid._unselectableHandle = aspect.after(grid, 'renderRow', function (row) {
+					makeUnselectable(row, true);
+					return row;
+				});
+			}
+			else if (selectable && grid._unselectableHandle) {
+				grid._unselectableHandle.remove();
+				delete grid._unselectableHandle;
+			}
+		}
+	}
+
+	return declare(null, {
+		// summary:
+		//		Add selection capabilities to a grid. The grid will have a selection property and
+		//		fire "dgrid-select" and "dgrid-deselect" events.
+
+		// selectionDelegate: String
+		//		Selector to delegate to as target of selection events.
+		selectionDelegate: '.dgrid-row',
+
+		// selectionEvents: String|Function
+		//		Event (or comma-delimited events, or extension event) to listen on
+		//		to trigger select logic.
+		selectionEvents: downType + ',' + upType + ',dgrid-cellfocusin',
+
+		// selectionTouchEvents: String|Function
+		//		Event (or comma-delimited events, or extension event) to listen on
+		//		in addition to selectionEvents for touch devices.
+		selectionTouchEvents: has('touch') ? touchUtil.tap : null,
+
+		// deselectOnRefresh: Boolean
+		//		If true, the selection object will be cleared when refresh is called.
+		deselectOnRefresh: true,
+
+		// allowSelectAll: Boolean
+		//		If true, allow ctrl/cmd+A to select all rows.
+		//		Also consulted by the selector plugin for showing select-all checkbox.
+		allowSelectAll: false,
+
+		// selection:
+		//		An object where the property names correspond to
+		//		object ids and values are true or false depending on whether an item is selected
+		selection: {},
+
+		// selectionMode: String
+		//		The selection mode to use, can be "none", "multiple", "single", or "extended".
+		selectionMode: 'extended',
+
+		// allowTextSelection: Boolean
+		//		Whether to still allow text within cells to be selected.  The default
+		//		behavior is to allow text selection only when selectionMode is none;
+		//		setting this property to either true or false will explicitly set the
+		//		behavior regardless of selectionMode.
+		allowTextSelection: undefined,
+
+		// _selectionTargetType: String
+		//		Indicates the property added to emitted events for selected targets;
+		//		overridden in CellSelection
+		_selectionTargetType: 'rows',
+
+		create: function () {
+			this.selection = {};
+			return this.inherited(arguments);
+		},
+		postCreate: function () {
+			this.inherited(arguments);
+
+			this._initSelectionEvents();
+
+			// Force selectionMode setter to run
+			var selectionMode = this.selectionMode;
+			this.selectionMode = '';
+			this._setSelectionMode(selectionMode);
+		},
+
+		destroy: function () {
+			this.inherited(arguments);
+
+			// Remove any extra handles added by Selection.
+			if (this._selectstartHandle) {
+				this._selectstartHandle.remove();
+			}
+			if (this._unselectableHandle) {
+				this._unselectableHandle.remove();
+			}
+			if (this._removeDeselectSignals) {
+				this._removeDeselectSignals();
+			}
+		},
+
+		_setSelectionMode: function (mode) {
+			// summary:
+			//		Updates selectionMode, resetting necessary variables.
+
+			if (mode === this.selectionMode) {
+				return;
+			}
+
+			// Start selection fresh when switching mode.
+			this.clearSelection();
+
+			this.selectionMode = mode;
+
+			// Compute name of selection handler for this mode once
+			// (in the form of _fooSelectionHandler)
+			this._selectionHandlerName = '_' + mode + 'SelectionHandler';
+
+			// Also re-run allowTextSelection setter in case it is in automatic mode.
+			this._setAllowTextSelection(this.allowTextSelection);
+		},
+
+		_setAllowTextSelection: function (allow) {
+			if (typeof allow !== 'undefined') {
+				setSelectable(this, allow);
+			}
+			else {
+				setSelectable(this, this.selectionMode === 'none');
+			}
+			this.allowTextSelection = allow;
+		},
+
+		_handleSelect: function (event, target) {
+			// Don't run if selection mode doesn't have a handler (incl. "none"), target can't be selected,
+			// or if coming from a dgrid-cellfocusin from a mousedown
+			if (!this[this._selectionHandlerName] || !this.allowSelect(this.row(target)) ||
+					(event.type === 'dgrid-cellfocusin' && event.parentType === 'mousedown') ||
+					(event.type === upType && target !== this._waitForMouseUp)) {
+				return;
+			}
+			this._waitForMouseUp = null;
+			this._selectionTriggerEvent = event;
+
+			// Don't call select handler for ctrl+navigation
+			if (!event.keyCode || !event.ctrlKey || event.keyCode === 32) {
+				// If clicking a selected item, wait for mouseup so that drag n' drop
+				// is possible without losing our selection
+				if (!event.shiftKey && event.type === downType && this.isSelected(target)) {
+					this._waitForMouseUp = target;
+				}
+				else {
+					this[this._selectionHandlerName](event, target);
+				}
+			}
+			this._selectionTriggerEvent = null;
+		},
+
+		_singleSelectionHandler: function (event, target) {
+			// summary:
+			//		Selection handler for "single" mode, where only one target may be
+			//		selected at a time.
+
+			var ctrlKey = event.keyCode ? event.ctrlKey : event[ctrlEquiv];
+			if (this._lastSelected === target) {
+				// Allow ctrl to toggle selection, even within single select mode.
+				this.select(target, null, !ctrlKey || !this.isSelected(target));
+			}
+			else {
+				this.clearSelection();
+				this.select(target);
+				this._lastSelected = target;
+			}
+		},
+
+		_multipleSelectionHandler: function (event, target) {
+			// summary:
+			//		Selection handler for "multiple" mode, where shift can be held to
+			//		select ranges, ctrl/cmd can be held to toggle, and clicks/keystrokes
+			//		without modifier keys will add to the current selection.
+
+			var lastRow = this._lastSelected,
+				ctrlKey = event.keyCode ? event.ctrlKey : event[ctrlEquiv],
+				value;
+
+			if (!event.shiftKey) {
+				// Toggle if ctrl is held; otherwise select
+				value = ctrlKey ? null : true;
+				lastRow = null;
+			}
+
+			this.select(target, lastRow, value,null,event.type.indexOf('mouse')!==-1 ? 'mouse' : event.type);
+
+			if (!lastRow) {
+				// Update reference for potential subsequent shift+select
+				// (current row was already selected above)
+				this._lastSelected = target;
+			}
+		},
+
+		_extendedSelectionHandler: function (event, target) {
+			// summary:
+			//		Selection handler for "extended" mode, which is like multiple mode
+			//		except that clicks/keystrokes without modifier keys will clear
+			//		the previous selection.
+
+			// Clear selection first for right-clicks outside selection and non-ctrl-clicks;
+			// otherwise, extended mode logic is identical to multiple mode
+			if (event.button === 2 ? !this.isSelected(target) :
+					!(event.keyCode ? event.ctrlKey : event[ctrlEquiv])) {
+				this.clearSelection(null, true);
+			}
+			this._multipleSelectionHandler(event, target);
+		},
+
+		_toggleSelectionHandler: function (event, target) {
+			// summary:
+			//		Selection handler for "toggle" mode which simply toggles the selection
+			//		of the given target.  Primarily useful for touch input.
+
+			this.select(target, null, null);
+		},
+
+		_initSelectionEvents: function () {
+			// summary:
+			//		Performs first-time hookup of event handlers containing logic
+			//		required for selection to operate.
+
+			var grid = this,
+				contentNode = this.contentNode,
+				selector = this.selectionDelegate;
+
+			this._selectionEventQueues = {
+				deselect: [],
+				select: []
+			};
+
+			if (has('touch') && !has('pointer') && this.selectionTouchEvents) {
+				// Listen for taps, and also for mouse/keyboard, making sure not
+				// to trigger both for the same interaction
+				on(contentNode, touchUtil.selector(selector, this.selectionTouchEvents), function (evt) {
+					grid._handleSelect(evt, this);
+					grid._ignoreMouseSelect = this;
+				});
+				on(contentNode, on.selector(selector, this.selectionEvents), function (event) {
+					if (grid._ignoreMouseSelect !== this) {
+						grid._handleSelect(event, this);
+					}
+					else if (event.type === upType) {
+						grid._ignoreMouseSelect = null;
+					}
+				});
+			}
+			else {
+				// Listen for mouse/keyboard actions that should cause selections
+				on(contentNode, on.selector(selector, this.selectionEvents), function (event) {
+					grid._handleSelect(event, this);
+				});
+			}
+
+			// Also hook up spacebar (for ctrl+space)
+			if (this.addKeyHandler) {
+				this.addKeyHandler(32, function (event) {
+					grid._handleSelect(event, event.target);
+				});
+			}
+
+			// If allowSelectAll is true, bind ctrl/cmd+A to (de)select all rows,
+			// unless the event was received from an editor component.
+			// (Handler further checks against _allowSelectAll, which may be updated
+			// if selectionMode is changed post-init.)
+			if (this.allowSelectAll) {
+				this.on('keydown', function (event) {
+					if (event[ctrlEquiv] && event.keyCode === 65 &&
+							!/\bdgrid-input\b/.test(event.target.className)) {
+						event.preventDefault();
+						grid[grid.allSelected ? 'clearSelection' : 'selectAll']();
+					}
+				});
+			}
+
+			// Update aspects if there is a collection change
+			if (this._setCollection) {
+				aspect.before(this, '_setCollection', function (collection) {
+					grid._updateDeselectionAspect(collection);
+				});
+			}
+			this._updateDeselectionAspect();
+		},
+
+		_updateDeselectionAspect: function (collection) {
+			// summary:
+			//		Hooks up logic to handle deselection of removed items.
+			//		Aspects to a trackable collection's notify method if applicable,
+			//		or to the list/grid's removeRow method otherwise.
+
+			var self = this,
+				signals;
+
+			function ifSelected(rowArg, methodName,why) {
+				// Calls a method if the row corresponding to the object is selected.
+				var row = self.row(rowArg),
+					selection = row && self.selection[row.id];
+				// Is the row currently in the selection list.
+				if (selection) {
+					self[methodName](row,null,true,null,why);
+				}
+			}
+
+			// Remove anything previously configured
+			if (this._removeDeselectSignals) {
+				this._removeDeselectSignals();
+			}
+
+			if (collection && collection.track && this._observeCollection) {
+				signals = [
+					aspect.before(this, '_observeCollection', function (collection) {
+						signals.push(
+							collection.on('delete', function (event) {
+								if (typeof event.index === 'undefined') {
+									// Call deselect on the row if the object is being removed.  This allows the
+									// deselect event to reference the row element while it still exists in the DOM.
+									ifSelected(event.id, 'deselect');
+								}
+							})
+						);
+					}),
+					aspect.after(this, '_observeCollection', function (collection) {
+						signals.push(
+							collection.on('update', function (event) {
+								if (typeof event.index !== 'undefined') {
+									// When List updates an item, the row element is removed and a new one inserted.
+									// If at this point the object is still in grid.selection,
+									// then call select on the row so the element's CSS is updated.
+									ifSelected(collection.getIdentity(event.target), 'select','update');
+								}
+							})
+						);
+					}, true)
+				];
+			}
+			else {
+				signals = [
+					aspect.before(this, 'removeRow', function (rowElement, preserveDom) {
+						var row;
+						if (!preserveDom) {
+							row = this.row(rowElement);
+							// if it is a real row removal for a selected item, deselect it
+							if (row && (row.id in this.selection)) {
+								this.deselect(row);
+							}
+						}
+					})
+				];
+			}
+
+			this._removeDeselectSignals = function () {
+				for (var i = signals.length; i--;) {
+					signals[i].remove();
+				}
+				signals = [];
+			};
+		},
+
+		allowSelect: function () {
+			// summary:
+			//		A method that can be overriden to determine whether or not a row (or
+			//		cell) can be selected. By default, all rows (or cells) are selectable.
+			// target: Object
+			//		Row object (for Selection) or Cell object (for CellSelection) for the
+			//		row/cell in question
+			return true;
+		},
+
+		_fireSelectionEvent: function (type) {
+			// summary:
+			//		Fires an event for the accumulated rows once a selection
+			//		operation is finished (whether singular or for a range)
+
+			var queue = this._selectionEventQueues[type],
+				triggerEvent = this._selectionTriggerEvent,
+				eventObject;
+
+			eventObject = {
+				bubbles: true,
+				grid: this
+			};
+			if (triggerEvent) {
+				eventObject.parentType = triggerEvent.type;
+			}
+			eventObject[this._selectionTargetType] = queue;
+
+			// Clear the queue so that the next round of (de)selections starts anew
+			this._selectionEventQueues[type] = [];
+
+			on.emit(this.contentNode, 'dgrid-' + type, eventObject);
+		},
+
+		_fireSelectionEvents: function () {
+			var queues = this._selectionEventQueues,
+				type;
+
+			for (type in queues) {
+				if (queues[type].length) {
+					this._fireSelectionEvent(type);
+				}
+			}
+		},
+
+		_select: function (row, toRow, value) {
+			// summary:
+			//		Contains logic for determining whether to select targets, but
+			//		does not emit events.  Called from select, deselect, selectAll,
+			//		and clearSelection.
+
+			var selection,
+				previousValue,
+				element,
+				toElement,
+				direction;
+
+			if (typeof value === 'undefined') {
+				// default to true
+				value = true;
+			}
+			if (!row.element) {
+				row = this.row(row);
+			}
+
+			// Check whether we're allowed to select the given row before proceeding.
+			// If a deselect operation is being performed, this check is skipped,
+			// to avoid errors when changing column definitions, and since disabled
+			// rows shouldn't ever be selected anyway.
+			if (value === false || this.allowSelect(row)) {
+				selection = this.selection;
+				previousValue = !!selection[row.id];
+				if (value === null) {
+					// indicates a toggle
+					value = !previousValue;
+				}
+				element = row.element;
+				if (!value && !this.allSelected) {
+					delete this.selection[row.id];
+				}
+				else {
+					selection[row.id] = value;
+				}
+				if (element) {
+					// add or remove classes as appropriate
+					if (value) {
+						domClass.add(element, 'dgrid-selected' +
+							(this.addUiClasses ? ' ui-state-active' : ''));
+					}
+					else {
+						domClass.remove(element, 'dgrid-selected ui-state-active');
+					}
+				}
+				if (value !== previousValue && element) {
+					// add to the queue of row events
+					this._selectionEventQueues[(value ? '' : 'de') + 'select'].push(row);
+				}
+
+				if (toRow) {
+					if (!toRow.element) {
+						toRow = this.row(toRow);
+					}
+
+					if (!toRow) {
+						this._lastSelected = element;
+						console.warn('The selection range has been reset because the ' +
+							'beginning of the selection is no longer in the DOM. ' +
+							'If you are using OnDemandList, you may wish to increase ' +
+							'farOffRemoval to avoid this, but note that keeping more nodes ' +
+							'in the DOM may impact performance.');
+						return;
+					}
+
+					toElement = toRow.element;
+					if (toElement) {
+						direction = this._determineSelectionDirection(element, toElement);
+						if (!direction) {
+							// The original element was actually replaced
+							toElement = document.getElementById(toElement.id);
+							direction = this._determineSelectionDirection(element, toElement);
+						}
+						while (row.element !== toElement && (row = this[direction](row))) {
+							this._select(row, null, value);
+						}
+					}
+				}
+			}
+		},
+
+		// Implement _determineSelectionDirection differently based on whether the
+		// browser supports element.compareDocumentPosition; use sourceIndex for IE<9
+		_determineSelectionDirection: has('dom-comparedocumentposition') ? function (from, to) {
+			var result = to.compareDocumentPosition(from);
+			if (result & 1) {
+				return false; // Out of document
+			}
+			return result === 2 ? 'down' : 'up';
+		} : function (from, to) {
+			if (to.sourceIndex < 1) {
+				return false; // Out of document
+			}
+			return to.sourceIndex > from.sourceIndex ? 'down' : 'up';
+		},
+
+		select: function (row, toRow, value) {
+			// summary:
+			//		Selects or deselects the given row or range of rows.
+			// row: Mixed
+			//		Row object (or something that can resolve to one) to (de)select
+			// toRow: Mixed
+			//		If specified, the inclusive range between row and toRow will
+			//		be (de)selected
+			// value: Boolean|Null
+			//		Whether to select (true/default), deselect (false), or toggle
+			//		(null) the row
+
+			this._select(row, toRow, value);
+			this._fireSelectionEvents();
+		},
+		deselect: function (row, toRow) {
+			// summary:
+			//		Deselects the given row or range of rows.
+			// row: Mixed
+			//		Row object (or something that can resolve to one) to deselect
+			// toRow: Mixed
+			//		If specified, the inclusive range between row and toRow will
+			//		be deselected
+
+			this.select(row, toRow, false);
+		},
+
+		clearSelection: function (exceptId, dontResetLastSelected) {
+			// summary:
+			//		Deselects any currently-selected items.
+			// exceptId: Mixed?
+			//		If specified, the given id will not be deselected.
+
+			this.allSelected = false;
+			for (var id in this.selection) {
+				if (exceptId !== id) {
+					this._select(id, null, false);
+				}
+			}
+			if (!dontResetLastSelected) {
+				this._lastSelected = null;
+			}
+			this._fireSelectionEvents();
+		},
+		selectAll: function () {
+			this.allSelected = true;
+			this.selection = {}; // we do this to clear out pages from previous sorts
+			for (var i in this._rowIdToObject) {
+				var row = this.row(this._rowIdToObject[i]);
+				this._select(row.id, null, true);
+			}
+			this._fireSelectionEvents();
+		},
+
+		isSelected: function (object) {
+			// summary:
+			//		Returns true if the indicated row is selected.
+
+			if (typeof object === 'undefined' || object === null) {
+				return false;
+			}
+			if (!object.element) {
+				object = this.row(object);
+			}
+/*
+            if (typeof object === 'undefined' || object === null) {
+                return false;
+            }*/
+
+
+			// First check whether the given row is indicated in the selection hash;
+			// failing that, check if allSelected is true (testing against the
+			// allowSelect method if possible)
+			return (object.id in this.selection) ? !!this.selection[object.id] :
+				this.allSelected && (!object.data || this.allowSelect(object));
+		},
+
+		refresh: function () {
+			if (this.deselectOnRefresh) {
+				this.clearSelection();
+			}
+			this._lastSelected = null;
+			return this.inherited(arguments);
+		},
+
+		renderArray: function () {
+			var rows = this.inherited(arguments),
+				selection = this.selection,
+				i,
+				row,
+				selected;
+
+			for (i = 0; i < rows.length; i++) {
+				row = this.row(rows[i]);
+				selected = row.id in selection ? selection[row.id] : this.allSelected;
+				if (selected) {
+					this.select(row, null, selected,null,'renderArray');
+				}
+			}
+			this._fireSelectionEvents();
+			return rows;
+		}
+	});
+});
+
+/** @module xgrid/Selection **/
+define('xgrid/Selection',[
+    "xdojo/declare",
+    "xdojo/has",
+    'xide/types',
+    'xide/utils',
+    'dgrid/Selection',
+    'dojo/dom-class',
+    'dojo/on',
+    'dojo/Deferred',
+    'xide/lodash',
+    'xide/$'
+], function (declare, has, types, utils, Selection, domClass, on, Deferred, _, $) {
+
+    /////////////////////////////////////////////////////////////////////
+    //
+    //  Utils
+    //
+    //
+    /**
+     * Event filter
+     * @param event
+     * @returns {string|boolean}
+     */
+    function handledEvent(event) {
+        // Text boxes and other inputs that can use direction keys should be ignored
+        // and not affect cell/row navigation
+        var target = event.target;
+        return target.type && (event.keyCode === 32);
+    }
+
+    /**
+     *
+     * @param selection to ids
+     * @returns {string[]}
+     */
+    function rows(selection) {
+        var result = [];
+        if (selection && selection.rows) {
+            selection.rows.forEach(function (row) {
+                result.push(row.id);
+            });
+        }
+        return result;
+    }
+
+    /**
+     *
+     * @param arrays
+     * @returns {*|Array}
+     */
+    function allArraysAlike(arrays) {
+        return _.all(arrays, function (array) {
+            return array.length == arrays[0].length && _.difference(array, arrays[0]).length == 0;
+        });
+    }
+
+    /**
+     *
+     * @param lastSelection
+     * @param newSelection
+     * @returns {*|Array}
+     */
+    function equals(lastSelection, newSelection) {
+        var cSelected = rows(lastSelection);
+        var nSelected = rows(newSelection);
+        return allArraysAlike([cSelected, nSelected]);
+    }
+
+    /**
+     *
+     * @param items
+     * @param now
+     * @param idProperty
+     * @returns {boolean}
+     */
+    function isSame(items, now, idProperty) {
+        var newSelection = items ? items.map(function (item) {
+            return item ? item.data || item : {};
+        }) : [];
+        var idsNew = newSelection.map(function (x) { return x[idProperty]; });
+        var idsNow = now.map(function (x) { return x[idProperty]; });
+        return (idsNew.join(',') === idsNow.join(','));
+    }
+
+    /**
+     *
+     * @param self {module:xgrid/Base}
+     */
+    function clearFocused(self) {
+        $(self.domNode).find('.dgrid-focus').each(function (i, el) {
+            $(el).removeClass('dgrid-focus');
+        });
+    }
+
+    var _debug = false;
+    var debugSelect = false;
+    /**
+     * @class module:xgrid/Selection
+     * @lends module:xgrid/Base
+     */
+    var Implementation = {
+        _lastSelection: null,
+        _lastFocused: null,
+        _refreshInProgress: null,
+        __lastLast: null,
+        __lastFirst: null,
+        /**
+         * Mute any selection events.
+         */
+        _muteSelectionEvents: true,
+        selectAll: function (filter) {
+            this.select(this.getRows(filter), null, true, {
+                append: false,
+                delay: 1
+            });
+        },
+        /**
+         *
+         * @param state
+         * @returns {object}
+         */
+        setState: function (state) {
+            state && state.selection && state.selection.selection && this.select(state.selection.selection, null, true, {
+                expand: true,
+                append: false,
+                scrollInto: true
+            }, 'restore');
+            return this.inherited(arguments);
+        },
+        /**
+         *
+         * @param state
+         * @returns {object}
+         */
+        getState: function (state) {
+            state = this.inherited(arguments) || {};
+            var selection = this._preserveSelection();
+            var thisState = {
+                selection: []
+            };
+            var collection = this.collection;
+            var idProp = collection.idProperty;
+            if (selection.selection && idProp) {
+                _.each(selection.selection, function (item) {
+                    if (item && item[idProp]) {
+                        thisState.selection.push(item[idProp]);
+                    }
+                });
+            }
+            if (selection.focused) {
+                thisState.focused = selection.focused.path;
+            }
+            state.selection = thisState;
+            return state;
+        },
+        /**
+         *
+         * @param restoreSelection
+         * @returns {*}
+         */
+        refresh: function (restoreSelection) {
+            if (!this.isRendered()) {
+                return false;
+            }
+            if (this._refreshInProgress) {
+                return this._refreshInProgress;
+            }
+
+            var _restore = restoreSelection !== false ? this._preserveSelection() : null,
+                thiz = this,
+                active = this.isActive(),
+                res = this.inherited(arguments);
+
+            this._refreshInProgress = res;
+
+            res && res.then && res.then(function () {
+                thiz._refreshInProgress = null;
+                active && _restore && thiz._restoreSelection(_restore, 1, !active, 'restore');
+            });
+            return res;
+        },
+        /**
+         * Normalize an item
+         * @param what
+         * @returns {*}
+         * @private
+         */
+        _normalize: function (what) {
+            if (!what) {
+                return null;
+            }
+            if (!what.element) {
+                what = this.cell(what);
+            }
+            if (what && what.row) {
+                what = what.row;
+            }
+            return what;
+        },
+        /**
+         * save deselect
+         */
+        deselectAll: function () {
+            if (!this._lastSelection) {
+                return;
+            }
+            this.clearSelection();
+            this._lastSelection = null;
+            this._lastFocused = null;
+            $(this.domNode).find('.dgrid-focus').each(function (i, el) {
+                $(el).removeClass('dgrid-focus');
+            });
+            this._emit('selectionChanged', {
+                selection: [],
+                why: "clear",
+                source: 'code'
+            });
+        },
+        invertSelection: function (items) {
+            var selection = items || this._getSelection() || [];
+            var newSelection = [],
+                all = this.getRows();
+            _.each(all, function (data) {
+                if (selection.indexOf(data) === -1) {
+                    newSelection.push(data);
+                }
+            });
+            return this.select(newSelection, null, true, {
+                append: false
+            });
+        },
+        runAction: function (action) {
+            if (_.isString(action)) {
+                action = this.getActionStore().getSync(action);
+            }
+            if (action.command === 'File/Select/None') {
+                this.deselectAll();
+                return true;
+            }
+            if (action.command === 'File/Select/All') {
+                this.selectAll();
+                return true;
+            }
+            if (action.command === 'File/Select/Invert') {
+                return this.invertSelection();
+            }
+            return this.inherited(arguments);
+        },
+        _preserveSelection: function () {
+            this.__lastSelection = this._getSelection();
+            this._lastFocused = this.getFocused();
+            return {
+                selection: this._getSelection(),
+                focused: this.getFocused()
+            };
+        },
+        _restoreSelection: function (what, delay, silent, reason) {
+            var lastFocused = what ? what.focused : this._lastFocused;
+            var lastSelection = what ? what.selection : this.__lastSelection;
+            if (_.isEmpty(lastSelection)) {
+                lastFocused = null;
+                this._lastFocused = null;
+            } else {
+                //restore:
+                var dfd = this.select(lastSelection, null, true, {
+                    silent: silent != null ? silent : true,
+                    append: false,
+                    delay: delay != null ? delay : 0
+                }, reason);
+
+                if (lastFocused && this.isActive()) {
+                    this.focus(this.row(lastFocused));
+                }
+                return dfd;
+            }
+        },
+        /**
+         * get previous item
+         * @param from
+         * @param domNode
+         * @param skipSelected
+         * @returns {*}
+         */
+        getPrevious: function (from, domNode, skipSelected) {
+            from = from || this.getFocused(domNode);
+            from = this._normalize(from);
+            var nextNode = this.cell(this._move(from, -1, "dgrid-row"));
+            if (nextNode && nextNode.row) {
+                nextNode = nextNode.row[domNode ? 'element' : 'data'];
+                if (skipSelected === true) {
+                    if (this.isSelected(nextNode)) {
+                        //nothing previous here
+                        if (from && from.data && from.data == nextNode) {
+                            return null;
+                        }
+                        var _nextNode = this.getPrevious(nextNode, domNode, skipSelected);
+                        if (_nextNode) {
+                            return _nextNode;
+                        }
+                    }
+                }
+            }
+            return nextNode;
+        },
+        /**
+         * get next item
+         * @param from
+         * @param domNode
+         * @param skipSelected
+         * @returns {*}
+         */
+        getNext: function (from, domNode, skipSelected) {
+            from = from || this.getFocused(domNode);
+            from = this._normalize(from);
+            var nextNode = this.cell(this._move(from, 1, "dgrid-row"));
+            if (nextNode && nextNode.row) {
+                nextNode = nextNode.row[domNode ? 'element' : 'data'];
+                if (skipSelected === true) {
+                    if (this.isSelected(nextNode)) {
+                        //nothing previous here
+                        if (from && from.data && from.data == nextNode) {
+                            return null;
+                        }
+                        var _nextNode = this.getNext(nextNode, domNode, skipSelected);
+                        if (_nextNode) {
+                            return _nextNode;
+                        }
+                    }
+                }
+            }
+            return nextNode;
+        },
+        /**
+         *
+         * @param filterFunction
+         * @returns selection {Object[] | NULL }
+         */
+        getSelection: function (filterFunction) {
+            return this._getSelection(filterFunction);
+        },
+        /**
+         *
+         * @param filterFunction
+         * @returns selection {Object[] | NULL }
+         */
+        _getSelection: function (filterFunction) {
+            var result = [];
+            var collection = this.collection;
+            if (collection) {
+                for (var id in this.selection) {
+                    var item = this.collection.getSync(id);
+                    item && result.push(item);
+                }
+                if (filterFunction) {
+                    return result.filter(filterFunction);
+                }
+            }
+            return result;
+        },
+        /**
+         *
+         * @param filterFunction
+         * @returns selection {Object[] | NULL }
+         */
+        _getSelected: function () {
+            return $('.dgrid-selected', this.domNode);
+        },
+        /**
+         *
+         * @param filter
+         * @returns {*}
+         */
+        getSelectedItem: function (filter) {
+            var _selection = this.getSelection(filter);
+            if (_selection.length === 1) {
+                return _selection[0];
+            }
+            return null;
+        },
+        /**
+         * Override std::postCreate
+         * @returns {*}
+         */
+        postCreate: function () {
+            var thiz = this;
+            if (this.options[types.GRID_OPTION.CLEAR_SELECTION_ON_CLICK] === true) {
+                var clickHandler = function (evt) {
+                    if (evt && evt.target && domClass.contains(evt.target, 'dgrid-content')) {
+                        this.deselectAll();
+                    }
+                }.bind(this);
+                this.on("click", function (evt) {
+                    clickHandler(evt);
+                }.bind(this));
+            }
+            this.on("dgrid-select", function (data) {
+                if (!equals(thiz._lastSelection, data)) {
+                    delete thiz._lastSelection;
+                    thiz._lastSelection = data;
+                    thiz._emit('selectionChanged', {
+                        selection: thiz._getSelection(),
+                        why: "select",
+                        source: data.parentType
+                    })
+                }
+            });
+            return this.inherited(arguments);
+        },
+        /**
+         * Override dgrid/Selection::_fireSelectionEvents
+         * @returns {*}
+         * @private
+         */
+        _fireSelectionEvents: function () {
+            if (this._muteSelectionEvents === true) {
+                return;
+            }
+            return this.inherited(arguments);
+        },
+        __select: function (items, toRow, select, dfd, reason) {
+            _.each(items, function (item) {
+                if (item) {
+                    var _row = this.row(item);
+                    if (_row) {
+                        this._select(_row, toRow, select);
+                    }
+                }
+            }, this);
+            dfd && dfd.resolve(items);
+            this._muteSelectionEvents = false;
+            this._fireSelectionEvents();
+            var rows = this.getRows();
+            if (rows && rows.length && items && items.length && select && reason && reason !== 'mouse') {
+                //trigger bounce if we hit
+                var _last = items[items.length - 1];
+                if (rows[rows.length - 1] == _last) {
+                    if (this.__lastLast && this.__lastLast == _last) {
+                        reason.indexOf('pointer') === -1 && this._emit('bounced', {
+                            direction: 1,
+                            item: _last
+                        });
+                        return;
+                    }
+                    this.__lastLast = _last;
+                } else {
+                    this.__lastLast = null;
+                }
+
+
+                var _first = items[0];
+                if (rows[0] == _first) {
+                    if (this.__lastFirst && this.__lastFirst == _first) {
+                        reason.indexOf('pointer') === -1 && this._emit('bounced', {
+                            direction: -1,
+                            item: _first
+                        })
+                        return;
+                    }
+                    this.__lastFirst = _first;
+                } else {
+                    this.__lastFirst = null;
+                }
+            } else {
+                this.__lastFirst = null;
+            }
+        },
+        /**
+         * Overrides dgrid selection
+         * @param mixed
+         * @param toRow {object|null} preserve super
+         * @param select {boolean|null} preserve super
+         * @param options {object}
+         * @param options.focus {boolean}
+         * @param options.silent {boolean}
+         * @param options.append {boolean}
+         * @param options.expand {boolean}
+         * @param options.scrollInto {boolean}
+         * @param reason {string} the origin event's type
+         * returns dojo/Deferred
+         */
+        select: function (mixed, toRow, select, options, reason) {
+            clearTimeout(this._selectTimer);
+            this._selectTimer = null;
+            var isMouse = reason === 'mouse',
+                isPrioritySelect = isMouse || reason === 'update',
+                isActive = this.isActive(),
+                def = new Deferred();
+
+            reason = reason || '';
+
+            //sanitize/defaults
+            options = options || {};
+
+            if (isPrioritySelect) {
+                isActive = true;
+            }
+            if (isMouse) {
+                options.focus = true;
+            }
+            select = select === null ? true : select;
+            var delay = options.delay || 0,
+                self = this,
+                coll = this.collection,
+                idProperty = coll.idProperty;
+
+            //silence selection change (batch or state restoring job)
+            if (options.silent === true) {
+                self._muteSelectionEvents = true;
+            }
+
+            //normalize to array
+            var items = utils.isArray(mixed) ? mixed : [mixed];
+            if (_.isEmpty(items)) {
+                return;
+            }
+            var _newItems = [];
+
+            //indices to items
+            if (_.isNumber(items[0])) {
+                var rows = self.getRows();
+                _.each(items, function (item) {
+                    _newItems.push(rows[item]);
+                });
+                items = _newItems;
+            } else if (_.isString(items[0])) {
+                _.each(items, function (item) {
+                    var _item = coll.getSync(item);
+                    if (_item) {
+                        _newItems.push(_item);
+                    }
+                });
+
+                items = _newItems;
+            } else if (items && items[0] && items[0].tagName) {
+                _.each(items, function (item) {
+                    _newItems.push(self.row(item).data);
+                });
+                items = _newItems;
+            }
+
+            if (!items.length) {
+                if (has('debug')) {
+                    _debug && console.log('nothing to select!');
+                }
+                def.resolve();
+                return def;
+            }
+
+
+            if (has('debug')) {
+                debugSelect && console.log('selected : ', _.map(items, "name"));
+            }
+
+            var _last = this._lastSelection ? this._lastSelection.rows : [];
+            var now = _last.map(function (x) { return x.data; });
+
+            var isEqual = isSame(items, now, idProperty);
+
+            //store update
+            if (reason === 'update' && select) {
+                options.focus = true;
+                options.append = false;
+                options.delay = 1;
+                //this.focus();
+            }
+
+            if (reason === 'dgrid-cellfocusin') {
+                options.focus = true;
+            }
+
+            //clear previous selection
+            if (options.append === false && select && !isEqual) {
+                self.clearSelection(items);
+                clearFocused(self);
+            }
+
+            if (isEqual && (reason === 'update' || reason === 'dgrid-cellfocusin')) {
+                if (options.focus) {
+                    clearFocused(self);
+                    self.focus(items[0]);
+                }
+                return;
+            }
+
+            //focus
+            if (options.focus === true) {
+                if (options.expand) {
+                    if (!self.isRendered(items[0])) {
+                        self._expandTo(items[0]);
+                    }
+                }
+            }
+            if (options.expand) {
+                if (!self.isRendered(items[0])) {
+                    self._expandTo(items[0]);
+                }
+            }
+            if (options.scrollInto && reason !== 'restore') {
+                var row = this.row(items[0]);
+                if (row.element) {
+                    row.element.scrollIntoView();
+                }
+            }
+
+            if (delay && items.length) {
+                this._selectTimer = setTimeout(function () {
+                    if (self.destroyed || !self.collection) {
+                        return;
+                    }
+                    if (options.append === false) {
+                        self.clearSelection();
+                    }
+                    clearFocused(self);
+                    self.focus(items[0], false);
+                    self.__select(items, toRow, select, def, reason);
+                }, delay);
+            } else {
+                self.__select(items, toRow, select, def, reason);
+            }
+            return def;
+        },
+
+        _setLast: function (selection) {
+            var _ids = [];
+            for (var i = 0; i < selection.length; i++) {
+                var obj = selection[i];
+                _ids.push(this.collection.getIdentity(obj));
+            }
+        },
+        isExpanded: function (item) {
+            item = this._normalize('root');
+            return !!this._expanded[item.id];
+        },
+        _expandTo: function (item) {
+            if (!item) {
+                return;
+            }
+            var store = this.collection;
+            if (_.isString(item)) {
+                item = store.getSync(item);
+            }
+            var parent = store.getSync(item[store.parentField]) || item.getParent ? item.getParent() : null;
+            if (parent) {
+                if (!this.isRendered(parent)) {
+                    this._expandTo(parent);
+                } else {
+                    if (!this.isExpanded(parent)) {
+                        this.expand(parent, true, true);
+                    }
+                    if (!this.isExpanded(item)) {
+                        this.expand(item, true, true);
+                    }
+                }
+            }
+        },
+        startup: function () {
+            var result = this.inherited(arguments);
+            //we want keyboard navigation also when nothing is selected
+            this.addHandle('keyup', on(this.domNode, 'keyup', function (event) {
+                // For now, don't squash browser-specific functionality by letting
+                // ALT and META function as they would natively
+                if (event.metaKey || event.altKey) {
+                    return;
+                }
+                var handler = this['keyMap'][event.keyCode];
+                // Text boxes and other inputs that can use direction keys should be ignored
+                // and not affect cell/row navigation
+                if (handler && !handledEvent(event) && this._getSelection().length == 0) {
+                    handler.call(this, event);
+                }
+            }.bind(this)));
+            return result;
+        }
+    };
+    //package via declare
+    var _class = declare('xgrid.Selection', Selection, Implementation);
+    _class.Implementation = Implementation;
+
+    return _class;
+});
+define('xgrid/Keyboard',[
+	'dojo/_base/declare',
+	'dojo/aspect',
+	'dojo/dom-class',
+	'dojo/on',
+	'dojo/_base/lang',
+	'dojo/has',
+	'dgrid/util/misc',
+	'dojo/_base/sniff',
+	'dcl/dcl'
+], function (declare, aspect, domClass, on, lang, has, miscUtil,dcl) {
+
+	var delegatingInputTypes = {
+			checkbox: 1,
+			radio: 1,
+			button: 1
+		},
+		hasGridCellClass = /\bdgrid-cell\b/,
+		hasGridRowClass = /\bdgrid-row\b/,
+		_debug = false;
+
+    has.add("dom-contains", function(global, doc, element){
+        return !!element.contains; // not supported by FF < 9
+    });
+
+    function contains(parent, node){
+        // summary:
+        //		Checks to see if an element is contained by another element.
+
+        if(has("dom-contains")){
+            return parent.contains(node);
+        }else{
+            return parent.compareDocumentPosition(node) & 8 /* DOCUMENT_POSITION_CONTAINS */;
+        }
+    }
+
+	var _upDownSelect = function(event,who,steps) {
+
+		var prev     = steps < 0,
+			selector = prev ? 'first:' : 'last',
+			s, n, sib, top, left;
+
+		var _current = who.row(event).element;
+		var sel = $(_current); // header reports row as undefined
+
+		var clDisabled = 'ui-state-disabled';
+		function sibling(n, direction) {
+			return n[direction+'All']('[id]:not(.'+clDisabled+'):not(.dgrid-content-parent):first');
+		}
+		var hasLeftRight=false;
+		if (sel.length) {
+			var next = who.up(who._focusedNode,1, true);
+			s = sel;
+			sib = $(next.element);
+			if (!sib.length) {
+				// there is no sibling on required side - do not move selection
+				n = s;
+			} else if (hasLeftRight) {//done somewhere else
+				n = sib;
+			} else {
+				// find up/down side file in icons view
+				top = s.position().top;
+				left = s.position().left;
+				n = s;
+				if (prev) {
+					do {
+						n = n.prev('[id]');
+					} while (n.length && !(n.position().top < top && n.position().left <= left));
+
+					if (n.is('.'+clDisabled)) {
+						n = sibling(n, 'next');
+					}
+				} else {
+					do {
+						n = n.next('[id]');
+					} while (n.length && !(n.position().top > top && n.position().left >= left));
+
+					if (n.is('.'+clDisabled)) {
+						n = sibling(n, 'prev');
+					}
+				}
+			}
+		}
+		return n;
+	};
+	var _rightLeftSelect = function(event,who,steps) {
+
+		var prev     = steps < 0,
+			selector = prev ? 'first:' : 'last',
+			s, n, sib, top, left;
+
+		var _current = who.row(event).element;
+		var sel = $(_current); // header reports row as undefined
+
+		var clDisabled = 'ui-state-disabled';
+		function sibling(n, direction) {
+			return n[direction+'All']('[id]:not(.'+clDisabled+'):not(.dgrid-content-parent):first');
+		}
+		var hasLeftRight=true;
+		if (sel.length) {
+			var next = who.up(who._focusedNode,1, true);
+			s = sel;
+			sib = $(next.element);
+			if (!sib.length) {
+				// there is no sibling on required side - do not move selection
+				n = s;
+			} else if (hasLeftRight) {//done somewhere else
+				n = sib;
+			} else {
+				// find up/down side file in icons view
+				top = s.position().top;
+				left = s.position().left;
+				n = s;
+				if (prev) {
+					do {
+						n = n.prev('[id]');
+					} while (n.length && !(n.position().top < top && n.position().left <= left));
+
+					if (n.is('.'+clDisabled)) {
+						n = sibling(n, 'next');
+					}
+				} else {
+					do {
+						n = n.next('[id]');
+					} while (n.length && !(n.position().top > top && n.position().left >= left));
+
+					if (n.is('.'+clDisabled)) {
+						n = sibling(n, 'prev');
+					}
+				}
+			}
+		}
+		return n;
+	};
+
+	var Implementation = {
+		// summary:
+		//		Adds keyboard navigation capability to a list or grid.
+
+		// pageSkip: Number
+		//		Number of rows to jump by when page up or page down is pressed.
+		pageSkip: 10,
+
+		tabIndex: -1,
+
+		// keyMap: Object
+		//		Hash which maps key codes to functions to be executed (in the context
+		//		of the instance) for key events within the grid's body.
+		keyMap: null,
+
+		// headerKeyMap: Object
+		//		Hash which maps key codes to functions to be executed (in the context
+		//		of the instance) for key events within the grid's header row.
+		headerKeyMap: null,
+
+		postMixInProperties: function () {
+			this.inherited(arguments);
+
+			if (!this.keyMap) {
+				this.keyMap = lang.mixin({}, Implementation.defaultKeyMap);
+			}
+			if (!this.headerKeyMap) {
+				this.headerKeyMap = lang.mixin({}, Implementation.defaultHeaderKeyMap);
+			}
+		},
+
+		postCreate: function () {
+			this.inherited(arguments);
+			var grid = this;
+
+			function handledEvent(event) {
+				// Text boxes and other inputs that can use direction keys should be ignored
+				// and not affect cell/row navigation
+				var target = event.target;
+				return target.type && (!delegatingInputTypes[target.type] || event.keyCode === 32);
+			}
+
+			function enableNavigation(areaNode) {
+
+				var cellNavigation = grid.cellNavigation,
+					isFocusableClass = cellNavigation ? hasGridCellClass : hasGridRowClass,
+					isHeader = areaNode === grid.headerNode,
+					initialNode = areaNode;
+
+				function initHeader() {
+					if (grid._focusedHeaderNode) {
+						// Remove the tab index for the node that previously had it.
+						grid._focusedHeaderNode.tabIndex = -1;
+					}
+					if (grid.showHeader) {
+						if (cellNavigation) {
+							// Get the focused element. Ensure that the focused element
+							// is actually a grid cell, not a column-set-cell or some
+							// other cell that should not be focused
+							var elements = grid.headerNode.getElementsByTagName('th');
+							for (var i = 0, element; (element = elements[i]); ++i) {
+								if (isFocusableClass.test(element.className)) {
+									grid._focusedHeaderNode = initialNode = element;
+									break;
+								}
+							}
+						}
+						else {
+							grid._focusedHeaderNode = initialNode = grid.headerNode;
+						}
+
+						// Set the tab index only if the header is visible.
+						if (initialNode) {
+							initialNode.tabIndex = grid.tabIndex;
+						}
+					}
+				}
+
+				if (isHeader) {
+					// Initialize header now (since it's already been rendered),
+					// and aspect after future renderHeader calls to reset focus.
+					initHeader();
+					aspect.after(grid, 'renderHeader', initHeader, true);
+				}
+				else {
+					aspect.after(grid, 'renderArray', function (rows) {
+						// summary:
+						//		Ensures the first element of a grid is always keyboard selectable after data has been
+						//		retrieved if there is not already a valid focused element.
+
+						var focusedNode = grid._focusedNode || initialNode;
+
+						// do not update the focused element if we already have a valid one
+						if (isFocusableClass.test(focusedNode.className) && miscUtil.contains(areaNode, focusedNode)) {
+							return rows;
+						}
+
+						// ensure that the focused element is actually a grid cell, not a
+						// dgrid-preload or dgrid-content element, which should not be focusable,
+						// even when data is loaded asynchronously
+						var elements = areaNode.getElementsByTagName('*');
+						for (var i = 0, element; (element = elements[i]); ++i) {
+							if (isFocusableClass.test(element.className)) {
+								focusedNode = grid._focusedNode = element;
+								break;
+							}
+						}
+
+						focusedNode.tabIndex = grid.tabIndex;
+						return rows;
+					});
+				}
+
+				grid._listeners.push(on(areaNode, 'mousedown', function (event) {
+					if (!handledEvent(event)) {
+						grid._focusOnNode(event.target, isHeader, event);
+					}
+				}));
+
+				grid._listeners.push(on(areaNode, 'keydown', function (event) {
+					//console.log('keyboardkey down : ',event);
+					// For now, don't squash browser-specific functionalities by letting
+					// ALT and META function as they would natively
+					if (event.metaKey || event.altKey) {
+						return;
+					}
+
+					var handler = grid[isHeader ? 'headerKeyMap' : 'keyMap'][event.keyCode];
+
+					// Text boxes and other inputs that can use direction keys should be ignored
+					// and not affect cell/row navigation
+					if (handler && !handledEvent(event)) {
+						handler.call(grid, event);
+					}
+				}));
+			}
+
+			if (this.tabableHeader) {
+				enableNavigation(this.headerNode);
+				on(this.headerNode, 'dgrid-cellfocusin', function () {
+					grid.scrollTo({ x: this.scrollLeft });
+				});
+			}
+			enableNavigation(this.contentNode);
+
+			this._debouncedEnsureScroll = miscUtil.debounce(this._ensureScroll, this);
+		},
+
+		removeRow: function (rowElement) {
+			if (!this._focusedNode) {
+				// Nothing special to do if we have no record of anything focused
+				return this.inherited(arguments);
+			}
+
+			var self = this,
+				isActive = document.activeElement === this._focusedNode,
+
+					focusedTarget = this[this.cellNavigation ? 'cell' : 'row'](this._focusedNode);
+
+            if(!focusedTarget){
+                console.error('no focus target');
+                return this.inherited(arguments);
+            }
+
+
+				var focusedRow = focusedTarget.row || focusedTarget,
+				sibling;
+			rowElement = rowElement.element || rowElement;
+
+			// If removed row previously had focus, temporarily store information
+			// to be handled in an immediately-following insertRow call, or next turn
+			if (rowElement === focusedRow.element) {
+				sibling = this.down(focusedRow, true);
+
+				// Check whether down call returned the same row, or failed to return
+				// any (e.g. during a partial unrendering)
+				if (!sibling || sibling.element === rowElement) {
+					sibling = this.up(focusedRow, true);
+				}
+
+				this._removedFocus = {
+					active: isActive,
+					rowId: focusedRow.id,
+					columnId: focusedTarget.column && focusedTarget.column.id,
+					siblingId: !sibling || sibling.element === rowElement ? undefined : sibling.id
+				};
+
+				// Call _restoreFocus on next turn, to restore focus to sibling
+				// if no replacement row was immediately inserted.
+				// Pass original row's id in case it was re-inserted in a renderArray
+				// call (and thus was found, but couldn't be focused immediately)
+				setTimeout(function () {
+					if (self._removedFocus) {
+						self._restoreFocus(focusedRow.id);
+					}
+				}, 0);
+
+				// Clear _focusedNode until _restoreFocus is called, to avoid
+				// needlessly re-running this logic
+				this._focusedNode = null;
+			}
+
+			this.inherited(arguments);
+		},
+
+		insertRow: function () {
+			var rowElement = this.inherited(arguments);
+			if (this._removedFocus && !this._removedFocus.wait) {
+				this._restoreFocus(rowElement);
+			}
+			return rowElement;
+		},
+
+		_restoreFocus: function (row) {
+			// summary:
+			//		Restores focus to the newly inserted row if it matches the
+			//		previously removed row, or to the nearest sibling otherwise.
+
+			var focusInfo = this._removedFocus,
+				newTarget,
+				cell;
+
+			row = row && this.row(row);
+			newTarget = row && row.element && row.id === focusInfo.rowId ? row :
+				typeof focusInfo.siblingId !== 'undefined' && this.row(focusInfo.siblingId);
+
+			if (newTarget && newTarget.element) {
+				if (!newTarget.element.parentNode.parentNode) {
+					// This was called from renderArray, so the row hasn't
+					// actually been placed in the DOM yet; handle it on the next
+					// turn (called from removeRow).
+					focusInfo.wait = true;
+					return;
+				}
+				// Should focus be on a cell?
+				if (typeof focusInfo.columnId !== 'undefined') {
+					cell = this.cell(newTarget, focusInfo.columnId);
+					if (cell && cell.element) {
+						newTarget = cell;
+					}
+				}
+				if (focusInfo.active && newTarget.element.offsetHeight !== 0) {
+					// Row/cell was previously focused and is visible, so focus the new one immediately
+					this._focusOnNode(newTarget, false, null);
+				}
+				else {
+					// Row/cell was not focused or is not visible, but we still need to
+					// update _focusedNode and the element's tabIndex/class
+					domClass.add(newTarget.element, 'dgrid-focus');
+					newTarget.element.tabIndex = this.tabIndex;
+					this._focusedNode = newTarget.element;
+				}
+			}
+
+			delete this._removedFocus;
+		},
+
+		addKeyHandler: function (key, callback, isHeader) {
+			// summary:
+			//		Adds a handler to the keyMap on the instance.
+			//		Supports binding additional handlers to already-mapped keys.
+			// key: Number
+			//		Key code representing the key to be handled.
+			// callback: Function
+			//		Callback to be executed (in instance context) when the key is pressed.
+			// isHeader: Boolean
+			//		Whether the handler is to be added for the grid body (false, default)
+			//		or the header (true).
+
+			// Aspects may be about 10% slower than using an array-based appraoch,
+			// but there is significantly less code involved (here and above).
+			return aspect.after( // Handle
+				this[isHeader ? 'headerKeyMap' : 'keyMap'], key, callback, true);
+		},
+
+		_ensureRowScroll: function (rowElement) {
+			// summary:
+			//		Ensures that the entire row is visible within the viewport.
+			//		Called for cell navigation in complex structures.
+
+			var scrollY = this.getScrollPosition().y;
+			if (scrollY > rowElement.offsetTop) {
+				// Row starts above the viewport
+				this.scrollTo({ y: rowElement.offsetTop });
+			}
+			else if (scrollY + this.contentNode.offsetHeight < rowElement.offsetTop + rowElement.offsetHeight) {
+				// Row ends below the viewport
+				this.scrollTo({ y: rowElement.offsetTop - this.contentNode.offsetHeight + rowElement.offsetHeight });
+			}
+		},
+
+		_ensureColumnScroll: function (cellElement) {
+			// summary:
+			//		Ensures that the entire cell is visible in the viewport.
+			//		Called in cases where the grid can scroll horizontally.
+
+			var scrollX = this.getScrollPosition().x;
+			var cellLeft = cellElement.offsetLeft;
+			if (scrollX > cellLeft) {
+				this.scrollTo({ x: cellLeft });
+			}
+			else {
+				var bodyWidth = this.bodyNode.clientWidth;
+				var cellWidth = cellElement.offsetWidth;
+				var cellRight = cellLeft + cellWidth;
+				if (scrollX + bodyWidth < cellRight) {
+					// Adjust so that the right side of the cell and grid body align,
+					// unless the cell is actually wider than the body - then align the left sides
+					this.scrollTo({ x: bodyWidth > cellWidth ? cellRight - bodyWidth : cellLeft });
+				}
+			}
+		},
+
+		_ensureScroll: function (cell, isHeader) {
+			// summary:
+			//		Corrects scroll based on the position of the newly-focused row/cell
+			//		as necessary based on grid configuration and dimensions.
+
+			if(this.cellNavigation && (this.columnSets || this.subRows.length > 1) && !isHeader){
+				this._ensureRowScroll(cell.row.element);
+			}
+			if(this.bodyNode.clientWidth < this.contentNode.offsetWidth){
+				this._ensureColumnScroll(cell.element);
+			}
+		},
+
+		_focusOnNode: function (element,isHeader,event,emit) {
+			var focusedNodeProperty = '_focused' + (isHeader ? 'Header' : '') + 'Node',
+				focusedNode = this[focusedNodeProperty],
+				cellOrRowType = this.cellNavigation ? 'cell' : 'row',
+				cell = this[cellOrRowType](element),
+				inputs,
+				input,
+				numInputs,
+				inputFocused,
+				i;
+
+			element = cell && cell.element;
+
+			if (!element /*|| element==this._focusedNode*/) {
+				//console.error('same el');
+				return;
+			}
+
+			if (this.cellNavigation) {
+				inputs = element.getElementsByTagName('input');
+				for (i = 0, numInputs = inputs.length; i < numInputs; i++) {
+					input = inputs[i];
+					if ((input.tabIndex !== -1 || '_dgridLastValue' in input) && !input.disabled) {
+						input.focus();
+						inputFocused = true;
+						break;
+					}
+				}
+			}
+
+			// Set up event information for dgrid-cellfocusout/in events.
+			// Note that these events are not fired for _restoreFocus.
+			if (event !== null) {
+				event = lang.mixin({ grid: this }, event);
+				if (event.type) {
+					event.parentType = event.type;
+				}
+				if (!event.bubbles) {
+					// IE doesn't always have a bubbles property already true.
+					// Opera throws if you try to set it to true if it is already true.
+					event.bubbles = true;
+				}
+			}
+
+			if (focusedNode) {
+				// Clean up previously-focused element
+				// Remove the class name and the tabIndex attribute
+				domClass.remove(focusedNode, 'dgrid-focus');
+				focusedNode.removeAttribute('tabindex');
+
+				// Expose object representing focused cell or row losing focus, via
+				// event.cell or event.row; which is set depends on cellNavigation.
+				if (event) {
+					event[cellOrRowType] = this[cellOrRowType](focusedNode);
+					on.emit(focusedNode, 'dgrid-cellfocusout', event);
+				}
+			}
+			focusedNode = this[focusedNodeProperty] = element;
+
+			if (event) {
+				// Expose object representing focused cell or row gaining focus, via
+				// event.cell or event.row; which is set depends on cellNavigation.
+				// Note that yes, the same event object is being reused; on.emit
+				// performs a shallow copy of properties into a new event object.
+				event[cellOrRowType] = cell;
+			}
+
+			var isFocusableClass = this.cellNavigation ? hasGridCellClass : hasGridRowClass;
+			if (!inputFocused && isFocusableClass.test(element.className)) {
+
+				element.tabIndex = this.tabIndex;
+				element.focus();
+			}
+			domClass.add(element, 'dgrid-focus');
+
+
+			if (event && emit!==false) {
+				on.emit(focusedNode, 'dgrid-cellfocusin', event);
+			}
+
+			this._debouncedEnsureScroll(cell, isHeader);
+		},
+
+		focusHeader: function (element) {
+			this._focusOnNode(element || this._focusedHeaderNode, true);
+		},
+
+		focus: function (element,emit) {
+			_debug && console.log('focuse : ' + (element ? element.id : ''));
+			var node = element || this._focusedNode;
+			if (node) {
+				if (element==this._focusedNode) {
+					//console.error('same el');
+					//return;
+				}
+				this._focusOnNode(node, false,null,emit);
+			}
+			else {
+				this.contentNode.focus();
+			}
+		}
+	};
+
+	// Common functions used in default keyMap (called in instance context)
+
+	var moveFocusVertical = Implementation.moveFocusVertical = function (event, steps) {
+		if(this.isThumbGrid){
+			var next = _upDownSelect(event,this,steps);
+			if(next && next.length){
+				this._focusOnNode(next[0], false, event);
+				event.preventDefault();
+				return;
+			}
+		}
+		var cellNavigation = this.cellNavigation,
+			target = this[cellNavigation ? 'cell' : 'row'](event),
+			columnId = cellNavigation && target.column.id,
+			next = this.down(this._focusedNode, steps, true);
+
+		// Navigate within same column if cell navigation is enabled
+		if (cellNavigation) {
+			next = this.cell(next, columnId);
+		}
+		this._focusOnNode(next, false, event);
+
+		event.preventDefault();
+	};
+
+	var moveFocusUp = Implementation.moveFocusUp = function (event) {
+		moveFocusVertical.call(this, event, -1);
+	};
+
+	var moveFocusDown = Implementation.moveFocusDown = function (event) {
+		moveFocusVertical.call(this, event, 1);
+	};
+
+	var moveFocusPageUp = Implementation.moveFocusPageUp = function (event) {
+		moveFocusVertical.call(this, event, -this.pageSkip);
+	};
+
+	var moveFocusPageDown = Implementation.moveFocusPageDown = function (event) {
+		moveFocusVertical.call(this, event, this.pageSkip);
+	};
+
+	var moveFocusHorizontal = Implementation.moveFocusHorizontal = function (event, steps) {
+
+		if (!this.cellNavigation && this.isThumbGrid!==true) {
+			return;
+		}
+
+		var isHeader = !this.row(event), // header reports row as undefined
+			currentNode = this['_focused' + (isHeader ? 'Header' : '') + 'Node'];
+
+		//var _row = this.row(event);
+		if(this.isThumbGrid==true){
+
+			var cellNavigation = this.cellNavigation,
+				next = this.down(this._focusedNode, steps, true);
+
+			// Navigate within same column if cell navigation is enabled
+			this._focusOnNode(next, false, event);
+			event.preventDefault();
+			return ;
+		}
+
+		this._focusOnNode(this.right(currentNode, steps), isHeader, event);
+		event.preventDefault();
+	};
+
+	var moveFocusLeft = Implementation.moveFocusLeft = function (event) {
+		moveFocusHorizontal.call(this, event, -1);
+	};
+
+	var moveFocusRight = Implementation.moveFocusRight = function (event) {
+		moveFocusHorizontal.call(this, event, 1);
+	};
+
+	var moveHeaderFocusEnd = Implementation.moveHeaderFocusEnd = function (event, scrollToBeginning) {
+		// Header case is always simple, since all rows/cells are present
+		var nodes;
+		if (this.cellNavigation) {
+			nodes = this.headerNode.getElementsByTagName('th');
+			this._focusOnNode(nodes[scrollToBeginning ? 0 : nodes.length - 1], true, event);
+		}
+		// In row-navigation mode, there's nothing to do - only one row in header
+
+		// Prevent browser from scrolling entire page
+		event.preventDefault();
+	};
+
+	var moveHeaderFocusHome = Implementation.moveHeaderFocusHome = function (event) {
+		moveHeaderFocusEnd.call(this, event, true);
+	};
+
+	var moveFocusEnd = Implementation.moveFocusEnd = function (event, scrollToTop) {
+		// summary:
+		//		Handles requests to scroll to the beginning or end of the grid.
+
+		// Assume scrolling to top unless event is specifically for End key
+		var cellNavigation = this.cellNavigation,
+			contentNode = this.contentNode,
+			contentPos = scrollToTop ? 0 : contentNode.scrollHeight,
+			scrollPos = contentNode.scrollTop + contentPos,
+			endChild = contentNode[scrollToTop ? 'firstChild' : 'lastChild'];
+
+		if(endChild.className.indexOf('dgrid-extra') > -1){
+			endChild = endChild['previousSibling'];
+		}
+
+		var	hasPreload = endChild.className.indexOf('dgrid-preload') > -1,
+			endTarget = hasPreload ? endChild[(scrollToTop ? 'next' : 'previous') + 'Sibling'] : endChild,
+			endPos = endTarget.offsetTop + (scrollToTop ? 0 : endTarget.offsetHeight),
+			handle;
+
+		if (hasPreload) {
+			// Find the nearest dgrid-row to the relevant end of the grid
+			while (endTarget && endTarget.className.indexOf('dgrid-row') < 0) {
+				endTarget = endTarget[(scrollToTop ? 'next' : 'previous') + 'Sibling'];
+			}
+			// If none is found, there are no rows, and nothing to navigate
+			if (!endTarget) {
+				return;
+			}
+		}
+
+		// Grid content may be lazy-loaded, so check if content needs to be
+		// loaded first
+		if (!hasPreload || endChild.offsetHeight < 1) {
+			// End row is loaded; focus the first/last row/cell now
+			if (cellNavigation) {
+				// Preserve column that was currently focused
+				endTarget = this.cell(endTarget, this.cell(event).column.id);
+			}
+			this._focusOnNode(endTarget, false, event);
+		}
+		else {
+			// In IE < 9, the event member references will become invalid by the time
+			// _focusOnNode is called, so make a (shallow) copy up-front
+			if (!has('dom-addeventlistener')) {
+				event = lang.mixin({}, event);
+			}
+
+			// If the topmost/bottommost row rendered doesn't reach the top/bottom of
+			// the contentNode, we are using OnDemandList and need to wait for more
+			// data to render, then focus the first/last row in the new content.
+			handle = aspect.after(this, 'renderArray', function (rows) {
+				var target = rows[scrollToTop ? 0 : rows.length - 1];
+				if (cellNavigation) {
+					// Preserve column that was currently focused
+					target = this.cell(target, this.cell(event).column.id);
+				}
+				this._focusOnNode(target, false, event);
+				handle.remove();
+				return rows;
+			});
+		}
+
+		if (scrollPos === endPos) {
+			// Grid body is already scrolled to end; prevent browser from scrolling
+			// entire page instead
+			event.preventDefault();
+		}
+	};
+
+	var moveFocusHome = Implementation.moveFocusHome = function (event) {
+		moveFocusEnd.call(this, event, true);
+	};
+
+	function preventDefault(event) {
+		event.preventDefault();
+	}
+
+	Implementation.defaultKeyMap = {
+		32: preventDefault, // space
+		33: moveFocusPageUp, // page up
+		34: moveFocusPageDown, // page down
+		35: moveFocusEnd, // end
+		36: moveFocusHome, // home
+		37: moveFocusLeft, // left
+		38: moveFocusUp, // up
+		39: moveFocusRight, // right
+		40: moveFocusDown // down
+	};
+
+	// Header needs fewer default bindings (no vertical), so bind it separately
+	Implementation.defaultHeaderKeyMap = {
+		32: preventDefault, // space
+		35: moveHeaderFocusEnd, // end
+		36: moveHeaderFocusHome, // home
+		37: moveFocusLeft, // left
+		39: moveFocusRight // right
+	};
+
+	var Module = declare(null,Implementation);
+	Module.dcl = dcl(null,Implementation);
+	return Module;
+});
+
+define('xgrid/ColumnHider',[
+	'xdojo/declare',
+    'dojo/has',
+    'dgrid/util/misc',
+    'xide/types',
+    'xide/utils'
+], function (declare, has, misc,types,utils) {
+
+    /*
+     *	Column Hider plugin for dgrid
+     *	Originally contributed by TRT 2011-09-28
+     *
+     *	A dGrid plugin that attaches a menu to a dgrid, along with a way of opening it,
+     *	that will allow you to show and hide columns.  A few caveats:
+     *
+     *	1. Menu placement is entirely based on CSS definitions.
+     *	2. If you want columns initially hidden, you must add "hidden: true" to your
+     *		column definition.
+     *	3. This implementation does NOT support ColumnSet, and has not been tested
+     *		with multi-subrow records.
+     *	4. Column show/hide is controlled via straight up HTML checkboxes.  If you
+     *		are looking for something more fancy, you'll probably need to use this
+     *		definition as a template to write your own plugin.
+     *
+     */
+	return declare('xgrid.ColumnHider',null, {
+        columnHiderActionRootCommand:'View/Columns',
+		// i18nColumnHider: Object
+		//		This object contains all of the internationalized strings for
+		//		the ColumnHider extension as key/value pairs.
+		i18nColumnHider: {},
+
+		// _columnHiderRules: Object
+		//		Hash containing handles returned from addCssRule.
+		_columnHiderRules: null,
+        _runAction:function(action,update,value){
+            if(action && action.command.indexOf(this.columnHiderActionRootCommand)!=-1 ){
+                var col = action.column;
+                var isHidden = this.isColumnHidden(col.id);
+                this.showColumn(col.id,isHidden);
+                update!==false && action.set('value', !this.isColumnHidden(col.id));
+            }
+            return this.inherited(arguments);
+        },
+        /**
+         *
+         * @param permissions
+         * @param actions
+         * @returns {Array}
+         */
+		getColumnHiderActions:function(permissions,actions){
+            var root = this.columnHiderActionRootCommand,
+                thiz = this,
+                columnActions = [],
+                VISIBILITY = types.ACTION_VISIBILITY,
+                node = this.domNode;
+
+            actions = actions || [];
+            var rootAction = _.find(actions,{
+                command:root
+            });
+            if(!rootAction) {
+                columnActions.push(this.createAction({
+                    label:'Columns',
+                    command:root,
+                    icon:'fa-columns',
+                    tab:'View',
+                    group:'Columns',
+                    toggleGroup:thiz.id + 'Columns',
+                    onCreate:function(action){
+                        action.setVisibility(VISIBILITY.RIBBON,{
+                            expand:true
+                        }).setVisibility(VISIBILITY.ACTION_TOOLBAR, false);
+                    }
+                }));
+            }
+            /**
+             *
+             * @param col
+             * @private
+             */
+            function _createEntry(col) {
+
+                var id = col.id,
+                    label = 'Show ' + ( col.label || col.field || ''),
+                    icon = col.icon || 'fa-cogs';
+
+                // Allow cols to opt out of the hider (e.g. for selector column).
+                if (col.unhidable) {
+                    return;
+                }
+                var _action = thiz.createAction(label, root + '/' + label , icon, null, 'View', 'Columns', 'item|view',
+
+                    //oncreate
+                    function(action){
+
+                        var widgetImplementation = {
+                            postMixInProperties: function() {
+                                this.inherited(arguments);
+                                this.checked = this.item.get('value') === true;
+                            },
+                            startup:function(){
+                                this.inherited(arguments);
+                                this.on('change',function(val){
+                                    thiz.showColumn(id,val);
+                                });
+                            }
+                        };
+                        var widgetArgs  ={
+                            checked:!col.hidden,
+                            iconClass:icon,
+                            style:'float:inherit;'
+                        };
+
+
+                        var _visibilityMixin = {
+                            //widgetClass:declare.classFactory('_Checked', [CheckedMenuItem,_ActionValueWidgetMixin], null, widgetImplementation ,null),
+                            widgetArgs:widgetArgs,
+                            actionType : 'multiToggle'
+                        };
+
+                        action.actionType = 'multiToggle';
+
+
+                        action.setVisibility(types.ACTION_VISIBILITY_ALL,utils.cloneKeys(_visibilityMixin,false));
+
+                        label = action.label.replace('Show ','');
+
+
+                        //for ribbons we collapse into 'Checkboxes'
+                        /*
+                        action.setVisibility(VISIBILITY.RIBBON,{
+                            widgetClass:declare.classFactory('_CheckedGroup', [ActionValueWidget], null,{
+                                iconClass:"",
+                                postMixInProperties: function() {
+                                    this.inherited(arguments);
+                                    this.checked = this.item.get('value') == true;
+                                },
+                                startup:function(){
+                                    this.inherited(arguments);
+                                    this.widget.on('change', function (val) {
+                                        thiz.showColumn(id,val);
+                                    }.bind(this));
+                                }
+                            } ,null),
+                            widgetArgs:{
+                                renderer:CheckBox,
+                                checked:!col.hidden,
+                                label:action.label.replace('Show ','')
+                            }
+                        });
+                        */
+
+                    }, /*handler*/ null ,
+                    {
+                        column:col,
+                        filterGroup:"item|view",
+                        tab:'View',
+                        value:!col.hidden,
+                        addPermission:true
+                    },
+                    null, null, permissions, node,thiz,thiz);
+
+                if(_action){
+                    columnActions.push(_action);
+                }
+
+                /**
+
+                columnActions.push(_ActionMixin.createActionParameters(label, root + '/' + label, 'Columns', icon, function () {
+                    console.log('handler');
+
+                }, '', null, null, thiz, thiz, {
+                    column:col,
+                    filterGroup:"item|view",
+                    tab:'View',
+                    value:!col.hidden,
+                    onCreate:function(action){
+
+                        var _action = this;
+
+                        action.owner = thiz;
+
+                        var widgetImplementation = {
+                            postMixInProperties: function() {
+                                this.inherited(arguments);
+                                this.checked = this.item.get('value') == true;
+                            },
+                            startup:function(){
+                                this.inherited(arguments);
+                                this.on('change',function(val){
+                                    thiz.showColumn(id,val);
+                                })
+                            },
+                            destroy:function(){
+
+                                this.inherited(arguments);
+                            }
+                        };
+                        var widgetArgs  ={
+                            checked:!col.hidden,
+                            iconClass:icon,
+                            style:'float:inherit;'
+                        };
+
+                        var _visibilityMixin = {
+                            widgetClass:declare.classFactory('_Checked', [CheckedMenuItem,_ActionValueWidgetMixin], null, widgetImplementation ,null),
+                            widgetArgs:widgetArgs
+                        };
+
+                        action.setVisibility(types.ACTION_VISIBILITY_ALL,_visibilityMixin);
+
+                        label = action.label.replace('Show ','');
+
+
+                        //for ribbons we collapse into 'Checkboxes'
+                        action.setVisibility(VISIBILITY.RIBBON,{
+                            widgetClass:declare.classFactory('_CheckedGroup', [ActionValueWidget], null,{
+                                iconClass:"",
+                                postMixInProperties: function() {
+                                    this.inherited(arguments);
+                                    this.checked = this.item.get('value') == true;
+                                },
+                                startup:function(){
+                                    this.inherited(arguments);
+                                    this.widget.on('change', function (val) {
+                                        thiz.showColumn(id,val);
+                                    }.bind(this));
+                                }
+                            } ,null),
+                            widgetArgs:{
+                                renderer:CheckBox,
+                                checked:!col.hidden,
+                                label:action.label.replace('Show ','')
+                            }
+                        });
+
+                    }
+                }));
+
+                */
+
+            }
+            var subRows = this.subRows,
+                first = true,
+                srLength, cLength, sr, c;
+            for (sr = 0, srLength = subRows.length; sr < srLength; sr++) {
+                for (c = 0, cLength = subRows[sr].length; c < cLength; c++) {
+                    _createEntry(subRows[sr][c]);
+                    if (first) {
+                        first = false;
+                    }
+                }
+            }
+            return columnActions;
+
+        },
+        resize:function(){
+            this.inherited(arguments);
+            this._checkHiddenColumns();
+        },
+        _checkHiddenColumns:function(){
+            var subRows = this.subRows,
+                srLength, cLength, sr, c,
+                totalWidth = $(this.domNode).width();
+
+            for (sr = 0, srLength = subRows.length; sr < srLength; sr++) {
+                for (c = 0, cLength = subRows[sr].length; c < cLength; c++) {
+                    var col = subRows[sr][c];
+                    if(col.minWidth){
+                        if(totalWidth < col.minWidth){
+                            if(!col.unhidable) {
+                                this.showColumn(col.id,false);
+                            }
+                        }else{
+                            this.showColumn(col.id,true);
+                        }
+                    }
+                }
+            }
+        },
+        startup:function(){
+            if(this._started){
+                return;
+            }
+
+            this._columnHiderCheckboxes = {};
+            this._columnHiderRules = {};
+            var res = this.inherited(arguments);
+            this._checkHiddenColumns();
+            var subRows = this.subRows,
+                srLength, cLength, sr, c,
+                thiz = this;
+
+            for (sr = 0, srLength = subRows.length; sr < srLength; sr++) {
+                for (c = 0, cLength = subRows[sr].length; c < cLength; c++) {
+
+                    var col = subRows[sr][c],
+                        id = col.id;
+
+                    if (col.hidden===true) {
+                        // Hide the column (reset first to avoid short-circuiting logic)
+                        col.hidden = false;
+                        thiz._hideColumn(id);
+                        col.hidden = true;
+                    }
+                }
+            }
+            if(this.getActionStore){
+                this.getActionStore().on('update',function(evt){
+                    var action = evt.target;
+                    if(action.command.indexOf('View/Columns')!==-1){
+                        var col = action.column;
+                        thiz.showColumn(col.id,action.get('value'));
+                        thiz.onAfterAction(action);
+
+                    }
+                });
+            }
+            return res;
+
+        },
+		left: function (cell, steps) {
+			return this.right(cell, -steps);
+		},
+		right: function (cell, steps) {
+			if (!cell.element) {
+				cell = this.cell(cell);
+			}
+			var nextCell = this.inherited(arguments),
+				prevCell = cell;
+
+			// Skip over hidden cells
+			while (nextCell.column.hidden) {
+				nextCell = this.inherited(arguments, [nextCell, steps > 0 ? 1 : -1]);
+				if (prevCell.element === nextCell.element) {
+					// No further visible cell found - return original
+					return cell;
+				}
+				prevCell = nextCell;
+			}
+			return nextCell;
+		},
+		isColumnHidden: function (id) {
+			// summary:
+			//		Convenience method to determine current hidden state of a column
+			return !!this._columnHiderRules[id];
+		},
+		_hideColumn: function (id) {
+			// summary:
+			//		Hides the column indicated by the given id.
+
+			// Use misc function directly, since we clean these up ourselves anyway
+			var grid = this,
+                domId = this.template ? this.template.id : this.domNode.id,
+                selectorPrefix = '#' + misc.escapeCssIdentifier(domId) + ' .dgrid-column-',
+				tableRule; // used in IE8 code path
+
+			if (this._columnHiderRules[id]) {
+				return;
+			}
+
+			this._columnHiderRules[id] = misc.addCssRule(selectorPrefix + misc.escapeCssIdentifier(id, '-'), 'display: none;');
+            
+			if (has('ie') === 8 || has('ie') === 10) {
+				// Work around IE8 display issue and IE10 issue where
+				// header/body cells get out of sync when ColumnResizer is also used
+				tableRule = misc.addCssRule('.dgrid-row-table', 'display: inline-table;');
+				window.setTimeout(function () {
+					tableRule.remove();
+					grid.resize();
+				}, 0);
+			}
+		},
+		_showColumn: function (id) {
+			// summary:
+			//		Shows the column indicated by the given id
+			//		(by removing the rule responsible for hiding it).
+
+			if (this._columnHiderRules[id]) {
+				this._columnHiderRules[id].remove();
+				delete this._columnHiderRules[id];
+			}
+		},
+        showColumn:function(id,show){
+            if(this.isColumnHidden(id)){
+                if(show) {
+                    this._showColumn(id);
+                }
+            }else if(!show){
+                this._hideColumn(id);
+            }
+        }
+	});
+});
+
+define('dgrid/_StoreMixin',[
+	'dojo/_base/declare',
+	'dojo/_base/lang',
+	'dojo/Deferred',
+	'dojo/aspect',
+	'dojo/dom-construct',
+	'dojo/has',
+	'dojo/on',
+	'dojo/when'
+], function (declare, lang, Deferred, aspect, domConstruct, has, on, when) {
+	// This module isolates the base logic required by store-aware list/grid
+	// components, e.g. OnDemandList/Grid and the Pagination extension.
+
+	function emitError(err) {
+		// called by _trackError in context of list/grid, if an error is encountered
+		if (typeof err !== 'object') {
+			// Ensure we actually have an error object, so we can attach a reference.
+			err = new Error(err);
+		}
+		else if (err.dojoType === 'cancel') {
+			// Don't fire dgrid-error events for errors due to canceled requests
+			// (unfortunately, the Deferred instrumentation will still log them)
+			return;
+		}
+
+		var event = on.emit(this.domNode, 'dgrid-error', {
+			grid: this,
+			error: err,
+			cancelable: true,
+			bubbles: true
+		});
+		if (event) {
+			console.error(err);
+		}
+	}
+
+	return declare(null, {
+		// collection: Object
+		//		The base object collection (implementing the dstore/api/Store API) before being sorted
+		//		or otherwise processed by the grid. Use it for general purpose store operations such as
+		//		`getIdentity` and `get`, `add`, `put`, and `remove`.
+		collection: null,
+
+		// _renderedCollection: Object
+		//		The object collection from which data is to be fetched. This is the sorted collection.
+		//		Use it when retrieving data to be rendered by the grid.
+		_renderedCollection: null,
+
+		// _rows: Array
+		//		Sparse array of row nodes, used to maintain the grid in response to events from a tracked collection.
+		//		Each node's index corresponds to the index of its data object in the collection.
+		_rows: null,
+
+		// _observerHandle: Object
+		//		The observer handle for the current collection, if trackable.
+		_observerHandle: null,
+
+		// shouldTrackCollection: Boolean
+		//		Whether this instance should track any trackable collection it is passed.
+		shouldTrackCollection: false,
+
+		// getBeforePut: boolean
+		//		If true, a get request will be performed to the store before each put
+		//		as a baseline when saving; otherwise, existing row data will be used.
+		getBeforePut: true,
+
+		// noDataMessage: String
+		//		Message to be displayed when no results exist for a collection, whether at
+		//		the time of the initial query or upon subsequent observed changes.
+		//		Defined by _StoreMixin, but to be implemented by subclasses.
+		noDataMessage: '',
+
+		// loadingMessage: String
+		//		Message displayed when data is loading.
+		//		Defined by _StoreMixin, but to be implemented by subclasses.
+		loadingMessage: '',
+
+		_total: 0,
+
+		constructor: function () {
+			// Create empty objects on each instance, not the prototype
+			this.dirty = {};
+			this._updating = {}; // Tracks rows that are mid-update
+			this._columnsWithSet = {};
+
+			// Reset _columnsWithSet whenever column configuration is reset
+			aspect.before(this, 'configStructure', lang.hitch(this, function () {
+				this._columnsWithSet = {};
+			}));
+		},
+
+		destroy: function () {
+			this.inherited(arguments);
+
+			if (this._renderedCollection) {
+				this._cleanupCollection();
+			}
+		},
+
+		_configColumn: function (column) {
+			// summary:
+			//		Implements extension point provided by Grid to store references to
+			//		any columns with `set` methods, for use during `save`.
+			if (column.set) {
+				this._columnsWithSet[column.field] = column;
+			}
+			this.inherited(arguments);
+		},
+
+		_setCollection: function (collection) {
+			// summary:
+			//		Assigns a new collection to the list/grid, sets up tracking
+			//		if applicable, and tells the list/grid to refresh.
+
+			if (this._renderedCollection) {
+				this.cleanup();
+				this._cleanupCollection({
+					// Only clear the dirty hash if the collection being used is actually from a different store
+					// (i.e. not just a re-sorted / re-filtered version of the same store)
+					shouldRevert: !collection || collection.storage !== this._renderedCollection.storage
+				});
+			}
+
+			this.collection = collection;
+
+			// Avoid unnecessary rendering and processing before the grid has started up
+			if (this._started) {
+				// Once startup is called, List.startup sets the sort property which calls _StoreMixin._applySort
+				// which sets the collection property again.  So _StoreMixin._applySort will be executed again
+				// after startup is called.
+				if (collection) {
+					var renderedCollection = collection;
+					if (this.sort && this.sort.length > 0) {
+						renderedCollection = collection.sort(this.sort);
+					}
+
+					if (renderedCollection.track && this.shouldTrackCollection) {
+						renderedCollection = renderedCollection.track();
+						this._rows = [];
+
+						this._observerHandle = this._observeCollection(
+							renderedCollection,
+							this.contentNode,
+							{ rows: this._rows }
+						);
+					}
+
+					this._renderedCollection = renderedCollection;
+				}
+				this.refresh();
+			}
+		},
+
+		_setStore: function () {
+			if (!this.collection) {
+				console.debug('set(\'store\') call detected, but you probably meant set(\'collection\')');
+			}
+		},
+
+		_getTotal: function () {
+			// summary:
+			//		Retrieves the currently-tracked total (as updated by
+			//		subclasses after store queries, or by _StoreMixin in response to
+			//		updated totalLength in events)
+
+			return this._total;
+		},
+
+		_cleanupCollection: function (options) {
+			// summary:
+			//		Handles cleanup duty for the previous collection;
+			//		called during _setCollection and destroy.
+			// options: Object?
+			//		* shouldRevert: Whether to clear the dirty hash
+
+			options = options || {};
+
+			if (this._renderedCollection.tracking) {
+				this._renderedCollection.tracking.remove();
+			}
+
+			// Remove observer and existing rows so any sub-row observers will be cleaned up
+			if (this._observerHandle) {
+				this._observerHandle.remove();
+				this._observerHandle = this._rows = null;
+			}
+
+			// Discard dirty map, as it applied to a previous collection
+			if (options.shouldRevert !== false) {
+				this.dirty = {};
+			}
+
+			this._renderedCollection = this.collection = null;
+		},
+
+		_applySort: function () {
+			if (this.collection) {
+				this.set('collection', this.collection);
+			}
+		},
+
+		row: function () {
+			// Extend List#row with more appropriate lookup-by-id logic
+			var row = this.inherited(arguments);
+			if (row && row.data && typeof row.id !== 'undefined') {
+
+				if(this.collection) {
+					row.id = this.collection.getIdentity(row.data);
+				}else{
+					console.error('_StoreMixin:have no collection!');
+				}
+
+			}
+			return row;
+		},
+
+		refresh: function () {
+			var result = this.inherited(arguments);
+
+			if (!this.collection) {
+				
+				this.noDataNode = domConstruct.create('div', {
+					className: 'dgrid-no-data',
+					innerHTML: this.noDataMessage
+				}, this.contentNode);
+				
+				this._emit('noData');
+			}
+			//{"values":[{"key":"Marantz-Power","value":"%%PowerState%%"}]}
+			return result;
+		},
+
+		refreshCell: function (cell) {
+			/*
+			 this.inherited(arguments);
+			 var row = cell.row;
+			 var self = this;
+			 */
+			if (!this.collection || !this._createBodyRowCell) {
+				//throw new Error('refreshCell requires a Grid with a collection.');
+				return false;
+			}
+
+			if(!cell.column){
+				return;
+			}
+			if (cell.column && cell.column.selector) {
+				return (new Deferred()).resolve();
+			}
+			this.inherited(arguments);
+			return this.collection.get(cell.row.id).then(lang.hitch(this, '_refreshCellFromItem', cell));
+
+/*
+			return this.collection.get(row.id).then(function (item) {
+
+				var cellElement = cell.element;
+
+				if(cellElement) {
+
+					if (cellElement.widget) {
+						cellElement.widget.destroyRecursive();
+					}
+					domConstruct.empty(cellElement);
+
+					var dirtyItem = self.dirty && self.dirty[row.id];
+					if (dirtyItem) {
+						item = lang.delegate(item, dirtyItem);
+					}
+
+					self._createBodyRowCell(cellElement, cell.column, item);
+				}
+			});
+			*/
+		},
+		_refreshCellFromItem: function (cell, item, options) {
+			if(!cell || !cell.element){
+				return;
+			}
+			var cellElement = cell.element;
+			if (cellElement.widget) {
+				cellElement.widget.destroyRecursive();
+			}
+			domConstruct.empty(cellElement);
+
+			var dirtyItem = this.dirty && this.dirty[cell.row.id];
+			if (dirtyItem) {
+				item = lang.delegate(item, dirtyItem);
+			}
+
+			this._createBodyRowCell(cellElement, cell.column, item, options);
+		},
+		renderArray: function () {
+			var rows = this.inherited(arguments);
+
+			if (!this.collection) {
+				if (rows.length && this.noDataNode) {
+					domConstruct.destroy(this.noDataNode);
+				}
+			}
+			return rows;
+		},
+
+		insertRow: function (object, parent, beforeNode, i, options) {
+			var store = this.collection,
+				dirty = this.dirty,
+				id = store && store.getIdentity(object),
+				dirtyObj,
+				row;
+
+			if (id in dirty && !(id in this._updating)) {
+				dirtyObj = dirty[id];
+			}
+			if (dirtyObj) {
+				// restore dirty object as delegate on top of original object,
+				// to provide protection for subsequent changes as well
+				object = lang.delegate(object, dirtyObj);
+			}
+
+			row = this.inherited(arguments);
+
+			if (options && options.rows) {
+				options.rows[i] = row;
+			}
+
+			// Remove no data message when a new row appears.
+			// Run after inherited logic to prevent confusion due to noDataNode
+			// no longer being present as a sibling.
+			if (this.noDataNode) {
+				domConstruct.destroy(this.noDataNode);
+				this.noDataNode = null;
+			}
+
+			return row;
+		},
+
+		updateDirty: function (id, field, value) {
+			// summary:
+			//		Updates dirty data of a field for the item with the specified ID.
+			var dirty = this.dirty,
+				dirtyObj = dirty[id];
+
+			if (!dirtyObj) {
+				dirtyObj = dirty[id] = {};
+			}
+			dirtyObj[field] = value;
+		},
+
+		save: function () {
+			// Keep track of the store and puts
+			var self = this,
+				store = this.collection,
+				dirty = this.dirty,
+				dfd = new Deferred(),
+				results = {},
+				getFunc = function (id) {
+					// returns a function to pass as a step in the promise chain,
+					// with the id variable closured
+					var data;
+					return (self.getBeforePut || !(data = self.row(id).data)) ?
+						function () {
+							return store.get(id);
+						} :
+						function () {
+							return data;
+						};
+				};
+
+			// function called within loop to generate a function for putting an item
+			function putter(id, dirtyObj) {
+				// Return a function handler
+				return function (object) {
+					var colsWithSet = self._columnsWithSet,
+						updating = self._updating,
+						key, data;
+
+					if (typeof object.set === 'function') {
+						object.set(dirtyObj);
+					} else {
+						// Copy dirty props to the original, applying setters if applicable
+						for (key in dirtyObj) {
+							object[key] = dirtyObj[key];
+						}
+					}
+
+					// Apply any set methods in column definitions.
+					// Note that while in the most common cases column.set is intended
+					// to return transformed data for the key in question, it is also
+					// possible to directly modify the object to be saved.
+					for (key in colsWithSet) {
+						data = colsWithSet[key].set(object);
+						if (data !== undefined) {
+							object[key] = data;
+						}
+					}
+
+					updating[id] = true;
+					// Put it in the store, returning the result/promise
+					return store.put(object).then(function (result) {
+						// Clear the item now that it's been confirmed updated
+						delete dirty[id];
+						delete updating[id];
+						results[id] = result;
+						return results;
+					});
+				};
+			}
+
+			var promise = dfd.then(function () {
+				// Ensure empty object is returned even if nothing was dirty, for consistency
+				return results;
+			});
+
+			// For every dirty item, grab the ID
+			for (var id in dirty) {
+				// Create put function to handle the saving of the the item
+				var put = putter(id, dirty[id]);
+
+				// Add this item onto the promise chain,
+				// getting the item from the store first if desired.
+				promise = promise.then(getFunc(id)).then(put);
+			}
+
+			// Kick off and return the promise representing all applicable get/put ops.
+			// If the success callback is fired, all operations succeeded; otherwise,
+			// save will stop at the first error it encounters.
+			dfd.resolve();
+			return promise;
+		},
+
+		revert: function () {
+			// summary:
+			//		Reverts any changes since the previous save.
+			this.dirty = {};
+			this.refresh();
+		},
+
+		_trackError: function (func) {
+			// summary:
+			//		Utility function to handle emitting of error events.
+			// func: Function|String
+			//		A function which performs some store operation, or a String identifying
+			//		a function to be invoked (sans arguments) hitched against the instance.
+			//		If sync, it can return a value, but may throw an error on failure.
+			//		If async, it should return a promise, which would fire the error
+			//		callback on failure.
+			// tags:
+			//		protected
+
+			if (typeof func === 'string') {
+				func = lang.hitch(this, func);
+			}
+
+			var self = this,
+				promise;
+
+			try {
+				promise = when(func());
+			} catch (err) {
+				// report sync error
+				var dfd = new Deferred();
+				dfd.reject(err);
+				promise = dfd.promise;
+			}
+
+			promise.otherwise(function (err) {
+				emitError.call(self, err);
+			});
+			return promise;
+		},
+
+		removeRow: function (rowElement, preserveDom, options) {
+			var row = {element: rowElement};
+			// Check to see if we are now empty...
+			if (!preserveDom && this.noDataMessage &&
+					(this.up(row).element === rowElement) &&
+					(this.down(row).element === rowElement)) {
+				// ...we are empty, so show the no data message.
+				this.noDataNode = domConstruct.create('div', {
+					className: 'dgrid-no-data',
+					innerHTML: this.noDataMessage
+				}, this.contentNode);
+				this._emit('noData');
+			}
+
+			var rows = (options && options.rows) || this._rows;
+			if (rows) {
+				delete rows[rowElement.rowIndex];
+			}
+
+			return this.inherited(arguments);
+		},
+
+		renderQueryResults: function (results, beforeNode, options) {
+			// summary:
+			//		Renders objects from QueryResults as rows, before the given node.
+
+			options = lang.mixin({ rows: this._rows }, options);
+			var self = this;
+
+			if (!has('dojo-built')) {
+				// Check for null/undefined totalResults to help diagnose faulty services/stores
+				results.totalLength.then(function (total) {
+					if (total == null) {
+						console.warn('Store reported null or undefined totalLength. ' +
+							'Make sure your store (and service, if applicable) are reporting total correctly!');
+					}
+				});
+			}
+
+			return results.then(function (resolvedResults) {
+				var resolvedRows = self.renderArray(resolvedResults, beforeNode, options);
+				delete self._lastCollection; // used only for non-store List/Grid
+				return resolvedRows;
+			});
+		},
+
+		_observeCollection: function (collection, container, options) {
+			var self = this,
+				rows = options.rows,
+				row;
+
+			var handles = [
+				collection.on('delete, update', function (event) {
+					var from = event.previousIndex;
+					var to = event.index;
+
+					if (from !== undefined && rows[from]) {
+						if ('max' in rows && (to === undefined || to < rows.min || to > rows.max)) {
+							rows.max--;
+						}
+
+						row = rows[from];
+
+						// check to make the sure the node is still there before we try to remove it
+						// (in case it was moved to a different place in the DOM)
+						if (row.parentNode === container) {
+							self.removeRow(row, false, options);
+						}
+
+						// remove the old slot
+						rows.splice(from, 1);
+
+						if (event.type === 'delete' ||
+								(event.type === 'update' && (from < to || to === undefined))) {
+							// adjust the rowIndex so adjustRowIndices has the right starting point
+							rows[from] && rows[from].rowIndex--;
+						}
+					}
+					if (event.type === 'delete') {
+						// Reset row in case this is later followed by an add;
+						// only update events should retain the row variable below
+						row = null;
+					}
+				}),
+
+				collection.on('add, update', function (event) {
+					var from = event.previousIndex;
+					var to = event.index;
+					var nextNode;
+
+					function advanceNext() {
+						nextNode = (nextNode.connected || nextNode).nextSibling;
+					}
+
+					// When possible, restrict observations to the actually rendered range
+					if (to !== undefined && (!('max' in rows) || (to >= rows.min && to <= rows.max))) {
+						if ('max' in rows && (from === undefined || from < rows.min || from > rows.max)) {
+							rows.max++;
+						}
+						// Add to new slot (either before an existing row, or at the end)
+						// First determine the DOM node that this should be placed before.
+						if (rows.length) {
+							nextNode = rows[to];
+							if (!nextNode) {
+								nextNode = rows[to - 1];
+								if (nextNode) {
+									// Make sure to skip connected nodes, so we don't accidentally
+									// insert a row in between a parent and its children.
+									advanceNext();
+								}
+							}
+						}
+						else {
+							// There are no rows.  Allow for subclasses to insert new rows somewhere other than
+							// at the end of the parent node.
+							nextNode = self._getFirstRowSibling && self._getFirstRowSibling(container);
+						}
+						// Make sure we don't trip over a stale reference to a
+						// node that was removed, or try to place a node before
+						// itself (due to overlapped queries)
+						if (row && nextNode && row.id === nextNode.id) {
+							advanceNext();
+						}
+						if (nextNode && !nextNode.parentNode) {
+							nextNode = document.getElementById(nextNode.id);
+						}
+						rows.splice(to, 0, undefined);
+						row = self.insertRow(event.target, container, nextNode, to, options);
+						self.highlightRow(row);
+					}
+					// Reset row so it doesn't get reused on the next event
+					row = null;
+				}),
+
+				collection.on('add, delete, update', function (event) {
+					var from = (typeof event.previousIndex !== 'undefined') ? event.previousIndex : Infinity,
+						to = (typeof event.index !== 'undefined') ? event.index : Infinity,
+						adjustAtIndex = Math.min(from, to);
+					from !== to && rows[adjustAtIndex] && self.adjustRowIndices(rows[adjustAtIndex]);
+
+					// the removal of rows could cause us to need to page in more items
+					if (from !== Infinity && self._processScroll && (rows[from] || rows[from - 1])) {
+						self._processScroll();
+					}
+
+					// Fire _onNotification, even for out-of-viewport notifications,
+					// since some things may still need to update (e.g. Pagination's status/navigation)
+					self._onNotification(rows, event, collection);
+
+					// Update _total after _onNotification so that it can potentially
+					// decide whether to perform actions based on whether the total changed
+					if (collection === self._renderedCollection && 'totalLength' in event) {
+						self._total = event.totalLength;
+					}
+				})
+			];
+
+			return {
+				remove: function () {
+					while (handles.length > 0) {
+						handles.pop().remove();
+					}
+				}
+			};
+		},
+
+		_onNotification: function () {
+			// summary:
+			//		Protected method called whenever a store notification is observed.
+			//		Intended to be extended as necessary by mixins/extensions.
+			// rows: Array
+			//		A sparse array of row nodes corresponding to data objects in the collection.
+			// event: Object
+			//		The notification event
+			// collection: Object
+			//		The collection that the notification is relevant to.
+			//		Useful for distinguishing child-level from top-level notifications.
+		}
+	});
+});
+
+define('dgrid/OnDemandList',[
+	'./List',
+	'./_StoreMixin',
+	'dojo/_base/declare',
+	'dojo/_base/lang',
+	'dojo/dom-construct',
+	'dojo/on',
+	'dojo/when',
+	'./util/misc'
+], function (List, _StoreMixin, declare, lang, domConstruct, on, when, miscUtil) {
+
+	return declare([ List, _StoreMixin ], {
+		// summary:
+		//		Extends List to include virtual scrolling functionality, querying a
+		//		dojo/store instance for the appropriate range when the user scrolls.
+
+		// minRowsPerPage: Integer
+		//		The minimum number of rows to request at one time.
+		minRowsPerPage: 2500,
+
+		// maxRowsPerPage: Integer
+		//		The maximum number of rows to request at one time.
+		maxRowsPerPage: 250,
+
+		// maxEmptySpace: Integer
+		//		Defines the maximum size (in pixels) of unrendered space below the
+		//		currently-rendered rows. Setting this to less than Infinity can be useful if you
+		//		wish to limit the initial vertical scrolling of the grid so that the scrolling is
+		// 		not excessively sensitive. With very large grids of data this may make scrolling
+		//		easier to use, albiet it can limit the ability to instantly scroll to the end.
+		maxEmptySpace: Infinity,
+
+		// bufferRows: Integer
+		//	  The number of rows to keep ready on each side of the viewport area so that the user can
+		//	  perform local scrolling without seeing the grid being built. Increasing this number can
+		//	  improve perceived performance when the data is being retrieved over a slow network.
+		bufferRows: 10,
+
+		// farOffRemoval: Integer
+		//		Defines the minimum distance (in pixels) from the visible viewport area
+		//		rows must be in order to be removed.  Setting to Infinity causes rows
+		//		to never be removed.
+		farOffRemoval: 2000,
+
+		// queryRowsOverlap: Integer
+		//		Indicates the number of rows to overlap queries. This helps keep
+		//		continuous data when underlying data changes (and thus pages don't
+		//		exactly align)
+		queryRowsOverlap: 0,
+
+		// pagingMethod: String
+		//		Method (from dgrid/util/misc) to use to either throttle or debounce
+		//		requests.  Default is "debounce" which will cause the grid to wait until
+		//		the user pauses scrolling before firing any requests; can be set to
+		//		"throttleDelayed" instead to progressively request as the user scrolls,
+		//		which generally incurs more overhead but might appear more responsive.
+		pagingMethod: 'debounce',
+
+		// pagingDelay: Integer
+		//		Indicates the delay (in milliseconds) imposed upon pagingMethod, to wait
+		//		before paging in more data on scroll events. This can be increased to
+		//		reduce client-side overhead or the number of requests sent to a server.
+		pagingDelay: miscUtil.defaultDelay,
+
+		// keepScrollPosition: Boolean
+		//		When refreshing the list, controls whether the scroll position is
+		//		preserved, or reset to the top.  This can also be overridden for
+		//		specific calls to refresh.
+		keepScrollPosition: true,
+
+		// rowHeight: Number
+		//		Average row height, computed in renderQuery during the rendering of
+		//		the first range of data.
+		rowHeight: 0,
+
+		postCreate: function () {
+			this.inherited(arguments);
+			var self = this;
+			// check visibility on scroll events
+			on(this.bodyNode, 'scroll',
+				miscUtil[this.pagingMethod](function (event) {
+					self._processScroll(event);
+				}, null, this.pagingDelay)
+			);
+		},
+
+		destroy: function () {
+			this.inherited(arguments);
+			if (this._refreshTimeout) {
+				clearTimeout(this._refreshTimeout);
+			}
+		},
+
+		renderQuery: function (query, options) {
+			// summary:
+			//		Creates a preload node for rendering a query into, and executes the query
+			//		for the first page of data. Subsequent data will be downloaded as it comes
+			//		into view.
+			// query: Function
+			//		Function to be called when requesting new data.
+			// options: Object?
+			//		Optional object containing the following:
+			//		* container: Container to build preload nodes within; defaults to this.contentNode
+
+			var self = this,
+				container = (options && options.container) || this.contentNode,
+				preload = {
+					query: query,
+					count: 0
+				},
+				preloadNode,
+				priorPreload = this.preload;
+
+			// Initial query; set up top and bottom preload nodes
+			var topPreload = {
+				node: domConstruct.create('div', {
+					className: 'dgrid-preload',
+					style: { height: '0' }
+				}, container),
+				count: 0,
+				query: query,
+				next: preload
+			};
+			topPreload.node.rowIndex = 0;
+			preload.node = preloadNode = domConstruct.create('div', {
+				className: 'dgrid-preload'
+			}, container);
+			preload.previous = topPreload;
+
+			// this preload node is used to represent the area of the grid that hasn't been
+			// downloaded yet
+			preloadNode.rowIndex = this.minRowsPerPage;
+
+			if (priorPreload) {
+				// the preload nodes (if there are multiple) are represented as a linked list, need to insert it
+				if ((preload.next = priorPreload.next) &&
+						// is this preload node below the prior preload node?
+						preloadNode.offsetTop >= priorPreload.node.offsetTop) {
+					// the prior preload is above/before in the linked list
+					preload.previous = priorPreload;
+				}
+				else {
+					// the prior preload is below/after in the linked list
+					preload.next = priorPreload;
+					preload.previous = priorPreload.previous;
+				}
+				// adjust the previous and next links so the linked list is proper
+				preload.previous.next = preload;
+				preload.next.previous = preload;
+			}
+			else {
+				this.preload = preload;
+			}
+
+			var loadingNode = domConstruct.create('div', {
+					className: 'dgrid-loading'
+				}, preloadNode, 'before'),
+				innerNode = domConstruct.create('div', {
+					className: 'dgrid-below'
+				}, loadingNode);
+			innerNode.innerHTML = this.loadingMessage;
+
+			// Establish query options, mixing in our own.
+			options = lang.mixin({ start: 0, count: this.minRowsPerPage },
+				'level' in query ? { queryLevel: query.level } : null);
+
+			// Protect the query within a _trackError call, but return the resulting collection
+			return this._trackError(function () {
+				var results = query(options);
+
+				// Render the result set
+				return self.renderQueryResults(results, preloadNode, options).then(function (trs) {
+					return results.totalLength.then(function (total) {
+						var trCount = trs.length,
+							parentNode = preloadNode.parentNode,
+							noDataNode = self.noDataNode;
+
+						if (self._rows) {
+							self._rows.min = 0;
+							self._rows.max = trCount === total ? Infinity : trCount - 1;
+						}
+
+						domConstruct.destroy(loadingNode);
+						if (!('queryLevel' in options)) {
+							self._total = total;
+						}
+						// now we need to adjust the height and total count based on the first result set
+						if (total === 0 && parentNode) {
+							if (noDataNode) {
+								domConstruct.destroy(noDataNode);
+								delete self.noDataNode;
+							}
+							self.noDataNode = noDataNode = domConstruct.create('div', {
+								className: 'dgrid-no-data',
+								innerHTML: self.noDataMessage
+							});
+							self._emit('noData');
+							parentNode.insertBefore(noDataNode, self._getFirstRowSibling(parentNode));
+						}
+						var height = 0;
+						for (var i = 0; i < trCount; i++) {
+							height += self._calcRowHeight(trs[i]);
+						}
+						// only update rowHeight if we actually got results and are visible
+						if (trCount && height) {
+							self.rowHeight = height / trCount;
+						}
+
+						total -= trCount;
+						preload.count = total;
+						preloadNode.rowIndex = trCount;
+						if (total) {
+							preloadNode.style.height = Math.min(total * self.rowHeight, self.maxEmptySpace) + 'px';
+						}
+						else {
+							preloadNode.style.display = 'none';
+						}
+
+						if (self._previousScrollPosition) {
+							// Restore position after a refresh operation w/ keepScrollPosition
+							self.scrollTo(self._previousScrollPosition);
+							delete self._previousScrollPosition;
+						}
+
+						// Redo scroll processing in case the query didn't fill the screen,
+						// or in case scroll position was restored
+						return when(self._processScroll()).then(function () {
+							return trs;
+						});
+					});
+				}).otherwise(function (err) {
+					// remove the loadingNode and re-throw
+					domConstruct.destroy(loadingNode);
+					throw err;
+				});
+			});
+		},
+
+		refresh: function (options) {
+			// summary:
+			//		Refreshes the contents of the grid.
+			// options: Object?
+			//		Optional object, supporting the following parameters:
+			//		* keepScrollPosition: like the keepScrollPosition instance property;
+			//			specifying it in the options here will override the instance
+			//			property's value for this specific refresh call only.
+
+			var self = this,
+				keep = (options && options.keepScrollPosition);
+
+			// Fall back to instance property if option is not defined
+			if (typeof keep === 'undefined') {
+				//keep = this.keepScrollPosition;
+			}
+
+			// Store scroll position to be restored after new total is received
+			if (keep) {
+				this._previousScrollPosition = this.getScrollPosition();
+			}
+
+			this.inherited(arguments);
+			if (this._renderedCollection) {
+				// render the query
+
+				// renderQuery calls _trackError internally
+				return this.renderQuery(function (queryOptions) {
+					return self._renderedCollection.fetchRange({
+						start: queryOptions.start,
+						end: queryOptions.start + queryOptions.count
+					});
+				}).then(function () {
+					// Emit on a separate turn to enable event to be used consistently for
+					// initial render, regardless of whether the backing store is async
+					self._refreshTimeout = setTimeout(function () {
+						on.emit(self.domNode, 'dgrid-refresh-complete', {
+							bubbles: true,
+							cancelable: false,
+							grid: self
+						});
+						self._refreshTimeout = null;
+					}, 0);
+				});
+			}
+		},
+
+		resize: function () {
+			this.inherited(arguments);
+			this._processScroll();
+		},
+
+		cleanup: function () {
+			this.inherited(arguments);
+			this.preload = null;
+		},
+
+		renderQueryResults: function (results) {
+			var rows = this.inherited(arguments);
+			var collection = this._renderedCollection;
+
+			if (collection && collection.releaseRange) {
+				rows.then(function (resolvedRows) {
+					if (resolvedRows[0] && !resolvedRows[0].parentNode.tagName) {
+						// Release this range, since it was never actually rendered;
+						// need to wait until totalLength promise resolves, since
+						// Trackable only adds the range then to begin with
+						results.totalLength.then(function () {
+							collection.releaseRange(resolvedRows[0].rowIndex,
+								resolvedRows[resolvedRows.length - 1].rowIndex + 1);
+						});
+					}
+				});
+			}
+
+			return rows;
+		},
+
+		_getFirstRowSibling: function (container) {
+			// summary:
+			//		Returns the DOM node that a new row should be inserted before
+			//		when there are no other rows in the current result set.
+			//		In the case of OnDemandList, this will always be the last child
+			//		of the container (which will be a trailing preload node).
+			return container.lastChild;
+		},
+
+		_calcRowHeight: function (rowElement) {
+			// summary:
+			//		Calculate the height of a row. This is a method so it can be overriden for
+			//		plugins that add connected elements to a row, like the tree
+
+			var sibling = rowElement.nextSibling;
+
+			// If a next row exists, compare the top of this row with the
+			// next one (in case "rows" are actually rendering side-by-side).
+			// If no next row exists, this is either the last or only row,
+			// in which case we count its own height.
+			if (sibling && !/\bdgrid-preload\b/.test(sibling.className)) {
+				return sibling.offsetTop - rowElement.offsetTop;
+			}
+
+			return rowElement.offsetHeight;
+		},
+
+		lastScrollTop: 0,
+		_processScroll: function (evt) {
+			// summary:
+			//		Checks to make sure that everything in the viewable area has been
+			//		downloaded, and triggering a request for the necessary data when needed.
+
+			if (!this.rowHeight) {
+				return;
+			}
+
+			var grid = this,
+				scrollNode = grid.bodyNode,
+				// grab current visible top from event if provided, otherwise from node
+				visibleTop = (evt && evt.scrollTop) || this.getScrollPosition().y,
+				visibleBottom = scrollNode.offsetHeight + visibleTop,
+				priorPreload, preloadNode, preload = grid.preload,
+				lastScrollTop = grid.lastScrollTop,
+				requestBuffer = grid.bufferRows * grid.rowHeight,
+				searchBuffer = requestBuffer - grid.rowHeight, // Avoid rounding causing multiple queries
+				// References related to emitting dgrid-refresh-complete if applicable
+				lastRows,
+				preloadSearchNext = true;
+
+			// XXX: I do not know why this happens.
+			// munging the actual location of the viewport relative to the preload node by a few pixels in either
+			// direction is necessary because at least WebKit on Windows seems to have an error that causes it to
+			// not quite get the entire element being focused in the viewport during keyboard navigation,
+			// which means it becomes impossible to load more data using keyboard navigation because there is
+			// no more data to scroll to to trigger the fetch.
+			// 1 is arbitrary and just gets it to work correctly with our current test cases; don’t wanna go
+			// crazy and set it to a big number without understanding more about what is going on.
+			// wondering if it has to do with border-box or something, but changing the border widths does not
+			// seem to make it break more or less, so I do not know…
+			var mungeAmount = 1;
+
+			grid.lastScrollTop = visibleTop;
+
+			function removeDistantNodes(preload, distanceOff, traversal, below) {
+				// we check to see the the nodes are "far off"
+				var farOffRemoval = grid.farOffRemoval,
+					preloadNode = preload.node;
+				// by checking to see if it is the farOffRemoval distance away
+				if (distanceOff > 2 * farOffRemoval) {
+					// there is a preloadNode that is far off;
+					// remove rows until we get to in the current viewport
+					var row;
+					var nextRow = preloadNode[traversal];
+					var reclaimedHeight = 0;
+					var count = 0;
+					var toDelete = [];
+					var firstRowIndex = nextRow && nextRow.rowIndex;
+					var lastRowIndex;
+
+					while ((row = nextRow)) {
+						var rowHeight = grid._calcRowHeight(row);
+						if (reclaimedHeight + rowHeight + farOffRemoval > distanceOff ||
+								(nextRow.className.indexOf('dgrid-row') < 0 &&
+									nextRow.className.indexOf('dgrid-loading') < 0)) {
+							// we have reclaimed enough rows or we have gone beyond grid rows
+							break;
+						}
+
+						nextRow = row[traversal];
+						reclaimedHeight += rowHeight;
+						count += row.count || 1;
+						// Just do cleanup here, as we will do a more efficient node destruction in a setTimeout below
+						grid.removeRow(row, true);
+						toDelete.push(row);
+
+						if ('rowIndex' in row) {
+							lastRowIndex = row.rowIndex;
+						}
+					}
+
+					if (grid._renderedCollection.releaseRange &&
+							typeof firstRowIndex === 'number' && typeof lastRowIndex === 'number') {
+						// Note that currently child rows in Tree structures are never unrendered;
+						// this logic will need to be revisited when that is addressed.
+
+						// releaseRange is end-exclusive, and won't remove anything if start >= end.
+						if (below) {
+							grid._renderedCollection.releaseRange(lastRowIndex, firstRowIndex + 1);
+						}
+						else {
+							grid._renderedCollection.releaseRange(firstRowIndex, lastRowIndex + 1);
+						}
+
+						grid._rows[below ? 'max' : 'min'] = lastRowIndex;
+						if (grid._rows.max >= grid._total - 1) {
+							grid._rows.max = Infinity;
+						}
+					}
+					// now adjust the preloadNode based on the reclaimed space
+					preload.count += count;
+					if (below) {
+						preloadNode.rowIndex -= count;
+						adjustHeight(preload);
+					}
+					else {
+						// if it is above, we can calculate the change in exact row changes,
+						// which we must do to not mess with the scroll position
+						preloadNode.style.height = (preloadNode.offsetHeight + reclaimedHeight) + 'px';
+					}
+					// we remove the elements after expanding the preload node so that
+					// the contraction doesn't alter the scroll position
+					var trashBin = document.createElement('div');
+					for (var i = toDelete.length; i--;) {
+						trashBin.appendChild(toDelete[i]);
+					}
+					setTimeout(function () {
+						// we can defer the destruction until later
+						domConstruct.destroy(trashBin);
+					}, 1);
+				}
+			}
+
+			function adjustHeight(preload, noMax) {
+				preload.node.style.height = Math.min(preload.count * grid.rowHeight,
+					noMax ? Infinity : grid.maxEmptySpace) + 'px';
+			}
+			function traversePreload(preload, moveNext) {
+				// Skip past preloads that are not currently connected
+				do {
+					preload = moveNext ? preload.next : preload.previous;
+				} while (preload && !preload.node.offsetWidth);
+				return preload;
+			}
+			while (preload && !preload.node.offsetWidth) {
+				// skip past preloads that are not currently connected
+				preload = preload.previous;
+			}
+			// there can be multiple preloadNodes (if they split, or multiple queries are created),
+			//	so we can traverse them until we find whatever is in the current viewport, making
+			//	sure we don't backtrack
+			while (preload && preload !== priorPreload) {
+				priorPreload = grid.preload;
+				grid.preload = preload;
+				preloadNode = preload.node;
+				var preloadTop = preloadNode.offsetTop;
+				var preloadHeight;
+
+				if (visibleBottom + mungeAmount + searchBuffer < preloadTop) {
+					// the preload is below the line of sight
+					preload = traversePreload(preload, (preloadSearchNext = false));
+				}
+				else if (visibleTop - mungeAmount - searchBuffer >
+						(preloadTop + (preloadHeight = preloadNode.offsetHeight))) {
+					// the preload is above the line of sight
+					preload = traversePreload(preload, (preloadSearchNext = true));
+				}
+				else {
+					// the preload node is visible, or close to visible, better show it
+					var offset = ((preloadNode.rowIndex ? visibleTop - requestBuffer :
+						visibleBottom) - preloadTop) / grid.rowHeight;
+					var count = (visibleBottom - visibleTop + 2 * requestBuffer) / grid.rowHeight;
+					// utilize momentum for predictions
+					var momentum = Math.max(
+						Math.min((visibleTop - lastScrollTop) * grid.rowHeight, grid.maxRowsPerPage / 2),
+						grid.maxRowsPerPage / -2);
+					count += Math.min(Math.abs(momentum), 10);
+					if (preloadNode.rowIndex === 0) {
+						// at the top, adjust from bottom to top
+						offset -= count;
+					}
+					offset = Math.max(offset, 0);
+					if (offset < 10 && offset > 0 && count + offset < grid.maxRowsPerPage) {
+						// connect to the top of the preloadNode if possible to avoid excessive adjustments
+						count += Math.max(0, offset);
+						offset = 0;
+					}
+					count = Math.min(Math.max(count, grid.minRowsPerPage),
+										grid.maxRowsPerPage, preload.count);
+
+					if (count === 0) {
+						preload = traversePreload(preload, preloadSearchNext);
+						continue;
+					}
+
+					count = Math.ceil(count);
+					offset = Math.min(Math.floor(offset), preload.count - count);
+
+					var options = {};
+					preload.count -= count;
+					var beforeNode = preloadNode,
+						keepScrollTo, queryRowsOverlap = grid.queryRowsOverlap,
+						below = (preloadNode.rowIndex > 0 || preloadNode.offsetTop > visibleTop) && preload;
+					if (below) {
+						// add new rows below
+						var previous = preload.previous;
+						if (previous) {
+							removeDistantNodes(previous,
+								visibleTop - (previous.node.offsetTop + previous.node.offsetHeight),
+								'nextSibling');
+							if (offset > 0 && previous.node === preloadNode.previousSibling) {
+								// all of the nodes above were removed
+								offset = Math.min(preload.count, offset);
+								preload.previous.count += offset;
+								adjustHeight(preload.previous, true);
+								preloadNode.rowIndex += offset;
+								queryRowsOverlap = 0;
+							}
+							else {
+								count += offset;
+							}
+							preload.count -= offset;
+						}
+						options.start = preloadNode.rowIndex - queryRowsOverlap;
+						options.count = Math.min(count + queryRowsOverlap, grid.maxRowsPerPage);
+						preloadNode.rowIndex = options.start + options.count;
+					}
+					else {
+						// add new rows above
+						if (preload.next) {
+							// remove out of sight nodes first
+							removeDistantNodes(preload.next, preload.next.node.offsetTop - visibleBottom,
+								'previousSibling', true);
+							beforeNode = preloadNode.nextSibling;
+							if (beforeNode === preload.next.node) {
+								// all of the nodes were removed, can position wherever we want
+								preload.next.count += preload.count - offset;
+								preload.next.node.rowIndex = offset + count;
+								adjustHeight(preload.next);
+								preload.count = offset;
+								queryRowsOverlap = 0;
+							}
+							else {
+								keepScrollTo = true;
+							}
+
+						}
+						options.start = preload.count;
+						options.count = Math.min(count + queryRowsOverlap, grid.maxRowsPerPage);
+					}
+					if (keepScrollTo && beforeNode && beforeNode.offsetWidth) {
+						keepScrollTo = beforeNode.offsetTop;
+					}
+
+					adjustHeight(preload);
+
+					// use the query associated with the preload node to get the next "page"
+					if ('level' in preload.query) {
+						options.queryLevel = preload.query.level;
+					}
+
+					// Avoid spurious queries (ideally this should be unnecessary...)
+					if (!('queryLevel' in options) && (options.start > grid._total || options.count < 0)) {
+						continue;
+					}
+
+					// create a loading node as a placeholder while the data is loaded
+					var loadingNode = domConstruct.create('div', {
+						className: 'dgrid-loading',
+						style: { height: count * grid.rowHeight + 'px' }
+					}, beforeNode, 'before');
+					domConstruct.create('div', {
+						className: 'dgrid-' + (below ? 'below' : 'above'),
+						innerHTML: grid.loadingMessage
+					}, loadingNode);
+					loadingNode.count = count;
+
+					// Query now to fill in these rows.
+					grid._trackError(function () {
+						// Use function to isolate the variables in case we make multiple requests
+						// (which can happen if we need to render on both sides of an island of already-rendered rows)
+						(function (loadingNode, below, keepScrollTo) {
+							/* jshint maxlen: 122 */
+							var rangeResults = preload.query(options);
+							lastRows = grid.renderQueryResults(rangeResults, loadingNode, options).then(function (rows) {
+								var gridRows = grid._rows;
+								if (gridRows && !('queryLevel' in options) && rows.length) {
+									// Update relevant observed range for top-level items
+									if (below) {
+										if (gridRows.max <= gridRows.min) {
+											// All rows were removed; update start of rendered range as well
+											gridRows.min = rows[0].rowIndex;
+										}
+										gridRows.max = rows[rows.length - 1].rowIndex;
+									}
+									else {
+										if (gridRows.max <= gridRows.min) {
+											// All rows were removed; update end of rendered range as well
+											gridRows.max = rows[rows.length - 1].rowIndex;
+										}
+										gridRows.min = rows[0].rowIndex;
+									}
+								}
+
+								// can remove the loading node now
+								beforeNode = loadingNode.nextSibling;
+								domConstruct.destroy(loadingNode);
+								// beforeNode may have been removed if the query results loading node was removed
+								// as a distant node before rendering
+								if (keepScrollTo && beforeNode && beforeNode.offsetWidth) {
+									// if the preload area above the nodes is approximated based on average
+									// row height, we may need to adjust the scroll once they are filled in
+									// so we don't "jump" in the scrolling position
+									var pos = grid.getScrollPosition();
+									grid.scrollTo({
+										// Since we already had to query the scroll position,
+										// include x to avoid TouchScroll querying it again on its end.
+										x: pos.x,
+										y: pos.y + beforeNode.offsetTop - keepScrollTo,
+										// Don't kill momentum mid-scroll (for TouchScroll only).
+										preserveMomentum: true
+									});
+								}
+
+								rangeResults.totalLength.then(function (total) {
+									if (!('queryLevel' in options)) {
+										grid._total = total;
+										if (grid._rows && grid._rows.max >= grid._total - 1) {
+											grid._rows.max = Infinity;
+										}
+									}
+									if (below) {
+										// if it is below, we will use the total from the collection to update
+										// the count of the last preload in case the total changes as
+										// later pages are retrieved
+
+										// recalculate the count
+										below.count = total - below.node.rowIndex;
+										// readjust the height
+										adjustHeight(below);
+									}
+								});
+
+								// make sure we have covered the visible area
+								grid._processScroll();
+								return rows;
+							}, function (e) {
+								domConstruct.destroy(loadingNode);
+								throw e;
+							});
+						})(loadingNode, below, keepScrollTo);
+					});
+
+					preload = preload.previous;
+
+				}
+			}
+
+			// return the promise from the last render
+			return lastRows;
+		}
+	});
+
+});
+
+define('dgrid/OnDemandGrid',[
+	'dojo/_base/declare',
+	'./Grid',
+	'./OnDemandList'
+], function (declare, Grid, OnDemandList) {
+	return declare([ Grid, OnDemandList ], {});
+});
+/** @module xgrid/Defaults **/
+define('xgrid/Defaults',[
+    'xdojo/declare'
+], function (declare) {
+    /**
+     * xGrid defaults
+     * */
+    return declare('xgrid/Defaults', null, {
+        minRowsPerPage: 100,
+        keepScrollPosition: true,
+        rowsPerPage: 30,
+        deselectOnRefresh: false,
+        cellNavigation: false,
+        _skipFirstRender: false,
+        loadingMessage: null,
+        preload: null,
+        childSelector: ".dgrid-row",
+        addUiClasses: false,
+        noDataMessage: '<span class="textWarning">No data....</span>',
+        showExtraSpace:true,
+        expandOnClick:true
+    });
+});
+
+/** @module xgrid/Layout **/
+define('xgrid/Layout',[
+    "xdojo/declare",
+    'xide/utils',
+    'xide/widgets/TemplatedWidgetBase',
+    'xide/registry',
+    'xide/$'
+], function (declare, utils, TemplatedWidgetBase, registry,$) {
+    var template = '<div tabindex="-1" attachTo="template" class="grid-template" style="width: 100%;height: 100%;overflow: hidden;position: relative;padding: 0px;margin: 0px">'+
+        '<div tabindex="-1" attachTo="header" class="grid-header row" style="width: 100%;height: auto"></div>'+
+        '<div tabindex="0" attachTo="grid" class="grid-body row"></div>'+
+        '<div attachTo="footer" class="grid-footer" style="position: absolute;bottom: 0px;width: 100%"></div>'+
+    '</div>';
+    /**
+     *
+     * @class module:xgrid/Layout
+     */
+    var Implementation = {
+        template: null,
+        attachDirect: true,
+        destroy: function () {
+            //important,remove us from our temp. template.
+            this.template && this.template.remove(this) && utils.destroy(this.template,true,this);
+            this.inherited(arguments);
+        },
+        getTemplateNode: function () {
+            return this.template.domNode;
+        },
+        getHeaderNode: function () {
+            return this.template.header;
+        },
+        getBodyNode: function () {
+            return this.template.grid;
+        },
+        getFooterNode: function () {
+            return this.template.footer;
+        },
+        resize: function () {
+            this.inherited(arguments);
+            var thiz = this,
+                mainNode = thiz.template  ? thiz.template.domNode : this.domNode,
+                isRerooted = false;
+
+            if(this.__masterPanel){
+                mainNode = this.__masterPanel.containerNode;
+                isRerooted= true;
+            }
+            var totalHeight = $(mainNode).height();
+            var template = thiz.template;
+            if(!template){
+                return;
+            }
+            var $header =$(template.header);
+            var topHeight = $header ? $header.height() : 0;
+            var _toolbarHeight = this._toolbar ? this._toolbar._height : 0;
+            if(_toolbarHeight>0 && topHeight===0){
+                topHeight +=_toolbarHeight;
+            }
+            if(_toolbarHeight && $header){
+                $header.css('height','auto');
+            }
+            var footerHeight = template.footer ? $(template.footer).height() : 0;
+            var finalHeight = totalHeight - topHeight - (footerHeight);
+
+            if (finalHeight > 50) {
+                $(template.grid).height(finalHeight + 'px');
+                isRerooted && $(template.domNode).width($(mainNode).width());
+            } else {
+                $(template.grid).height('inherited');
+            }
+
+
+        },
+        buildRendering: function () {
+            if (this.template) {
+                return;
+            }
+            this._domNode = this.domNode;
+            var templated = utils.addWidget(TemplatedWidgetBase, {
+                templateString: template,
+                declaredClass: 'xgrid/_BaseParent_' + this.declaredClass
+            }, null, this.domNode, true);
+
+            $(templated.domNode).attr('tabIndex', -1);
+
+            this.template = templated;
+            this.header = templated.header;
+            this.footer = templated.footer;
+            this.gridBody = templated.grid;
+            this.domNode = templated.grid;
+            this.id = this.template.id;
+            this.domNode.id = this.id;
+            templated.domNode.id = this.id;
+            registry._hash[this.id] = this;
+            templated.add(this);
+            return this.inherited(arguments);
+        }
+    };
+
+    //package via declare
+    var _class = declare('xgrid.Layout', null, Implementation);
+    _class.Implementation = Implementation;
+    return _class;
+});
+
+define('xgrid/Focus',[
+    "xdojo/declare",
+    "xide/types",
+    "xide/utils"
+], function (declare,types,utils) {
+
+    var Implementation = {
+        _focused:false,
+        _detectFocus:null,
+        _detectBlur:null,
+        destroy:function(){
+            this.inherited(arguments);
+            window.removeEventListener('focus', this._detectFocus, true);
+            window.removeEventListener('blur', this._detectBlur, true);
+        },
+        _onBlur:function(){
+        },
+        set:function(what,value){
+            if(what=='focused'){
+                this._onFocusChanged(value);
+              }
+            return this.inherited(arguments);
+        },
+        _onFocusChanged:function(focused,type){
+            if(this._focused && !focused){
+                this._onBlur();
+            }
+            if(!this._focused && focused){
+                this._emit(types.EVENTS.ON_VIEW_SHOW,this);
+            }
+            this._focused = focused;
+            this.highlight  && this.highlight(focused);
+        },
+        getFocused:function(domNode){
+            if(this._focusedNode){
+                var row = this.row(this._focusedNode);
+                if(row){
+                    return row[domNode? 'element' : 'data' ];
+                }
+            }
+            return null;
+        },
+        startup:function(){
+            this.inherited(arguments);
+            var thiz = this,
+                node = thiz.domNode.parentNode;
+
+
+            //@TODO: /active=true
+            this.headerNode.tabIndex=-1;
+            this._focused  = true;
+        }
+
+    };
+    //package via declare
+    var _class = declare('xgrid.Focus',null,Implementation);
+    _class.Implementation = Implementation;
+    return _class;
+});
+/** @module xgrid/Clipboard **/
+define('xgrid/Clipboard',[
+    "xdojo/declare",
+    'xide/types'
+], function (declare,types) {
+
+    var Implementation = {
+        runAction:function(action){
+            switch (action.command){
+                case types.ACTION.CLIPBOARD_COPY:{
+                    this.clipboardCopy();
+                    this.refreshActions();
+                    return true;
+                }
+                case types.ACTION.CLIPBOARD_PASTE:{
+                    return this.clipboardPaste();
+                }
+                case types.ACTION.CLIPBOARD_CUT:{
+                    this.clipboardCut();
+                    return true;
+                }
+            }
+            return this.inherited(arguments);
+        },
+        clipboardPaste:function(){
+            return this.inherited(arguments);
+        },
+        /**
+         * Clipboard/Copy action
+         */
+
+        clipboardCopy:function(){
+            this.currentCutSelection=null;
+            this.currentCopySelection=this.getSelection();
+            this.publish(types.EVENTS.ON_CLIPBOARD_COPY,{
+                selection:this.currentCopySelection,
+                owner:this,
+                type:this.itemType
+            });
+        },
+        clipboardCut:function(){
+            this.currentCopySelection = null;
+            this.currentCutSelection = this.getSelection();
+        },
+        getClipboardActions:function(addAction){
+            var thiz = this,
+                actions = [],
+                ACTION = types.ACTION;
+
+            function _selection(){
+                var selection = thiz.getSelection();
+                if (!selection || !selection.length) {
+                    return null;
+                }
+                var item = selection[0];
+                if(!item){
+                    console.error('have no item');
+                    return null;
+                }
+                return selection;
+            }
+
+            function isItem() {
+                var selection = _selection();
+                if (!selection) {
+                    return true;
+                }
+                return false;
+            }
+
+            function disable(){
+                switch (this.title){
+                    case 'Cut':
+                    case 'Copy':{
+                        return isItem()!==false;
+                    }
+                    case 'Paste':{
+                        return thiz.currentCopySelection==null;
+                    }
+                }
+                return false;
+            }
+            function _createEntry(label,command,icon,keyCombo) {
+                actions.push(thiz.createAction({
+                    label: label,
+                    command: command,
+                    icon: icon,
+                    tab: 'Home',
+                    group: 'Clipboard',
+                    keycombo: keyCombo,
+                    mixin: {
+                        addPermission:true,
+                        quick:true
+                    },
+                    shouldDisable:disable
+                }));
+            }
+            _createEntry('Copy',ACTION.CLIPBOARD_COPY,'fa-copy','ctrl c');
+            _createEntry('Paste',ACTION.CLIPBOARD_PASTE,'fa-paste','ctrl v');
+            _createEntry('Cut',ACTION.CLIPBOARD_CUT,'fa-cut','ctrl x');
+            return actions;
+        }
+    };
+
+    //package via declare
+    var _class = declare('xgrid.Clipboard',null,Implementation);
+    _class.Implementation = Implementation;
+
+    return _class;
+});
+define('xide/console',[], function () {
+    return typeof window !=='undefined' ? window.console : typeof global !=='undefined' ? global.console : {
+
+    }
+});
+/** module xgrid/actions **/
+define('xgrid/Actions',[
+    "xdojo/declare",
+    'xide/types',
+    'xaction/ActionProvider',
+    'xaction/DefaultActions',
+    'xide/lodash',
+    'xide/$',
+    'xide/console'
+], function (declare, types, ActionProvider, DefaultActions, _, $, console) {
+    var _debug = false;
+    /**
+     * @class module:xgrid/Actions
+     * @lends module:xide/mixins/EventedMixin
+     *
+     * All about actions:
+     * 1. implements std before and after actions:
+     * 1.1 on onAfterAction its restoring focus and selection automatically
+     * 2. handles and forwards click, contextmenu and onAddActions     *
+     */
+    var Implementation = {
+        _ActionContextState: null,
+        onActivateActionContext: function (context, e) {
+            return;
+            /*
+            var state = this._ActionContextState;
+            if (this._isRestoring) {
+                return;
+            }
+            this._isRestoring = true;
+            if (e != null && e.selection && state) {
+                state.selection = e != null ? e.selection : state.selection;
+            }
+            var self = this;
+            _debug && console.log('onActivateActionContext', e);
+            //@TODO Fixme
+
+                var dfd = self._restoreSelection(state, 0, false, 'onActivateActionContext');
+                if (dfd && dfd.then) {
+                    dfd.then(function (e) {
+                        self._isRestoring = false;
+                    });
+                } else {
+                    self._isRestoring = false;
+                }
+
+                */
+        },
+        onDeactivateActionContext: function (context, event) {
+            //_debug && console.log('onDeactivateActionContext ' + this.id, event);
+            //this._ActionContextState = this._preserveSelection();
+        },
+        /**
+         * Callback when action is performed:before (xide/widgets/_MenuMixin)
+         * @param action {module:xaction/Action}
+         */
+        onBeforeAction: function (action) {
+        },
+        /**
+         * Callback when action is performed: after (xide/widgets/_MenuMixin)
+         *
+         * @TODO Run the post selection only when we are active!
+         *
+         *
+         * @param action {module:xaction/Action}
+         */
+        onAfterAction: function (action, actionDfdResult) {
+            action = this.getAction(action);
+            _debug && console.log('on after ' + action.command, actionDfdResult);
+            if (actionDfdResult != null) {
+                if (_.isObject(actionDfdResult)) {
+                    // post work: selection & focus
+                    var select = actionDfdResult.select,
+                        focus = actionDfdResult.focus || true;
+                    if (select) {
+                        var options = {
+                            append: actionDfdResult.append,
+                            focus: focus,
+                            delay: actionDfdResult.delay || 1,
+                            expand: actionDfdResult.expand
+                        };
+                        //focus == true ? null : this.focus();
+                        return this.select(select, null, true, options);
+                    }
+                }
+            }
+            this._emit(types.EVENTS.ON_AFTER_ACTION, action);
+        },
+        hasPermission: function (permission) {
+            return DefaultActions.hasAction(this.permissions, permission);
+        },
+        /**
+         *
+         * @param where
+         * @param action
+         * @returns {boolean}
+         */
+        addAction: function (where, action) {
+            if (action.keyCombo && _.isArray(action.keyCombo)) {
+                if (action.keyCombo.indexOf('dblclick') !== -1) {
+                    var thiz = this;
+                    function handler(e) {
+                        // @TODO: weird dblclick event duplicate in xgrid/Actions
+                        if (e._inp) {
+                            return;
+                        }
+                        e._inp = true;
+                        var row = thiz.row(e);
+                        row && thiz.runAction(action, row.data);
+                    }
+                    this.addHandle('dbclick', this.on('dblclick', handler));
+                }
+            }
+            return this.inherited(arguments);
+        },
+        /**
+         * Callback when selection changed, refreshes all actions
+         * @param evt
+         * @private
+         */
+        _onSelectionChanged: function (evt) {
+            this.inherited(arguments);
+            this.refreshActions();
+        },
+        ////////////////////////////////////////////////////////////////////////////
+        //
+        //  Original ActionMixin
+        //
+        ///////////////////////////////////////////////////////////////////////////
+        /**
+         *
+         * @param provider
+         * @param target
+         */
+        updateActions: function (provider, target) {
+            var actions,
+                actionsFiltered,
+                selection = this.getSelection();
+
+            if (provider && target) {
+                actions = provider.getItemActions();
+                actionsFiltered = this._filterActions(selection, actions, provider);
+                target.setItemActions({}, actionsFiltered);
+            }
+        },
+        startup: function () {
+            if (this._started) {
+                return;
+            }
+            var thiz = this;
+            thiz.domNode.tabIndex = -1;
+            function clickHandler(evt) {
+                //container
+                if (evt && evt.target) {
+                    var $target = $(evt.target);
+                    if ($target.hasClass('dgrid-content') || $target.hasClass('dgrid-extra')) {
+                        thiz.select([], null, false);
+                        thiz.deselectAll();
+                        if (evt.type !== 'contextmenu') {
+                            setTimeout(function () {
+                                thiz.domNode.focus();
+                                document.activeElement = thiz.domNode;
+                                $(thiz.domNode).focus();
+                            }, 1);
+                        }
+                    }
+                }
+            }
+            this.on("contextmenu", clickHandler.bind(this));
+            this._on('selectionChanged', function (evt) {
+                this._onSelectionChanged(evt);
+            }.bind(this));
+
+            this._on('onAddActions', function (evt) {
+                var actions = evt.actions,
+                    action = types.ACTION.HEADER;
+
+                if (!thiz.getAction(action)) {
+                    actions.push(thiz.createAction({
+                        label: 'Header',
+                        command: action,
+                        icon: 'fa-hdd-o',
+                        tab: 'View',
+                        group: 'Show',
+                        mixin: {
+                            actionType: 'multiToggle'
+                        },
+                        onCreate: function (action) {
+                            action.set('value', thiz.showHeader);
+                        },
+                        onChange: function (property, value) {
+                            thiz._setShowHeader(value);
+                            thiz.showHeader = value;
+                            thiz.onAfterAction(types.ACTION.HEADER);
+                        }
+                    }));
+                }
+            });
+            return this.inherited(arguments);
+        }
+    };
+    //package via declare
+    var _class = declare('xgrid.Actions', ActionProvider, Implementation);
+    _class.Implementation = Implementation;
+    return _class;
+});
+/** @module xgrid/types **/
+define('xgrid/typesLite',[
+    "xdojo/declare",
+    'xide/types',
+    'xgrid/Selection',
+    'xgrid/Keyboard',
+    'xgrid/ColumnHider',
+    'xide/mixins/EventedMixin',
+    'dgrid/OnDemandGrid',
+    'xgrid/Defaults',
+    'xgrid/Layout',
+    'xgrid/Focus',
+    'xgrid/ListRenderer',
+    'xgrid/Clipboard',
+    'xgrid/Actions',
+    'xlang/i18'
+], function (declare,types,
+             Selection,_GridKeyboardSelection,ColumnHider,
+             EventedMixin, OnDemandGrid,Defaults,Layout,Focus,
+             ListRenderer,
+             Clipboard,Actions,i18)
+{
+    /**
+     * Grid Bases
+     * @enum module:xgrid/types/GRID_BASES
+     * @memberOf module:xgrid/types
+     */
+    types.GRID_BASES = {
+        GRID: OnDemandGrid,
+        LAYOUT:Layout,
+        DEFAULTS: Defaults,
+        RENDERER: ListRenderer,
+        EVENTED: EventedMixin,
+        FOCUS:Focus,
+        i18:i18
+    };
+    /**
+     * Default Grid Options
+     * @deprecated
+     * @enum module:xgrid/types/DEFAULT_GRID_OPTIONS
+     * @memberOf module:xgrid/types
+     */
+    types.DEFAULT_GRID_OPTIONS = {
+        /**
+         * Instruct the grid to add jQuery theme classes
+         * @default true
+         * @type {bool}
+         * @constant
+         */
+        USE_JQUERY_CSS: false,
+        /**
+         * Behaviour flag to deselect an item when its already selected
+         * @default true
+         * @type {bool}
+         * @constant
+         */
+        DESELECT_SELECTED: true,
+        /**
+         * Behaviour flag to clear selection when clicked on the container node
+         * @default true
+         * @type {bool}
+         * @constant
+         */
+        CLEAR_SELECTION_ON_CLICK: true,
+        /**
+         * Item actions
+         * @default true
+         * @type {object}
+         * @constant
+         */
+        ITEM_ACTIONS: {},
+        /**
+         * Grid actions (sort, hide column, layout)
+         * @default true
+         * @type {object}
+         * @constant
+         */
+        GRID_ACTIONS: {},
+        /**
+         * Publish selection change globally
+         * @default true
+         * @type {boolean}
+         * @constant
+         */
+        PUBLISH_SELECTION: false
+    };
+    /**
+     * Grid option keys
+     * @enum module:xgrid/types/GRID_OPTION
+     * @memberOf module:xgrid/types
+     */
+    types.GRID_OPTION = {
+        /**
+         * Instruct the grid to add jQuery theme classes
+         * @default true
+         * @type {string}
+         * @constant
+         */
+        USE_JQUERY_CSS: 'USE_JQUERY_CSS',
+        /**
+         * Behaviour flag to deselect an item when its already selected
+         * @default true
+         * @type {string}
+         * @constant
+         */
+        DESELECT_SELECTED: 'DESELECT_SELECTED',
+        /**
+         * Behaviour flag to deselect an item when its already selected
+         * @default true
+         * @type {string}
+         * @constant
+         */
+        CLEAR_SELECTION_ON_CLICK:'CLEAR_SELECTION_ON_CLICK',
+        /**
+         * Actions
+         * @default true
+         * @type {string}
+         * @constant
+         */
+        ITEM_ACTIONS:'ITEM_ACTIONS',
+        /**
+         * Actions
+         * @default true
+         * @type {string}
+         * @constant
+         */
+        GRID_ACTIONS:'GRID_ACTIONS'
+    };
+    /**
+     * All grid default features
+     * @enum module:xgrid/types/GRID_DEFAULT_FEATURES
+     * @memberOf module:xgrid/types
+     */
+    types.DEFAULT_GRID_FEATURES_LITE = {
+        SELECTION: {
+            CLASS: Selection,
+            IMPLEMENTATION: {},
+            CLASSES: null
+        },
+        KEYBOARD_SELECTION: {
+            CLASS: _GridKeyboardSelection,
+            IMPLEMENTATION: {},
+            CLASSES: null
+        },
+        COLUMN_HIDER: {
+            CLASS: ColumnHider,
+            IMPLEMENTATION: {},
+            CLASSES: null
+        }
+
+    };
+    /**
+     * All Grid Features for easy access
+     * @enum module:xgrid/types/GRID_FEATURES
+     * @memberOf module:xgrid/types
+     */
+    types.GRID_FEATURES_LITE = {
+        SELECTION: {
+            CLASS: Selection,
+            IMPLEMENTATION: {},
+            CLASSES: null
+        },
+        KEYBOARD_SELECTION: {
+            CLASS: _GridKeyboardSelection,
+            IMPLEMENTATION: {},
+            CLASSES: null
+        },
+        ACTIONS: {
+            CLASS: Actions,
+            IMPLEMENTATION: {},
+            CLASSES: null
+        },
+        CLIPBOARD:{
+            CLASS:Clipboard,
+            IMPLEMENTATION:{},
+            CLASSES:null
+        },
+        COLUMN_HIDER: {
+            CLASS: ColumnHider,
+            IMPLEMENTATION: {},
+            CLASSES: null
+        }
+    };
+    return declare(null,[],{});
+});
+/** @module xgrid/Base **/
+define('xgrid/BaseLite',[
+    "xdojo/declare",
+    'xide/types',
+    'xgrid/typesLite',
+    'xide/utils/ObjectUtils',   //possibly not loaded yet
+    'xide/utils',
+    'dgrid/OnDemandGrid',
+    'xgrid/Defaults',
+    'xgrid/Layout',
+    'xgrid/Focus',
+    'xgrid/ListRenderer',
+    'xgrid/ThumbRenderer',
+    'xgrid/TreeRenderer',
+    'dgrid/util/misc'
+], function (declare,types,
+             xTypes,ObjectUtils,utils,
+             OnDemandGrid,Defaults,Layout,Focus,
+             ListRenderer,ThumbRenderer,TreeRenderer,
+             miscUtil){
+
+    var BASE_CLASSES = ['EVENTED','GRID','EDITOR','RENDERER','DEFAULTS','LAYOUT','FOCUS','i18'];
+    var DEFAULT_GRID_FEATURES = types.DEFAULT_GRID_FEATURES_LITE;
+    var GRID_BASES = types.GRID_BASES;
+    var DEFAULT_GRID_OPTIONS = types.DEFAULT_GRID_OPTIONS;
+
+    /**
+     * Short hand version of declare.classFactory for our base grid
+     * @param name
+     * @param bases
+     * @param extraClasses
+     * @param implementation
+     * @private
+     * @returns {*}
+     */
+    function classFactory(name, bases, extraClasses,implementation) {
+        return declare.classFactory(name, bases, extraClasses, implementation,GRID_BASES);
+    }
+    /**
+     * Default implementation
+     * @class module:xgrid/Base
+     * @extends module:dgrid/List
+     * @extends module:xide/mixins/EventedMixin
+     */
+    var Implementation = {
+        _isHighlighting:false,
+        _featureMap:{},
+        options: utils.clone(types.DEFAULT_GRID_OPTIONS),
+        getContextMenu:function(){},
+        getToolbar:function(){},
+        /**
+         * Returns true if there is anything rendered.
+         * @param item {obj|null}
+         * @returns {boolean}
+         */
+        isRendered:function(item){
+            if(!item){
+                return this.bodyNode!=null;
+            }
+            item = this._normalize(item);
+            var collection = this.collection;
+            if(item){
+                var itemData = item.data;
+                var idProp = collection['idProperty'];
+                var nodes = this.getRows(true);
+                if(nodes) {
+                    for (var i = 0; i < nodes.length; i++) {
+                        var node = nodes[i];
+                        var row = this.row(node);
+                        if (row && row.data && row.data && itemData && row.data[idProp] === itemData[idProp]) {
+                            return true;
+                        }
+                    }
+                }
+
+            }
+            return false;
+        },
+        /**
+         * highlightRow in dgrid/List leaks and is anyway not needed.
+         */
+        highlightRow:function(){},
+        getParent:function(){
+            return this._parent;
+        },
+        get:function(what){
+            var parent = this.getParent();
+            if(what==='iconClass') {
+                //docker:
+                if (parent && parent.icon) {
+                    return parent.icon();
+                }
+            }
+            return this.inherited(arguments);
+        },
+        set:function(what,value){
+            var parent = this.getParent();
+            if(what==='iconClass'){
+                var _set = parent.set;
+                if(_set) {
+                    _set.apply(parent, [what, value]);
+                }else if(parent && parent.icon){
+                    parent.icon(value);
+                    return true;
+                }
+            }
+            if(what==='title' && value && parent){
+                var _set = parent.set;
+                if(_set){
+                    _set.apply(parent,[what,value]);
+                }else if(parent && parent.title){
+                    parent.title(value);
+                }
+            }
+
+            if(what==='loading'){            
+                this.__loading = value;
+                if(parent){
+                    //docker:
+                    if(parent.startLoading) {
+                        var icon = parent._options.icon;
+                        if (value === true) {
+                            parent.startLoading('', 0.5);
+                            parent.icon('fa-spinner fa-spin');
+                        } else {
+                            parent.finishLoading();
+                            parent.icon(icon);
+                        }
+                        return true;
+                    }else if(parent.set){
+                        parent.set('loading',value);
+                    }
+                }
+            }
+            return this.inherited(arguments);
+        },
+        runAction:function(action){
+            if(action.command==types.ACTION.HEADER){
+                this._setShowHeader(!this.showHeader);
+            }
+            return this.inherited(arguments);
+        },
+        highlight:function(highlight){
+            var node = $(this.domNode.parentNode);
+            if(highlight){
+                if(this._isHighlighting){
+                    return;
+                }
+                this._isHighlighting = true;
+                node.addClass('highlight');
+            }else{
+
+                this._isHighlighting=false;
+                node.removeClass('highlight');
+            }
+        },
+        getState:function(state) {
+            state = this.inherited(arguments) || {};
+            state.showHeader = this.showHeader;
+            return state;
+        },
+        postMixInProperties: function () {
+            var state = this.state;
+            if (state) {
+                this.showHeader = state.showHeader;
+            }
+            return this.inherited(arguments);
+        },
+        renderArray:function(array){
+            if(this.__loading){
+                return [];
+            }
+            this._lastData = array;            
+            return this.inherited(arguments);
+        },
+        getData:function(){
+            return this._lastData;
+        },
+        refreshItem:function(item,silent){
+            if (silent) {
+                this._muteSelectionEvents = true;
+            }
+            this.collection.emit('update', {
+                target: item
+            });
+            if (silent) {
+                this._muteSelectionEvents = false;
+            }
+        },
+        onShow:function(){
+            this._emit(types.EVENTS.ON_VIEW_SHOW,this);
+            return this.inherited(arguments);
+        },
+        isActive:function(testNode){
+            return utils.isDescendant(this.domNode,testNode || document.activeElement);
+        },
+        _showHeader:function(show){
+            $(this.domNode).find('.dgrid-header').each(function(i,el){
+                $(el).css('display',show ? '' : 'none' );
+            });
+
+            $(this.domNode).find('.dgrid-scroller').each(function(i,el){
+                $(el).css('margin-top',show ? 26 : 0 );
+            });
+
+        },
+        destroy:function(){
+            this._emit('destroy',this);
+            return this.inherited(arguments);
+        },
+        hasFeature:function(name){
+            return _contains(['name'],_.keys(this._featureMap));
+        },
+        /**
+         * Return current row's elements or data
+         * @param domNodes {boolean} return dom instead of data. Default false.
+         * @param filterFunction
+         * @returns {*}
+         */
+        getRows:function(domNodes,filterFunction){
+            var result = [],
+                self = this;
+            var nodes = $(self.domNode).find('.dgrid-row');
+            _.each(nodes,function(node){
+                var _row = self.row(node);
+                if(_row && _row.element){
+                    result.push(_row[domNodes ? 'element' : 'data']);
+                }
+            });
+            if (filterFunction) {
+                return result.filter(filterFunction);
+            }
+            return result;
+        },
+        startup:function(){
+            var result = this.inherited(arguments);
+            if(this.columns) {
+                _.each(this.columns,function(column){
+                    if (column.width) {
+                        this.styleColumn(parseInt(column.id), 'width:' + column.width);
+                    }
+                },this);
+            }
+
+            var self = this;
+            this.showExtraSpace && this.on('dgrid-refresh-complete',function(){
+                var rows = self.getRows();
+                var _extra = $(self.contentNode).find('.dgrid-extra');
+                if(!rows.length){
+                    return;
+                }
+
+                if(!_extra.length){
+                    _extra = $('<div class="dgrid-extra" style="width:100%;height:80px"></div>');
+                    $(self.contentNode).append(_extra);
+                    _extra.on('click',function(){
+                        self.deselectAll();
+                    });
+                    _extra.on('contextmenu',function(){
+                        self.deselectAll();
+                    })
+                }
+            });
+
+            return result;
+        },
+        removeRow:function(){
+            var res = this.inherited(arguments);
+            var self = this;
+            if(this.showExtraSpace) {
+                var rows = self.getRows();
+                var _extra = $(self.contentNode).find('.dgrid-extra');
+                if (!rows.length) {
+                    _extra.remove();
+                }
+            }
+            return res;
+        }
+    };
+    /**
+     * Create root class with declare and default implementation
+     */
+    var _default = declare('xgrid.DefaultLite', null, Implementation);
+
+    /**
+     * 2-dim array search
+     * @param left {string[]}
+     * @param keys {string[]}
+     * @returns {boolean}
+     * @private
+     */
+    function _contains(left, keys) {
+        return keys.some(function (v) {
+            return left.indexOf(v) >= 0;
+        });
+    }
+
+    /**
+     * Find default keys in a feature struct and recompse user feature
+     * @param feature {object} feature struct
+     * @param defaultFeature {object}
+     * @returns {object} recomposed feature
+     */
+    function getFeature(feature, defaultFeature) {
+        //is new feature, return the mix of default props and customized version
+        if (_contains(['CLASS','CLASSES','IMPLEMENTATION'],_.keys(feature))) {
+            return utils.mixin(utils.cloneKeys(defaultFeature),feature);
+        }
+        return defaultFeature;
+    }
+
+    /**
+     * Grid class factory
+     * @param name {string} A name for the class created
+     * @param baseClass {object} the actual implementation (default root class, declared above)
+     * @param features {object} the feature map override
+     * @param gridClasses {object} the base grid classes map override
+     * @param args {object} root class override
+     * @param _defaultBases {object}
+     * @memberOf module:xgrid/Base
+     * @returns {module:xgrid/Base}
+     */
+    function createGridClass(name, baseClass, features, gridClasses, args,_defaultBases) {
+        var _isNewBaseClass = false;
+        baseClass = baseClass || _default;
+        //simple case, no base class and no features
+        if (!baseClass && !features) {
+            return _default;
+        }
+        if (baseClass) {
+            _isNewBaseClass = _contains(BASE_CLASSES,_.keys(gridClasses));
+            var defaultBases = utils.cloneKeys(_defaultBases || GRID_BASES);
+            if (_isNewBaseClass) {
+                utils.mixin(defaultBases, gridClasses);
+                //remove empty
+                defaultBases = _.pick(defaultBases, _.identity);
+            }
+            //recompose base class
+            baseClass = classFactory(name, defaultBases, [_default], baseClass);
+        }
+
+        var newFeatures = [],
+            featureMap = {};
+
+        //case: base class and features
+        if (baseClass && features) {
+            var _defaultFeatures = utils.cloneKeys(DEFAULT_GRID_FEATURES);
+            utils.mixin(_defaultFeatures, features);
+
+            for (var featureName in _defaultFeatures) {
+                var feature = _defaultFeatures[featureName];
+                if (!_defaultFeatures[featureName]) {
+                    continue;
+                }
+                var newFeature = null;
+                if (feature === true) {
+                    //is a base feature
+                    newFeature = DEFAULT_GRID_FEATURES[featureName];
+                } else if (DEFAULT_GRID_FEATURES[featureName]) {
+                    //is new/extra feature
+                    newFeature = getFeature(feature, DEFAULT_GRID_FEATURES[featureName]);
+                } else {
+                    //go on
+                    newFeature = feature;
+                }
+                if (newFeature) {
+                    var featureClass = classFactory(featureName, newFeature['CLASSES'] || [], [newFeature['CLASS']], newFeature['IMPLEMENTATION']);
+                    newFeatures.push(featureClass);
+                    featureMap[featureName]=featureClass;
+                }
+            }
+            //recompose
+            if (newFeatures.length > 0) {
+                baseClass = classFactory(name, [baseClass], newFeatures, args);
+            }
+            //complete
+            baseClass.prototype._featureMap = featureMap;
+        }
+        return baseClass;
+    }
+
+
+    var Module = createGridClass('xgrid/Base',{
+            options: utils.clone(DEFAULT_GRID_OPTIONS)
+        },
+        //features
+        {
+            SELECTION: true,
+            KEYBOARD_SELECTION: true,
+            PAGINATION: false,
+            COLUMN_HIDER: false
+        },
+        //bases, no modification
+        null,
+        {
+
+        });
+
+    Module.createGridClass = createGridClass;
+
+    //track defaults on module
+    Module.classFactory = classFactory;
+    Module.DEFAULT_GRID_FEATURES = DEFAULT_GRID_FEATURES;
+    Module.DEFAULT_GRID_BASES = GRID_BASES;
+    Module.DEFAULT_GRID_OPTIONS = DEFAULT_GRID_OPTIONS;
+    Module.DEFAULT_GRID_OPTION_KEYS = types.DEFAULT_GRID_OPTION_KEYS;
+
+    return Module;
+
+});
+/** @module xgrid/Grid **/
+define('xgrid/GridLite',[
+    'dojo/_base/declare',
+    'xide/types',
+    './BaseLite'
+],function (declare,types,Base) {
+    /**
+     *
+     * Please read {@link module:xgrid/types}
+     *
+     * @class module:xgrid/Grid
+     * @augments module:xgrid/Base
+     */
+    var grid = declare('xgrid/Grid',Base,{});
+
+    grid.createGridClass = Base.createGridClass;
+
+    //track defaults on module
+    grid.classFactory = Base.classFactory;
+    grid.DEFAULT_GRID_FEATURES = types.DEFAULT_GRID_FEATURES_LITE;
+    grid.DEFAULT_GRID_BASES = Base.DEFAULT_GRID_BASES;
+    grid.DEFAULT_GRID_OPTIONS = types.DEFAULT_GRID_OPTIONS;
+    grid.DEFAULT_GRID_OPTION_KEYS = types.DEFAULT_GRID_OPTION_KEYS;
+
+    return grid;
+});
+/** @module xgrid/MultiRenderer **/
+define('xgrid/MultiRenderer',[
+    "xdojo/declare",
+    'xide/types',
+    'xgrid/Renderer',
+    'dojo/_base/kernel'
+], function (declare, types, Renderer,dojo) {
+    /**
+     * @class module:xgrid/MultiRenderer
+     * @extends module:xgrid/Renderer
+     */
+    var Implementation = {
+        renderers: null,
+        selectedRenderer: null,
+        lastRenderer: null,
+        rendererActionRootCommand: 'View/Layout',
+        runAction:function(action){
+            action = this.getAction(action);
+            if(action.command.indexOf(this.rendererActionRootCommand)!==-1){
+                var parentAction = action.getParent ?  action.getParent() : null;
+                action._originEvent = 'change';
+                this.setRenderer(action.value);
+                if(parentAction) {
+                    parentAction.set('icon', action.get('icon'));
+                    var rendererActions = parentAction.getChildren();
+                    _.each(rendererActions, function (child) {
+                        child._oldIcon && child.set('icon', child._oldIcon);
+                    });
+                }
+                action.set && action.set('icon', 'fa-check');
+                return true;
+            }
+            return this.inherited(arguments);
+        },
+        /**
+         * Impl. set state
+         * @param state
+         * @returns {object|null}
+         */
+        setState:function(state){
+            var renderer = state.selectedRenderer ? dojo.getObject(state.selectedRenderer) : null;
+            if(renderer){
+                this.setRenderer(renderer);
+                this.set('collection',this.collection.getDefaultCollection());
+
+            }
+            return this.inherited(arguments);
+        },
+        /**
+         * Impl. get state
+         * @param state
+         * @returns {object}
+         */
+        getState:function(state){
+            state = this.inherited(arguments) || {};
+            if(this.selectedRenderer) {
+                state.selectedRenderer = this.getSelectedRenderer.declaredClass;
+            }
+            return state;
+        },
+        getRendererActions: function (_renderers, actions) {
+            var root = this.rendererActionRootCommand,
+                thiz = this,
+                renderActions = [],
+                renderers = _renderers || this.getRenderers(),
+                VISIBILITY = types.ACTION_VISIBILITY,
+                index = 1;
+
+            actions = actions || [];
+
+            //root
+            renderActions.push(this.createAction({
+                label: 'Layout',
+                command: root,
+                icon: 'fa-laptop',
+                tab: 'View',
+                group: 'Layout',
+                mixin:{
+                    closeOnClick:false
+                },
+                onCreate:function(action){
+                    action.value = thiz.selectedRenderer;
+
+                    action.setVisibility(VISIBILITY.ACTION_TOOLBAR, false).
+                    setVisibility(VISIBILITY.RIBBON,{expand:true});
+                }
+            }));
+            /**
+             *
+             * @param col
+             * @private
+             */
+            function createEntry(label, icon, Renderer) {
+                var selected = Renderer == thiz.selectedRenderer;
+                /*
+                var mapping = {
+                    "change":{
+                        //action to widget mapping
+                        input:ActionValueWidget.createTriggerSetting('value','checked',function(event,value,mapping){
+                            //return this.actionValue;
+                            return value;
+                        }),
+
+                        //widget to action mapping
+                        output:utils.mixin(ActionValueWidget.createTriggerSetting('checked','value',function(){
+                            return this.actionValue;
+                        }),{
+                            ignore:function(event,value){
+                                return value === false;
+                            }
+                        })
+                    }
+                };
+                */
+
+                /*
+                var widgetArgs = {
+                    actionValue:Renderer,
+                    mapping:mapping,
+                    checked: selected,
+                    label:label
+                };
+                */
+
+                var keycombo = 'shift f' + index;
+                index++;
+
+                var _renderer = Renderer;
+                var _action = null;
+                var ACTION = null;
+
+                _action = thiz.createAction({
+                    label: label,
+                    command: root + '/' + label,
+                    icon: icon,
+                    tab: 'View',
+                    group: 'Layout',
+                    mixin:{
+                        value:Renderer,
+                        addPermission:true,
+                        closeOnClick:false
+                    },
+                    keycombo:[keycombo],
+                    onCreate:function(action){
+                        action._oldIcon = icon;
+                        action.actionType = types.ACTION_TYPE.SINGLE_TOGGLE;
+                        //action.set('value',Renderer);
+                        action.value = Renderer;
+                        /*
+                        var _visibilityMixin = {
+                            widgetArgs: {
+                                actionValue:Renderer,
+                                mapping:mapping,
+                                group: thiz.id+'_renderer_all',
+                                checked: selected,
+                                label:label,
+                                iconClass: null,
+                                title:'test'
+                            }
+                        };
+                        action.setVisibility(types.ACTION_VISIBILITY_ALL,_visibilityMixin);
+                        */
+
+                    }
+                });
+                renderActions.push(_action);
+                return renderActions;
+            }
+
+            _.each(renderers,function (Renderer) {
+                var impl = Renderer.Implementation || Renderer.prototype;
+                if (impl._getLabel) {
+                    createEntry(impl._getLabel(), impl._getIcon(), Renderer);
+                }
+            });
+            return renderActions;
+        },
+        getSelectedRenderer:function(){
+            return this.selectedRenderer.prototype;
+        },
+        startup: function () {
+            var thiz = this;
+            this._on('onAddGridActions', function (evt) {
+                var renderActions = thiz.getRendererActions(thiz.getRenderers(), evt.actions);
+                renderActions.forEach(function (action) {
+                    evt.actions.push(action);
+                });
+            });
+            this.inherited(arguments);
+            //add new root class
+            this.selectedRenderer && $(this.domNode).addClass(this.getSelectedRenderer()._getLabel());
+        },
+        getRenderers: function () {
+            return this.renderers;
+        },
+        setRenderer: function (renderer,_focus) {
+            //track focus and selection
+            var self = this,
+                selection = self.getSelection(),
+                focused = self.getFocused(),
+                selected = self.getSelectedRenderer();
+
+            var args = {
+                'new': renderer,
+                'old': self.selectedRenderer
+            };
+            var node$ = $(this.domNode);
+            //remove renderer root css class
+            node$.removeClass(selected._getLabel());
+            //call renderer API
+            selected.deactivateRenderer.apply(this, args);
+
+            //tell everyone
+            this._emit('onChangeRenderer', args);
+
+            //update locals
+            this.lastRenderer = this.selectedRenderer;
+            this.selectedRenderer = renderer;
+
+            //?
+            this.selectedRendererClass = renderer.prototype.declaredClass;
+
+            //add new root class
+            node$.addClass(renderer.prototype._getLabel());
+
+            //call  API
+            renderer.prototype.activateRenderer.apply(this, args);
+
+            //reset store
+            this.collection.reset();
+
+            //refresh, then restore sel/focus
+            var refresh = this.refresh();
+
+            refresh && refresh.then && refresh.then(function(){
+                self._emit('onChangedRenderer', args);
+            });
+            return refresh;
+        }
+    };
+
+
+    /**
+     * Forward custom renderer method
+     * @param who
+     * @param method
+     */
+    function forward(who,method){
+        Implementation[method]=function(){
+            var parent = this.getSelectedRenderer();
+            if (parent[method]) {
+                return parent[method].apply(this, arguments);
+            }
+            return this.inherited(arguments);
+        };
+    }
+
+    //@TODO: this should be all public methods in dgrid/List ?
+    _.each(['row','removeRow','renderRow','insertRow','activateRenderer','deactivateRenderer'],function(method){
+        forward(Implementation,method);
+    });
+
+
+    //package via declare
+    var _class = declare('xgrid.MultiRenderer', null, Implementation);
+    _class.Implementation = Implementation;
+
+    return _class;
 });
 /** module:xide/views/_LayoutMixin **/
 define('xide/views/_LayoutMixin',[
@@ -37807,6 +37943,7 @@ define('xide/utils/StringUtils',[
         }
         str = utils.cleanString(str);//control characters
         str = str.replace('./', '');//file store specifics
+        str = str.replace('/.', '');//file store specifics
         str = str.replace(/([^:]\/)\/+/g, "$1");//double slashes
         return str;
     };
@@ -39989,7 +40126,7 @@ define('xfile/data/Store',[
      * Constants
      * @type {string}
      */
-    var C_ITEM_EXPANDED = "_EX";      // Attribute indicating if a directory item is fully expanded.
+    var C_ITEM_EXPANDED = "_EX"; // Attribute indicating if a directory item is fully expanded.
     /**
      *
      * A store based on dstore/Memory and additional dstore mixins, used for all xfile grids.
@@ -40085,7 +40222,7 @@ define('xfile/data/Store',[
             options: {
                 fields: 1663,
                 includeList: "*",
-                excludeList: "*"    // XPHP actually sets this to ".svn,.git,.idea" which are compatible to PHP's 'glob'
+                excludeList: "*" // XPHP actually sets this to ".svn,.git,.idea" which are compatible to PHP's 'glob'
             },
             /**
              * @member serviceUrl {string} the path to the service entry point. There are 2 modes this end-point must
@@ -40332,7 +40469,9 @@ define('xfile/data/Store',[
                     var deferred = new Deferred();
                     var _loadNext = function () {
                         //no additional lodash or array stuff please, keep it simple
-                        var isFinish = !_.find(partsToLoad, { loaded: false });
+                        var isFinish = !_.find(partsToLoad, {
+                            loaded: false
+                        });
                         if (isFinish) {
                             deferred.resolve(thiz._getItem(path));
                         } else {
@@ -40380,7 +40519,10 @@ define('xfile/data/Store',[
                             itemStr += '/';
                         }
                         itemStr += parts[i];
-                        partsToLoad.push({ path: itemStr, loaded: false });
+                        partsToLoad.push({
+                            path: itemStr,
+                            loaded: false
+                        });
                     }
                     //fire
                     _loadNext();
@@ -40501,26 +40643,26 @@ define('xfile/data/Store',[
                 var result = this._request(path, options);
                 //console.log('load path : ' + path);
                 result.then(function (items) {
-                    //console.log('got : items for ' + path, items);
-                    var _item = thiz._getItem(path, true);
-                    if (_item) {
-                        if (force) {
-                            if (!_.isEmpty(_item.children)) {
-                                thiz.removeItems(_item.children);
+                        //console.log('got : items for ' + path, items);
+                        var _item = thiz._getItem(path, true);
+                        if (_item) {
+                            if (force) {
+                                if (!_.isEmpty(_item.children)) {
+                                    thiz.removeItems(_item.children);
+                                }
+                            }
+                            _item._EX = true;
+                            thiz.addItems(items, force);
+                            _item.children = items;
+                            return items;
+                        } else {
+                            if (options && options.onError) {
+                                options.onError('Error Requesting path on server : ' + path);
+                            } else {
+                                throw new Error('cant get item at ' + path);
                             }
                         }
-                        _item._EX = true;
-                        thiz.addItems(items, force);
-                        _item.children = items;
-                        return items;
-                    } else {
-                        if (options && options.onError) {
-                            options.onError('Error Requesting path on server : ' + path);
-                        } else {
-                            throw new Error('cant get item at ' + path);
-                        }
-                    }
-                }.bind(this),
+                    }.bind(this),
                     function (err) {
                         console.error('error in load');
                     });
@@ -40643,7 +40785,11 @@ define('xfile/data/Store',[
                 }
             },
             getDefaultSort: function () {
-                return [{ property: 'name', descending: false, ignoreCase: true }];
+                return [{
+                    property: 'name',
+                    descending: false,
+                    ignoreCase: true
+                }];
             },
             filter: function (data) {
                 if (data && typeof data === 'function') {
@@ -40678,25 +40824,34 @@ define('xfile/data/Store',[
             },
             _request: function (path, options) {
                 var collection = this;
-                //console.log('requesting ' + path);
-                return this.runDeferred(null, 'ls', {
-                    path: path,
-                    mount: this.mount,
-                    options: this.options,
-                    recursive: this.recursive
-                },
-                    utils.mixin({ checkErrors: false, displayError: true }, options)).then(function (response) {
-                        var results = collection._normalize(response);
-                        collection._parse(results);
-                        // support items in the results
-                        results = results.children || results;
-                        return results;
-                    }, function (e) {
-                        if (options && options.displayError === false) {
-                            return;
-                        }
-                        logError(e, 'error in FileStore : ' + this.mount + ' :' + e);
-                    });
+                const onError = ((e) => {
+                    if (options && options.displayError === false) {
+                        return;
+                    }
+                    logError(e, 'error in FileStore : ' + this.mount + ' :' + e);
+                });
+                const promise = this.runDeferred(null, 'ls', {
+                        path: path,
+                        mount: this.mount,
+                        options: this.options,
+                        recursive: this.recursive
+                    },
+                    utils.mixin({
+                        checkErrors: false,
+                        displayError: true
+                    }, options), onError).then(function (response) {
+                    var results = collection._normalize(response);
+                    collection._parse(results);
+                    // support items in the results
+                    results = results.children || results;
+                    return results;
+                }, function (e) {
+                    if (options && options.displayError === false) {
+                        return;
+                    }
+                    logError(e, 'error in FileStore : ' + this.mount + ' :' + e);
+                });
+                return promise;
             },
             fetchRangeSync: function () {
                 var data = this.fetchSync();
@@ -40721,10 +40876,10 @@ define('xfile/data/Store',[
                 return new QueryResults(results.then(function (data) {
                     return data;
                 }), {
-                        totalLength: results.then(function (data) {
-                            return data.length;
-                        })
-                    });
+                    totalLength: results.then(function (data) {
+                        return data.length;
+                    })
+                });
             },
             initRoot: function () {
                 //first time load
@@ -40807,9 +40962,11 @@ define('xfile/data/Store',[
                 // object:
                 //		The parent object
                 // returns: dstore/Store.Collection
-                return this.root.filter({ parent: this.getIdentity(object) });
+                return this.root.filter({
+                    parent: this.getIdentity(object)
+                });
             },
-            spin:true
+            spin: true
         };
     }
     var Module = declare("xfile/data/Store", [TreeMemory, Cache, Trackable, ObservableStore, ServerActionBase.declare, ReloadMixin], Implementation());
@@ -41749,7 +41906,7 @@ define('xfile/manager/FileManagerActions',[
             return this.doOperation(types.OPERATION.NEW_DIRECTORY, [mount, path], path, null, null, dfdOptions);
         },
         mkfile: function (mount, path, content) {
-            return this.doOperation(types.OPERATION.NEW_FILE, [mount, path], path);
+            return this.doOperation(types.OPERATION.NEW_FILE, [mount, path, content || ''], path);
         },
         rename: function (mount, src, dst) {
             return this.doOperation(types.OPERATION.RENAME, [mount, src, dst], src);
@@ -41993,7 +42150,7 @@ define('xfile/manager/FileManager',[
         },
         getUploadUrl: function () {
             if(has('nserver')){
-                return this.serviceUrl.replace('/smd','/upload?');
+                return this.serviceUrl.replace('/smd', '/upload/?');
             }
             var url = '' + decodeURIComponent(this.serviceUrl);
 
@@ -43090,9 +43247,9 @@ define('xfile/mainr.js',[
     'xgrid/ListRenderer',
     'xfile/types',
     'xfile/component',
-    'xfile/views/GridLight',
-    'xfile/views/FileGridLight',
     'xfile/FileActions',
+    'xfile/views/GridLight',
+    'xfile/views/FileGridLight',    
     'xfile/Statusbar',
     'xfile/ThumbRenderer',
     'xfile/types',
