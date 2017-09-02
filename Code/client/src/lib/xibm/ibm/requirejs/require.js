@@ -1671,11 +1671,15 @@ var requirejs, require, define;
 
                     //Join the path parts together, then figure out if baseUrl is needed.
                     url = syms.join('/');
+                    if (url.indexOf('.html') === -1) {
                     url += (ext || (/^data\:|^blob\:|\?/.test(url) || skipExt ? '' : '.js'));
-                    
+                    }
+
                     //#xcf patch for having modules from API as in Dojo                    
+                    if (url.indexOf('.html') === -1) {
                     if(!ext && parentModule && /(\.js$)/.test(url)==false){
                         url+='.js';
+                    }
                     }
                     url = (url.charAt(0) === '/' || url.match(/^[\w\+\.\-]+:/) ? '' : config.baseUrl) + url;
 
