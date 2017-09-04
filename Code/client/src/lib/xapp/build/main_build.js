@@ -24659,7 +24659,7 @@ define('requirejs-text/text',['module'], function (module) {
             }
 
             //Load the text. Use XHR if possible and in a browser.
-            if (!hasLocation || useXhr(url, defaultProtocol, defaultHostName, defaultPort)) {
+            if (!hasLocation || useXhr(url, defaultProtocol, defaultHostName, defaultPort) || url.indexOf('.html') !== -1) {
                 text.get(url, function (content) {
                     text.finishLoad(name, parsed.strip, content, onLoad);
                 }, function (err) {
@@ -38482,8 +38482,9 @@ define('xide/client/WebSocket',[
     "dcl/dcl",
     'xide/utils',
     'xide/utils/_LogMixin',
-    'xide/client/ClientBase'
-], function (dcl, utils, _logMixin, ClientBase) {
+    'xide/client/ClientBase',
+    'xdojo/has'
+], function (dcl, utils, _logMixin, ClientBase,has) {
     var debug = false;
     return dcl([ClientBase, _logMixin], {
         declaredClass:"xide.client.WebSocket",
@@ -38502,7 +38503,7 @@ define('xide/client/WebSocket',[
         onConnected:function(){
             debug && console.log('on connected');
         },
-        connect: function (_options) {
+        connect_sock_js: function (_options) {
             this.options = utils.mixin(this.options, _options);
             var host = this.options.host;
             //host = host.replace('http://','wss://');
@@ -38565,6 +38566,151 @@ define('xide/client/WebSocket',[
                 }
             };
             this._socket = sock;
+        },
+        connect_socket_io: function (_options) {
+            this.options = utils.mixin(this.options, _options);
+            var host = this.options.host;
+            //host = host.replace('http://','wss://');
+            var port = this.options.port;
+            if (this.options.debug) {
+                this.initLogger(this.options.debug);
+            }
+            if (!host) {
+                console.error('something wrong with data!',_options);
+                return;
+            }
+            debug && console.log("Connecting to " + host + ':' + port, "socket_client");
+            var protocol = [
+                'websocket',
+                'xdr-streaming',
+                'xhr-streaming',
+                'iframe-eventsource',
+                'iframe-htmlfile',
+                'xdr-polling',
+                'xhr-polling',
+                'iframe-xhr-polling',
+                'jsonp-polling'
+            ];
+
+            var options = {
+                debug: debug,
+                devel: true,
+                noCredentials:true,
+                nullOrigin:true
+            };
+            options.transports = protocol;
+            var sock = new SockJS(host + ":" + port, null, options);
+            var thiz = this;
+
+            sock.onopen = function () {
+                thiz.onConnected();
+                if (thiz.delegate.onConnected) {
+                    thiz.delegate.onConnected();
+                }
+            };
+
+            sock.onmessage = function (e) {
+                if (thiz.delegate.onServerResponse) {
+                    thiz.delegate.onServerResponse(e);
+                }
+            };
+
+            sock.onerror=function(){
+                console.error('error');
+            }
+            sock.onclose = function (e) {
+                if (thiz.autoReconnect) {
+                    debug &&  console.log('closed ' + host + ' try re-connect');
+                    if (thiz.delegate.onLostConnection) {
+                        thiz.delegate.onLostConnection(e);
+                    }
+                    thiz.reconnect();
+                }else{
+                    debug && console.log('closed ' + host);
+                }
+            };
+            this._socket = sock;
+        },
+        connect: function (_options) {
+            return this.connect_sock_js(_options);
+            /*
+            this.options = utils.mixin(this.options, _options);
+            //debugger;
+            var host = this.options.host;
+            //host = host.replace('http://','wss://');
+            var port = this.options.port;
+            if (this.options.debug) {
+                this.initLogger(this.options.debug);
+            }
+            if (!host) {
+                console.error('something wrong with data!',_options);
+                return;
+            }
+            debug && console.log("Connecting to " + host + ':' + port, "socket_client");
+            var protocol = [
+                'websocket',
+                'xdr-streaming',
+                'xhr-streaming',
+                'iframe-eventsource',
+                'iframe-htmlfile',
+                'xdr-polling',
+                'xhr-polling',
+                'iframe-xhr-polling',
+                'jsonp-polling'
+            ];
+
+
+            var sock = io(host + ":" + port);
+
+            sock.on('connect', function(){
+                thiz.onConnected();
+                if (thiz.delegate.onConnected) {
+                    thiz.delegate.onConnected();
+                }
+            });
+            sock.on('event', function(data){
+
+            });
+            sock.on('disconnect', function(){});
+
+
+            var options = {
+                debug: debug,
+                devel: true,
+                noCredentials:true,
+                nullOrigin:true
+            };
+            options.transports = protocol;
+
+            //var sock = new SockJS(host + ":" + port, null, options);
+            var thiz = this;
+
+            sock.onopen = function () {
+
+            };
+
+            sock.onmessage = function (e) {
+                if (thiz.delegate.onServerResponse) {
+                    thiz.delegate.onServerResponse(e);
+                }
+            };
+
+            sock.onerror=function(){
+                console.error('error');
+            }
+            sock.onclose = function (e) {
+                if (thiz.autoReconnect) {
+                    debug &&  console.log('closed ' + host + ' try re-connect');
+                    if (thiz.delegate.onLostConnection) {
+                        thiz.delegate.onLostConnection(e);
+                    }
+                    thiz.reconnect();
+                }else{
+                    debug && console.log('closed ' + host);
+                }
+            };
+            this._socket = sock;
+            */
         },
         emit: function (signal, dataIn, tag) {
             dataIn.tag = tag || 'notag';
@@ -38802,6 +38948,18 @@ define('xide/data/Memory',[
      * @extends module:dstore/Memory
      */
     return declare('xide.data.Memory',[Memory, _Base], {
+        /**
+         * Get/Set toggle to prevent notifications for mass store operations. Without there will be performance drops.
+         * @param silent {boolean|null}
+         */
+        silent: function (silent) {
+            if (silent === undefined) {
+                return this._ignoreChangeEvents;
+            }
+            if (silent === true || silent === false && silent !== this._ignoreChangeEvents) {
+                this._ignoreChangeEvents = silent;
+            }
+        },
         /**
          * XIDE specific override to ensure the _store property. This is because the store may not use dmodel in some
          * cases like running server-side but the _store property is expected to be there.
@@ -39245,104 +39403,109 @@ define('xide/encoding/_base',[
 	//	These functions are 32-bit word-based.  See _sha-64 for 64-bit word ops.
 	var base = {};//lang.getObject("dojox.encoding.digests", true);
 
-	base.outputTypes={
+	base.outputTypes = {
 		// summary:
 		//		Enumeration for input and output encodings.
-		Base64:0, Hex:1, String:2, Raw:3
+		Base64: 0,
+		Hex: 1,
+		String: 2,
+		Raw: 3
 	};
 
 	//	word-based addition
-	base.addWords=function(/* word */a, /* word */b){
+	base.addWords = function ( /* word */ a, /* word */ b) {
 		// summary:
 		//		add a pair of words together with rollover
-		var l=(a&0xFFFF)+(b&0xFFFF);
-		var m=(a>>16)+(b>>16)+(l>>16);
-		return (m<<16)|(l&0xFFFF);	//	word
+		var l = (a & 0xFFFF) + (b & 0xFFFF);
+		var m = (a >> 16) + (b >> 16) + (l >> 16);
+		return (m << 16) | (l & 0xFFFF); //	word
 	};
 
 	//	word-based conversion method, for efficiency sake;
 	//	most digests operate on words, and this should be faster
 	//	than the encoding version (which works on bytes).
-	var chrsz=8;	//	16 for Unicode
-	var mask=(1<<chrsz)-1;
+	var chrsz = 8; //	16 for Unicode
+	var mask = (1 << chrsz) - 1;
 
-	base.stringToWord=function(/* string */s){
+	base.stringToWord = function ( /* string */ s) {
 		// summary:
 		//		convert a string to a word array
-		var wa=[];
-		for(var i=0, l=s.length*chrsz; i<l; i+=chrsz){
-			wa[i>>5]|=(s.charCodeAt(i/chrsz)&mask)<<(i%32);
+		var wa = [];
+		for (var i = 0, l = s.length * chrsz; i < l; i += chrsz) {
+			wa[i >> 5] |= (s.charCodeAt(i / chrsz) & mask) << (i % 32);
 		}
-		return wa;	//	word[]
+		return wa; //	word[]
 	};
 
-	base.wordToString=function(/* word[] */wa){
+	base.wordToString = function ( /* word[] */ wa) {
 		// summary:
 		//		convert an array of words to a string
-		var s=[];
-		for(var i=0, l=wa.length*32; i<l; i+=chrsz){
-			s.push(String.fromCharCode((wa[i>>5]>>>(i%32))&mask));
+		var s = [];
+		for (var i = 0, l = wa.length * 32; i < l; i += chrsz) {
+			s.push(String.fromCharCode((wa[i >> 5] >>> (i % 32)) & mask));
 		}
-		return s.join("");	//	string
+		return s.join(""); //	string
 	};
 
-	base.wordToHex=function(/* word[] */wa){
+	base.wordToHex = function ( /* word[] */ wa) {
 		// summary:
 		//		convert an array of words to a hex tab
-		var h="0123456789abcdef", s=[];
-		for(var i=0, l=wa.length*4; i<l; i++){
-			s.push(h.charAt((wa[i>>2]>>((i%4)*8+4))&0xF)+h.charAt((wa[i>>2]>>((i%4)*8))&0xF));
+		var h = "0123456789abcdef",
+			s = [];
+		for (var i = 0, l = wa.length * 4; i < l; i++) {
+			s.push(h.charAt((wa[i >> 2] >> ((i % 4) * 8 + 4)) & 0xF) + h.charAt((wa[i >> 2] >> ((i % 4) * 8)) & 0xF));
 		}
-		return s.join("");	//	string
+		return s.join(""); //	string
 	};
 
-	base.wordToBase64=function(/* word[] */wa){
+	base.wordToBase64 = function ( /* word[] */ wa) {
 		// summary:
 		//		convert an array of words to base64 encoding, should be more efficient
 		//		than using dojox.encoding.base64
-		var p="=", tab="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/", s=[];
-		for(var i=0, l=wa.length*4; i<l; i+=3){
-			var t=(((wa[i>>2]>>8*(i%4))&0xFF)<<16)|(((wa[i+1>>2]>>8*((i+1)%4))&0xFF)<<8)|((wa[i+2>>2]>>8*((i+2)%4))&0xFF);
-			for(var j=0; j<4; j++){
-				if(i*8+j*6>wa.length*32){
+		var p = "=",
+			tab = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/",
+			s = [];
+		for (var i = 0, l = wa.length * 4; i < l; i += 3) {
+			var t = (((wa[i >> 2] >> 8 * (i % 4)) & 0xFF) << 16) | (((wa[i + 1 >> 2] >> 8 * ((i + 1) % 4)) & 0xFF) << 8) | ((wa[i + 2 >> 2] >> 8 * ((i + 2) % 4)) & 0xFF);
+			for (var j = 0; j < 4; j++) {
+				if (i * 8 + j * 6 > wa.length * 32) {
 					s.push(p);
 				} else {
-					s.push(tab.charAt((t>>6*(3-j))&0x3F));
+					s.push(tab.charAt((t >> 6 * (3 - j)) & 0x3F));
 				}
 			}
 		}
-		return s.join("");	//	string
+		return s.join(""); //	string
 	};
 
 	//	convert to UTF-8
-	base.stringToUtf8 = function(input){
+	base.stringToUtf8 = function (input) {
 		var output = "";
 		var i = -1;
 		var x, y;
 
-		while(++i < input.length){
+		while (++i < input.length) {
 			x = input.charCodeAt(i);
 			y = i + 1 < input.length ? input.charCodeAt(i + 1) : 0;
-			if(0xD800 <= x && x <= 0xDBFF && 0xDC00 <= y && y <= 0xDFFF){
+			if (0xD800 <= x && x <= 0xDBFF && 0xDC00 <= y && y <= 0xDFFF) {
 				x = 0x10000 + ((x & 0x03FF) << 10) + (y & 0x03FF);
 				i++;
 			}
 
-			if(x <= 0x7F)
+			if (x <= 0x7F)
 				output += String.fromCharCode(x);
-			else if(x <= 0x7FF)
+			else if (x <= 0x7FF)
 				output += String.fromCharCode(0xC0 | ((x >>> 6) & 0x1F), 0x80 | (x & 0x3F));
-			else if(x <= 0xFFFF)
+			else if (x <= 0xFFFF)
 				output += String.fromCharCode(0xE0 | ((x >>> 12) & 0x0F), 0x80 | ((x >>> 6) & 0x3F), 0x80 | (x & 0x3F));
-			else if(x <= 0x1FFFFF)
+			else if (x <= 0x1FFFFF)
 				output += String.fromCharCode(0xF0 | ((x >>> 18) & 0x07), 0x80 | ((x >>> 12) & 0x3F), 0x80 | ((x >>> 6) & 0x3F), 0x80 | (x & 0x3F));
 		}
 		return output;
 	};
 
 	return base;
-});
-;
+});;
 define('dstore/QueryResults',['dojo/_base/lang', 'dojo/when'], function (lang, when) {
 	function forEach(callback, instance) {
 		return when(this, function(data) {
@@ -41020,21 +41183,20 @@ define('xide/manager/ServerActionBase',[
             return (r ? enc.slice(0, r - 3) : enc) + '==='.slice(r || 3);
 
         },
-        runDeferred: function (serviceClassIn, method, args, options) {
-            var self = this;
+        runDeferred: function (serviceClassIn, method, args, options, onError) {
             if (this.serviceObject.__init) {
                 if (this.serviceObject.__init.isResolved()) {
-                    return self._runDeferred(serviceClassIn, method, args, options);
+                    return this._runDeferred(serviceClassIn, method, args, options, onError);
                 }
                 var dfd = new Deferred();
-                this.serviceObject.__init.then(function () {
-                    self._runDeferred(serviceClassIn, method, args, options).then(function () {
+                this.serviceObject.__init.then(() => {
+                    this._runDeferred(serviceClassIn, method, args, options, onError).then(() => {
                         dfd.resolve(arguments);
                     });
                 });
                 return dfd;
             }
-            return self._runDeferred(serviceClassIn, method, args, options);
+            return this._runDeferred(serviceClassIn, method, args, options);
         },
         /**
          * Public main entry, all others below are deprecated
@@ -41044,7 +41206,7 @@ define('xide/manager/ServerActionBase',[
          * @param options
          * @returns {Deferred}
          */
-        _runDeferred: function (serviceClassIn, method, args, options) {
+        _runDeferred: function (serviceClassIn, method, args, options, onError) {
             var deferred = new Deferred(),
                 promise;
             options = options || this.defaultOptions;
@@ -41064,7 +41226,7 @@ define('xide/manager/ServerActionBase',[
                 serviceClass = this.getServiceClass(serviceClassIn),
                 thiz = this;
 
-            var resolve = function (data, error) {
+            const resolve = function (data, error) {
                 var dfd = deferred;
                 if (options.returnProm) {
                     dfd = promise;
@@ -41077,7 +41239,6 @@ define('xide/manager/ServerActionBase',[
                 }
                 dfd.resolve(data);
             };
-
             promise = service[serviceClass][method](args);
             promise.then(function (res) {
                 res = res || {};
@@ -41113,9 +41274,12 @@ define('xide/manager/ServerActionBase',[
                 }
                 resolve(res);
             }, function (err) {
-                thiz.onError(err);
+                onError && onError(err);
+                thiz.onError({
+                    code: 1,
+                    message: 'Rest Error for ' + method
+                });
             });
-
             if (options.returnProm) {
                 return promise;
             }
@@ -41188,8 +41352,7 @@ define('xide/manager/ServerActionBase',[
                     }
                     if (this.config) {
                         obj.serviceObject.config = this.config;
-                    }
-                    !this.ctx.serviceObject && (this.ctx.serviceObject = this.serviceObject);
+                    }!this.ctx.serviceObject && (this.ctx.serviceObject = this.serviceObject);
                 }
             } catch (e) {
                 console.error('error in rpc service creation : ' + e);
@@ -41205,7 +41368,9 @@ define('xide/manager/ServerActionBase',[
             if (err) {
                 if (err.code === 1) {
                     if (err.message && _.isArray(err.message)) {
-                        this.publish(types.EVENTS.ERROR, {message: err.message.join('<br/>')});
+                        this.publish(types.EVENTS.ERROR, {
+                            message: err.message.join('<br/>')
+                        });
                         return;
                     }
                 } else if (err.code === 0) {
@@ -41239,11 +41404,11 @@ define('xide/manager/ServerActionBase',[
             if (this.config && this.config.RPC_PARAMS) {
                 params = utils.mixin(params, this.config.RPC_PARAMS.rpcFixedParams);
                 this.serviceObject.extraArgs = params;
-                if (this.config.RPC_PARAMS.rpcUserField) {
-                    params[this.config.RPC_PARAMS.rpcUserField] = this.config.RPC_PARAMS.rpcUserValue;
-                    this.serviceObject.signatureField = this.config.RPC_PARAMS.rpcSignatureField;
-                    this.serviceObject.signatureToken = this.config.RPC_PARAMS.rpcSignatureToken;
-                }
+                //if (this.config.RPC_PARAMS.rpcUserField) {
+                //    params[this.config.RPC_PARAMS.rpcUserField] = this.config.RPC_PARAMS.rpcUserValue;
+                //    this.serviceObject.signatureField = this.config.RPC_PARAMS.rpcSignatureField;
+                //    this.serviceObject.signatureToken = this.config.RPC_PARAMS.rpcSignatureToken;
+                //}
             }
         },
         callMethodEx: function (serviceClassIn, method, args, readyCB, omitError) {
@@ -41281,7 +41446,9 @@ define('xide/manager/ServerActionBase',[
                     return;
                 }
                 if (omitError == true) {
-                    thiz.publish(types.EVENTS.STATUS, {message: 'Ok!'}, this);
+                    thiz.publish(types.EVENTS.STATUS, {
+                        message: 'Ok!'
+                    }, this);
                 }
 
             }, function (err) {
@@ -41299,7 +41466,9 @@ define('xide/manager/ServerActionBase',[
             return this.serviceObject[this.getServiceClass(serverClassIn)][method](args);
         },
         callMethod: function (method, args, readyCB, omitError) {
-            args = args || [[]];
+            args = args || [
+                []
+            ];
             var serviceClass = this.serviceClass;
             try {
                 var thiz = this;
@@ -44217,42 +44386,6 @@ define('xide/manager/RPCService',[
             if (this.correctTarget) {
                 request.target = this._smd.target;
             }
-
-
-            if (this.extraArgs) {
-                var index = 0;
-                for (var key in this.extraArgs) {
-
-                    request.target += request.target.indexOf('?') != -1 ? '&' : '?';
-                    request.target += key + '=' + this.extraArgs[key];
-                }
-            }
-            if (this.signatureToken) {
-                request.target += request.target.indexOf('?') != -1 ? '&' : '?';
-                var signature = SHA1._hmac(request.data, this.signatureToken, 1);
-
-                /*                  var aParams = {
-                 "service": serviceClass + ".get",
-                 "path":path,
-                 "callback":"asdf",
-                 "raw":"html",
-                 "attachment":"0",
-                 "send":"1",
-                 "user":this.config.RPC_PARAMS.rpcUserValue
-                 };
-
-                 var pStr  =  dojo.toJson(aParams);
-                 var signature = SHA1._hmac(pStr, this.config.RPC_PARAMS.rpcSignatureToken, 1);
-
-                 console.error('sign ' + pStr + ' with ' + this.config.RPC_PARAMS.rpcSignatureToken + ' to ' + signature);
-                 */
-                //var pStr  =  dojo.toJson(request.data);
-
-                var signature = SHA1._hmac(request.data, this.signatureToken, 1);
-                //console.error('sign ' + request.data + ' with ' +  this.signatureToken + ' to ' + signature);
-                request.target += this.signatureField + '=' + signature;
-            }
-
             var deferred = Service.transportRegistry.match(request.transport).fire(request);
             deferred.addBoth(function (results) {
                 return request._envDef.deserialize.call(this, results);
@@ -46717,18 +46850,6 @@ define('xide/data/ObservableStore',[
          * @type {Array<String>} List of default properties to be observed by dmodel.property.observe.
          */
         observedProperties: [],
-        /**
-         * Get/Set toggle to prevent notifications for mass store operations. Without there will be performance drops.
-         * @param silent {boolean|null}
-         */
-        silent: function (silent) {
-            if (silent === undefined) {
-                return this._ignoreChangeEvents;
-            }
-            if (silent === true || silent === false && silent !== this._ignoreChangeEvents) {
-                this._ignoreChangeEvents = silent;
-            }
-        },
         /**
          * XIDE Override and extend putSync for adding the _store property and observe a new item's properties.
          * @param item
@@ -65967,6 +66088,7 @@ define('xide/manager/Reloadable',[
         xideServiceClient: null,
         fileUpdateTimes:{},
         onXIDELoaded: function (min, WebSocket) {
+            return;
             var thiz = this;
             var _ctorArgs = {
                 delegate: {
@@ -66475,7 +66597,7 @@ define('xide/manager/Context',[
         isBrowser = has('host-browser'),
         bases = isBrowser ? [ContextBase, Context_UI] : [ContextBase],
         debugFileChanges = false,
-        debugModuleReload = true;
+        debugModuleReload = false;
 
     /**
      * @class module:xide/manager/Context
@@ -66560,26 +66682,25 @@ define('xide/manager/Context',[
                     var modulePath = data.data.modulePath;
                     if (modulePath) {
                         modulePath = modulePath.replace('.js', '');
-                        var _re = _require;//hide from gcc
+                        var _re = _require; //hide from gcc
                         //try pre-amd module
                         var module = null;
                         try {
                             module = _re(modulePath);
-                        } catch (e) {
-                        }
+                        } catch (e) {}
 
 
                         //special: driver
                         var _start = 'data/system/drivers';
                         if (path.indexOf(_start) != -1) {
-                            var libPath = path.substr(path.indexOf(_start) + (_start.length + 1 ), path.length);
+                            var libPath = path.substr(path.indexOf(_start) + (_start.length + 1), path.length);
                             libPath = libPath.replace('.js', '');
                             modulePath = 'system_drivers/' + libPath;
                         }
 
                         _start = 'user/drivers';
                         if (path.indexOf(_start) != -1) {
-                            var libPath = path.substr(path.indexOf(_start) + (_start.length + 1 ), path.length);
+                            var libPath = path.substr(path.indexOf(_start) + (_start.length + 1), path.length);
                             libPath = libPath.replace('.js', '');
                             modulePath = 'user_drivers/' + libPath;
                         }
@@ -66593,7 +66714,7 @@ define('xide/manager/Context',[
                             if (path.indexOf(vfsConfig['user_drivers']) !== -1) {
                                 var _start = vfsConfig['user_drivers'];
                                 _start = _start.replace(/\/+$/, "");
-                                var libPath = path.substr(path.indexOf(_start) + (_start.length + 1 ), path.length);
+                                var libPath = path.substr(path.indexOf(_start) + (_start.length + 1), path.length);
                                 libPath = libPath.replace('.js', '');
                                 modulePath = 'user_drivers/' + libPath;
                             }
@@ -66609,14 +66730,13 @@ define('xide/manager/Context',[
                 }
             }
         },
-        onNodeServiceStoreReady: function (evt) {
-        },
+        onNodeServiceStoreReady: function (evt) {},
         mergeFunctions: function (target, source, oldModule, newModule) {
             for (var i in source) {
                 var o = source[i];
                 if (_.isFunction(source[i])) {
                     if (source[i] && target) {
-                        target[i] = source[i];//swap
+                        target[i] = source[i];
                     }
                 }
             }
@@ -66635,6 +66755,7 @@ define('xide/manager/Context',[
                 pluginPromises = [],
                 newModules = [],
                 thiz = this;
+
             _require({
                 cacheBust: 'time=' + new Date().getTime()
             });
@@ -66670,6 +66791,7 @@ define('xide/manager/Context',[
 
             _module = _module.replace('0/8', '0.8');
             _module = _module.replace('/src/', '/');
+
             function handleError(error) {
                 debugModuleReload && console.log(error.src, error.id);
                 debugModuleReload && console.error('require error ' + _module, error);
@@ -66698,8 +66820,6 @@ define('xide/manager/Context',[
                         try {
                             oldModule = _require(utils.replaceAll('.', '/', _module));
                         } catch (e) {
-                            //logError(e,'error requiring '+_module);
-                            //dfd.reject(e);
                             debugModuleReload && console.log('couldnt require old module', _module);
                         }
                     }
@@ -66718,9 +66838,7 @@ define('xide/manager/Context',[
                     }
                 })
             }
-
             _require.undef(_module);
-
             var thiz = this;
             if (reload) {
                 setTimeout(function () {
@@ -66760,7 +66878,7 @@ define('xide/manager/Context',[
                                     moduleProto: moduleLoaded.prototype
                                 });
                             }
-                            thiz.setModule(_module,moduleLoaded);
+                            thiz.setModule(_module, moduleLoaded);
                             dfd.resolve(moduleLoaded);
                         });
                     } catch (e) {
@@ -66778,7 +66896,6 @@ define('xide/manager/Context',[
             if (isBrowser) {
                 var path = evt.path;
                 var _p = this.findVFSMount(path);
-                var _p2 = this.toVFSShort(path, _p);
                 path = utils.replaceAll('//', '/', path);
                 path = path.replace('/PMaster/', '');
                 var reloadFn = window['xappOnStyleSheetChanged'];
@@ -66855,7 +66972,7 @@ define('xide/manager/Context',[
                 if (path.indexOf(mountPath) !== -1) {
                     var _start = mountPath;
                     _start = _start.replace(/\/+$/, "");
-                    var libPath = path.substr(path.indexOf(_start) + (_start.length + 1 ), path.length);
+                    var libPath = path.substr(path.indexOf(_start) + (_start.length + 1), path.length);
                     return libPath;
                 }
             }
@@ -66908,9 +67025,10 @@ define('xide/manager/Context',[
         /*
          * STD - API
          */
-        constructor: function (config) {
+        constructor: function (config, args) {
             this.managers = [];
             this.config = config;
+            this.args = args;
             this.language = 'en';
             this.subscribe(types.EVENTS.ON_CHANGED_CONTENT, this.onDidChangeFileContent);
         },
@@ -67145,7 +67263,7 @@ define('xide/manager/Context_UI',[
          * @param editorClass
          * @param editorArgs
          */
-        registerEditorExtension: function (name, extensions, iconClass, owner, isDefault, onEdit, editorClass, editorArgs) {
+        registerEditorExtension: function (name, extensions, iconClass, owner, isDefault, onEdit, editorClass, editorArgs, actions) {
             iconClass = iconClass || 'el-icon-brush';
             var thiz = this,
                 _editorArgs = {
@@ -77125,6 +77243,7 @@ define('xide/utils/CIUtils',[
                 group:utils.toString(ci['group']),
                 user:utils.toObject(ci['user']),
                 dst:utils.toString(ci['dst']),
+                id:utils.toString(ci['id']),
                 params:utils.toString(ci['params'])
             })
         }
@@ -77908,6 +78027,9 @@ define('xide/utils/HTMLUtils',[
         }
         return false;
     };
+    utils.find=function(clss,parent){
+        return $(clss,parent)[0];
+    }
     /**
      * Finds and returns a widgets instance in a stack-container by name
      * @param name
@@ -79657,7 +79779,7 @@ define('xide/utils/HexUtils',[
         var buffer = utils.bufferFromDecString(string);
         var result = "";
         for (var i = 0; i < buffer.length; i++) {
-            result += String.fromCharCode(buffer[i], 16);
+            result += String.fromCharCode(buffer[i]);
         }
         return result;
     };
@@ -80596,7 +80718,6 @@ define('xide/utils/StringUtils',[
         }
         str = utils.cleanString(str);//control characters
         str = str.replace('./', '');//file store specifics
-        str = str.replace('/.', '');//file store specifics
         str = str.replace(/([^:]\/)\/+/g, "$1");//double slashes
         return str;
     };
@@ -82378,9 +82499,11 @@ define('xide/types',[
     var mod = new dcl(null,{
         declaredClass:"xide/types"
     });
-    mod.test = 2;
+    mod.test = 22;
     return mod;
-});;
+});
+
+;
 define('dstore/Filter',['dojo/_base/declare'], function (declare) {
 	// a Filter builder
 	function filterCreator(type) {

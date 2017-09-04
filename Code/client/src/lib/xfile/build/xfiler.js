@@ -238,9 +238,11 @@ define('xide/types',[
     var mod = new dcl(null,{
         declaredClass:"xide/types"
     });
-    mod.test = 2;
+    mod.test = 22;
     return mod;
 });
+
+
 /** @module xgrid/Renderer **/
 define('xgrid/Renderer',[
     "xdojo/declare",
@@ -5942,96 +5944,102 @@ define('xide/encoding/_base',[
 	//	These functions are 32-bit word-based.  See _sha-64 for 64-bit word ops.
 	var base = {};//lang.getObject("dojox.encoding.digests", true);
 
-	base.outputTypes={
+	base.outputTypes = {
 		// summary:
 		//		Enumeration for input and output encodings.
-		Base64:0, Hex:1, String:2, Raw:3
+		Base64: 0,
+		Hex: 1,
+		String: 2,
+		Raw: 3
 	};
 
 	//	word-based addition
-	base.addWords=function(/* word */a, /* word */b){
+	base.addWords = function ( /* word */ a, /* word */ b) {
 		// summary:
 		//		add a pair of words together with rollover
-		var l=(a&0xFFFF)+(b&0xFFFF);
-		var m=(a>>16)+(b>>16)+(l>>16);
-		return (m<<16)|(l&0xFFFF);	//	word
+		var l = (a & 0xFFFF) + (b & 0xFFFF);
+		var m = (a >> 16) + (b >> 16) + (l >> 16);
+		return (m << 16) | (l & 0xFFFF); //	word
 	};
 
 	//	word-based conversion method, for efficiency sake;
 	//	most digests operate on words, and this should be faster
 	//	than the encoding version (which works on bytes).
-	var chrsz=8;	//	16 for Unicode
-	var mask=(1<<chrsz)-1;
+	var chrsz = 8; //	16 for Unicode
+	var mask = (1 << chrsz) - 1;
 
-	base.stringToWord=function(/* string */s){
+	base.stringToWord = function ( /* string */ s) {
 		// summary:
 		//		convert a string to a word array
-		var wa=[];
-		for(var i=0, l=s.length*chrsz; i<l; i+=chrsz){
-			wa[i>>5]|=(s.charCodeAt(i/chrsz)&mask)<<(i%32);
+		var wa = [];
+		for (var i = 0, l = s.length * chrsz; i < l; i += chrsz) {
+			wa[i >> 5] |= (s.charCodeAt(i / chrsz) & mask) << (i % 32);
 		}
-		return wa;	//	word[]
+		return wa; //	word[]
 	};
 
-	base.wordToString=function(/* word[] */wa){
+	base.wordToString = function ( /* word[] */ wa) {
 		// summary:
 		//		convert an array of words to a string
-		var s=[];
-		for(var i=0, l=wa.length*32; i<l; i+=chrsz){
-			s.push(String.fromCharCode((wa[i>>5]>>>(i%32))&mask));
+		var s = [];
+		for (var i = 0, l = wa.length * 32; i < l; i += chrsz) {
+			s.push(String.fromCharCode((wa[i >> 5] >>> (i % 32)) & mask));
 		}
-		return s.join("");	//	string
+		return s.join(""); //	string
 	};
 
-	base.wordToHex=function(/* word[] */wa){
+	base.wordToHex = function ( /* word[] */ wa) {
 		// summary:
 		//		convert an array of words to a hex tab
-		var h="0123456789abcdef", s=[];
-		for(var i=0, l=wa.length*4; i<l; i++){
-			s.push(h.charAt((wa[i>>2]>>((i%4)*8+4))&0xF)+h.charAt((wa[i>>2]>>((i%4)*8))&0xF));
+		var h = "0123456789abcdef",
+			s = [];
+		for (var i = 0, l = wa.length * 4; i < l; i++) {
+			s.push(h.charAt((wa[i >> 2] >> ((i % 4) * 8 + 4)) & 0xF) + h.charAt((wa[i >> 2] >> ((i % 4) * 8)) & 0xF));
 		}
-		return s.join("");	//	string
+		return s.join(""); //	string
 	};
 
-	base.wordToBase64=function(/* word[] */wa){
+	base.wordToBase64 = function ( /* word[] */ wa) {
 		// summary:
 		//		convert an array of words to base64 encoding, should be more efficient
 		//		than using dojox.encoding.base64
-		var p="=", tab="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/", s=[];
-		for(var i=0, l=wa.length*4; i<l; i+=3){
-			var t=(((wa[i>>2]>>8*(i%4))&0xFF)<<16)|(((wa[i+1>>2]>>8*((i+1)%4))&0xFF)<<8)|((wa[i+2>>2]>>8*((i+2)%4))&0xFF);
-			for(var j=0; j<4; j++){
-				if(i*8+j*6>wa.length*32){
+		var p = "=",
+			tab = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/",
+			s = [];
+		for (var i = 0, l = wa.length * 4; i < l; i += 3) {
+			var t = (((wa[i >> 2] >> 8 * (i % 4)) & 0xFF) << 16) | (((wa[i + 1 >> 2] >> 8 * ((i + 1) % 4)) & 0xFF) << 8) | ((wa[i + 2 >> 2] >> 8 * ((i + 2) % 4)) & 0xFF);
+			for (var j = 0; j < 4; j++) {
+				if (i * 8 + j * 6 > wa.length * 32) {
 					s.push(p);
 				} else {
-					s.push(tab.charAt((t>>6*(3-j))&0x3F));
+					s.push(tab.charAt((t >> 6 * (3 - j)) & 0x3F));
 				}
 			}
 		}
-		return s.join("");	//	string
+		return s.join(""); //	string
 	};
 
 	//	convert to UTF-8
-	base.stringToUtf8 = function(input){
+	base.stringToUtf8 = function (input) {
 		var output = "";
 		var i = -1;
 		var x, y;
 
-		while(++i < input.length){
+		while (++i < input.length) {
 			x = input.charCodeAt(i);
 			y = i + 1 < input.length ? input.charCodeAt(i + 1) : 0;
-			if(0xD800 <= x && x <= 0xDBFF && 0xDC00 <= y && y <= 0xDFFF){
+			if (0xD800 <= x && x <= 0xDBFF && 0xDC00 <= y && y <= 0xDFFF) {
 				x = 0x10000 + ((x & 0x03FF) << 10) + (y & 0x03FF);
 				i++;
 			}
 
-			if(x <= 0x7F)
+			if (x <= 0x7F)
 				output += String.fromCharCode(x);
-			else if(x <= 0x7FF)
+			else if (x <= 0x7FF)
 				output += String.fromCharCode(0xC0 | ((x >>> 6) & 0x1F), 0x80 | (x & 0x3F));
-			else if(x <= 0xFFFF)
+			else if (x <= 0xFFFF)
 				output += String.fromCharCode(0xE0 | ((x >>> 12) & 0x0F), 0x80 | ((x >>> 6) & 0x3F), 0x80 | (x & 0x3F));
-			else if(x <= 0x1FFFFF)
+			else if (x <= 0x1FFFFF)
 				output += String.fromCharCode(0xF0 | ((x >>> 18) & 0x07), 0x80 | ((x >>> 12) & 0x3F), 0x80 | ((x >>> 6) & 0x3F), 0x80 | (x & 0x3F));
 		}
 		return output;
@@ -6039,7 +6047,6 @@ define('xide/encoding/_base',[
 
 	return base;
 });
-
 define('xide/encoding/MD5',["./_base"], function(base) {
 
 /*	A port of Paul Johnstone's MD5 implementation
@@ -6469,6 +6476,18 @@ define('xide/data/Memory',[
      * @extends module:dstore/Memory
      */
     return declare('xide.data.Memory',[Memory, _Base], {
+        /**
+         * Get/Set toggle to prevent notifications for mass store operations. Without there will be performance drops.
+         * @param silent {boolean|null}
+         */
+        silent: function (silent) {
+            if (silent === undefined) {
+                return this._ignoreChangeEvents;
+            }
+            if (silent === true || silent === false && silent !== this._ignoreChangeEvents) {
+                this._ignoreChangeEvents = silent;
+            }
+        },
         /**
          * XIDE specific override to ensure the _store property. This is because the store may not use dmodel in some
          * cases like running server-side but the _store property is expected to be there.
@@ -7354,197 +7373,184 @@ define('xide/views/_Dialog',[
     'dojo/Deferred',
     'xide/_Popup'
 
-], function (dcl,types,
-             utils, EventedMixin,
-             _Widget,Deferred,_Popup
+], function (dcl, types,
+    utils, EventedMixin,
+    _Widget, Deferred, _Popup
 ) {
 
 
 
-    var ctx = window.sctx,
-        root;
+        var ctx = window.sctx,
+            root;
 
-    var _BootstrapDialog  = typeof BootstrapDialog !=='undefined' ? BootstrapDialog : {};
+        var _BootstrapDialog = typeof BootstrapDialog !== 'undefined' ? BootstrapDialog : {};
 
-    var Module = dcl([_Widget.dcl,EventedMixin.dcl],{
-        declaredClass:'xide/views/_Dialog',
-        //message: null,
-        cssClass:'bootstrap3-dialog',
-        containerClass:'',
-        type: types.DIALOG_TYPE.WARNING,
-        size: types.DIALOG_SIZE.SIZE_WIDE,
-        //defaultOptions:_BootstrapDialog.defaultOptions,
-        dlg:null,
-        bodyCSS:null,
-        okButtonClass:'btn-danger',
-        startDfd:null,
-        _ready:false,
-        getData:function(){
-            return null;
-        },
-        getInstance:function(args){
-
-            this.defaultOptions  = typeof BootstrapDialog !=='undefined' ? BootstrapDialog.defaultOptions : {};
-
-            if(this.dlg){
-                return this.dlg;
-            }
-
-            args = this.buildArgs(args);
-
-            var instance = new _BootstrapDialog(args),
-                oldRealize = instance.realize,
-                self = this;
-
-            if(!instance){
-                console.error('BootstrapDialog not loaded, abort');
-                return;
-            }
-
-            instance.realize = function(){
-                oldRealize.apply(instance,null);
-                self.buildRendering(instance);
-                $.each(args.buttons, function (index, button) {
-                    var $button = instance.getButton(button.id);
-                    if($button && button.focus==true){
-                        $button.addClass('active');
-                    }
-                });
-
-                $(instance.$modalDialog).draggable({ handle: ".modal-header" });
-            }
-
-            instance.owner = this;
-
-
-            this.dlg = instance;
-
-            return instance;
-
-        },
-        buildRendering:function(dlg){
-            this.containerNode= this.domNode = dlg.$modalBody[0];
-            dlg.$modalBody.addClass(this.containerClass);
-            this.bodyCSS && dlg.$modalBody.css(this.bodyCSS);
-        },
-        onshown:function(dlg){
-            dlg.owner.resize();
-            dlg.owner.onShow.apply(dlg.owner,[]);
-            var zIndexBackdrop = window.__nextZ ? window.__nextZ(1) : 1040;
-            var zIndexModal = window.__nextZ ? window.__nextZ() : 1050;
-
-            dlg.$modal.css('z-index',zIndexBackdrop);
-            dlg.$modalDialog.css('z-index',zIndexModal);
-
-            this._ready = true;
-        },
-        onReady:function(){
-            var self = this;
-            setTimeout(function(){
-                self._ready = true;
-            },100);
-
-        },
-        startup:function(){
-            var dlg = this.getInstance();
-        },
-        destroy:function(){
-            this.dlg && this.dlg.close();
-        },
-        show:function(args){
-
-            var self=this;
-
-            if(!this.startDfd){
-                this.startDfd = new Deferred();
-                this.startDfd.then(function(){
-                    self.onReady();
-                });
-            }
-
-            var dlg = this.getInstance(args);
-
-            dlg.open();
-
-            setTimeout(function(){
-                self._ready=true;
-            },1000);
-
-            return this.startDfd;
-
-        },
-
-        getButtons:function(){
-
-            var thiz = this;
-
-            var buttons = [{
-                icon: 'fa-check',
-                label: thiz.localize('Ok'),
-                cssClass: thiz.okButtonClass || 'btn-primary',
-                hotkey: 13, // Enter.
-                autospin: false,
-                focus:true,
-                id:utils.createUUID(),
-                action: function(dialogRef) {
-                    if(!thiz._ready){
-                        return;
-                    }
-                    dialogRef.close(false);
-                    dialogRef.owner.onOk(thiz.getData());
-                }
+        var Module = dcl([_Widget.dcl, EventedMixin.dcl], {
+            declaredClass: 'xide/views/_Dialog',
+            //message: null,
+            cssClass: 'bootstrap3-dialog',
+            containerClass: '',
+            type: types.DIALOG_TYPE.WARNING,
+            size: types.DIALOG_SIZE.SIZE_WIDE,
+            //defaultOptions:_BootstrapDialog.defaultOptions,
+            dlg: null,
+            bodyCSS: null,
+            okButtonClass: 'btn-danger',
+            startDfd: null,
+            _ready: false,
+            getData: function () {
+                return null;
             },
-            {
-                icon: 'glyphicon glyphicon-check',
-                label: thiz.localize('CANCEL'),
-                cssClass: 'btn-info',
-                autospin: false,
-                id:utils.createUUID(),
-                action: function (dialogRef) {
-                    dialogRef.close();
-                    dialogRef.owner.onCancel();
+            getInstance: function (args) {
+                this.defaultOptions = typeof BootstrapDialog !== 'undefined' ? BootstrapDialog.defaultOptions : {};
+
+                if (this.dlg) {
+                    return this.dlg;
                 }
+                args = this.buildArgs(args);
+                var instance = new _BootstrapDialog(args),
+                    oldRealize = instance.realize,
+                    self = this;
 
-            }
-            ];
+                if (!instance) {
+                    console.error('BootstrapDialog not loaded, abort');
+                    return;
+                }
+                instance.realize = function () {
+                    oldRealize.apply(instance, null);
+                    self.buildRendering(instance);
+                    $.each(args.buttons, function (index, button) {
+                        var $button = instance.getButton(button.id);
+                        if ($button && button.focus == true) {
+                            $button.addClass('active');
+                        }
+                    });
 
-            return buttons;
+                    $(instance.$modalDialog).draggable({ handle: ".modal-header" });
+                }
+                instance.owner = this;
+                this.dlg = instance;
+                return instance;
 
-        },
-        buildArgs:function(args){
-            args = args || this.defaultOptions || {};
-            utils.mixin(args,{
-                type: this.type,
-                size: this.size,
-                message:this.message,
-                title:this.title,
-                buttons:this.buttons,
-                onOk:this.onOk,
-                onCancel:this.onCancel,
-                onShow:this.onShow,
-                onshown:this.onshown
-                //defaultOptions:_BootstrapDialog.defaultOptions,
-            });
-            args.title = this.localize(args.title)
-            return args;
-        },
-        constructor:function(args){
-            this.buttons = this.getButtons();
-            utils.mixin(this,args);
-        },
-        onOk:function(){},
-        onCancel:function(){}
+            },
+            buildRendering: function (dlg) {
+                this.containerNode = this.domNode = dlg.$modalBody[0];
+                dlg.$modalBody.addClass(this.containerClass);
+                this.bodyCSS && dlg.$modalBody.css(this.bodyCSS);
+            },
+            onshown: function (dlg) {
+                dlg.owner.resize();
+                dlg.owner.onShow.apply(dlg.owner, []);
+                var zIndexBackdrop = window.__nextZ ? window.__nextZ(1) : 1040;
+                var zIndexModal = window.__nextZ ? window.__nextZ() : 1050;
+
+                dlg.$modal.css('z-index', zIndexBackdrop);
+                dlg.$modalDialog.css('z-index', zIndexModal);
+
+                this._ready = true;
+            },
+            onReady: function () {
+                var self = this;
+                setTimeout(function () {
+                    self._ready = true;
+                }, 100);
+
+            },
+            startup: function () {
+                var dlg = this.getInstance();
+            },
+            destroy: function () {
+                this.dlg && this.dlg.close();
+            },
+            show: function (args) {
+                var self = this;
+                if (!this.startDfd) {
+                    this.startDfd = new Deferred();
+                    this.startDfd.then(function () {
+                        self.onReady();
+                    });
+                }
+                var dlg = this.getInstance(args);
+                dlg.open();
+                setTimeout(function () {
+                    self._ready = true;
+                }, 1000);
+                return this.startDfd;
+            },
+
+            getButtons: function () {
+                var thiz = this;
+                var buttons = [{
+                    icon: 'fa-check',
+                    label: thiz.localize('Ok'),
+                    cssClass: thiz.okButtonClass || 'btn-primary',
+                    hotkey: 13, // Enter.
+                    autospin: false,
+                    focus: true,
+                    id: utils.createUUID(),
+                    action: function (dialogRef) {
+                        if (!thiz._ready) {
+                            return;
+                        }
+                        dialogRef.close(false);
+                        try {
+                            dialogRef.owner.onOk(thiz.getData());
+                        } catch (e) {
+                            console.error('Error in dlg ok:', e);
+                        }
+                    }
+                },
+                {
+                    icon: 'glyphicon glyphicon-check',
+                    label: thiz.localize('CANCEL'),
+                    cssClass: 'btn-info',
+                    autospin: false,
+                    id: utils.createUUID(),
+                    action: function (dialogRef) {
+                        dialogRef.close();
+                        dialogRef.owner.onCancel();
+                    }
+
+                }
+                ];
+
+                return buttons;
+
+            },
+            buildArgs: function (args) {
+                args = args || this.defaultOptions || {};
+                utils.mixin(args, {
+                    type: this.type,
+                    size: this.size,
+                    message: this.message,
+                    title: this.title,
+                    buttons: this.buttons,
+                    onOk: this.onOk,
+                    onCancel: this.onCancel,
+                    onShow: this.onShow,
+                    onshown: this.onshown
+                    //defaultOptions:_BootstrapDialog.defaultOptions,
+                });
+                args.title = this.localize(args.title)
+                return args;
+            },
+            constructor: function (args) {
+                this.buttons = this.getButtons();
+                utils.mixin(this, args);
+            },
+            onOk: function () { },
+            onCancel: function () { }
+        });
+
+        dcl.chainAfter(Module, "onReady");
+        dcl.chainAfter(Module, "onOk");
+        dcl.chainAfter(Module, "onCancel");
+        dcl.chainAfter(Module, "resize");
+
+
+        return Module;
+
     });
-
-    dcl.chainAfter(Module, "onReady");
-    dcl.chainAfter(Module, "onOk");
-    dcl.chainAfter(Module, "onCancel");
-    dcl.chainAfter(Module, "resize");
-
-
-    return Module;
-
-});
 /** @module xfile/views/FileOperationDialog **/
 define('xfile/views/FileOperationDialog',[
     "dcl/dcl",
@@ -10236,8 +10242,6 @@ define('xide/views/_CIDialog',[
         bodyCSS: {
             'height': 'auto',
             'min-height': '200px',
-            /*'width':'600px',
-             'min-width':'600px',*/
             'padding': '8px',
             'margin-right': '16px'
         },
@@ -10335,174 +10339,171 @@ define('xide/views/_Panel',[
     'dojo/Deferred',
     'xide/_Popup',
     'xide/registry'
-], function (dcl, types, utils,EventedMixin,_Widget,Deferred,_Popup,registry) {
+], function (dcl, types, utils, EventedMixin, _Widget, Deferred, _Popup, registry) {
 
-    var Module = dcl([_Widget.dcl,EventedMixin.dcl],{
-        containerClass:'',
+    var Module = dcl([_Widget.dcl, EventedMixin.dcl], {
+        containerClass: '',
         type: types.DIALOG_TYPE.WARNING,
         size: types.DIALOG_SIZE.SIZE_WIDE,
-        titleBarClass:'',
-        panel:null,
-        bodyCSS:null,
-        startDfd:null,
-        _ready:false,
-        title:'No Title',
+        titleBarClass: '',
+        panel: null,
+        bodyCSS: null,
+        startDfd: null,
+        _ready: false,
+        title: 'No Title',
         /**
          * jsPanelOptions
          * @link http://beta.jspanel.de/api/#defaults
          * @type {object}
          */
-        options:null,
-        getDefaultOptions:function(mixin){
+        options: null,
+        getContentSize: function () {
+            return {
+                width: '600px',
+                height: '500px'
+            }
+        },
+        getDefaultOptions: function (mixin) {
             var self = this;
             var options = {
-                "contentSize": {
-                    width: '600px',
-                    height: '500px'
-                },
-                footerToolbar:[
+                "contentSize": this.getContentSize(),
+                footerToolbar: [
                     {
-                        item:     "<button style='margin-left:5px;' type='button'><span class='...'></span></button>",
-                        event:    "click",
+                        item: "<button style='margin-left:5px;' type='button'><span class='...'></span></button>",
+                        event: "click",
                         btnclass: "btn btn-danger btn-sm",
-                        btntext:  " Cancel",
-                        callback: function( event ){
+                        btntext: " Cancel",
+                        callback: function (event) {
                             event.data.close();
                             self.onCancel();
                         }
                     },
                     {
-                        item:     "<button style='margin-left:5px;' type='button'><span class='...'></span></button>",
-                        event:    "click",
+                        item: "<button style='margin-left:5px;' type='button'><span class='...'></span></button>",
+                        event: "click",
                         btnclass: "btn btn-primary btn-sm",
-                        btntext:  " Ok",
-                        callback: function( event ){
+                        btntext: " Ok",
+                        callback: function (event) {
                             self.onOk();
                             event.data.close();
                         }
                     }
                 ]
             };
-            utils.mixin(options,mixin);
+            utils.mixin(options, mixin);
             return options;
         },
-        getInstance:function(args){
-            if(this.panel){
+        getInstance: function (args) {
+            if (this.panel) {
                 return this.panel;
             }
             _Popup.nextZ(3);
             var self = this;
             this.panel = $.jsPanel(utils.mixin({
-                zi:_Popup.nextZ(),
+                zi: _Popup.nextZ(),
                 position: {
                     left: 200,
                     top: 100
                 },
                 title: self.title || 'jsPanel theme info',
                 theme: self.theme || 'bootstrap-default',
-                onmaximized:function(){
+                onmaximized: function () {
                     self.resize();
                 },
-                onnormalized:function(){
+                onnormalized: function () {
                     self.resize();
                 },
-                onbeforeclose:function(){
+                onbeforeclose: function () {
                     self.destroy(false);
                 },
                 callback: function (panel) {
-
                     self.domNode = this.content[0];
-
                     var thiz = this;
-
-                    self.onshown(this,this.content[0]).then(function(){
-
+                    self.onshown(this, this.content[0]).then(function () {
                         thiz.content.addClass(self.containerClass);
-                        thiz.content.css('tabIndex',1);
+                        thiz.content.css('tabIndex', 1);
                         thiz.header.addClass(self.type);
                         thiz.footer.addClass('modal-footer');
                         var newZ = _Popup.nextZ();
                         panel.css("z-index", newZ);
-                        panel.attr('tabIndex',1);
+                        panel.attr('tabIndex', 1);
                         panel.keyup(function (event) {
-                            if(event.which === 27){
+                            if (event.which === 27) {
                                 self.destroy(true);
                             }
                         });
                         panel.focus();
                     });
                 }
-            },args));
-            this.panel.on("resize",function(){
+            }, args));
+            this.panel.on("resize", function () {
                 self.resize();
             });
             return this.panel;
         },
-        onshown:function(panelInstance,content){
+        onshown: function (panelInstance, content) {
             var self = this,
                 head = new Deferred();
-
-            if(this.onShow){
-                var result = this.onShow(panelInstance,content,this);
-                function ready(what){
+            if (this.onShow) {
+                var result = this.onShow(panelInstance, content, this);
+                function ready(what) {
                     self.startDfd.resolve(what);
                     self._ready = true;
                     self.resize();
                     head.resolve(what);
                 }
-                if(result && result.then){
+                if (result && result.then) {
                     result.then(ready);
-                }else if(_.isArray(result)){
-                    _.each(result,function(widget){
-                        self.add(widget,null,false);
+                } else if (_.isArray(result)) {
+                    _.each(result, function (widget) {
+                        self.add(widget, null, false);
                     });
                     ready(result);
+                } else if (!result) {
+                    ready();
                 }
             }
             return head;
         },
-        onReady:function(){
+        onReady: function () {
             var self = this;
-            setTimeout(function(){
+            setTimeout(function () {
                 self._ready = true;
-            },100);
+            }, 100);
         },
-        destroy:function(destroyPanel){
+        destroy: function (destroyPanel) {
             try {
                 destroyPanel !== false && this.panel && this.panel.close();
                 registry.remove(this.panel.id);
                 //destroy
-                if(this.headDfd){
+                if (this.headDfd) {
                     this.headDfd.resolve(false);
                 }
-            }catch(e){
-                logError(e,'panel close');
+            } catch (e) {
+                logError(e, 'panel close');
             }
         },
-        show:function(options){
-            var self=this;
+        show: function (options) {
+            var self = this;
             this.headDfd = new Deferred();
-            if(!this.startDfd){
+            if (!this.startDfd) {
                 this.startDfd = new Deferred();
-                this.startDfd.then(function(){
+                this.startDfd.then(function () {
                     self.onReady();
                 });
             }
-
             this.panel = this.getInstance(options || this.options);
-            //this.panel.id = this.panel[0].id;
-            //registry.add(this.panel);
             return this.headDfd;
         },
-        constructor:function(args){
+        constructor: function (args) {
             args = args || {};
             this.options = args.options || this.options || this.getDefaultOptions();
-            utils.mixin(this,args);
+            utils.mixin(this, args);
         },
-        onOk:function(){
+        onOk: function () {
             this.headDfd.resolve(true);
         },
-        onCancel:function(){
+        onCancel: function () {
             this.headDfd.resolve(false);
         }
     });
@@ -10525,13 +10526,16 @@ define('xide/views/_PanelDialog',[
 
     var Module = dcl(_Panel,{
         containerClass:'CIDialog',
+        getContentSize: function () {
+            return {
+                width: '600px',
+                height: '500px'
+            }
+        },
         getDefaultOptions:function(mixin){
             var self = this;
             var options = {
-                "contentSize": {
-                    width: '600px',
-                    height: '500px'
-                },
+                "contentSize": this.getContentSize(),
                 footerToolbar:[
                     {
                         item:     "<button style='margin-left:5px;' type='button'><span class='...'></span></button>",
@@ -19070,18 +19074,6 @@ define('xide/data/ObservableStore',[
          * @type {Array<String>} List of default properties to be observed by dmodel.property.observe.
          */
         observedProperties: [],
-        /**
-         * Get/Set toggle to prevent notifications for mass store operations. Without there will be performance drops.
-         * @param silent {boolean|null}
-         */
-        silent: function (silent) {
-            if (silent === undefined) {
-                return this._ignoreChangeEvents;
-            }
-            if (silent === true || silent === false && silent !== this._ignoreChangeEvents) {
-                this._ignoreChangeEvents = silent;
-            }
-        },
         /**
          * XIDE Override and extend putSync for adding the _store property and observe a new item's properties.
          * @param item
@@ -37943,7 +37935,6 @@ define('xide/utils/StringUtils',[
         }
         str = utils.cleanString(str);//control characters
         str = str.replace('./', '');//file store specifics
-        str = str.replace('/.', '');//file store specifics
         str = str.replace(/([^:]\/)\/+/g, "$1");//double slashes
         return str;
     };
@@ -39154,42 +39145,6 @@ define('xide/manager/RPCService',[
             if (this.correctTarget) {
                 request.target = this._smd.target;
             }
-
-
-            if (this.extraArgs) {
-                var index = 0;
-                for (var key in this.extraArgs) {
-
-                    request.target += request.target.indexOf('?') != -1 ? '&' : '?';
-                    request.target += key + '=' + this.extraArgs[key];
-                }
-            }
-            if (this.signatureToken) {
-                request.target += request.target.indexOf('?') != -1 ? '&' : '?';
-                var signature = SHA1._hmac(request.data, this.signatureToken, 1);
-
-                /*                  var aParams = {
-                 "service": serviceClass + ".get",
-                 "path":path,
-                 "callback":"asdf",
-                 "raw":"html",
-                 "attachment":"0",
-                 "send":"1",
-                 "user":this.config.RPC_PARAMS.rpcUserValue
-                 };
-
-                 var pStr  =  dojo.toJson(aParams);
-                 var signature = SHA1._hmac(pStr, this.config.RPC_PARAMS.rpcSignatureToken, 1);
-
-                 console.error('sign ' + pStr + ' with ' + this.config.RPC_PARAMS.rpcSignatureToken + ' to ' + signature);
-                 */
-                //var pStr  =  dojo.toJson(request.data);
-
-                var signature = SHA1._hmac(request.data, this.signatureToken, 1);
-                //console.error('sign ' + request.data + ' with ' +  this.signatureToken + ' to ' + signature);
-                request.target += this.signatureField + '=' + signature;
-            }
-
             var deferred = Service.transportRegistry.match(request.transport).fire(request);
             deferred.addBoth(function (results) {
                 return request._envDef.deserialize.call(this, results);
@@ -39528,21 +39483,20 @@ define('xide/manager/ServerActionBase',[
             return (r ? enc.slice(0, r - 3) : enc) + '==='.slice(r || 3);
 
         },
-        runDeferred: function (serviceClassIn, method, args, options) {
-            var self = this;
+        runDeferred: function (serviceClassIn, method, args, options, onError) {
             if (this.serviceObject.__init) {
                 if (this.serviceObject.__init.isResolved()) {
-                    return self._runDeferred(serviceClassIn, method, args, options);
+                    return this._runDeferred(serviceClassIn, method, args, options, onError);
                 }
                 var dfd = new Deferred();
-                this.serviceObject.__init.then(function () {
-                    self._runDeferred(serviceClassIn, method, args, options).then(function () {
+                this.serviceObject.__init.then(() => {
+                    this._runDeferred(serviceClassIn, method, args, options, onError).then(() => {
                         dfd.resolve(arguments);
                     });
                 });
                 return dfd;
             }
-            return self._runDeferred(serviceClassIn, method, args, options);
+            return this._runDeferred(serviceClassIn, method, args, options);
         },
         /**
          * Public main entry, all others below are deprecated
@@ -39552,7 +39506,7 @@ define('xide/manager/ServerActionBase',[
          * @param options
          * @returns {Deferred}
          */
-        _runDeferred: function (serviceClassIn, method, args, options) {
+        _runDeferred: function (serviceClassIn, method, args, options, onError) {
             var deferred = new Deferred(),
                 promise;
             options = options || this.defaultOptions;
@@ -39572,7 +39526,7 @@ define('xide/manager/ServerActionBase',[
                 serviceClass = this.getServiceClass(serviceClassIn),
                 thiz = this;
 
-            var resolve = function (data, error) {
+            const resolve = function (data, error) {
                 var dfd = deferred;
                 if (options.returnProm) {
                     dfd = promise;
@@ -39585,7 +39539,6 @@ define('xide/manager/ServerActionBase',[
                 }
                 dfd.resolve(data);
             };
-
             promise = service[serviceClass][method](args);
             promise.then(function (res) {
                 res = res || {};
@@ -39621,9 +39574,12 @@ define('xide/manager/ServerActionBase',[
                 }
                 resolve(res);
             }, function (err) {
-                thiz.onError(err);
+                onError && onError(err);
+                thiz.onError({
+                    code: 1,
+                    message: 'Rest Error for ' + method
+                });
             });
-
             if (options.returnProm) {
                 return promise;
             }
@@ -39696,8 +39652,7 @@ define('xide/manager/ServerActionBase',[
                     }
                     if (this.config) {
                         obj.serviceObject.config = this.config;
-                    }
-                    !this.ctx.serviceObject && (this.ctx.serviceObject = this.serviceObject);
+                    }!this.ctx.serviceObject && (this.ctx.serviceObject = this.serviceObject);
                 }
             } catch (e) {
                 console.error('error in rpc service creation : ' + e);
@@ -39713,7 +39668,9 @@ define('xide/manager/ServerActionBase',[
             if (err) {
                 if (err.code === 1) {
                     if (err.message && _.isArray(err.message)) {
-                        this.publish(types.EVENTS.ERROR, {message: err.message.join('<br/>')});
+                        this.publish(types.EVENTS.ERROR, {
+                            message: err.message.join('<br/>')
+                        });
                         return;
                     }
                 } else if (err.code === 0) {
@@ -39747,11 +39704,11 @@ define('xide/manager/ServerActionBase',[
             if (this.config && this.config.RPC_PARAMS) {
                 params = utils.mixin(params, this.config.RPC_PARAMS.rpcFixedParams);
                 this.serviceObject.extraArgs = params;
-                if (this.config.RPC_PARAMS.rpcUserField) {
-                    params[this.config.RPC_PARAMS.rpcUserField] = this.config.RPC_PARAMS.rpcUserValue;
-                    this.serviceObject.signatureField = this.config.RPC_PARAMS.rpcSignatureField;
-                    this.serviceObject.signatureToken = this.config.RPC_PARAMS.rpcSignatureToken;
-                }
+                //if (this.config.RPC_PARAMS.rpcUserField) {
+                //    params[this.config.RPC_PARAMS.rpcUserField] = this.config.RPC_PARAMS.rpcUserValue;
+                //    this.serviceObject.signatureField = this.config.RPC_PARAMS.rpcSignatureField;
+                //    this.serviceObject.signatureToken = this.config.RPC_PARAMS.rpcSignatureToken;
+                //}
             }
         },
         callMethodEx: function (serviceClassIn, method, args, readyCB, omitError) {
@@ -39789,7 +39746,9 @@ define('xide/manager/ServerActionBase',[
                     return;
                 }
                 if (omitError == true) {
-                    thiz.publish(types.EVENTS.STATUS, {message: 'Ok!'}, this);
+                    thiz.publish(types.EVENTS.STATUS, {
+                        message: 'Ok!'
+                    }, this);
                 }
 
             }, function (err) {
@@ -39807,7 +39766,9 @@ define('xide/manager/ServerActionBase',[
             return this.serviceObject[this.getServiceClass(serverClassIn)][method](args);
         },
         callMethod: function (method, args, readyCB, omitError) {
-            args = args || [[]];
+            args = args || [
+                []
+            ];
             var serviceClass = this.serviceClass;
             try {
                 var thiz = this;
