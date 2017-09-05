@@ -10618,85 +10618,37 @@ define('wcDocker/types',["xide/types","xide/utils"], function (types,utils) {
      * @enum {String} module:wcDocker.EVENT
      */
     wcDocker.EVENT = {
-        /** When the panel is initialized */
         INIT: 'panelInit',
-        /** When all panels have finished loading */
         LOADED: 'dockerLoaded',
-        /** When the panel is updated */
         UPDATED: 'panelUpdated',
-        /**
-         * When the panel has changed its visibility<br>
-         * This event is called with the current visibility state as the first parameter.
-         */
         VISIBILITY_CHANGED: 'panelVisibilityChanged',
-        /** When the user begins moving any panel from its current docked position */
         BEGIN_DOCK: 'panelBeginDock',
-        /** When the user finishes moving or docking a panel */
         END_DOCK: 'panelEndDock',
-        /** When the user brings any panel within a tabbed frame into focus */
         GAIN_FOCUS: 'panelGainFocus',
-        /** When the user leaves focus on any panel within a tabbed frame */
         LOST_FOCUS: 'panelLostFocus',
-        /** When the panel is about to be closed, but before it closes. If any event handler returns a falsey value, the close action will be canceled. */
         CLOSING: 'panelClosing',
-        /** When the panel is being closed */
         CLOSED: 'panelClosed',
-        /** When a persistent panel is being hidden */
         PERSISTENT_CLOSED: 'panelPersistentClosed',
-        /** When a persistent panel is being shown */
         PERSISTENT_OPENED: 'panelPersistentOpened',
-        /** When a custom button is clicked, See [wcPanel.addButton]{@link module:wcPanel~addButton} */
         BUTTON: 'panelButton',
-        /** When the panel has moved from floating to a docked position */
         ATTACHED: 'panelAttached',
-        /** When the panel has moved from a docked position to floating */
         DETACHED: 'panelDetached',
-        /**
-         * When the user has started moving the panel (top-left coordinates changed)<br>
-         * This event is called with an object of the current {x, y} position as the first parameter.
-         */
         MOVE_STARTED: 'panelMoveStarted',
-        /**
-         * When the user has finished moving the panel<br>
-         * This event is called with an object of the current {x, y} position as the first parameter.
-         */
         MOVE_ENDED: 'panelMoveEnded',
-        /**
-         * When the top-left coordinates of the panel has changed<br>
-         * This event is called with an object of the current {x, y} position as the first parameter.
-         */
         MOVED: 'panelMoved',
-        /**
-         * When the user has started resizing the panel (width or height changed)<br>
-         * This event is called with an object of the current {width, height} size as the first parameter.
-         */
         RESIZE_STARTED: 'panelResizeStarted',
-        /**
-         * When the user has finished resizing the panel<br>
-         * This event is called with an object of the current {width, height} size as the first parameter.
-         */
         RESIZE_ENDED: 'panelResizeEnded',
-        /**
-         * When the panels width or height has changed<br>
-         * This event is called with an object of the current {width, height} size as the first parameter.
-         */
         RESIZED: 'panelResized',
-        /** This only happens with floating windows when the order of the windows have changed. */
         ORDER_CHANGED: 'panelOrderChanged',
-        /** When the contents of the panel has been scrolled */
         SCROLLED: 'panelScrolled',
-        /** When the layout is being saved, See [wcDocker.save]{@link module:wcDocker#save} */
         SAVE_LAYOUT: 'layoutSave',
-        /** When the layout is being restored, See [wcDocker.restore]{@link module:wcDocker#restore} */
         RESTORE_LAYOUT: 'layoutRestore',
-        /** When the current tab on a custom tab widget associated with this panel has changed, See {@link module:wcTabFrame} */
         CUSTOM_TAB_CHANGED: 'customTabChanged',
-        /** When a tab has been closed on a custom tab widget associated with this panel, See {@link module:wcTabFrame} */
         CUSTOM_TAB_CLOSED: 'customTabClosed',
         BEGIN_FLOAT_RESIZE: 'beginFloatResize',
         END_FLOAT_RESIZE: 'endFloatResize',
         BEGIN_RESIZE:"beginResize",
-        END_RESIZE:"endResize"
+        END_RESIZE:"endResize",CUSTOM_TAB_CLOSED: 'customTabClosed'
     };
 
     /**
@@ -11037,12 +10989,21 @@ define('wcDocker/panel',[
                 if (this.$icon) {
                     this.$titleText.prepend(this.$icon);
                 }
-
+                if (this._closeable)
+                {
                 if (this.$closeIcon) {
                     this.$titleText.append(this.$closeIcon);
                     this.$closeIcon[0].__panel= this;
                 }
+                    else
+                    {
+                        this.$closeIcon = $('<div class="wcPanelCloseIcon fa fa-close"/>');
+                        this.$titleText.append(this.$closeIcon);
+                        this.$closeIcon[0].__panel= this;
 
+                    }
+
+                }
 
                 if (this._parent && this._parent.instanceOf('wcFrame')) {
                     this._parent.__updateTabs();
@@ -11401,8 +11362,8 @@ define('wcDocker/panel',[
          */
         scrollable: function (x, y) {
             if (typeof x !== 'undefined') {
-                this._scrollable.x = !!x;
-                this._scrollable.y = !!y;
+                this._scrollable.x = x ? true : false;
+                this._scrollable.y = y ? true : false;
             }
 
             return {x: this._scrollable.x, y: this._scrollable.y};
@@ -11448,7 +11409,7 @@ define('wcDocker/panel',[
          */
         collapsible: function (enabled) {
             if (typeof enabled !== 'undefined') {
-                this._collapsible = !!enabled;
+                this._collapsible = enabled ? true : false;
             }
 
             return this._collapsible;
@@ -11463,7 +11424,7 @@ define('wcDocker/panel',[
          */
         overflowVisible: function (visible) {
             if (typeof visible !== 'undefined') {
-                this._overflowVisible = !!visible;
+                this._overflowVisible = visible ? true : false;
             }
 
             return this._overflowVisible;
@@ -11478,7 +11439,7 @@ define('wcDocker/panel',[
          */
         resizeVisible: function (visible) {
             if (typeof visible !== 'undefined') {
-                this._resizeVisible = !!visible;
+                this._resizeVisible = visible ? true : false;
             }
 
             return this._resizeVisible;
@@ -11493,7 +11454,8 @@ define('wcDocker/panel',[
          */
         moveable: function (enabled) {
             if (typeof enabled !== 'undefined') {
-                this._moveable = !!enabled;
+                this._moveable = enabled ? true : false;
+
                 this.$title.toggleClass('wcNotMoveable', !this._moveable);
             }
 
@@ -11508,7 +11470,7 @@ define('wcDocker/panel',[
          */
         detachable: function(enabled) {
             if (typeof enabled !== 'undefined') {
-                this._detachable = !!enabled;
+                this._detachable = enabled ? true: false;
             }
 
             return this._detachable;
@@ -11665,6 +11627,7 @@ define('wcDocker/panel',[
         off: function (eventType, handler) {
             if (typeof eventType === 'undefined') {
                 this._events = {};
+                return;
             } else {
                 if (this._events[eventType]) {
                     if (typeof handler === 'undefined') {
@@ -11706,12 +11669,9 @@ define('wcDocker/panel',[
             var layoutClass = (this._options && this._options.layout) || 'wcLayoutTable';
             this._layout = new (this.docker().__getClass(layoutClass))(this.$container, this);
             this.$title = $('<div class="wcPanelTab">');
-            this.$titleText = $('<div>' + this._title + '</div>');
+            this.$titleText = $('<div></div>');
             this.$title.append(this.$titleText);
-
-            if (this._options.hasOwnProperty('title')) {
-                this.title(this._options.title);
-            }
+            this.title(this._options.hasOwnProperty('title') ? this._options.title : this._title);
 
             if (this._options.icon) {
                 this.icon(this._options.icon);
@@ -11741,7 +11701,7 @@ define('wcDocker/panel',[
                 this._initialized = true;
                 var self = this;
                 setTimeout(function () {
-                    self.__trigger(wcDocker.EVENT.INIT);
+                    self.__trigger.call(self,wcDocker.EVENT.INIT);
 
                     docker.__testLoadFinished();
                 }, 0);
@@ -11842,7 +11802,7 @@ define('wcDocker/panel',[
         },
 
         // Restores a previously saved configuration.
-        __restore: function (data) {
+        __restore: function (data, docker) {
             // this._title = data.title;
             if (data.size) {
                 this._size.x = data.size.x;
@@ -11873,7 +11833,8 @@ define('wcDocker/panel',[
         // Params:
         //    eventType     The event to trigger.
         //    data          A custom data object to pass into all handlers.
-        __trigger: function (eventType, data) {
+        //    docker        [optional] Explicitly specify Docker instance
+        __trigger: function (eventType, data,docker) {
             if (!eventType) {
                 return false;
             }
@@ -11885,6 +11846,11 @@ define('wcDocker/panel',[
                     results.push(events[i].call(this, data));
                 }
             }
+
+            // Trigger event in parent docker instance so we can just have one global listener
+            if (!docker) docker = this.docker();
+            if (docker)
+                docker.__trigger(eventType,data,this);
 
             return results;
         },
@@ -12321,6 +12287,10 @@ define('wcDocker/splitter',[
                     minSize1.x = Math.max(minSize1.x, minSize2.x);
                 }
                 return minSize1;
+                return {
+                    x: Math.min(minSize1.x, minSize2.x),
+                    y: Math.min(minSize1.y, minSize2.y)
+                };
             } else if (minSize1) {
                 return minSize1;
             } else if (minSize2) {
@@ -12355,6 +12325,10 @@ define('wcDocker/splitter',[
                     maxSize1.x = Math.min(maxSize1.x, maxSize2.x);
                 }
                 return maxSize1;
+                return {
+                    x: Math.min(maxSize1.x, maxSize2.x),
+                    y: Math.min(maxSize1.y, maxSize2.y)
+                };
             } else if (maxSize1) {
                 return maxSize1;
             } else if (maxSize2) {
@@ -12732,7 +12706,6 @@ define('wcDocker/splitter',[
             }
             this._pane[0] && this._pane[0].__update(opt_dontMove);
             this._pane[1] && this._pane[1].__update(opt_dontMove);
-            //console.log('pos ' + this.pos());
         },
 
         // Saves the current panel configuration into a meta
@@ -12775,7 +12748,7 @@ define('wcDocker/splitter',[
         // Attempts to find the best splitter position based on
         // the contents of each pane.
         __findBestPos: function () {
-            this._findBestPos = false;
+            this._findBestPos = true;
         },
 
         // Moves the slider bar based on a mouse position.
@@ -13252,6 +13225,10 @@ define('wcDocker/frame',[
          */
         panel: function (tabIndex, autoFocus) {
             if (typeof tabIndex !== 'undefined') {
+
+                if (tabIndex == this._curTab)
+                    return this._panelList[this._curTab];
+
                 if (this.isCollapser() && tabIndex === this._curTab) {
                     this.collapse();
                     tabIndex = -1;
@@ -13268,7 +13245,7 @@ define('wcDocker/frame',[
                         this.$center.children('.wcPanelTabContent[id="' + tabIndex + '"]').removeClass('wcPanelTabContentHidden');
                         this.expand();
                     }
-                    this.__updateTabs(autoFocus);
+                    this.__updateTabs(autoFocus,'panelchange');
                 }
             }
 
@@ -13421,15 +13398,15 @@ define('wcDocker/frame',[
                 this._resizeData.time = new Date();
                 if (!this._resizeData.timeout) {
                     this._resizeData.timeout = true;
-                    setTimeout(this.__resizeEnd.bind(this), this._resizeData.delta);
+                    setTimeout(this.__resizeEnd.bind(this,'update'), this._resizeData.delta);
                 }
             }
             // this.__updateTabs();
             this.__onTabChange();
         },
 
-        __resizeEnd: function () {
-            this.__updateTabs(null,true);
+        __resizeEnd: function (trigger) {
+            this.__updateTabs(undefined,trigger || 'resize');
             if (new Date() - this._resizeData.time < this._resizeData.delta) {
                 setTimeout(this.__resizeEnd.bind(this), this._resizeData.delta);
             } else {
@@ -13493,7 +13470,11 @@ define('wcDocker/frame',[
             }
         },
 
-        __updateTabs: function (autoFocus,isResize) {
+        __updateTabs: function (autoFocus,reason) {
+
+            // TODO: Handle reason='panelchange' || reason == 'resize' to prevent un-necessary rebuild of everything
+            // and prevent iframe/webview from being re-rendered
+
             this.$tabScroll.empty();
             var getOffset = function ($item) {
                 switch (this._tabOrientation) {
@@ -13553,17 +13534,16 @@ define('wcDocker/frame',[
                     this._titleVisible = false;
                 }
 
-                var $tabContent=null;
-                //if(isResize!==true) {
-                    $tabContent = this.$center.children('.wcPanelTabContent[id="' + i + '"]');
-                    if (!$tabContent.length) {
+                var $tabContent = this.$center.children('.wcPanelTabContent[id="' + panel.id + '"]');
+                var foundTabContent = !!$tabContent.length;
+                if (!foundTabContent) {
                         $tabContent = $('<div class="wcPanelTabContent wcPanelTabContentHidden" id="' + i + '">');
                         this.$center.append($tabContent);
                     }
+                if (!foundTabContent) {
                     panel.__container($tabContent);
-                //}
-
                 panel._parent = this;
+                }
 
                 var isVisible = this._curTab === i;
                 if (panel.isVisible() !== isVisible) {
@@ -13573,7 +13553,7 @@ define('wcDocker/frame',[
                     });
                 }
 
-                $tabContent && $tabContent.removeClass('wcPanelTabUnused');
+                $tabContent.removeClass('wcPanelTabUnused');
 
                 if (isVisible) {
                     $tab && $tab.addClass('wcPanelTabActive active');
@@ -15962,8 +15942,7 @@ define('wcDocker/tabframe',[
         },
 
         __updateTabs: function (scrollTo) {
-
-            //this.$tabScroll.empty();
+            this.$tabScroll.empty();
 
             var getOffset = function ($item) {
                 switch (this._tabOrientation) {
@@ -16242,6 +16221,292 @@ define('wcDocker/tabframe',[
     return Module;
 });
 
+/** @module wcAbsolute*/
+define('wcDocker/absolute',[
+    "dcl/dcl",
+    "./types",
+    "./base"
+], function (dcl, wcDocker, base) {
+
+    /**
+     * @class module:wcAbsolute
+     * The wcAbsolute widget makes it easier to wrap an absolute positioned element into your panel.
+     */
+    var Module = dcl(base, {
+        declaredClass: 'wcIFrame', // Retained for CSS simplicity
+
+        /**
+         * @memberOf module:wcAbsolute
+         * @param {external:jQuery~selector|external:jQuery~Object|external:domNode} container - A container element for this layout.
+         * @param {module:wcPanel} parent - The webviews's parent panel.
+         */
+        constructor:function(container, panel) {
+
+            this._panel = panel;
+            this._layout = panel.layout();
+
+            this.$container = $(container);
+            this.$frame = null;
+            this.$focus = null;
+
+            this._isDocking = false;
+            this._isHovering = false;
+
+            this._boundEvents = [];
+            this._onClosedFuncs = [];
+
+            this.__init();
+        },
+
+        ///////////////////////////////////////////////////////////////////////////////////////////////////////
+        // Public Functions
+        ///////////////////////////////////////////////////////////////////////////////////////////////////////
+
+        /**
+         * Set the content
+         * @function module:wcAbsolute#setContent
+         * @param {HTMLElement|JQueryElement|string} content - The content
+         */
+        setContent: function (content,options) {
+
+            var self = this;
+            options = options || []
+            this.__clearFrame();
+            this.$content = $(content);
+            this.$frame.prepend(this.$content);
+
+            this.__onMoved();
+            this.__updateFrame();
+
+            this.$content.hover(this.__onHoverEnter.bind(this), this.__onHoverExit.bind(this));
+        },
+
+
+        /**
+         * Registers an event handler when the content has been closed.
+         * @function module:wcAbsolute#onClosed
+         * @param {Function} onClosedFunc - A function to call when the webView has closed.
+         */
+        onClosed: function(onClosedFunc) {
+            this._onClosedFuncs.push(onClosedFunc);
+        },
+
+        /**
+         * Allows the webView to be visible when the panel is visible.
+         * @function module:wcAbsolute#show
+         */
+        show: function () {
+            if (this.$frame) {
+                this.$frame.removeClass('wcIFrameHidden');
+            }
+        },
+
+        /**
+         * Forces the webView to be hidden, regardless of whether the panel is visible.
+         * @function module:wcAbsolute#hide
+         */
+        hide: function () {
+            if (this.$frame) {
+                this.$frame.addClass('wcIFrameHidden');
+            }
+        },
+        /**
+         * Destroys the webView element and clears all references.<br>
+         * <b>Note:</b> This is automatically called when the owner panel is destroyed.
+         * @function module:wcAbsolute#destroy
+         */
+        destroy: function () {
+            // Remove all registered events.
+            while (this._boundEvents.length) {
+                this._panel.off(this._boundEvents[0].event, this._boundEvents[0].handler);
+                this._boundEvents.shift();
+            }
+
+            this.__clearFrame();
+            this._panel = null;
+            this._layout = null;
+            this.$container = null;
+            this.$frame.remove();
+            this.$frame = null;
+            this.$focus = null;
+        },
+
+        ///////////////////////////////////////////////////////////////////////////////////////////////////////
+        // Private Functions
+        ///////////////////////////////////////////////////////////////////////////////////////////////////////
+
+        __init: function () {
+            this.$frame = $('<div class="wcIFrame">');
+            this.$focus = $('<div class="wcIFrameFocus">');
+            this._panel.docker().$container.append(this.$frame);
+            this.$frame.append(this.$focus);
+
+            this._boundEvents.push({event: wcDocker.EVENT.VISIBILITY_CHANGED, handler: this.__onVisibilityChanged.bind(this)});
+            this._boundEvents.push({event: wcDocker.EVENT.BEGIN_DOCK, handler: this.__onBeginDock.bind(this)});
+            this._boundEvents.push({event: wcDocker.EVENT.END_DOCK, handler: this.__onEndDock.bind(this)});
+            this._boundEvents.push({event: wcDocker.EVENT.MOVE_STARTED, handler: this.__onMoveStarted.bind(this)});
+            this._boundEvents.push({event: wcDocker.EVENT.RESIZE_STARTED, handler: this.__onMoveStarted.bind(this)});
+            this._boundEvents.push({event: wcDocker.EVENT.MOVE_ENDED, handler: this.__onMoveFinished.bind(this)});
+            this._boundEvents.push({event: wcDocker.EVENT.RESIZE_ENDED, handler: this.__onMoveFinished.bind(this)});
+            this._boundEvents.push({event: wcDocker.EVENT.MOVED, handler: this.__onMoved.bind(this)});
+            this._boundEvents.push({event: wcDocker.EVENT.RESIZED, handler: this.__onMoved.bind(this)});
+            this._boundEvents.push({event: wcDocker.EVENT.ATTACHED, handler: this.__onAttached.bind(this)});
+            this._boundEvents.push({event: wcDocker.EVENT.DETACHED, handler: this.__updateFrame.bind(this)});
+            this._boundEvents.push({event: wcDocker.EVENT.GAIN_FOCUS, handler: this.__updateFrame.bind(this)});
+            this._boundEvents.push({event: wcDocker.EVENT.LOST_FOCUS, handler: this.__updateFrame.bind(this)});
+            this._boundEvents.push({event: wcDocker.EVENT.PERSISTENT_OPENED, handler: this.__updateFrame.bind(this)});
+            this._boundEvents.push({event: wcDocker.EVENT.PERSISTENT_CLOSED, handler: this.__updateFrame.bind(this)});
+            this._boundEvents.push({event: wcDocker.EVENT.CLOSED, handler: this.__onClosed.bind(this)});
+            this._boundEvents.push({event: wcDocker.EVENT.ORDER_CHANGED, handler: this.__onOrderChanged.bind(this)});
+
+            for (var i = 0; i < this._boundEvents.length; ++i) {
+                this._panel.on(this._boundEvents[i].event, this._boundEvents[i].handler);
+            }
+
+            $(window).blur(this.__onBlur.bind(this));
+        },
+
+        __clearFrame: function () {
+            if (this.$content) {
+                for (var i = 0; i < this._onClosedFuncs.length; ++i) {
+                    this._onClosedFuncs[i]();
+                }
+                this._onClosedFuncs = [];
+            }
+        },
+
+        __updateFrame: function () {
+            if (this.$frame && this._panel) {
+                var floating = this._panel.isFloating();
+                this.$frame.toggleClass('wcIFrameFloating', floating);
+                if (floating) {
+                    this.$frame.toggleClass('wcIFrameFloatingFocus', focus);
+                } else {
+                    this.$frame.removeClass('wcIFrameFloatingFocus');
+                }
+                this.$frame.toggleClass('wcIFramePanelHidden', !this._panel.isVisible());
+                if (this._panel && this._panel._parent && this._panel._parent.instanceOf('wcFrame')) {
+                    this.$frame.toggleClass('wcDrawer', this._panel._parent.isCollapser());
+                }
+            }
+        },
+
+        __focusFix: function () {
+            // Fixes a bug where the frame stops responding to mouse wheel after
+            // it has been assigned and unassigned pointer-events: none in css.
+            this.$frame.css('left', parseInt(this.$frame.css('left')) + 1);
+            this.$frame.css('left', parseInt(this.$frame.css('left')) - 1);
+        },
+
+        __onHoverEnter: function () {
+            this._isHovering = true;
+        },
+
+        __onHoverExit: function () {
+            this._isHovering = false;
+        },
+
+        __onBlur: function () {
+            if (this._isHovering) {
+                this.__onFocus();
+            }
+        },
+
+        __onFocus: function () {
+            if (this._panel) {
+                this.docker(this._panel).__focus(this._panel._parent);
+            }
+        },
+
+        __onVisibilityChanged: function () {
+            this.__updateFrame();
+            if (this._panel.isVisible()) {
+                this.__onMoved();
+            }
+        },
+
+        __onBeginDock: function () {
+            if (this.$frame) {
+                this._isDocking = true;
+                this.$frame.addClass('wcIFrameMoving');
+            }
+        },
+
+        __onEndDock: function () {
+            if (this.$frame) {
+                this._isDocking = false;
+                this.$frame.removeClass('wcIFrameMoving');
+                this.__focusFix();
+            }
+        },
+
+        __onAttached: function() {
+            this.$frame.css('z-index', '');
+            this.__updateFrame();
+        },
+
+        __onMoveStarted: function () {
+            if (this.$frame && !this._isDocking) {
+                this.$frame.addClass('wcIFrameMoving');
+            }
+        },
+
+        __onMoveFinished: function () {
+            if (this.$frame && !this._isDocking) {
+                this.$frame.removeClass('wcIFrameMoving');
+                this.__focusFix();
+            }
+        },
+        __onMoved: function () {
+            if (this.$frame && this._panel) {
+                // Size, position, and show the frame once the move is finished.
+                var docker = this.docker(this._panel);//in base
+                if(docker) {
+                    var dockerPos = docker.$container.offset();
+                    var pos = this.$container.offset();
+                    var width = this.$container.width();
+                    var height = this.$container.height();
+
+                    this.$frame.css('top', pos.top - dockerPos.top);
+                    this.$frame.css('left', pos.left - dockerPos.left);
+                    this.$frame.css('width', width);
+                    this.$frame.css('height', height);
+                }else{
+                    console.error('have no docker');
+                }
+            }
+        },
+        __onOrderChanged: function(layer) {
+            this.$frame.css('z-index', layer+1);
+        },
+        __onClosed: function () {
+            this.destroy();
+        }
+    });
+
+    // window['wcIFrame'] = Module;
+
+    return Module;
+
+});
+
+/*!
+ * Web Cabin Docker - Docking Layout Interface.
+ *
+ * Dependencies:
+ *  JQuery 1.11.1
+ *  JQuery-contextMenu 1.6.6
+ *  font-awesome 4.2.0
+ *
+ * Author: Jeff Houde (lochemage@webcabin.org)
+ * Web: https://docker.webcabin.org/
+ *
+ * Licensed under
+ *   MIT License http://www.opensource.org/licenses/mit-license
+ *   GPL v3 http://opensource.org/licenses/GPL-3.0
+ *
+ */
+/** @module wcDocker */
 define('wcDocker/docker',[
     "dcl/dcl",
     "wcDocker/types",
@@ -16254,8 +16519,9 @@ define('wcDocker/docker',[
     'wcDocker/layouttable',
     'wcDocker/tabframe',
     'wcDocker/drawer',
-    'wcDocker/base'
-], function (dcl, wcDocker, wcPanel, wcGhost, wcSplitter, wcFrame, wcCollapser, wcLayoutSimple, wcLayoutTable, wcTabFrame, wcDrawer, base) {
+    'wcDocker/base',
+    'wcDocker/absolute'
+], function (dcl, wcDocker, wcPanel, wcGhost, wcSplitter, wcFrame, wcCollapser, wcLayoutSimple, wcLayoutTable, wcTabFrame, wcDrawer, base, wcAbsolute) {
 
     /**
      * Default class name to module mapping, being used for default options
@@ -16269,7 +16535,8 @@ define('wcDocker/docker',[
         'wcLayoutSimple': wcLayoutSimple,
         'wcLayoutTable': wcLayoutTable,
         'wcDrawer': wcDrawer,
-        'wcTabFrame': wcTabFrame
+        'wcTabFrame': wcTabFrame,
+        'wcAbsolute':wcAbsolute
     };
 
     /**
@@ -16459,9 +16726,10 @@ define('wcDocker/docker',[
          * @param {module:wcDocker.DOCK} location - The docking location to place this panel.
          * @param {module:wcPanel|module:wcDocker.COLLAPSED} [targetPanel] - A target panel to dock relative to, or use {@link wcDocker.COLLAPSED} to collapse it to the side or bottom.
          * @param {module:wcDocker~PanelOptions} [options] - Other options for panel placement.
+         * @param {Object} [data] - Data to pass to onCreate
          * @returns {module:wcPanel|Boolean} - The newly created panel object, or false if no panel was created.
          */
-        addPanel: function (typeName, location, targetPanel, options) {
+        addPanel: function (typeName, location, targetPanel, options,data) {
             function __addPanel(panel) {
                 if (location === wcDocker.DOCK.STACKED) {
                     this.__addPanelGrouped(panel, targetPanel, options);
@@ -16496,8 +16764,8 @@ define('wcDocker/docker',[
 
                     var panel = new (this.__getClass('wcPanel'))(this, typeName, panelType.options);
                     panel.__container(this.$transition);
-                    var panelOptions = (panelType.options && panelType.options.options) || options || {};
-                    panel._panelObject = new panelType.options.onCreate(panel, panelOptions);
+                    var panelOptions = (panelType.options && panelType.options.options) || {};
+                    panel._panelObject = new panelType.options.onCreate(panel, panelOptions,data);
 
                     __addPanel.call(this, panel);
                     return panel;
@@ -17061,12 +17329,6 @@ define('wcDocker/docker',[
             this._root = null;
             this.__eventHandles = [];
             this.__addPlaceholder();
-            //self.__on($(window), 'resize', this.__resize.bind(this));
-            //self.__on(body, 'contextmenu', '.wcSplitterBar', __onContextDisable);
-
-            // $('body').on('selectstart', '.wcFrameTitleBar, .wcPanelTab, .wcFrameButton', function(event) {
-            //   event.preventDefault();
-            // });
 
             // Hovering over a panel creation context menu.
             self.__on(body, 'mouseenter', '.wcMenuCreatePanel', __onEnterCreatePanel);
@@ -17363,7 +17625,9 @@ define('wcDocker/docker',[
                 } else if (self._draggingFrame && !self._draggingFrameTab) {
                     self._draggingFrame.__move(mouse);
                     self._draggingFrame.__update();
-                    self.trigger(wcDocker.EVENT.MOVE_STARTED);
+                    if(self._draggingFrameSizer){
+                        self.trigger(wcDocker.EVENT.END_FLOAT_RESIZE);
+                    }
                 }
                 return true;
             }
@@ -17740,6 +18004,7 @@ define('wcDocker/docker',[
                     self._ghost.update(mouse);
                     self._ghost.anchor(mouse, self._ghost.anchor());
                     self._creatingPanel = panelType;
+                    self._creatingPanelNoFloating = !$(this).data('nofloating');
                     self.__focus();
                     self.trigger(wcDocker.EVENT.BEGIN_DOCK);
                 }
@@ -18013,7 +18278,8 @@ define('wcDocker/docker',[
         // Params:
         //    eventName   The name of the event.
         //    data        A custom data parameter to pass to all handlers.
-        __trigger: function (eventName, data) {
+        //    panel       [optional] The panel associated with the event
+        __trigger: function (eventName, data, panel) {
             if (!eventName) {
                 return;
             }
@@ -18023,7 +18289,7 @@ define('wcDocker/docker',[
             if (this._events[eventName]) {
                 var events = this._events[eventName].slice(0);
                 for (var i = 0; i < events.length; ++i) {
-                    results.push(events[i].call(this, data));
+                    results.push(events[i].call(this, data,panel));
                 }
             }
 
@@ -18393,6 +18659,8 @@ define('wcDocker/docker',[
             if (parent) {
                 var parentSplitter = parent._parent;
                 var splitterChild = parent;
+                var _d = dcl;
+
                 while (parentSplitter && !(parentSplitter.instanceOf('wcSplitter') || parentSplitter.instanceOf('wcDocker'))) {
                     splitterChild = parentSplitter;
                     parentSplitter = parentSplitter._parent;
@@ -26516,26 +26784,26 @@ define('xdocker/Docker2',[
     'xide/widgets/_Widget',
     'xide/widgets/ContextMenu',
     'require'
-], function (dcl,types,utils,wcDocker,Panel2,Frame2,Splitter2,EventedMixin,registry,dTypes,base,ActionProvider,_CWidget,ContextMenu,require) {
+], function (dcl, types, utils, wcDocker, Panel2, Frame2, Splitter2, EventedMixin, registry, dTypes, base, ActionProvider, _CWidget, ContextMenu, require) {
     /**
      * @class module:xDocker/Docker2
      * @extends module:wcDocker/docker
      */
-    var Module = dcl([wcDocker,base,ActionProvider.dcl,_CWidget.dcl,EventedMixin.dcl],{
-        isResizing:false,
-        _last:null,
-        _lastResize:null,
-        _needResize:false,
-        _lastResizeTimer:null,
-        _declaredClass:'xdocker.Docker2',
-        __eventHandles:[],
-        contextMenu:null,
-        contextMenuEventTarget:null,
-        contextMenuPanelId:null,
-        setupActions:function(_mixin){
-            this.__on(this._root.$container,'contextmenu', '.wcPanelTab', function(e){
-                self.contextMenuEventTarget  = e.target;
-                self.contextMenuPanelId = e.target.parentNode ?  e.target.parentNode.id : null;
+    var Module = dcl([wcDocker, base, ActionProvider.dcl, _CWidget.dcl, EventedMixin.dcl], {
+        isResizing: false,
+        _last: null,
+        _lastResize: null,
+        _needResize: false,
+        _lastResizeTimer: null,
+        _declaredClass: 'xdocker.Docker2',
+        __eventHandles: [],
+        contextMenu: null,
+        contextMenuEventTarget: null,
+        contextMenuPanelId: null,
+        setupActions: function (_mixin) {
+            this.__on(this._root.$container, 'contextmenu', '.wcPanelTab', function (e) {
+                self.contextMenuEventTarget = e.target;
+                self.contextMenuPanelId = e.target.parentNode ? e.target.parentNode.id : null;
             });
 
             var self = this,
@@ -26544,105 +26812,107 @@ define('xdocker/Docker2',[
                     addPermission: true
                 },
                 defaultProps = {
-                    group:'Misc',
-                    tab:'View',
-                    mixin:_mixin || mixin
+                    group: 'Misc',
+                    tab: 'View',
+                    mixin: _mixin || mixin
                 },
                 _actions = [],
-                action = function(label,command,icon){
+                action = function (label, command, icon) {
                     return self.createAction(_.extend({
-                        label:label,
-                        command:command,
-                        icon:icon
-                    },defaultProps));
+                        label: label,
+                        command: command,
+                        icon: icon
+                    }, defaultProps));
                 },
                 actions = this.addActions([
-                    action('Close','View/Close','fa-close'),
-                    action('Close others','View/Close Others','fa-close'),
-                    action('Close all in group','View/Close all group','fa-close'),
-                    action('Split Horizontal','View/Split Horizontal','fa-columns'),
-                    action('Split Vertical','View/Split Vertical','fa-columns')]
-                ),
+                    action('Close', 'View/Close', 'fa-close'),
+                    action('Close others', 'View/Close Others', 'fa-close'),
+                    action('Close all in group', 'View/Close all group', 'fa-close'),
+                    action('Split Horizontal', 'View/Split Horizontal', 'fa-columns'),
+                    action('Split Vertical', 'View/Split Vertical', 'fa-columns')
+                ]),
                 node = this._root.$container[0],
                 contextMenu = new ContextMenu({
-                    owner:this,
-                    delegate:this,
-                    limitTo:'wcPanelTab',
-                    openTarget:node
-                },node);
+                    owner: this,
+                    delegate: this,
+                    limitTo: 'wcPanelTab',
+                    openTarget: node
+                }, node);
 
-            contextMenu.init({preventDoubleContext: false});
-            contextMenu.setActionEmitter(this,types.EVENTS.ON_VIEW_SHOW,this);
+            contextMenu.init({
+                preventDoubleContext: false
+            });
+            contextMenu.setActionEmitter(this, types.EVENTS.ON_VIEW_SHOW, this);
             this.contextMenu = contextMenu;
-            this.add(contextMenu,null,false);
+            this.add(contextMenu, null, false);
 
             return actions;
         },
-        runAction:function(action,type,event){
+        runAction: function (action, type, event) {
 
             var DOCKER_TYPES = types.DOCKER,
                 _panel = this.contextMenuEventTarget ? this.__panel(this.contextMenuEventTarget) : null,
                 self = this,
-                frame = _panel ? _panel.getFrame(): null,
+                frame = _panel ? _panel.getFrame() : null,
                 panels = frame ? frame.panels() : null;
 
-            if(action.command ==='View/Close') {
+            if (action.command === 'View/Close') {
                 if (_panel) {
                     this.removePanel(_panel);
                 }
             }
 
-            if(action.command ==='View/Close all group' && _panel) {
-                if(frame){
+            if (action.command === 'View/Close all group' && _panel) {
+                if (frame) {
                     var toRemove = [];
-                    _.each(panels,function(panel){
-                        if(panel && panel._moveable && panel._closeable){
+                    _.each(panels, function (panel) {
+                        if (panel && panel._moveable && panel._closeable) {
                             toRemove.push(panel);
                         }
                     });
-                    _.each(toRemove,function(panel){
+                    _.each(toRemove, function (panel) {
                         self.removePanel(panel);
                     })
                 }
 
             }
-            if(action.command ==='View/Close Others' && _panel) {
-                frame && _.each(panels,function(panel){
-                        if(panel && panel!=_panel  && panel._moveable && panel._closeable){
-                            self.removePanel(panel);
-                        }
-                    });
+            if (action.command === 'View/Close Others' && _panel) {
+                frame && _.each(panels, function (panel) {
+                    if (panel && panel != _panel && panel._moveable && panel._closeable) {
+                        self.removePanel(panel);
+                    }
+                });
 
                 _panel.select();
             }
 
-            function split(direction){
+            function split(direction) {
                 var otherPanel = _panel.next(-1) || _panel.next(1);
-                if(otherPanel && _panel !=otherPanel){
+                if (otherPanel && _panel != otherPanel) {
 
-                    self.movePanel(otherPanel,direction == DOCKER_TYPES.ORIENTATION.HORIZONTAL ?
-                        DOCKER_TYPES.DOCK.BOTTOM : DOCKER_TYPES.DOCK.RIGHT,_panel,direction);
+                    self.movePanel(otherPanel, direction == DOCKER_TYPES.ORIENTATION.HORIZONTAL ?
+                        DOCKER_TYPES.DOCK.BOTTOM : DOCKER_TYPES.DOCK.RIGHT, _panel, direction);
 
                     var splitter = otherPanel.getSplitter();
                     splitter && splitter.pos(0.5);
                 }
             }
 
-            if(action.command ==='View/Split Horizontal' && _panel) {
+            if (action.command === 'View/Split Horizontal' && _panel) {
                 split(DOCKER_TYPES.ORIENTATION.HORIZONTAL);
             }
-            if(action.command ==='View/Split Vertical' && _panel) {
+            if (action.command === 'View/Split Vertical' && _panel) {
                 split(DOCKER_TYPES.ORIENTATION.VERTICAL);
             }
         },
-        __panel:function(el){
+        __panel: function (el) {
 
             var panels = this.getPanels();
             var frame = null,
                 self = this;
 
-            _.each(this._frameList,function(_frame){
-                if($.contains(_frame.$container[0],el)){
+            _.each(this._frameList, function (_frame) {
+                if ($.contains(_frame.$container[0], el)) {
                     frame = _frame;
                 }
             });
@@ -26650,24 +26920,24 @@ define('xdocker/Docker2',[
             var id = self.contextMenuPanelId;
             this.contextMenuEventTarget = null;
             this.contextMenuPanelId = null;
-            if(frame && id!==null){
+            if (frame && id !== null) {
                 var _panel = frame.panel(id);
-                if(_panel){
+                if (_panel) {
                     return _panel;
                 }
             }
         },
         /**********************************************************************/
-        allPanels:function(){
+        allPanels: function () {
             var result = [];
-            _.each(this._frameList,function(frame){
-                _.each(frame._panelList,function(panel){
+            _.each(this._frameList, function (frame) {
+                _.each(frame._panelList, function (panel) {
                     result.push(panel);
                 });
             });
             return result;
         },
-        destroy:function(){
+        destroy: function () {
             registry.remove(this.id);
             this.__destroy();
         },
@@ -26679,35 +26949,35 @@ define('xdocker/Docker2',[
          * @param handler {function|null}
          * @private
          */
-        __on:function(element,type,selector,handler){
+        __on: function (element, type, selector, handler) {
 
-            if(typeof selector =='function' && !handler){
+            if (typeof selector == 'function' && !handler) {
                 //no selector given, swap arg[3] with arg[2]
                 handler = selector;
                 selector = null;
             }
 
-            element.on(type,selector,handler);
+            element.on(type, selector, handler);
 
             this.__eventHandles.push({
-                element:element,
-                type:type,
-                selector:selector,
-                handler:handler
+                element: element,
+                type: type,
+                selector: selector,
+                handler: handler
             });
         },
-        __destroy:function(){
+        __destroy: function () {
             var self = this;
             //docker handles
-            _.each(self.__eventHandles,function(handle){
-                handle && handle.element && handle.element.off(handle.type,handle.selector,handle.handler);
+            _.each(self.__eventHandles, function (handle) {
+                handle && handle.element && handle.element.off(handle.type, handle.selector, handle.handler);
                 self.__eventHandles.remove(handle);
             });
 
             //xide handles
-            _.each(self._events,function(handles,type){
-                _.each(handles,function(handler){
-                    self.off(type,handler);
+            _.each(self._events, function (handles, type) {
+                _.each(handles, function (handler) {
+                    self.off(type, handler);
                 });
             });
 
@@ -26716,33 +26986,34 @@ define('xdocker/Docker2',[
             delete self.__eventHandles;
             self._updateId && clearTimeout(self._updateId);
         },
-        resize: function (force,noob,why) {
-            if(why==='deselected'){
+        resize: function (force, noob, why) {
+            if (why === 'deselected') {
                 return;
             }
             var self = this;
-            function _resize(){
-                if(self.$container) {
+
+            function _resize() {
+                if (self.$container) {
                     var h = self.$container.height();
                     var w = self.$container.width();
-                    if(h<110 || w<110){
+                    if (h < 110 || w < 110) {
                         return;
                     }
                 }
                 self._dirty = true;
                 self._root && self._root.__update(true);
-                _.invoke(self._floatingList,'__update');
+                _.invoke(self._floatingList, '__update');
             }
-            return this.debounce('resize',_resize.bind(this),100,null);
+            return this.debounce('resize', _resize.bind(this), 100, null);
         },
         /**
          * Helper
          * @returns {xdocker/Panel[]}
          */
-        getPanels:function(){
+        getPanels: function () {
             var result = [];
-            _.each(this._frameList,function(frame){
-                _.each(frame._panelList,function(panel){
+            _.each(this._frameList, function (frame) {
+                _.each(frame._panelList, function (panel) {
                     result.push(panel);
                 });
             });
@@ -26752,9 +27023,9 @@ define('xdocker/Docker2',[
          * Returns a default panel
          * @returns {xdocker/Panel}
          */
-        getDefaultPanel:function(){
-            return _.find(this.getPanels(),{
-                isDefault:true
+        getDefaultPanel: function () {
+            return _.find(this.getPanels(), {
+                isDefault: true
             });
         },
         /**
@@ -26810,6 +27081,7 @@ define('xdocker/Docker2',[
             } else if (_.isObject(mixed)) {
                 panel = mixed;
             }
+
             function applyOptions(who, what) {
                 for (var option in what) {
                     if (_.isFunction(who[option])) {
@@ -26836,30 +27108,30 @@ define('xdocker/Docker2',[
      * @param onCreate
      * @returns {{faicon: *, closeable: *, title: *, onCreate: Function}}
      */
-    Module.defaultPaneType = function (label, iconClass, closable, collapsible, moveable, onCreate,isPrivate) {
+    Module.defaultPaneType = function (label, iconClass, closable, collapsible, moveable, onCreate, isPrivate) {
 
         return {
-            isPrivate: isPrivate!==null ? isPrivate : false,
+            isPrivate: isPrivate !== null ? isPrivate : false,
             faicon: iconClass,
             closeable: closable,
             title: label,
-            moveable:moveable,
+            moveable: moveable,
             onCreate: function (panel, options) {
 
                 var docker = panel.docker();
 
-                utils.mixin(panel._options,options);
+                utils.mixin(panel._options, options);
 
-                panel.on(wcDocker.EVENT.ATTACHED,function(){
-                    docker._emit(wcDocker.EVENT.ATTACHED,panel);
+                panel.on(wcDocker.EVENT.ATTACHED, function () {
+                    docker._emit(wcDocker.EVENT.ATTACHED, panel);
                 });
 
-                panel.on(wcDocker.EVENT.DETACHED,function(){
-                    docker._emit(wcDocker.EVENT.DETACHED,panel);
+                panel.on(wcDocker.EVENT.DETACHED, function () {
+                    docker._emit(wcDocker.EVENT.DETACHED, panel);
                 });
 
-                panel.on(wcDocker.EVENT.CLOSED,function(){
-                    docker._emit(wcDocker.EVENT.CLOSED,panel);
+                panel.on(wcDocker.EVENT.CLOSED, function () {
+                    docker._emit(wcDocker.EVENT.CLOSED, panel);
                 });
 
                 if (closable !== null) {
@@ -26884,25 +27156,25 @@ define('xdocker/Docker2',[
                 var parent = $('<div style="height: 100%;width: 100%;overflow: hidden;" class="panelParent"/>');
                 panel.layout().addItem(parent).stretch('100%', '100%');
                 panel.containerNode = parent[0];
-                utils.mixin(panel,options.mixin);
+                utils.mixin(panel, options.mixin);
 
-                function resize(panel,parent,why){
+                function resize(panel, parent, why) {
                     var extraH = 0;
 
                     var resizeToChildren = panel.resizeToChildren;
                     panel.onResize && panel.onResize();
-                    if(resizeToChildren){
+                    if (resizeToChildren) {
                         var totalHeight = utils.getHeight(panel._findWidgets()),
                             panelParent = panel._parent.$container;
 
                         extraH = panelParent.outerHeight() - panelParent.height();
-                        if(extraH){
-                            totalHeight+=extraH;
+                        if (extraH) {
+                            totalHeight += extraH;
                         }
                         parent.css('width', panel._actualSize.x + 'px');
-                        panel.set('height',totalHeight);
+                        panel.set('height', totalHeight);
 
-                    }else {
+                    } else {
                         parent.css('height', panel._actualSize.y + 'px');
                         parent.css('width', panel._actualSize.x + 'px');
                         //transfer size and resize on widgets
@@ -26931,17 +27203,17 @@ define('xdocker/Docker2',[
                 }
 
 
-                function select(selected,reason){
+                function select(selected, reason) {
                     //console.log(reason + ' : select ' +panel.title() +' selected:'+ selected + ' visible:' + panel.isVisible() + ' p#selected:' + panel.selected + ' __isVisible'+panel.isVisible());
 
-                    if(panel.selected && selected){
+                    if (panel.selected && selected) {
                         return true;
                     }
                     panel.selected = selected;
                     selected && (docker._lastSelected = panel);
-                    resize(panel,parent,selected ?  'selected' : 'deselected');
+                    resize(panel, parent, selected ? 'selected' : 'deselected');
 
-                    var apiMethod = selected ? 'onShow'  : 'onHide';
+                    var apiMethod = selected ? 'onShow' : 'onHide';
                     panel[apiMethod] && panel[apiMethod]();
 
 
@@ -26949,11 +27221,11 @@ define('xdocker/Docker2',[
 
                     //tell widgets
                     _.each(panel._findWidgets(), function (widget) {
-                        if(!widget){
+                        if (!widget) {
                             return;
                         }
-                        if(selected){
-                            if(!widget._started){
+                        if (selected) {
+                            if (!widget._started) {
                                 widget.startup && widget.startup();
                             }
                         }
@@ -26963,7 +27235,7 @@ define('xdocker/Docker2',[
                         }
                         //forward
                         if (widget._emit) {
-                            widget._emit(selected ? types.EVENTS.ON_VIEW_SHOW :types.EVENTS.ON_VIEW_HIDE , widget);
+                            widget._emit(selected ? types.EVENTS.ON_VIEW_SHOW : types.EVENTS.ON_VIEW_HIDE, widget);
                         }
 
                         //forward
@@ -26974,53 +27246,53 @@ define('xdocker/Docker2',[
                 }
 
                 panel.on(types.DOCKER.EVENT.VISIBILITY_CHANGED, function (visible) {
-                    panel.silent!==true && select(visible,'vis changed');
+                    panel.silent !== true && select(visible, 'vis changed');
                 });
                 panel._on(types.DOCKER.EVENT.SELECT, function (what) {
-                    panel.silent!==true && select(true,'select');
+                    panel.silent !== true && select(true, 'select');
 
                 });
 
                 panel._on(types.DOCKER.EVENT.MOVE_STARTED, function () {
-                    docker.trigger(types.DOCKER.EVENT.MOVE_STARTED,panel);
+                    docker.trigger(types.DOCKER.EVENT.MOVE_STARTED, panel);
                 });
 
                 panel._on(types.DOCKER.EVENT.MOVE_ENDED, function () {
-                    docker.trigger(types.DOCKER.EVENT.MOVE_ENDED,panel);
+                    docker.trigger(types.DOCKER.EVENT.MOVE_ENDED, panel);
                 });
 
                 panel.on(types.DOCKER.EVENT.SAVE_LAYOUT, function (customData) {
 
 
                     panel.onSaveLayout({
-                        data:customData,
-                        panel:panel
+                        data: customData,
+                        panel: panel
                     });
 
-                    if(!customData.widgets){
+                    if (!customData.widgets) {
                         customData.widgets = [];
                     }
 
-                    _.each(panel._findWidgets(),function(w){
-                        if(!w){
+                    _.each(panel._findWidgets(), function (w) {
+                        if (!w) {
                             console.warn('SAVE_LAYOUT : invalid widget');
                             return;
                         }
-                        w._emit && w._emit(types.EVENTS.SAVE_LAYOUT,{
-                            panel:panel,
-                            data:customData
+                        w._emit && w._emit(types.EVENTS.SAVE_LAYOUT, {
+                            panel: panel,
+                            data: customData
                         });
                         w.onSaveLayout && w.onSaveLayout({
-                            data:customData,
-                            owner:panel
+                            data: customData,
+                            owner: panel
                         })
                     });
                 });
                 panel.on(types.DOCKER.EVENT.RESTORE_LAYOUT, function (customData) {
-                    
+
                     var eventData = {
-                        data:customData,
-                        panel:panel
+                        data: customData,
+                        panel: panel
                     };
                     panel.onRestoreLayout(eventData);
                     //console.log('restore layout');
@@ -27029,17 +27301,17 @@ define('xdocker/Docker2',[
 
                 panel.on(types.DOCKER.EVENT.RESIZE_STARTED, function () {
                     panel.onResizeBegin(arguments);
-                    docker.trigger(types.DOCKER.EVENT.BEGIN_RESIZE,panel);
+                    docker.trigger(types.DOCKER.EVENT.BEGIN_RESIZE, panel);
                 });
                 panel.on(types.DOCKER.EVENT.RESIZE_ENDED, function () {
                     panel.onResizeEnd(arguments);
-                    resize(panel,parent);
-                    docker.trigger(types.DOCKER.EVENT.END_RESIZE,panel);
+                    resize(panel, parent);
+                    docker.trigger(types.DOCKER.EVENT.END_RESIZE, panel);
                 });
                 panel.on(types.DOCKER.EVENT.RESIZED, function () {
-                    resize(panel,parent);
+                    resize(panel, parent);
                 });
-                utils.mixin(panel,options.mixin);
+                utils.mixin(panel, options.mixin);
 
                 if (onCreate) {
                     onCreate(panel);
@@ -27052,10 +27324,10 @@ define('xdocker/Docker2',[
      * @static
      * @param docker
      */
-    Module.registerDefaultTypes = function(docker){
-        docker.registerPanelType('DefaultFixed',Module.defaultPaneType('','',false,false,true,null,true));
-        docker.registerPanelType('DefaultTab',Module.defaultPaneType('','',true,false,true,null,true));
-        docker.registerPanelType('Collapsible',Module.defaultPaneType('','',false,true,true,null,true));
+    Module.registerDefaultTypes = function (docker) {
+        docker.registerPanelType('DefaultFixed', Module.defaultPaneType('', '', false, false, true, null, true));
+        docker.registerPanelType('DefaultTab', Module.defaultPaneType('', '', true, false, true, null, true));
+        docker.registerPanelType('Collapsible', Module.defaultPaneType('', '', false, true, true, null, true));
     };
 
     /**
@@ -27064,39 +27336,41 @@ define('xdocker/Docker2',[
      * @param container
      * @param options
      */
-    Module.createDefault=function(container,options){
-        require({cacheBust: null});
+    Module.createDefault = function (container, options) {
+        require({
+            cacheBust: null
+        });
         options = options || {};
 
         //get or create new docker variant
         var _class = Module;
-        options.extension && ( _class = dcl([Module,options.extension],{}));
-        var docker = new _class($(container),utils.mixin({
+        options.extension && (_class = dcl([Module, options.extension], {}));
+        var docker = new _class($(container), utils.mixin({
             allowCollapse: true,
             responseRate: 100,
             allowContextMenu: false,
             themePath: require.toUrl('xdocker') + '/Themes/',
             theme: 'transparent2',
-            wcPanelClass:Panel2,
-            wcFrameClass:Frame2,
-            wcSplitterClass:Splitter2
-        },options || {}));
+            wcPanelClass: Panel2,
+            wcFrameClass: Frame2,
+            wcSplitterClass: Splitter2
+        }, options || {}));
 
         Module.registerDefaultTypes(docker);
 
-        function hideFrames(hide){
+        function hideFrames(hide) {
             var frame = $('#xIFrames');
             frame.css('display', hide ? 'none' : 'block');
-            frame.children().css('display',hide ? 'none' : 'block');
+            frame.children().css('display', hide ? 'none' : 'block');
         }
 
-        docker.on(wcDocker.EVENT.BEGIN_DOCK,_.partial(hideFrames,true));
-        docker.on(wcDocker.EVENT.END_DOCK,_.partial(hideFrames,false));
-        docker.on(wcDocker.EVENT.RESIZE_STARTED,_.partial(hideFrames,true));
-        docker.on(wcDocker.EVENT.RESIZED,_.partial(hideFrames,false));
-        if(!docker.id){
+        docker.on(wcDocker.EVENT.BEGIN_DOCK, _.partial(hideFrames, true));
+        docker.on(wcDocker.EVENT.END_DOCK, _.partial(hideFrames, false));
+        docker.on(wcDocker.EVENT.RESIZE_STARTED, _.partial(hideFrames, true));
+        docker.on(wcDocker.EVENT.RESIZED, _.partial(hideFrames, false));
+        if (!docker.id) {
             docker.id = registry.getUniqueId(docker._declaredClass.replace(/\./g, "_"));
-            docker.$container.attr('id',docker.id);
+            docker.$container.attr('id', docker.id);
         }
         registry.add(docker);
         return docker;
