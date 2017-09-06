@@ -22,13 +22,13 @@ class TrackingService extends JSONFile_1.JSONFileService {
         this.root = "admin";
     }
     get(section, path, query) {
-        let data = this.readConfig(this._getConfigPath(arguments), json_1.serialize({ admin: { meta: {} } }));
+        let data = this.readConfig(this._getConfigPath(arguments, 'meta.json'), json_1.serialize({ admin: { meta: {} } }));
         let result = {};
         result[section] = dotProp.get(data, this.root + path + section);
         return result;
     }
     set(section, path = '.', searchQuery = null, value, decodeValue = true) {
-        let data = this.readConfig(this._getConfigPath(arguments));
+        let data = this.readConfig(this._getConfigPath(arguments, 'meta.json'));
         const dataAt = dotProp.get(data, this.root + path + section);
         dataAt && _.extend(_.find(dataAt, searchQuery), value);
         this.write(this._getConfigPath(arguments), data);

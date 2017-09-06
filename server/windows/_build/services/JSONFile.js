@@ -32,11 +32,11 @@ class JSONFileService extends Base_1.BaseService {
     _userDir(userRoot, what) {
         return pathUtil.resolve(pathUtil.join(userRoot + pathUtil.sep + what));
     }
-    _getConfigPath(args) {
+    _getConfigPath(args, file = 'settings.json') {
         const user = this._getUser(this._getRequest(args));
         let configPath = this.configPath;
         if (user) {
-            configPath = this._userDir(user, 'settings.json');
+            configPath = this._userDir(user, file || 'settings.json');
         }
         return configPath;
     }
