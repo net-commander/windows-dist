@@ -81,7 +81,6 @@ var ELayout;
     ELayout[ELayout["SOURCE"] = 'SOURCE'] = "SOURCE";
     ELayout[ELayout["OFFLINE_RELEASE"] = 'OFFLINE_RELEASE'] = "OFFLINE_RELEASE";
 })(ELayout = exports.ELayout || (exports.ELayout = {}));
-;
 exports.ESKey = {
     'SettingsService': 'settingsService'
 };

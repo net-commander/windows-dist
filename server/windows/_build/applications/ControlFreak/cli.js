@@ -2,7 +2,6 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const cli = require("yargs");
 const path = require("path");
-//import * as global from '../../global';
 function create() {
     const argv = cli.argv;
     const cwd = process.cwd();

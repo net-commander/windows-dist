@@ -6,29 +6,7 @@ const index_2 = require("./applications/xbox/index");
 const Application_1 = require("./interfaces/Application");
 const path = require("path");
 const yargs_parser = require("yargs-parser");
-/*
-import { hookStream } from './debug';
-const stdout = process.stdout;
-hookStream(stdout);
-stdout['hook']('write', function (str, encoding, fd, write) {
-    write('caught: ' + str);
-});
-*/
-/*
-const yargs = require("yargs");
-yargs.options('v', {
-    alias: 'version',
-    description: 'Display version number'
-});
-yargs.describe('f', 'df');
-var _argv = yargs.argv;
-console.log('dfdf',_argv);
-
-if (_argv.h || _argv.help) {
-    yargs.showHelp();
-    process.exit();
-}
-*/
+const homedir = require('os-homedir');
 let argv = yargs_parser(process.argv.slice(2));
 let app = argv.app ? yargs_parser.app : "ControlFreak";
 let root = argv.root ? path.resolve(argv.root) : path.resolve('../../../');
@@ -59,6 +37,12 @@ if (argv.file) {
     }
     */
 }
+let user = null;
+if (argv.user) {
+    if (argv.user === 'home') {
+        user = path.join(homedir(), 'Documents', 'Control-Freak');
+    }
+}
 const CFOptions = {
     root: root,
     port: argv.port,
@@ -67,7 +51,7 @@ const CFOptions = {
     type: argv.type || Base_1.ELayout.SOURCE,
     print: argv.print === 'true',
     uuid: argv.uuid || 'ide',
-    user: argv.user ? path.resolve(argv.user) : null,
+    user: user || (argv.user ? path.resolve(argv.user) : null),
     persistence: argv.persistences ? argv.persistence : Application_1.EPersistence.MEMORY,
     interface: argv.interface ? argv.interface : null
 };
