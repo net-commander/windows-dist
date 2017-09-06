@@ -11,6 +11,7 @@ const _path = require("path");
 const write = require('write-file-atomic');
 const qs = require('qs').parse;
 const url = require('url');
+const pathUtil = require("path");
 const permissionError = 'You don\'t have access to this file.';
 const defaultPathMode = parseInt('0700', 8);
 const writeFileOptions = { mode: parseInt('0600', 8) };
@@ -39,8 +40,19 @@ class BaseService extends Resolver_1.ResourceResolver {
         this.WRITE_MODE = writeFileOptions;
         this.method = 'no_method';
     }
-    init() { }
-    ;
+    init() {
+    }
+    _userDir(userRoot, what) {
+        return pathUtil.resolve(pathUtil.join(userRoot + pathUtil.sep + what));
+    }
+    _getConfigPath(args) {
+        const user = this._getUser(this._getRequest(args));
+        let configPath = this.configPath;
+        if (user) {
+            configPath = this._userDir(user, 'settings.json');
+        }
+        return configPath;
+    }
     _getUser(request) {
         if (request) {
             // pick userDirectory from referrer (xide RPC calls don't have it has it as url parameter )

@@ -18,26 +18,9 @@ const write = require('write-file-atomic');
 const _fs = require('node-fs-extra');
 const _path = require("path");
 function create(fsOptions, resource) {
-    let pty;
-    if (!fsOptions.nopty) {
-        try {
-            if (fsOptions.local) {
-                throw new Error();
-            }
-            pty = fsOptions.local ? require('pty.nw.js') : require('pty.js');
-        }
-        catch (e) {
-            console.warn("unable to initialize "
-                + (fsOptions.local ? "pty.nw.js" : "pty.js") + ":");
-            console.warn(e);
-            pty = function () { };
-        }
-    }
-    else {
-        pty = function () {
-            console.log("PTY is not supported.");
-        };
-    }
+    let pty = function () {
+        console.log("PTY is not supported.");
+    };
     // Get the separator char. In Node 0.8, we can use path.sep instead
     const pathSep = _path.sep;
     const METAPATH = fsOptions.metapath;
@@ -62,7 +45,7 @@ function create(fsOptions, resource) {
     }
     const umask = fsOptions.umask || parseInt('0750', 8);
     if (fsOptions.hasOwnProperty('defaultEnv')) {
-        //fsOptions.defaultEnv.__proto__ = process.env;
+        // fsOptions.defaultEnv.__proto__ = process.env;
     }
     else {
         fsOptions.defaultEnv = process.env;
@@ -1042,52 +1025,6 @@ function create(fsOptions, resource) {
             });
         });
     }
-    /*
-    function ptyspawn(executablePath, options, callback) {
-        const args = options.args || [];
-        delete options.args;
-
-        if (options.hasOwnProperty('env')) {
-            options.env.__proto__ = fsOptions.defaultEnv;
-        } else {
-            options.env = fsOptions.defaultEnv;
-        }
-
-        // Pty is only reading from the object itself;
-        let env: any = {};
-        for (let prop in options.env) {
-            if (prop === "TMUX") { continue; }
-            env[prop] = options.env[prop];
-        }
-        options.env = env;
-        if (options.cwd && options.cwd.charAt(0) === "~") {
-            options.cwd = env.HOME + options.cwd.substr(1);
-        }
-
-        resolvePath(executablePath, {
-            nocheck: 1,
-            alreadyRooted: true
-        }, function (err, path) {
-            if (err) { return callback(err); }
-
-            let proc;
-            try {
-                proc = pty.spawn(path, args, options);
-                proc.on("error", function () {
-                    // Prevent PTY from throwing an error;
-                    // I don't know how to test and the src is funky because
-                    // it tests for .length < 2. Who is setting the other event?
-                });
-            } catch (err) {
-                return callback(err);
-            }
-
-            callback(null, {
-                pty: proc
-            });
-        });
-    }
-    */
     function execFile(executablePath, options, callback) {
         if (options.hasOwnProperty('env')) {
             options.env.__proto__ = fsOptions.defaultEnv;
@@ -1218,7 +1155,6 @@ function create(fsOptions, resource) {
     return vfs;
 }
 exports.create = create;
-;
 // Consume all data in a readable stream and call callback with full buffer.
 function consumeStream(stream, callback) {
     const chunks = [];

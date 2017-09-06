@@ -13,7 +13,6 @@ const Base_1 = require("../services/Base");
 const JSONFile_1 = require("./JSONFile");
 const json_1 = require("../io/json");
 const dotProp = require("dot-prop");
-const _path = require("path");
 const _ = require("lodash");
 class TrackingService extends JSONFile_1.JSONFileService {
     constructor() {
@@ -23,34 +22,16 @@ class TrackingService extends JSONFile_1.JSONFileService {
         this.root = "admin";
     }
     get(section, path, query) {
-        const request = this._getRequest(arguments);
-        let user = null;
-        let file = null;
-        if (request) {
-            user = this._getUser(request);
-            if (user) {
-                file = _path.join(user, 'meta.json');
-            }
-        }
-        let data = this.readConfig(file, json_1.serialize({ admin: { meta: {} } }));
+        let data = this.readConfig(this._getConfigPath(arguments), json_1.serialize({ admin: { meta: {} } }));
         let result = {};
         result[section] = dotProp.get(data, this.root + path + section);
         return result;
     }
     set(section, path = '.', searchQuery = null, value, decodeValue = true) {
-        const request = this._getRequest(arguments);
-        let user = null;
-        let file = null;
-        if (request) {
-            user = this._getUser(request);
-            if (user) {
-                file = _path.join(user, 'meta.json');
-            }
-        }
-        let data = this.readConfig(file);
+        let data = this.readConfig(this._getConfigPath(arguments));
         const dataAt = dotProp.get(data, this.root + path + section);
         dataAt && _.extend(_.find(dataAt, searchQuery), value);
-        this.write(file, data);
+        this.write(this._getConfigPath(arguments), data);
         return data;
     }
     //
