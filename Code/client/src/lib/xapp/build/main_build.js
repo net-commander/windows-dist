@@ -52142,7 +52142,6 @@ define('xcf/manager/DeviceManager',[
                 this._deviceInfoCache = {};
                 this.subscribe(types.EVENTS.ON_DRIVER_VARIABLE_CHANGED, this.onVariableChanged);
                 this.subscribe(types.EVENTS.ON_DEVICE_SERVER_CONNECTED, function () {
-                    console.log('got device server connection');
                     var connect = has('drivers') && has('devices');
                     if (thiz.autoConnectDevices && connect) {
                         all(thiz.connectToAllDevices()).then(function () {
@@ -52435,8 +52434,7 @@ define('xcf/manager/DeviceManager',[
                 }
             }
         });
-    });
-;
+    });;
 define('xide/console',[], function () {
     return typeof window !=='undefined' ? window.console : typeof global !=='undefined' ? global.console : {
 
