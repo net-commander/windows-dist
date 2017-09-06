@@ -60,7 +60,6 @@ class JSONFileService extends Base_1.BaseService {
         return this.readConfig(this._getConfigPath(arguments));
     }
     write(path, val) {
-        console.log('wr ' + path, new Error().stack);
         this.writeConfig(path, val);
     }
     //

@@ -31,7 +31,7 @@ class TrackingService extends JSONFile_1.JSONFileService {
         let data = this.readConfig(this._getConfigPath(arguments, 'meta.json'));
         const dataAt = dotProp.get(data, this.root + path + section);
         dataAt && _.extend(_.find(dataAt, searchQuery), value);
-        this.write(this._getConfigPath(arguments), data);
+        this.write(this._getConfigPath(arguments, 'meta.json'), data);
         return data;
     }
     //
