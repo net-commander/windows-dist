@@ -40,7 +40,7 @@ if (argv.file) {
 let user = null;
 if (argv.user) {
     if (argv.user === 'home') {
-        user = path.join(homedir(), 'Documents', 'Control-Freak');
+        // 	user = path.join(homedir(), 'Documents', 'Control-Freak');
     }
 }
 const CFOptions = {
@@ -134,6 +134,5 @@ function create(app) {
     return application;
 }
 exports.create = create;
-;
 create(argv.app || 'ControlFreak');
 //# sourceMappingURL=index.js.map
