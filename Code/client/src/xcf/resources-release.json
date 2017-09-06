@@ -68,7 +68,7 @@
         {
             "class":"cmx.types.Resource",
             "type":"JS-HEADER-INCLUDE",
-            "enabled": true,
+            "enabled": false,
             "url":"%XASWEB%/xfile/ext/d3.v3.min.js"
         },
         {

@@ -39,7 +39,7 @@ var dojoConfig ={
 		    'devices':true,
 		    'plugins':false,
 		    'php':true,
-		    'FileConsole':true,
+		    'FileConsole':false,
 		    'deferredInstrumentation':false,
 		    'x-markdown':true,
 		    'xtrack':true

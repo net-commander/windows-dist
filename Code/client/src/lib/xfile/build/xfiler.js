@@ -30386,8 +30386,7 @@ define('xgrid/TreeRenderer',[
         if (thiz.isThumbGrid) {
             return;
         }
-        if (evt.keyCode == keys.LEFT_ARROW || evt.keyCode == keys.RIGHT_ARROW || evt.keyCode == keys.HOME || evt.keyCode == keys.END) {
-        } else {
+        if (evt.keyCode == keys.LEFT_ARROW || evt.keyCode == keys.RIGHT_ARROW || evt.keyCode == keys.HOME || evt.keyCode == keys.END) {} else {
             return;
         }
         var target = evt.target;
@@ -30478,7 +30477,10 @@ define('xgrid/TreeRenderer',[
                         if (down) {
                             return this.select(down, null, true, defaultSelectArgs);
                         } else {
-                            on.emit(this.contentNode, "keydown", { keyCode: 36, force: true });
+                            on.emit(this.contentNode, "keydown", {
+                                keyCode: 36,
+                                force: true
+                            });
                         }
                     }
                 }
@@ -30523,6 +30525,10 @@ define('xgrid/TreeRenderer',[
      */
     var Implementation = {
         _expandOnClickHandle: null,
+        _patchTreeClick: function () {
+            this._expandOnClickHandle = this.on("click", this.onTreeClick.bind(this));
+            $(this.domNode).addClass('openTreeOnClick');
+        },
         _getLabel: function () {
             return "Tree";
         },
@@ -30538,8 +30544,7 @@ define('xgrid/TreeRenderer',[
         activateRenderer: function () {
             this._showHeader(true);
             if (this.expandOnClick) {
-                this._expandOnClickHandle = this.on("click", this.onTreeClick.bind(this));
-                $(this.domNode).addClass('openTreeOnClick');
+                this._patchTreeClick();
             }
         },
         __getParent: function (item) {
@@ -30569,7 +30574,7 @@ define('xgrid/TreeRenderer',[
             this.inherited(arguments);
         },
         onTreeClick: function (e) {
-            if(e.target.className.indexOf('expando')!==-1){
+            if (e.target.className.indexOf('expando') !== -1) {
                 return;
             }
             var row = this.row(e);
