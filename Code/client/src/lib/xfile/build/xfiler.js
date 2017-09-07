@@ -247,7 +247,7 @@ define('xide/types',[
 define('xgrid/Renderer',[
     "xdojo/declare",
     'xide/types'
-], (declare, types) => {
+], function (declare,types) {
     var Implementation = {
         _renderIndex: 0,
         _lastRenderedArray: null,
@@ -1903,7 +1903,7 @@ define('xgrid/ListRenderer',[
     './Renderer',
     'dojo/dom-construct',
     'dgrid/Grid'
-], (declare, types, Renderer, domConstruct, Grid) => {
+], function (declare,types,Renderer,domConstruct,Grid) {
 
     /**
      * The list renderer does nothing since the xgrid/Base is already inherited from
@@ -1929,7 +1929,7 @@ define('xgrid/ListRenderer',[
         renderRow:function(object,options){
 
             var self = this;
-            var row = this.createRowCells('td', (td, column) => {
+            var row = this.createRowCells('td', function (td, column) {
                 var data = object;
                 // Support get function or field property (similar to DataGrid)
                 if (column.get) {
@@ -27151,7 +27151,7 @@ define('xgrid/ThumbRenderer',[
     'xide/types',
     'dojo/dom-construct',
     './Renderer'
-], (declare, types, domConstruct, Renderer) => {
+], function (declare,types,domConstruct,Renderer) {
     /**
      * The list renderer does nothing since the xgrid/Base is already inherited from
      * dgrid/OnDemandList and its rendering as list already.
@@ -30408,7 +30408,7 @@ define('xgrid/TreeRenderer',[
     "dojo/keys",
     "dojo/on",
     "xide/$"
-], (declare, Renderer, Tree, keys, on, $) => {
+], function (declare, Renderer, Tree, keys, on, $) {
 
     function KEYBOARD_HANDLER(evt) {
         this.onTreeKey(evt);
@@ -30486,7 +30486,7 @@ define('xgrid/TreeRenderer',[
         }
 
         function expand(what, expand) {
-            _.each(what, item => {
+            _.each(what, function (item) {
                 var _row = thiz.row(item);
                 if (_row && _row.element) {
                     thiz.expand(_row, expand, true);
@@ -31336,7 +31336,7 @@ define('xgrid/Selection',[
     'dojo/Deferred',
     'xide/lodash',
     'xide/$'
-], (declare, has, types, utils, Selection, domClass, on, Deferred, _, $) => {
+], function (declare, has, types, utils, Selection, domClass, on, Deferred, _, $) {
 
     /////////////////////////////////////////////////////////////////////
     //
@@ -31363,7 +31363,7 @@ define('xgrid/Selection',[
     function rows(selection) {
         var result = [];
         if (selection && selection.rows) {
-            selection.rows.forEach(row => {
+            selection.rows.forEach(function (row) {
                 result.push(row.id);
             });
         }
@@ -31376,7 +31376,9 @@ define('xgrid/Selection',[
      * @returns {*|Array}
      */
     function allArraysAlike(arrays) {
-        return _.all(arrays, array => array.length == arrays[0].length && _.difference(array, arrays[0]).length == 0);
+        return _.all(arrays, function (array) {
+            return array.length == arrays[0].length && _.difference(array, arrays[0]).length == 0;
+        });
     }
 
     /**
@@ -31399,9 +31401,11 @@ define('xgrid/Selection',[
      * @returns {boolean}
      */
     function isSame(items, now, idProperty) {
-        var newSelection = items ? items.map(item => item ? item.data || item : {}) : [];
-        var idsNew = newSelection.map(x => x[idProperty]);
-        var idsNow = now.map(x => x[idProperty]);
+        var newSelection = items ? items.map(function (item) {
+            return item ? item.data || item : {};
+        }) : [];
+        var idsNew = newSelection.map(function (x) { return x[idProperty]; });
+        var idsNow = now.map(function (x) { return x[idProperty]; });
         return (idsNew.join(',') === idsNow.join(','));
     }
 
@@ -31410,7 +31414,7 @@ define('xgrid/Selection',[
      * @param self {module:xgrid/Base}
      */
     function clearFocused(self) {
-        $(self.domNode).find('.dgrid-focus').each((i, el) => {
+        $(self.domNode).find('.dgrid-focus').each(function (i, el) {
             $(el).removeClass('dgrid-focus');
         });
     }
@@ -31464,7 +31468,7 @@ define('xgrid/Selection',[
             var collection = this.collection;
             var idProp = collection.idProperty;
             if (selection.selection && idProp) {
-                _.each(selection.selection, item => {
+                _.each(selection.selection, function (item) {
                     if (item && item[idProp]) {
                         thisState.selection.push(item[idProp]);
                     }
@@ -31496,7 +31500,7 @@ define('xgrid/Selection',[
 
             this._refreshInProgress = res;
 
-            res && res.then && res.then(() => {
+            res && res.then && res.then(function () {
                 thiz._refreshInProgress = null;
                 active && _restore && thiz._restoreSelection(_restore, 1, !active, 'restore');
             });
@@ -31530,7 +31534,7 @@ define('xgrid/Selection',[
             this.clearSelection();
             this._lastSelection = null;
             this._lastFocused = null;
-            $(this.domNode).find('.dgrid-focus').each((i, el) => {
+            $(this.domNode).find('.dgrid-focus').each(function (i, el) {
                 $(el).removeClass('dgrid-focus');
             });
             this._emit('selectionChanged', {
@@ -31543,7 +31547,7 @@ define('xgrid/Selection',[
             var selection = items || this._getSelection() || [];
             var newSelection = [],
                 all = this.getRows();
-            _.each(all, data => {
+            _.each(all, function (data) {
                 if (selection.indexOf(data) === -1) {
                     newSelection.push(data);
                 }
@@ -31707,16 +31711,16 @@ define('xgrid/Selection',[
         postCreate: function () {
             var thiz = this;
             if (this.options[types.GRID_OPTION.CLEAR_SELECTION_ON_CLICK] === true) {
-                var clickHandler = evt => {
+                var clickHandler = function (evt) {
                     if (evt && evt.target && domClass.contains(evt.target, 'dgrid-content')) {
                         this.deselectAll();
                     }
-                };
-                this.on("click", evt => {
+                }.bind(this);
+                this.on("click", function (evt) {
                     clickHandler(evt);
-                });
+                }.bind(this));
             }
-            this.on("dgrid-select", data => {
+            this.on("dgrid-select", function (data) {
                 if (!equals(thiz._lastSelection, data)) {
                     delete thiz._lastSelection;
                     thiz._lastSelection = data;
@@ -31841,12 +31845,12 @@ define('xgrid/Selection',[
             //indices to items
             if (_.isNumber(items[0])) {
                 var rows = self.getRows();
-                _.each(items, item => {
+                _.each(items, function (item) {
                     _newItems.push(rows[item]);
                 });
                 items = _newItems;
             } else if (_.isString(items[0])) {
-                _.each(items, item => {
+                _.each(items, function (item) {
                     var _item = coll.getSync(item);
                     if (_item) {
                         _newItems.push(_item);
@@ -31855,7 +31859,7 @@ define('xgrid/Selection',[
 
                 items = _newItems;
             } else if (items && items[0] && items[0].tagName) {
-                _.each(items, item => {
+                _.each(items, function (item) {
                     _newItems.push(self.row(item).data);
                 });
                 items = _newItems;
@@ -31875,7 +31879,7 @@ define('xgrid/Selection',[
             }
 
             var _last = this._lastSelection ? this._lastSelection.rows : [];
-            var now = _last.map(x => x.data);
+            var now = _last.map(function (x) { return x.data; });
 
             var isEqual = isSame(items, now, idProperty);
 
@@ -31926,7 +31930,7 @@ define('xgrid/Selection',[
             }
 
             if (delay && items.length) {
-                this._selectTimer = setTimeout(() => {
+                this._selectTimer = setTimeout(function () {
                     if (self.destroyed || !self.collection) {
                         return;
                     }
@@ -31979,7 +31983,7 @@ define('xgrid/Selection',[
         startup: function () {
             var result = this.inherited(arguments);
             //we want keyboard navigation also when nothing is selected
-            this.addHandle('keyup', on(this.domNode, 'keyup', event => {
+            this.addHandle('keyup', on(this.domNode, 'keyup', function (event) {
                 // For now, don't squash browser-specific functionality by letting
                 // ALT and META function as they would natively
                 if (event.metaKey || event.altKey) {
@@ -31991,7 +31995,7 @@ define('xgrid/Selection',[
                 if (handler && !handledEvent(event) && this._getSelection().length == 0) {
                     handler.call(this, event);
                 }
-            }));
+            }.bind(this)));
             return result;
         }
     };
@@ -32011,7 +32015,7 @@ define('xgrid/Keyboard',[
 	'dgrid/util/misc',
 	'dojo/_base/sniff',
 	'dcl/dcl'
-], (declare, aspect, domClass, on, lang, has, miscUtil, dcl) => {
+], function (declare, aspect, domClass, on, lang, has, miscUtil,dcl) {
 
 	var delegatingInputTypes = {
 			checkbox: 1,
@@ -32022,8 +32026,9 @@ define('xgrid/Keyboard',[
 		hasGridRowClass = /\bdgrid-row\b/,
 		_debug = false;
 
-    has.add("dom-contains", (global, doc, element) => // not supported by FF < 9
-    !!element.contains);
+    has.add("dom-contains", function(global, doc, element){
+        return !!element.contains; // not supported by FF < 9
+    });
 
     function contains(parent, node){
         // summary:
@@ -32036,7 +32041,7 @@ define('xgrid/Keyboard',[
         }
     }
 
-	var _upDownSelect = (event, who, steps) => {
+	var _upDownSelect = function(event,who,steps) {
 
 		var prev     = steps < 0,
 			selector = prev ? 'first:' : 'last',
@@ -32085,7 +32090,7 @@ define('xgrid/Keyboard',[
 		}
 		return n;
 	};
-	var _rightLeftSelect = (event, who, steps) => {
+	var _rightLeftSelect = function(event,who,steps) {
 
 		var prev     = steps < 0,
 			selector = prev ? 'first:' : 'last',
@@ -32220,7 +32225,7 @@ define('xgrid/Keyboard',[
 					aspect.after(grid, 'renderHeader', initHeader, true);
 				}
 				else {
-					aspect.after(grid, 'renderArray', rows => {
+					aspect.after(grid, 'renderArray', function (rows) {
 						// summary:
 						//		Ensures the first element of a grid is always keyboard selectable after data has been
 						//		retrieved if there is not already a valid focused element.
@@ -32248,13 +32253,13 @@ define('xgrid/Keyboard',[
 					});
 				}
 
-				grid._listeners.push(on(areaNode, 'mousedown', event => {
+				grid._listeners.push(on(areaNode, 'mousedown', function (event) {
 					if (!handledEvent(event)) {
 						grid._focusOnNode(event.target, isHeader, event);
 					}
 				}));
 
-				grid._listeners.push(on(areaNode, 'keydown', event => {
+				grid._listeners.push(on(areaNode, 'keydown', function (event) {
 					//console.log('keyboardkey down : ',event);
 					// For now, don't squash browser-specific functionalities by letting
 					// ALT and META function as they would natively
@@ -32326,7 +32331,7 @@ define('xgrid/Keyboard',[
 				// if no replacement row was immediately inserted.
 				// Pass original row's id in case it was re-inserted in a renderArray
 				// call (and thus was found, but couldn't be focused immediately)
-				setTimeout(() => {
+				setTimeout(function () {
 					if (self._removedFocus) {
 						self._restoreFocus(focusedRow.id);
 					}
@@ -32765,391 +32770,395 @@ define('xgrid/ColumnHider',[
     'dgrid/util/misc',
     'xide/types',
     'xide/utils'
-], (declare, has, misc, types, utils) => /*
- *	Column Hider plugin for dgrid
- *	Originally contributed by TRT 2011-09-28
- *
- *	A dGrid plugin that attaches a menu to a dgrid, along with a way of opening it,
- *	that will allow you to show and hide columns.  A few caveats:
- *
- *	1. Menu placement is entirely based on CSS definitions.
- *	2. If you want columns initially hidden, you must add "hidden: true" to your
- *		column definition.
- *	3. This implementation does NOT support ColumnSet, and has not been tested
- *		with multi-subrow records.
- *	4. Column show/hide is controlled via straight up HTML checkboxes.  If you
- *		are looking for something more fancy, you'll probably need to use this
- *		definition as a template to write your own plugin.
- *
- */
-declare('xgrid.ColumnHider', null, {
-    columnHiderActionRootCommand:'View/Columns',
-    // i18nColumnHider: Object
-    //		This object contains all of the internationalized strings for
-    //		the ColumnHider extension as key/value pairs.
-    i18nColumnHider: {},
+], function (declare, has, misc,types,utils) {
 
-    // _columnHiderRules: Object
-    //		Hash containing handles returned from addCssRule.
-    _columnHiderRules: null,
-    _runAction:function(action,update,value){
-        if(action && action.command.indexOf(this.columnHiderActionRootCommand)!=-1 ){
-            var col = action.column;
-            var isHidden = this.isColumnHidden(col.id);
-            this.showColumn(col.id,isHidden);
-            update!==false && action.set('value', !this.isColumnHidden(col.id));
-        }
-        return this.inherited(arguments);
-    },
-    /**
+    /*
+     *	Column Hider plugin for dgrid
+     *	Originally contributed by TRT 2011-09-28
      *
-     * @param permissions
-     * @param actions
-     * @returns {Array}
+     *	A dGrid plugin that attaches a menu to a dgrid, along with a way of opening it,
+     *	that will allow you to show and hide columns.  A few caveats:
+     *
+     *	1. Menu placement is entirely based on CSS definitions.
+     *	2. If you want columns initially hidden, you must add "hidden: true" to your
+     *		column definition.
+     *	3. This implementation does NOT support ColumnSet, and has not been tested
+     *		with multi-subrow records.
+     *	4. Column show/hide is controlled via straight up HTML checkboxes.  If you
+     *		are looking for something more fancy, you'll probably need to use this
+     *		definition as a template to write your own plugin.
+     *
      */
-    getColumnHiderActions:function(permissions,actions){
-        var root = this.columnHiderActionRootCommand,
-            thiz = this,
-            columnActions = [],
-            VISIBILITY = types.ACTION_VISIBILITY,
-            node = this.domNode;
+	return declare('xgrid.ColumnHider',null, {
+        columnHiderActionRootCommand:'View/Columns',
+		// i18nColumnHider: Object
+		//		This object contains all of the internationalized strings for
+		//		the ColumnHider extension as key/value pairs.
+		i18nColumnHider: {},
 
-        actions = actions || [];
-        var rootAction = _.find(actions,{
-            command:root
-        });
-        if(!rootAction) {
-            columnActions.push(this.createAction({
-                label:'Columns',
-                command:root,
-                icon:'fa-columns',
-                tab:'View',
-                group:'Columns',
-                toggleGroup:thiz.id + 'Columns',
-                onCreate:function(action){
-                    action.setVisibility(VISIBILITY.RIBBON,{
-                        expand:true
-                    }).setVisibility(VISIBILITY.ACTION_TOOLBAR, false);
-                }
-            }));
-        }
+		// _columnHiderRules: Object
+		//		Hash containing handles returned from addCssRule.
+		_columnHiderRules: null,
+        _runAction:function(action,update,value){
+            if(action && action.command.indexOf(this.columnHiderActionRootCommand)!=-1 ){
+                var col = action.column;
+                var isHidden = this.isColumnHidden(col.id);
+                this.showColumn(col.id,isHidden);
+                update!==false && action.set('value', !this.isColumnHidden(col.id));
+            }
+            return this.inherited(arguments);
+        },
         /**
          *
-         * @param col
-         * @private
+         * @param permissions
+         * @param actions
+         * @returns {Array}
          */
-        function _createEntry(col) {
+		getColumnHiderActions:function(permissions,actions){
+            var root = this.columnHiderActionRootCommand,
+                thiz = this,
+                columnActions = [],
+                VISIBILITY = types.ACTION_VISIBILITY,
+                node = this.domNode;
 
-            var id = col.id,
-                label = 'Show ' + ( col.label || col.field || ''),
-                icon = col.icon || 'fa-cogs';
-
-            // Allow cols to opt out of the hider (e.g. for selector column).
-            if (col.unhidable) {
-                return;
+            actions = actions || [];
+            var rootAction = _.find(actions,{
+                command:root
+            });
+            if(!rootAction) {
+                columnActions.push(this.createAction({
+                    label:'Columns',
+                    command:root,
+                    icon:'fa-columns',
+                    tab:'View',
+                    group:'Columns',
+                    toggleGroup:thiz.id + 'Columns',
+                    onCreate:function(action){
+                        action.setVisibility(VISIBILITY.RIBBON,{
+                            expand:true
+                        }).setVisibility(VISIBILITY.ACTION_TOOLBAR, false);
+                    }
+                }));
             }
-            var _action = thiz.createAction(label, root + '/' + label , icon, null, 'View', 'Columns', 'item|view',
+            /**
+             *
+             * @param col
+             * @private
+             */
+            function _createEntry(col) {
 
-                action => {
+                var id = col.id,
+                    label = 'Show ' + ( col.label || col.field || ''),
+                    icon = col.icon || 'fa-cogs';
 
-                    var widgetImplementation = {
-                        postMixInProperties: function() {
-                            this.inherited(arguments);
-                            this.checked = this.item.get('value') === true;
-                        },
-                        startup:function(){
-                            this.inherited(arguments);
-                            this.on('change',val => {
-                                thiz.showColumn(id,val);
-                            });
-                        }
-                    };
-                    var widgetArgs  ={
-                        checked:!col.hidden,
-                        iconClass:icon,
-                        style:'float:inherit;'
-                    };
+                // Allow cols to opt out of the hider (e.g. for selector column).
+                if (col.unhidable) {
+                    return;
+                }
+                var _action = thiz.createAction(label, root + '/' + label , icon, null, 'View', 'Columns', 'item|view',
 
+                    //oncreate
+                    function(action){
 
-                    var _visibilityMixin = {
-                        //widgetClass:declare.classFactory('_Checked', [CheckedMenuItem,_ActionValueWidgetMixin], null, widgetImplementation ,null),
-                        widgetArgs:widgetArgs,
-                        actionType : 'multiToggle'
-                    };
-
-                    action.actionType = 'multiToggle';
-
-
-                    action.setVisibility(types.ACTION_VISIBILITY_ALL,utils.cloneKeys(_visibilityMixin,false));
-
-                    label = action.label.replace('Show ','');
-
-
-                    //for ribbons we collapse into 'Checkboxes'
-                    /*
-                    action.setVisibility(VISIBILITY.RIBBON,{
-                        widgetClass:declare.classFactory('_CheckedGroup', [ActionValueWidget], null,{
-                            iconClass:"",
+                        var widgetImplementation = {
                             postMixInProperties: function() {
                                 this.inherited(arguments);
-                                this.checked = this.item.get('value') == true;
+                                this.checked = this.item.get('value') === true;
                             },
                             startup:function(){
                                 this.inherited(arguments);
-                                this.widget.on('change', function (val) {
+                                this.on('change',function(val){
                                     thiz.showColumn(id,val);
-                                }.bind(this));
+                                });
                             }
-                        } ,null),
-                        widgetArgs:{
-                            renderer:CheckBox,
+                        };
+                        var widgetArgs  ={
                             checked:!col.hidden,
-                            label:action.label.replace('Show ','')
-                        }
-                    });
-                    */
+                            iconClass:icon,
+                            style:'float:inherit;'
+                        };
 
-                }, /*handler*/ null ,
-                {
+
+                        var _visibilityMixin = {
+                            //widgetClass:declare.classFactory('_Checked', [CheckedMenuItem,_ActionValueWidgetMixin], null, widgetImplementation ,null),
+                            widgetArgs:widgetArgs,
+                            actionType : 'multiToggle'
+                        };
+
+                        action.actionType = 'multiToggle';
+
+
+                        action.setVisibility(types.ACTION_VISIBILITY_ALL,utils.cloneKeys(_visibilityMixin,false));
+
+                        label = action.label.replace('Show ','');
+
+
+                        //for ribbons we collapse into 'Checkboxes'
+                        /*
+                        action.setVisibility(VISIBILITY.RIBBON,{
+                            widgetClass:declare.classFactory('_CheckedGroup', [ActionValueWidget], null,{
+                                iconClass:"",
+                                postMixInProperties: function() {
+                                    this.inherited(arguments);
+                                    this.checked = this.item.get('value') == true;
+                                },
+                                startup:function(){
+                                    this.inherited(arguments);
+                                    this.widget.on('change', function (val) {
+                                        thiz.showColumn(id,val);
+                                    }.bind(this));
+                                }
+                            } ,null),
+                            widgetArgs:{
+                                renderer:CheckBox,
+                                checked:!col.hidden,
+                                label:action.label.replace('Show ','')
+                            }
+                        });
+                        */
+
+                    }, /*handler*/ null ,
+                    {
+                        column:col,
+                        filterGroup:"item|view",
+                        tab:'View',
+                        value:!col.hidden,
+                        addPermission:true
+                    },
+                    null, null, permissions, node,thiz,thiz);
+
+                if(_action){
+                    columnActions.push(_action);
+                }
+
+                /**
+
+                columnActions.push(_ActionMixin.createActionParameters(label, root + '/' + label, 'Columns', icon, function () {
+                    console.log('handler');
+
+                }, '', null, null, thiz, thiz, {
                     column:col,
                     filterGroup:"item|view",
                     tab:'View',
                     value:!col.hidden,
-                    addPermission:true
-                },
-                null, null, permissions, node,thiz,thiz);
+                    onCreate:function(action){
 
-            if(_action){
-                columnActions.push(_action);
-            }
+                        var _action = this;
 
-            /**
+                        action.owner = thiz;
 
-            columnActions.push(_ActionMixin.createActionParameters(label, root + '/' + label, 'Columns', icon, function () {
-                console.log('handler');
-
-            }, '', null, null, thiz, thiz, {
-                column:col,
-                filterGroup:"item|view",
-                tab:'View',
-                value:!col.hidden,
-                onCreate:function(action){
-
-                    var _action = this;
-
-                    action.owner = thiz;
-
-                    var widgetImplementation = {
-                        postMixInProperties: function() {
-                            this.inherited(arguments);
-                            this.checked = this.item.get('value') == true;
-                        },
-                        startup:function(){
-                            this.inherited(arguments);
-                            this.on('change',function(val){
-                                thiz.showColumn(id,val);
-                            })
-                        },
-                        destroy:function(){
-
-                            this.inherited(arguments);
-                        }
-                    };
-                    var widgetArgs  ={
-                        checked:!col.hidden,
-                        iconClass:icon,
-                        style:'float:inherit;'
-                    };
-
-                    var _visibilityMixin = {
-                        widgetClass:declare.classFactory('_Checked', [CheckedMenuItem,_ActionValueWidgetMixin], null, widgetImplementation ,null),
-                        widgetArgs:widgetArgs
-                    };
-
-                    action.setVisibility(types.ACTION_VISIBILITY_ALL,_visibilityMixin);
-
-                    label = action.label.replace('Show ','');
-
-
-                    //for ribbons we collapse into 'Checkboxes'
-                    action.setVisibility(VISIBILITY.RIBBON,{
-                        widgetClass:declare.classFactory('_CheckedGroup', [ActionValueWidget], null,{
-                            iconClass:"",
+                        var widgetImplementation = {
                             postMixInProperties: function() {
                                 this.inherited(arguments);
                                 this.checked = this.item.get('value') == true;
                             },
                             startup:function(){
                                 this.inherited(arguments);
-                                this.widget.on('change', function (val) {
+                                this.on('change',function(val){
                                     thiz.showColumn(id,val);
-                                }.bind(this));
+                                })
+                            },
+                            destroy:function(){
+
+                                this.inherited(arguments);
                             }
-                        } ,null),
-                        widgetArgs:{
-                            renderer:CheckBox,
+                        };
+                        var widgetArgs  ={
                             checked:!col.hidden,
-                            label:action.label.replace('Show ','')
-                        }
-                    });
+                            iconClass:icon,
+                            style:'float:inherit;'
+                        };
 
-                }
-            }));
+                        var _visibilityMixin = {
+                            widgetClass:declare.classFactory('_Checked', [CheckedMenuItem,_ActionValueWidgetMixin], null, widgetImplementation ,null),
+                            widgetArgs:widgetArgs
+                        };
 
-            */
+                        action.setVisibility(types.ACTION_VISIBILITY_ALL,_visibilityMixin);
 
-        }
-        var subRows = this.subRows,
-            first = true,
-            srLength, cLength, sr, c;
-        for (sr = 0, srLength = subRows.length; sr < srLength; sr++) {
-            for (c = 0, cLength = subRows[sr].length; c < cLength; c++) {
-                _createEntry(subRows[sr][c]);
-                if (first) {
-                    first = false;
-                }
+                        label = action.label.replace('Show ','');
+
+
+                        //for ribbons we collapse into 'Checkboxes'
+                        action.setVisibility(VISIBILITY.RIBBON,{
+                            widgetClass:declare.classFactory('_CheckedGroup', [ActionValueWidget], null,{
+                                iconClass:"",
+                                postMixInProperties: function() {
+                                    this.inherited(arguments);
+                                    this.checked = this.item.get('value') == true;
+                                },
+                                startup:function(){
+                                    this.inherited(arguments);
+                                    this.widget.on('change', function (val) {
+                                        thiz.showColumn(id,val);
+                                    }.bind(this));
+                                }
+                            } ,null),
+                            widgetArgs:{
+                                renderer:CheckBox,
+                                checked:!col.hidden,
+                                label:action.label.replace('Show ','')
+                            }
+                        });
+
+                    }
+                }));
+
+                */
+
             }
-        }
-        return columnActions;
-
-    },
-    resize:function(){
-        this.inherited(arguments);
-        this._checkHiddenColumns();
-    },
-    _checkHiddenColumns:function(){
-        var subRows = this.subRows,
-            srLength, cLength, sr, c,
-            totalWidth = $(this.domNode).width();
-
-        for (sr = 0, srLength = subRows.length; sr < srLength; sr++) {
-            for (c = 0, cLength = subRows[sr].length; c < cLength; c++) {
-                var col = subRows[sr][c];
-                if(col.minWidth){
-                    if(totalWidth < col.minWidth){
-                        if(!col.unhidable) {
-                            this.showColumn(col.id,false);
-                        }
-                    }else{
-                        this.showColumn(col.id,true);
+            var subRows = this.subRows,
+                first = true,
+                srLength, cLength, sr, c;
+            for (sr = 0, srLength = subRows.length; sr < srLength; sr++) {
+                for (c = 0, cLength = subRows[sr].length; c < cLength; c++) {
+                    _createEntry(subRows[sr][c]);
+                    if (first) {
+                        first = false;
                     }
                 }
             }
-        }
-    },
-    startup:function(){
-        if(this._started){
-            return;
-        }
+            return columnActions;
 
-        this._columnHiderCheckboxes = {};
-        this._columnHiderRules = {};
-        var res = this.inherited(arguments);
-        this._checkHiddenColumns();
-        var subRows = this.subRows,
-            srLength, cLength, sr, c,
-            thiz = this;
+        },
+        resize:function(){
+            this.inherited(arguments);
+            this._checkHiddenColumns();
+        },
+        _checkHiddenColumns:function(){
+            var subRows = this.subRows,
+                srLength, cLength, sr, c,
+                totalWidth = $(this.domNode).width();
 
-        for (sr = 0, srLength = subRows.length; sr < srLength; sr++) {
-            for (c = 0, cLength = subRows[sr].length; c < cLength; c++) {
-
-                var col = subRows[sr][c],
-                    id = col.id;
-
-                if (col.hidden===true) {
-                    // Hide the column (reset first to avoid short-circuiting logic)
-                    col.hidden = false;
-                    thiz._hideColumn(id);
-                    col.hidden = true;
+            for (sr = 0, srLength = subRows.length; sr < srLength; sr++) {
+                for (c = 0, cLength = subRows[sr].length; c < cLength; c++) {
+                    var col = subRows[sr][c];
+                    if(col.minWidth){
+                        if(totalWidth < col.minWidth){
+                            if(!col.unhidable) {
+                                this.showColumn(col.id,false);
+                            }
+                        }else{
+                            this.showColumn(col.id,true);
+                        }
+                    }
                 }
             }
-        }
-        if(this.getActionStore){
-            this.getActionStore().on('update',evt => {
-                var action = evt.target;
-                if(action.command.indexOf('View/Columns')!==-1){
-                    var col = action.column;
-                    thiz.showColumn(col.id,action.get('value'));
-                    thiz.onAfterAction(action);
+        },
+        startup:function(){
+            if(this._started){
+                return;
+            }
 
+            this._columnHiderCheckboxes = {};
+            this._columnHiderRules = {};
+            var res = this.inherited(arguments);
+            this._checkHiddenColumns();
+            var subRows = this.subRows,
+                srLength, cLength, sr, c,
+                thiz = this;
+
+            for (sr = 0, srLength = subRows.length; sr < srLength; sr++) {
+                for (c = 0, cLength = subRows[sr].length; c < cLength; c++) {
+
+                    var col = subRows[sr][c],
+                        id = col.id;
+
+                    if (col.hidden===true) {
+                        // Hide the column (reset first to avoid short-circuiting logic)
+                        col.hidden = false;
+                        thiz._hideColumn(id);
+                        col.hidden = true;
+                    }
                 }
-            });
-        }
-        return res;
-
-    },
-    left: function (cell, steps) {
-        return this.right(cell, -steps);
-    },
-    right: function (cell, steps) {
-        if (!cell.element) {
-            cell = this.cell(cell);
-        }
-        var nextCell = this.inherited(arguments),
-            prevCell = cell;
-
-        // Skip over hidden cells
-        while (nextCell.column.hidden) {
-            nextCell = this.inherited(arguments, [nextCell, steps > 0 ? 1 : -1]);
-            if (prevCell.element === nextCell.element) {
-                // No further visible cell found - return original
-                return cell;
             }
-            prevCell = nextCell;
-        }
-        return nextCell;
-    },
-    isColumnHidden: function (id) {
-        // summary:
-        //		Convenience method to determine current hidden state of a column
-        return !!this._columnHiderRules[id];
-    },
-    _hideColumn: function (id) {
-        // summary:
-        //		Hides the column indicated by the given id.
+            if(this.getActionStore){
+                this.getActionStore().on('update',function(evt){
+                    var action = evt.target;
+                    if(action.command.indexOf('View/Columns')!==-1){
+                        var col = action.column;
+                        thiz.showColumn(col.id,action.get('value'));
+                        thiz.onAfterAction(action);
 
-        // Use misc function directly, since we clean these up ourselves anyway
-        var grid = this,
-            domId = this.template ? this.template.id : this.domNode.id,
-            selectorPrefix = '#' + misc.escapeCssIdentifier(domId) + ' .dgrid-column-',
-            tableRule; // used in IE8 code path
-
-        if (this._columnHiderRules[id]) {
-            return;
-        }
-
-        this._columnHiderRules[id] = misc.addCssRule(selectorPrefix + misc.escapeCssIdentifier(id, '-'), 'display: none;');
-        
-        if (has('ie') === 8 || has('ie') === 10) {
-            // Work around IE8 display issue and IE10 issue where
-            // header/body cells get out of sync when ColumnResizer is also used
-            tableRule = misc.addCssRule('.dgrid-row-table', 'display: inline-table;');
-            window.setTimeout(() => {
-                tableRule.remove();
-                grid.resize();
-            }, 0);
-        }
-    },
-    _showColumn: function (id) {
-        // summary:
-        //		Shows the column indicated by the given id
-        //		(by removing the rule responsible for hiding it).
-
-        if (this._columnHiderRules[id]) {
-            this._columnHiderRules[id].remove();
-            delete this._columnHiderRules[id];
-        }
-    },
-    showColumn:function(id,show){
-        if(this.isColumnHidden(id)){
-            if(show) {
-                this._showColumn(id);
+                    }
+                });
             }
-        }else if(!show){
-            this._hideColumn(id);
+            return res;
+
+        },
+		left: function (cell, steps) {
+			return this.right(cell, -steps);
+		},
+		right: function (cell, steps) {
+			if (!cell.element) {
+				cell = this.cell(cell);
+			}
+			var nextCell = this.inherited(arguments),
+				prevCell = cell;
+
+			// Skip over hidden cells
+			while (nextCell.column.hidden) {
+				nextCell = this.inherited(arguments, [nextCell, steps > 0 ? 1 : -1]);
+				if (prevCell.element === nextCell.element) {
+					// No further visible cell found - return original
+					return cell;
+				}
+				prevCell = nextCell;
+			}
+			return nextCell;
+		},
+		isColumnHidden: function (id) {
+			// summary:
+			//		Convenience method to determine current hidden state of a column
+			return !!this._columnHiderRules[id];
+		},
+		_hideColumn: function (id) {
+			// summary:
+			//		Hides the column indicated by the given id.
+
+			// Use misc function directly, since we clean these up ourselves anyway
+			var grid = this,
+                domId = this.template ? this.template.id : this.domNode.id,
+                selectorPrefix = '#' + misc.escapeCssIdentifier(domId) + ' .dgrid-column-',
+				tableRule; // used in IE8 code path
+
+			if (this._columnHiderRules[id]) {
+				return;
+			}
+
+			this._columnHiderRules[id] = misc.addCssRule(selectorPrefix + misc.escapeCssIdentifier(id, '-'), 'display: none;');
+            
+			if (has('ie') === 8 || has('ie') === 10) {
+				// Work around IE8 display issue and IE10 issue where
+				// header/body cells get out of sync when ColumnResizer is also used
+				tableRule = misc.addCssRule('.dgrid-row-table', 'display: inline-table;');
+				window.setTimeout(function () {
+					tableRule.remove();
+					grid.resize();
+				}, 0);
+			}
+		},
+		_showColumn: function (id) {
+			// summary:
+			//		Shows the column indicated by the given id
+			//		(by removing the rule responsible for hiding it).
+
+			if (this._columnHiderRules[id]) {
+				this._columnHiderRules[id].remove();
+				delete this._columnHiderRules[id];
+			}
+		},
+        showColumn:function(id,show){
+            if(this.isColumnHidden(id)){
+                if(show) {
+                    this._showColumn(id);
+                }
+            }else if(!show){
+                this._hideColumn(id);
+            }
         }
-    }
-}));
+	});
+});
 
 define('dgrid/_StoreMixin',[
 	'dojo/_base/declare',
@@ -34503,24 +34512,26 @@ define('dgrid/OnDemandGrid',[
 /** @module xgrid/Defaults **/
 define('xgrid/Defaults',[
     'xdojo/declare'
-], declare => /**
- * xGrid defaults
- * */
-declare('xgrid/Defaults', null, {
-    minRowsPerPage: 100,
-    keepScrollPosition: true,
-    rowsPerPage: 30,
-    deselectOnRefresh: false,
-    cellNavigation: false,
-    _skipFirstRender: false,
-    loadingMessage: null,
-    preload: null,
-    childSelector: ".dgrid-row",
-    addUiClasses: false,
-    noDataMessage: '<span class="textWarning">No data....</span>',
-    showExtraSpace:true,
-    expandOnClick:true
-}));
+], function (declare) {
+    /**
+     * xGrid defaults
+     * */
+    return declare('xgrid/Defaults', null, {
+        minRowsPerPage: 100,
+        keepScrollPosition: true,
+        rowsPerPage: 30,
+        deselectOnRefresh: false,
+        cellNavigation: false,
+        _skipFirstRender: false,
+        loadingMessage: null,
+        preload: null,
+        childSelector: ".dgrid-row",
+        addUiClasses: false,
+        noDataMessage: '<span class="textWarning">No data....</span>',
+        showExtraSpace:true,
+        expandOnClick:true
+    });
+});
 
 /** @module xgrid/Layout **/
 define('xgrid/Layout',[
@@ -34529,7 +34540,7 @@ define('xgrid/Layout',[
     'xide/widgets/TemplatedWidgetBase',
     'xide/registry',
     'xide/$'
-], (declare, utils, TemplatedWidgetBase, registry, $) => {
+], function (declare, utils, TemplatedWidgetBase, registry,$) {
     var template = '<div tabindex="-1" attachTo="template" class="grid-template" style="width: 100%;height: 100%;overflow: hidden;position: relative;padding: 0px;margin: 0px">'+
         '<div tabindex="-1" attachTo="header" class="grid-header row" style="width: 100%;height: auto"></div>'+
         '<div tabindex="0" attachTo="grid" class="grid-body row"></div>'+
@@ -34631,7 +34642,7 @@ define('xgrid/Focus',[
     "xdojo/declare",
     "xide/types",
     "xide/utils"
-], (declare, types, utils) => {
+], function (declare,types,utils) {
 
     var Implementation = {
         _focused:false,
@@ -34690,7 +34701,7 @@ define('xgrid/Focus',[
 define('xgrid/Clipboard',[
     "xdojo/declare",
     'xide/types'
-], (declare, types) => {
+], function (declare,types) {
 
     var Implementation = {
         runAction:function(action){
@@ -34810,7 +34821,7 @@ define('xgrid/Actions',[
     'xide/lodash',
     'xide/$',
     'xide/console'
-], (declare, types, ActionProvider, DefaultActions, _, $, console) => {
+], function (declare, types, ActionProvider, DefaultActions, _, $, console) {
     var _debug = false;
     /**
      * @class module:xgrid/Actions
@@ -34960,7 +34971,7 @@ define('xgrid/Actions',[
                         thiz.select([], null, false);
                         thiz.deselectAll();
                         if (evt.type !== 'contextmenu') {
-                            setTimeout(() => {
+                            setTimeout(function () {
                                 thiz.domNode.focus();
                                 document.activeElement = thiz.domNode;
                                 $(thiz.domNode).focus();
@@ -34970,11 +34981,11 @@ define('xgrid/Actions',[
                 }
             }
             this.on("contextmenu", clickHandler.bind(this));
-            this._on('selectionChanged', evt => {
+            this._on('selectionChanged', function (evt) {
                 this._onSelectionChanged(evt);
-            });
+            }.bind(this));
 
-            this._on('onAddActions', evt => {
+            this._on('onAddActions', function (evt) {
                 var actions = evt.actions,
                     action = types.ACTION.HEADER;
 
@@ -35023,22 +35034,12 @@ define('xgrid/typesLite',[
     'xgrid/Clipboard',
     'xgrid/Actions',
     'xlang/i18'
-], (
- declare,
- types,
- Selection,
- _GridKeyboardSelection,
- ColumnHider,
- EventedMixin,
- OnDemandGrid,
- Defaults,
- Layout,
- Focus,
- ListRenderer,
- Clipboard,
- Actions,
- i18
-) => {
+], function (declare,types,
+             Selection,_GridKeyboardSelection,ColumnHider,
+             EventedMixin, OnDemandGrid,Defaults,Layout,Focus,
+             ListRenderer,
+             Clipboard,Actions,i18)
+{
     /**
      * Grid Bases
      * @enum module:xgrid/types/GRID_BASES
@@ -35217,21 +35218,11 @@ define('xgrid/BaseLite',[
     'xgrid/ThumbRenderer',
     'xgrid/TreeRenderer',
     'dgrid/util/misc'
-], (
-    declare,
-    types,
-    xTypes,
-    ObjectUtils,
-    utils,
-    OnDemandGrid,
-    Defaults,
-    Layout,
-    Focus,
-    ListRenderer,
-    ThumbRenderer,
-    TreeRenderer,
-    miscUtil
-) => {
+], function (declare,types,
+             xTypes,ObjectUtils,utils,
+             OnDemandGrid,Defaults,Layout,Focus,
+             ListRenderer,ThumbRenderer,TreeRenderer,
+             miscUtil){
 
     var BASE_CLASSES = ['EVENTED','GRID','EDITOR','RENDERER','DEFAULTS','LAYOUT','FOCUS','i18'];
     var DEFAULT_GRID_FEATURES = types.DEFAULT_GRID_FEATURES_LITE;
@@ -35409,11 +35400,11 @@ define('xgrid/BaseLite',[
             return utils.isDescendant(this.domNode,testNode || document.activeElement);
         },
         _showHeader:function(show){
-            $(this.domNode).find('.dgrid-header').each((i, el) => {
+            $(this.domNode).find('.dgrid-header').each(function(i,el){
                 $(el).css('display',show ? '' : 'none' );
             });
 
-            $(this.domNode).find('.dgrid-scroller').each((i, el) => {
+            $(this.domNode).find('.dgrid-scroller').each(function(i,el){
                 $(el).css('margin-top',show ? 26 : 0 );
             });
 
@@ -35435,7 +35426,7 @@ define('xgrid/BaseLite',[
             var result = [],
                 self = this;
             var nodes = $(self.domNode).find('.dgrid-row');
-            _.each(nodes,node => {
+            _.each(nodes,function(node){
                 var _row = self.row(node);
                 if(_row && _row.element){
                     result.push(_row[domNodes ? 'element' : 'data']);
@@ -35457,7 +35448,7 @@ define('xgrid/BaseLite',[
             }
 
             var self = this;
-            this.showExtraSpace && this.on('dgrid-refresh-complete',() => {
+            this.showExtraSpace && this.on('dgrid-refresh-complete',function(){
                 var rows = self.getRows();
                 var _extra = $(self.contentNode).find('.dgrid-extra');
                 if(!rows.length){
@@ -35467,10 +35458,10 @@ define('xgrid/BaseLite',[
                 if(!_extra.length){
                     _extra = $('<div class="dgrid-extra" style="width:100%;height:80px"></div>');
                     $(self.contentNode).append(_extra);
-                    _extra.on('click',() => {
+                    _extra.on('click',function(){
                         self.deselectAll();
                     });
-                    _extra.on('contextmenu',() => {
+                    _extra.on('contextmenu',function(){
                         self.deselectAll();
                     })
                 }
@@ -35504,7 +35495,9 @@ define('xgrid/BaseLite',[
      * @private
      */
     function _contains(left, keys) {
-        return keys.some(v => left.indexOf(v) >= 0);
+        return keys.some(function (v) {
+            return left.indexOf(v) >= 0;
+        });
     }
 
     /**
@@ -35625,7 +35618,7 @@ define('xgrid/GridLite',[
     'dojo/_base/declare',
     'xide/types',
     './BaseLite'
-],(declare, types, Base) => {
+],function (declare,types,Base) {
     /**
      *
      * Please read {@link module:xgrid/types}
@@ -35652,7 +35645,7 @@ define('xgrid/MultiRenderer',[
     'xide/types',
     'xgrid/Renderer',
     'dojo/_base/kernel'
-], (declare, types, Renderer, dojo) => {
+], function (declare, types, Renderer,dojo) {
     /**
      * @class module:xgrid/MultiRenderer
      * @extends module:xgrid/Renderer
@@ -35671,7 +35664,7 @@ define('xgrid/MultiRenderer',[
                 if(parentAction) {
                     parentAction.set('icon', action.get('icon'));
                     var rendererActions = parentAction.getChildren();
-                    _.each(rendererActions, child => {
+                    _.each(rendererActions, function (child) {
                         child._oldIcon && child.set('icon', child._oldIcon);
                     });
                 }
@@ -35815,7 +35808,7 @@ define('xgrid/MultiRenderer',[
                 return renderActions;
             }
 
-            _.each(renderers,Renderer => {
+            _.each(renderers,function (Renderer) {
                 var impl = Renderer.Implementation || Renderer.prototype;
                 if (impl._getLabel) {
                     createEntry(impl._getLabel(), impl._getIcon(), Renderer);
@@ -35828,9 +35821,9 @@ define('xgrid/MultiRenderer',[
         },
         startup: function () {
             var thiz = this;
-            this._on('onAddGridActions', evt => {
+            this._on('onAddGridActions', function (evt) {
                 var renderActions = thiz.getRendererActions(thiz.getRenderers(), evt.actions);
-                renderActions.forEach(action => {
+                renderActions.forEach(function (action) {
                     evt.actions.push(action);
                 });
             });
@@ -35880,7 +35873,7 @@ define('xgrid/MultiRenderer',[
             //refresh, then restore sel/focus
             var refresh = this.refresh();
 
-            refresh && refresh.then && refresh.then(() => {
+            refresh && refresh.then && refresh.then(function(){
                 self._emit('onChangedRenderer', args);
             });
             return refresh;
@@ -35904,7 +35897,7 @@ define('xgrid/MultiRenderer',[
     }
 
     //@TODO: this should be all public methods in dgrid/List ?
-    _.each(['row','removeRow','renderRow','insertRow','activateRenderer','deactivateRenderer'],method => {
+    _.each(['row','removeRow','renderRow','insertRow','activateRenderer','deactivateRenderer'],function(method){
         forward(Implementation,method);
     });
 
@@ -36088,7 +36081,7 @@ define('xgrid/KeyboardNavigation',[
 	"dojo/_base/lang", // hitch
 	"dojo/on",
 	"xide/utils"
-], (declare, keys, lang, on, utils) => {
+], function(declare, keys, lang, on, utils){
 
 	//@TODO: port hitch
 	var hitch = lang.hitch;
