@@ -44,6 +44,7 @@ const console_1 = require("../../console");
 const io_1 = require("../../interfaces/io");
 const cli_1 = require("./cli");
 cli_1.create();
+const open_1 = require("../../utils/open");
 const app_2 = require("./desktop/app");
 const mount = require('koa-mount');
 const argv = yargs_parser(process.argv.slice(2));
@@ -909,7 +910,7 @@ class ControlFreak extends Base_1.ApplicationBase {
     isDev() {
         return __filename.indexOf('.ts') !== -1;
     }
-    ready() {
+    ready(url) {
         if (this.options.interface === Base_1.IInterface.ELECTRON) {
             let appPath = null;
             if (this.isDev()) {
@@ -917,6 +918,9 @@ class ControlFreak extends Base_1.ApplicationBase {
                 console_1.console.log('ControlFreak#run : start desktop application' + appPath);
                 app_2.runElectron(process.cwd(), appPath, this.path(Base_1.EEKey.USER_DIRECTORY));
             }
+        }
+        if (process.argv.join(' ').indexOf('.ts') === -1) {
+            open_1.default(url, null);
         }
     }
     run(deviceServer = true) {
@@ -933,7 +937,7 @@ class ControlFreak extends Base_1.ApplicationBase {
                 console_1.console.info('ControlFreak#run : serve www at : ' + this.path(Base_1.EEKey.APP_ROOT));
                 this.use(convert(serve(this.path(Base_1.EEKey.APP_ROOT), { maxage: 1 })));
                 const port = this.profile.http.port || this.options.port || process.env.PORT || 5555;
-                const host = this.profile.http.host || this.options.host || process.env.HOST || '0.0.0.0';
+                const host = this.profile.http.host || this.options.host || process.env.HOST || 'localhost';
                 console_1.console.info('ControlFreak#run : create HTTP server at ' + host + ':' + port);
                 this.server.listen(port, host);
                 if (!deviceServer) {
@@ -965,7 +969,9 @@ class ControlFreak extends Base_1.ApplicationBase {
                         });
                     }
                     resolve(context);
-                    this.ready();
+                    this.ready('http://' + host + ':' +
+                        port + '/app/xcf?userDirectory=' +
+                        encodeURIComponent(this.path(Base_1.EEKey.USER_DIRECTORY)));
                 });
                 try {
                     dojoRequire([loader], (_module) => { });

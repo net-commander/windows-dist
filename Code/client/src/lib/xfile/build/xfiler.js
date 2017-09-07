@@ -247,7 +247,7 @@ define('xide/types',[
 define('xgrid/Renderer',[
     "xdojo/declare",
     'xide/types'
-], function (declare,types) {
+], (declare, types) => {
     var Implementation = {
         _renderIndex: 0,
         _lastRenderedArray: null,
@@ -1903,7 +1903,7 @@ define('xgrid/ListRenderer',[
     './Renderer',
     'dojo/dom-construct',
     'dgrid/Grid'
-], function (declare,types,Renderer,domConstruct,Grid) {
+], (declare, types, Renderer, domConstruct, Grid) => {
 
     /**
      * The list renderer does nothing since the xgrid/Base is already inherited from
@@ -1929,7 +1929,7 @@ define('xgrid/ListRenderer',[
         renderRow:function(object,options){
 
             var self = this;
-            var row = this.createRowCells('td', function (td, column) {
+            var row = this.createRowCells('td', (td, column) => {
                 var data = object;
                 // Support get function or field property (similar to DataGrid)
                 if (column.get) {
@@ -2825,7 +2825,7 @@ define('xide/types/Types',[
 define('xaction/types',[
     'xide/types',
     'dojo/_base/lang'
-],function(types,lang){
+],(types, lang) => {
 
     lang.mixin(types.EVENTS,{
         ON_ACTION_CHANGE_CONTEXT: 'onChangeActionContext',
@@ -4331,11 +4331,11 @@ define('xaction/DefaultActions',[
     'xide/types',
     'xide/utils',
     'xlang/i18'
-], function (dcl,inherited,declare,types,utils,i18) {
+], (dcl, inherited, declare, types, utils, i18) => {
     /**
      * @mixin module:xide/action/DefaultActions
      */
-    var Module = declare("xaction/DefaultActions", null , {});
+    const Module = declare("xaction/DefaultActions", null , {});
     /**
      *
      * @param title
@@ -4351,21 +4351,31 @@ define('xaction/DefaultActions',[
      * @param mixin
      * @returns {{title: *, command: *, group: *, icon: *, handler: *, accelKey: *, keyCombo: *, keyProfile: *, keyTarget: *, keyScope: *}}
      */
-    Module.createActionParameters=function(title, command, group, icon, handler, accelKey, keyCombo, keyProfile, keyTarget, keyScope,mixin){
-        return {
-            title:title,
-            command: command,
-            group: group,
-            icon: icon,
-            handler: handler,
-            accelKey: accelKey,
-            keyCombo: keyCombo,
-            keyProfile: keyProfile,
-            keyTarget: keyTarget,
-            keyScope: keyScope,
-            mixin:mixin
-        };
-    };
+    Module.createActionParameters=(
+        title,
+        command,
+        group,
+        icon,
+        handler,
+        accelKey,
+        keyCombo,
+        keyProfile,
+        keyTarget,
+        keyScope,
+        mixin
+    ) => ({
+        title:title,
+        command: command,
+        group: group,
+        icon: icon,
+        handler: handler,
+        accelKey: accelKey,
+        keyCombo: keyCombo,
+        keyProfile: keyProfile,
+        keyTarget: keyTarget,
+        keyScope: keyScope,
+        mixin:mixin
+    });
     /**
      *
      * @param label
@@ -4383,7 +4393,21 @@ define('xaction/DefaultActions',[
      * @param container
      * @returns {*}
      */
-    var createAction = function(label,command,icon,keycombo,tab,group,filterGroup,onCreate,handler,mixin,shouldShow,shouldDisable,container){
+    const createAction = (
+        label,
+        command,
+        icon,
+        keycombo,
+        tab,
+        group,
+        filterGroup,
+        onCreate,
+        handler,
+        mixin,
+        shouldShow,
+        shouldDisable,
+        container
+    ) => {
         if(keycombo) {
             if (_.isString(keycombo)) {
                 keycombo = [keycombo];
@@ -4393,12 +4417,12 @@ define('xaction/DefaultActions',[
         mixin = utils.mixin({
             filterGroup:filterGroup || "item|view",
             tab:tab||'File',
-            onCreate: onCreate || function (action){},
-            shouldShow:shouldShow||function(){return true;},
-            shouldDisable:shouldDisable||function(){return false;}
+            onCreate: onCreate || (action => {}),
+            shouldShow:shouldShow||(() => true),
+            shouldDisable:shouldDisable||(() => false)
         },mixin);
 
-        var _action = Module.createActionParameters(
+        const _action = Module.createActionParameters(
             label,
             command,
             group || 'File',//Group
@@ -4429,9 +4453,9 @@ define('xaction/DefaultActions',[
      * @private
      */
     function _afterAction(dfdResult,event,action) {
-        var who = this;
+        const who = this;
         // call onAfterAction with this results
-        var onAfterActionDfd = null;
+        let onAfterActionDfd = null;
         who.onAfterAction && (onAfterActionDfd = who.onAfterAction(action, dfdResult, event));
 
         who._emit && who._emit('onAfterAction', {
@@ -4451,8 +4475,8 @@ define('xaction/DefaultActions',[
      * @param event
      */
     function defaultHandler(action,event){
-        var actionDfd,
-            who = this;
+        let actionDfd;
+        const who = this;
 
         who && who.onBeforeAction && who.onBeforeAction(action);
         if(who.runAction){
@@ -4461,7 +4485,7 @@ define('xaction/DefaultActions',[
             actionDfd = action.handler.apply(who,[action,null,event]);
         }
         if(actionDfd && actionDfd.then){
-            actionDfd.then(function(actionResult){
+            actionDfd.then(actionResult => {
                 _afterAction.apply(who,[actionResult,event,action]);
             });
 
@@ -4514,14 +4538,14 @@ define('xaction/DefaultActions',[
             return false;
         }
 
-        var root = 'File/',
-            thiz = this,
-            renderActions = [],
-            VISIBILITY = types.ACTION_VISIBILITY,
-            result = [],
-            ACTION = types.ACTION,
-            ACTION_ICON = types.ACTION_ICON,
-            creator = owner || grid;
+        const root = 'File/';
+        const thiz = this;
+        const renderActions = [];
+        const VISIBILITY = types.ACTION_VISIBILITY;
+        let result = [];
+        const ACTION = types.ACTION;
+        const ACTION_ICON = types.ACTION_ICON;
+        const creator = owner || grid;
 
         /**
          *
@@ -4539,7 +4563,7 @@ define('xaction/DefaultActions',[
          * @param shouldDisable
          */
         function addAction(label,command,icon,keycombo,tab,group,filterGroup,onCreate,handler,mixin,shouldShow,shouldDisable){
-            var action = null;
+            let action = null;
             mixin = mixin || {};
             utils.mixin(mixin,{owner:owner || grid});
 
@@ -4660,10 +4684,8 @@ define('xaction/DefaultActions',[
         //
         //  File
         //
-        addAction('Extract','File/Extract',ACTION_ICON.EXTRACT,['ctrl e'],'Home','File','item|view',null,null,null,null,function(){
-            return true;
-            //return shouldDisableDefaultFileOnly.apply(this,arguments);
-        });
+        addAction('Extract','File/Extract',ACTION_ICON.EXTRACT,['ctrl e'],'Home','File','item|view',null,null,null,null,() => //return shouldDisableDefaultFileOnly.apply(this,arguments);
+        true);
 
         result.push(creator.createAction({
             label: 'Download',
@@ -4726,26 +4748,27 @@ define('xaction/DefaultActions',[
         //  Selection
         //
         if(hasAction(permissions,ACTION.SELECTION)) {
-            result.push(createAction('Select', 'File/Select', 'fa-hand-o-up', null, 'Home', 'Select', 'item|view', function(action){
+            result.push(createAction('Select', 'File/Select', 'fa-hand-o-up', null, 'Home', 'Select', 'item|view', action => {
                 action.setVisibility(VISIBILITY.RIBBON,{
                     expand:true
                 });
             }, null, null, null, null,grid.domNode));
 
-            var _mixin = {
-                    owner:owner || grid
-                },
-                container = grid.domNode;
+            const _mixin = {
+                          owner:owner || grid
+                      };
 
-            result.push(createAction('Select all', 'File/Select/All', 'fa-th', ['ctrl a'], 'Home', 'Select', 'item|view', null, function(){
+            const container = grid.domNode;
+
+            result.push(createAction('Select all', 'File/Select/All', 'fa-th', ['ctrl a'], 'Home', 'Select', 'item|view', null, () => {
                 grid.selectAll();
             }, _mixin, null, null,container));
 
-            result.push(createAction('Select none', 'File/Select/None', 'fa-square-o', 'ctrl d', 'Home', 'Select', 'item|view', null, function(){
+            result.push(createAction('Select none', 'File/Select/None', 'fa-square-o', 'ctrl d', 'Home', 'Select', 'item|view', null, () => {
                 grid.deselectAll();
             }, _mixin, null, null,container));
 
-            result.push(createAction('Invert selection', 'File/Select/Invert', 'fa-square', ['ctrl i'], 'Home', 'Select', 'item|view', null, function(){
+            result.push(createAction('Invert selection', 'File/Select/Invert', 'fa-square', ['ctrl i'], 'Home', 'Select', 'item|view', null, () => {
                 grid.invertSelection();
             }, _mixin, null, null,container));
         }
@@ -20448,9 +20471,9 @@ define('xaction/Action',[
     'xide/utils',
     'xide/mixins/EventedMixin',
     'xide/cache/Circular'
-], function (dcl, Base, types, ObjectUtils, utils, EventedMixin, Circular) {
+], (dcl, Base, types, ObjectUtils, utils, EventedMixin, Circular) => {
 
-    var Cache = null;//new Circular(100);
+    const Cache = null;//new Circular(100);
     /***
      * Extend the core types for action visibility(main menu,...) options/enums:
      * 1. 'Main menu',
@@ -20547,22 +20570,20 @@ define('xaction/Action',[
              * @returns {module:xide/types/ACTION_VISIBILITY}
              */
             factory: function () {
-
-                var _in = arguments[1] || utils.clone(types.ACTION_VISIBILITY),
-                    _args = arguments;
+                const _in = arguments[1] || utils.clone(types.ACTION_VISIBILITY);
+                const _args = arguments;
 
                 //
                 // A mode when we have the arguments like (1,1,1,2).
                 //  This clones types.ACTION_VISIBILITY and blends in an integer mask
 
                 if (_args[0].length > 0 && _.isNumber(_args[0][0])) {
-
-                    var _FlagArgs = _args[0],
-                        _val = null,
-                        _index = 0;
+                    const _FlagArgs = _args[0];
+                    const _val = null;
+                    let _index = 0;
 
                     //integer case, sets this[propIndex] to something
-                    _.each(_in, function (index, prop) {
+                    _.each(_in, (index, prop) => {
                         if (typeof _in[prop] !== 'function') {
                             if (_index < _FlagArgs.length) {
                                 //set the value per key but preserve the actualy key by storing
@@ -20600,7 +20621,7 @@ define('xaction/Action',[
      * @class module:xaction/Action
      * @augments xide/model/Base
      */
-    var Module = dcl([Base.dcl, EventedMixin.dcl], {
+    const Module = dcl([Base.dcl, EventedMixin.dcl], {
         declaredClass: "xaction/Action",
         disabled: false,
         destroy: function () {
@@ -20746,18 +20767,17 @@ define('xaction/Action',[
          */
         setVisibility: function () {
             if (arguments.length == 2 && _.isString(arguments[0]) && arguments[0] == types.ACTION_VISIBILITY_ALL) {
-                var _obj = arguments[1],
-                    _vis = types.ACTION_VISIBILITY,
-                    thiz = this;
+                const _obj = arguments[1];
+                const _vis = types.ACTION_VISIBILITY;
+                const thiz = this;
 
                 //track vis key in all
-                [_vis.MAIN_MENU, _vis.ACTION_TOOLBAR, _vis.CONTEXT_MENU, _vis.RIBBON].forEach(function (vis) {
+                [_vis.MAIN_MENU, _vis.ACTION_TOOLBAR, _vis.CONTEXT_MENU, _vis.RIBBON].forEach(vis => {
                     thiz.setVisibility(vis, utils.cloneKeys(_obj, false));
                 });
                 return this;
-
             }
-            var _args = _.isArray(arguments[0]) ? arguments[0] : arguments;
+            const _args = _.isArray(arguments[0]) ? arguments[0] : arguments;
             this.visibility_ = types.ACTION_VISIBILITY.factory(_args, this.visibility_);
             return this;
         },
@@ -20788,8 +20808,8 @@ define('xaction/Action',[
          * @returns {boolean}
          */
         shouldDestroyWidget: function (_visibility, who, newItem) {
-            var visibility = this.getVisibility != null ? this.getVisibility(_visibility) : null;
-            var destroy = true;
+            const visibility = this.getVisibility != null ? this.getVisibility(_visibility) : null;
+            let destroy = true;
             if (visibility && visibility.permanent) {
                 destroy = !(_.isFunction(visibility.permanent) ? visibility.permanent(this, who, newItem) : visibility.permanent);
             }
@@ -20821,9 +20841,9 @@ define('xaction/Action',[
      * @returns {module:xaction/Action}
      */
     Module.create = function (label, icon, command, permanent, operation, btypes, group, visibility, register, handler, mixin) {
-        var _action = null;
+        let _action = null;
 
-        var _args = {
+        const _args = {
             permanent: permanent,
             command: command,
             icon: icon,
@@ -20865,9 +20885,7 @@ define('xaction/Action',[
      * @param mixin
      * @returns {module:xaction/Action}
      */
-    Module.createDefault = function (label, icon, command, group, handler, mixin) {
-        return Module.create(label, icon, command, false, null, null, group || 'nogroup', null, false, handler, mixin);
-    };
+    Module.createDefault = (label, icon, command, group, handler, mixin) => Module.create(label, icon, command, false, null, null, group || 'nogroup', null, false, handler, mixin);
     return Module;
 });
 
@@ -21790,9 +21808,9 @@ define('xaction/ActionModel',[
     "xide/data/Source",
     'xide/model/Path',
     'xide/utils'
-], function (dcl, Action, Model, Source, Path, utils) {
-    var debug = false;
-    var count = 0;
+], (dcl, Action, Model, Source, Path, utils) => {
+    const debug = false;
+    const count = 0;
     /**
      * @class module:xaction/ActionModel
      * @extends module:xide/data/Source
@@ -21830,7 +21848,7 @@ define('xaction/ActionModel',[
             }
         },
         refreshReferences: function (property, value) {
-            _.each(this.getReferences(), function (ref) {
+            _.each(this.getReferences(), ref => {
                 ref.set(property, value);
             }, this);
         },
@@ -21850,13 +21868,13 @@ define('xaction/ActionModel',[
             this.items = this.getChildren();
         },
         getParent: function () {
-            var segments = this.command.split('/');
+            const segments = this.command.split('/');
             if (segments.length > 1) {
                 return this._store.getSync(segments.slice(0, segments.length - 1).join('/'));
             }
         },
         getParentCommand: function () {
-            var segments = this.command.split('/');
+            const segments = this.command.split('/');
             if (segments.length > 1) {
                 return segments.slice(0, segments.length - 1).join('/');
             }
@@ -21871,8 +21889,8 @@ define('xaction/ActionModel',[
             return new Path(path).getChildren(utils.pluck(items, 'command'), false);
         },
         getChildren: function () {
-            var children = this.getItemsAtBranch(this._store.getAll(), this.command),
-                self = this;
+            const children = this.getItemsAtBranch(this._store.getAll(), this.command);
+            const self = this;
 
             //return an action from both stores
             function getAction(command) {
@@ -21881,8 +21899,8 @@ define('xaction/ActionModel',[
 
             //command strings to actions
             function toActions(paths) {
-                var result = [];
-                _.each(paths, function (path) {
+                const result = [];
+                _.each(paths, path => {
                     result.push(getAction(path));
                 });
                 return result;
@@ -21926,12 +21944,12 @@ define('xaction/ActionStore',[
     'xide/data/ObservableStore',
     'dstore/Trackable',
     'xaction/ActionModel'
-], function (declare, TreeMemory, utils, ObservableStore, Trackable, ActionModel) {
+], (declare, TreeMemory, utils, ObservableStore, Trackable, ActionModel) => {
     /**
      * Default properties to be observed (in ObservableStore)
      * @type {string[]}
      */
-    var DEFAULT_ACTION_PROPERTIES = [
+    const DEFAULT_ACTION_PROPERTIES = [
         "value",
         "icon",
         "disabled",
@@ -21967,10 +21985,8 @@ define('xaction/ActionStore',[
         }, mixin));
     }
 
-    var Module = createClass(null, null, null, null, null);
-    Module.createDefault = function (args) {
-        return new Module(args);
-    };
+    const Module = createClass(null, null, null, null, null);
+    Module.createDefault = args => new Module(args);
     Module.createClass = createClass;
     Module.DEFAULT_ACTION_PROPERTIES = DEFAULT_ACTION_PROPERTIES;
     return Module;
@@ -22521,9 +22537,21 @@ define('xaction/ActionProvider',[
     'xide/mixins/EventedMixin',
     'xaction/DefaultActions',
     'xide/lodash'
-], function (declare, dcl, types, utils, Path, ActionStore, Action, Keyboard, EventedMixin, DefaultActions,_) {
+], (
+    declare,
+    dcl,
+    types,
+    utils,
+    Path,
+    ActionStore,
+    Action,
+    Keyboard,
+    EventedMixin,
+    DefaultActions,
+    _
+) => {
 
-    var Implementation = {
+    const Implementation = {
         /**
          * @type module:xaction/ActionStore
          */
@@ -22531,10 +22559,10 @@ define('xaction/ActionProvider',[
         actions: null,
         allowActionOverride: true,
         sortGroups: function (groups, groupMap) {
-            groups = groups.sort(function (a, b) {
+            groups = groups.sort((a, b) => {
                 if (groupMap[a] != null && groupMap[b] != null) {
-                    var orderA = groupMap[a];
-                    var orderB = groupMap[b];
+                    const orderA = groupMap[a];
+                    const orderB = groupMap[b];
                     return orderB - orderA;
                 }
                 return 100;
@@ -22553,9 +22581,9 @@ define('xaction/ActionProvider',[
          * Update all actions referencing widgets
          */
         refreshActions: function () {
-            var allActions = this.getActions();
-            for (var i = 0; i < allActions.length; i++) {
-                var action = allActions[i];
+            const allActions = this.getActions();
+            for (let i = 0; i < allActions.length; i++) {
+                const action = allActions[i];
                 if (action.refresh) {
                     action.refresh();
                 }
@@ -22568,10 +22596,10 @@ define('xaction/ActionProvider',[
             return mixed;
         },
         clearActions: function () {
-            var store = this.getActionStore(),
-                actions = store ? store.query() : [];
+            const store = this.getActionStore();
+            const actions = store ? store.query() : [];
 
-            _.each(actions, function (action) {
+            _.each(actions, action => {
                 action && store.removeSync(action.command);
             });
             store && store.setData([]);
@@ -22597,17 +22625,17 @@ define('xaction/ActionProvider',[
          */
         __createAction: function (title, command, group, icon, handler, accelKey, keyCombo, keyProfile, keyTarget, keyScope, mixin) {
             icon = icon || types.ACTION_ICON[command];
-            var args = {accelKey: accelKey};
+            const args = {accelKey: accelKey};
             utils.mixin(args, mixin);
-            var action = Action.createDefault(title, icon, command, group, handler, args);
+            const action = Action.createDefault(title, icon, command, group, handler, args);
             if (keyCombo) {
-                var keyboardMappings;
+                let keyboardMappings;
                 if (this.keyboardMappings) {
                     keyboardMappings = this.keyboardMappings;
                 } else {
                     action.keyboardMappings = keyboardMappings = [];
                 }
-                var mapping = Keyboard.defaultMapping(keyCombo, handler, keyProfile || types.KEYBOARD_PROFILE.DEFAULT, keyTarget, keyScope, [action]);
+                let mapping = Keyboard.defaultMapping(keyCombo, handler, keyProfile || types.KEYBOARD_PROFILE.DEFAULT, keyTarget, keyScope, [action]);
                 mapping = this.registerKeyboardMapping(mapping);
                 keyboardMappings.push(mapping);
                 action.keyboardMappings = keyboardMappings;
@@ -22618,19 +22646,19 @@ define('xaction/ActionProvider',[
             action = action || this.getAction(action);
             if (action) {
                 action.set(what, value);
-                setTimeout(function () {
-                    action.getReferences().forEach(function (ref) {
+                setTimeout(() => {
+                    action.getReferences().forEach(ref => {
                         ref.set(what, value);
                     });
                 }, 100);
             }
         },
         _completeActions: function (actions) {
-            var result = [];
-            var keyTarget = this.getKeyTarget ? this.getKeyTarget() : null;
-            for (var i = 0; i < actions.length; i++) {
-                var config = actions[i],
-                    action;
+            const result = [];
+            const keyTarget = this.getKeyTarget ? this.getKeyTarget() : null;
+            for (let i = 0; i < actions.length; i++) {
+                const config = actions[i];
+                let action;
 
                 if (!config) {
                     continue;
@@ -22666,7 +22694,7 @@ define('xaction/ActionProvider',[
         },
         createActionStore: function () {
             if (!this.actionStore) {
-                var _actions = this._completeActions(this.actions || []);
+                const _actions = this._completeActions(this.actions || []);
                 this.actionStore = new ActionStore({
                     id: utils.createUUID(),
                     data: _actions,
@@ -22693,7 +22721,7 @@ define('xaction/ActionProvider',[
             if (!mixed && allowCache !== false && this.__actions) {
                 return this.__actions;
             }
-            var query = mixed;
+            let query = mixed;
             //no query or function given
             if (!mixed) {
                 query = {
@@ -22719,11 +22747,11 @@ define('xaction/ActionProvider',[
             this.createActionStore();
         },
         addActions: function (actions) {
-            var store = this.getActionStore();
+            const store = this.getActionStore();
             if (!store['subscribedToUpdates_' + this.id]) {
                 store['subscribedToUpdates_' + this.id] = true;
-                this.addHandle('update', store.on('update', function (evt) {
-                    var action = evt.target;
+                this.addHandle('update', store.on('update', evt => {
+                    const action = evt.target;
                     if (action._isCreating || !evt.property) {
                         return;
                     }
@@ -22733,7 +22761,7 @@ define('xaction/ActionProvider',[
 
                 }));
             }
-            var result = [];
+            const result = [];
             this._emit('onAddActions', {
                 actions: actions,
                 permissions: this.permissions,
@@ -22741,9 +22769,9 @@ define('xaction/ActionProvider',[
             });
 
             //remove existing
-            this.allowActionOverride && _.each(actions, function (action) {
+            this.allowActionOverride && _.each(actions, action => {
                 if (action) {
-                    var existing = store.getSync(action.command);
+                    const existing = store.getSync(action.command);
                     if (existing) {
                         store.removeSync(existing.command);
                     }
@@ -22751,17 +22779,17 @@ define('xaction/ActionProvider',[
             });
             actions = this._completeActions(actions);
 
-            _.each(actions, function (action) {
+            _.each(actions, action => {
                 if (this.allowActionOverride && store.getSync(action.command)) {
                     store.removeSync(action.command);
                 }
-                var _action = store.putSync(action);
+                const _action = store.putSync(action);
                 result.push(_action);
                 _action._isCreating = true;
                 _action.onCreate && _action.onCreate(_action);
                 this._emit('onAddAction', _action);
                 _action._isCreating = false;
-            }.bind(this));
+            });
             return result;
 
         },
@@ -22788,23 +22816,23 @@ define('xaction/ActionProvider',[
          * @returns {*}
          */
         createAction2: function (options) {
-            var thiz = this,
-                action = null,
-                mixin = options.mixin || {},
-                owner = options.owner || mixin.owner || thiz,
-                permissions = options.permissions || this.permissions || [],
-                command = options.command,
-                keycombo = options.keycombo,
-                label = options.label,
-                icon = options.icon,
-                tab = options.tab,
-                group = options.group,
-                filterGroup = options.filterGroup,
-                onCreate = options.onCreate,
-                handler = options.handler,
-                container = options.container || thiz.domNode,
-                shouldShow = options.shouldShow,
-                shouldDisable = options.shouldDisable;
+            const thiz = this;
+            let action = null;
+            const mixin = options.mixin || {};
+            const owner = options.owner || mixin.owner || thiz;
+            const permissions = options.permissions || this.permissions || [];
+            const command = options.command;
+            let keycombo = options.keycombo;
+            const label = options.label;
+            const icon = options.icon;
+            const tab = options.tab;
+            const group = options.group;
+            const filterGroup = options.filterGroup;
+            const onCreate = options.onCreate;
+            let handler = options.handler;
+            const container = options.container || thiz.domNode;
+            const shouldShow = options.shouldShow;
+            const shouldDisable = options.shouldDisable;
 
             utils.mixin(mixin, {
                 owner: owner,
@@ -22852,8 +22880,8 @@ define('xaction/ActionProvider',[
             if (arguments.length == 1) {
                 return this.createAction2(arguments[0]);
             }
-            var thiz = this,
-                action = null;
+            const thiz = this;
+            let action = null;
 
             mixin = mixin || {};
             utils.mixin(mixin, {owner: owner || thiz});
@@ -22875,8 +22903,8 @@ define('xaction/ActionProvider',[
             }
         },
         addAction: function (where, action) {
-            var actions = where || [];
-            var eventCallbackResult = this._emit('addAction', action);
+            const actions = where || [];
+            const eventCallbackResult = this._emit('addAction', action);
             if (eventCallbackResult === false) {
                 return false;
             } else if (_.isObject(eventCallbackResult)) {
@@ -22892,8 +22920,8 @@ define('xaction/ActionProvider',[
          * @returns {boolean}
          */
         _addAction: function (where, action) {
-            var actions = where || [],
-                eventCallbackResult = this._emit('addAction', action);
+            const actions = where || [];
+            const eventCallbackResult = this._emit('addAction', action);
 
             if (eventCallbackResult === false) {
                 return false;
@@ -22915,7 +22943,7 @@ define('xaction/ActionProvider',[
      * @class module:xide/mixins/ActionProvider
      * @extends module:xide/mixins/EventedMixin
      */
-    var Module = declare("xaction/ActionProvider", [EventedMixin, Keyboard], Implementation);
+    const Module = declare("xaction/ActionProvider", [EventedMixin, Keyboard], Implementation);
     Module.dcl = dcl([EventedMixin.dcl, Keyboard.dcl], Implementation);
     return Module;
 });
@@ -23132,18 +23160,18 @@ define('xaction/ActionContext',[
     'xide/types',
     'dojo/aspect',
     'xide/views/History'
-], function (dcl, declare, types, aspect, History) {
-    var _debug = false;
+], (dcl, declare, types, aspect, History) => {
+    const _debug = false;
     /**
      * Mixin to handle different action contexts.
      *
      * @mixin module:xaction/ActionContext
      */
-    var Implementation = {
+    const Implementation = {
         currentActionEmitter: null,
         _history: null,
         isEmpty: function () {
-            var _emitter = this.getCurrentEmitter();
+            const _emitter = this.getCurrentEmitter();
             if (_emitter) {
                 return _emitter.getActionStore().getAll().length == 0;
             }
@@ -23154,19 +23182,19 @@ define('xaction/ActionContext',[
         },
         _onRemoveEmitter: function (emitter) {
             this._history.remove(emitter);
-            var _next = this._history.getNow();
-            var cEmitter = this.currentActionEmitter;
+            const _next = this._history.getNow();
+            const cEmitter = this.currentActionEmitter;
             if (cEmitter == emitter) {
                 this.currentActionEmitter = null;
             }
-            var _last = _next;
+            const _last = _next;
             if (_last) {
                 this.setActionEmitter(_last);
             }
         },
         refreshActions: function (actions) {
-            var _self = this;
-            _.each(actions, function (action) {
+            const _self = this;
+            _.each(actions, action => {
                 if (_self.renderAction) {
                     _self.renderAction(action, null, null, null, null);
                 } else {
@@ -23187,10 +23215,10 @@ define('xaction/ActionContext',[
             }
             _debug && console.log('setActionEmitter ' + this.id + ' ' + this.declaredClass + ' for : ' + what + ' emitter : ' + emitter.id);
             try {
-                var cEmitter = this.currentActionEmitter;
+                const cEmitter = this.currentActionEmitter;
                 if (cEmitter) {
                     if (cEmitter.getActionStore) {
-                        var store = cEmitter.getActionStore();
+                        const store = cEmitter.getActionStore();
                         if (store) {
                             store._all = null;
                         } else {
@@ -23214,7 +23242,7 @@ define('xaction/ActionContext',[
                 this.setActionStore(null);
                 return;
             }
-            var newEmitterStore = emitter.getActionStore();
+            const newEmitterStore = emitter.getActionStore();
             if (!newEmitterStore) {
                 _debug && console.error('new emitter has no action store ! ' + emitter.declaredClass);
                 return;
@@ -23244,24 +23272,26 @@ define('xaction/ActionContext',[
                 _debug && console.warn('register action emitter : emitter = null');
                 return false;
             }
-            var thiz = this,
-                handler = function (what, e) {
-                    thiz.setActionEmitter(emitter, what, e);
-                },
-                _handle = emitter._on('selectionChanged', function (e) {
-                    var type = e.why == 'clear' ? 'selectionCleared' : 'selectionChanged';
-                    handler(type, e);
-                });
+            const thiz = this;
 
-            emitter.on('click', function (e) {
-                var doHandler = true;
+            const handler = (what, e) => {
+                thiz.setActionEmitter(emitter, what, e);
+            };
+
+            const _handle = emitter._on('selectionChanged', e => {
+                const type = e.why == 'clear' ? 'selectionCleared' : 'selectionChanged';
+                handler(type, e);
+            });
+
+            emitter.on('click', e => {
+                let doHandler = true;
                 if (emitter.handleActionClick) {
                     doHandler = emitter.handleActionClick(e);
                 }
                 doHandler && handler('click', e);
             });
             !this._history && (this._history = new History());
-            emitter._on(types.EVENTS.ON_VIEW_SHOW, function (view) {
+            emitter._on(types.EVENTS.ON_VIEW_SHOW, view => {
                 if (thiz._history.indexOf(view)) {
                     view.view && (view = view.view);
                     thiz.setActionEmitter(view, types.EVENTS.ON_VIEW_SHOW, view);
@@ -23277,7 +23307,7 @@ define('xaction/ActionContext',[
                 _debug && console.warn('addActionEmitter::emitter is null');
                 return;
             }
-            var thiz = this;
+            const thiz = this;
             !this._history && (this._history = new History());
             if (!emitter.getActionStore) {
                 _debug && console.error('invalid emitter ', emitter);
@@ -23290,11 +23320,11 @@ define('xaction/ActionContext',[
                 thiz._onRemoveEmitter(emitter);
             }
 
-            aspect.after(emitter, 'destroy', function () {
+            aspect.after(emitter, 'destroy', () => {
                 remove(emitter);
             }, true);
 
-            emitter._on('destroy', function () {
+            emitter._on('destroy', () => {
                 try {
                     remove(emitter);
                 } catch (e) {
@@ -23304,7 +23334,7 @@ define('xaction/ActionContext',[
         }
     };
     //package via declare
-    var Module = declare('xaction/ActionContext', null, Implementation);
+    const Module = declare('xaction/ActionContext', null, Implementation);
     //package via dcl
     Module.dcl = dcl(null, Implementation);
     return Module;
@@ -27121,7 +27151,7 @@ define('xgrid/ThumbRenderer',[
     'xide/types',
     'dojo/dom-construct',
     './Renderer'
-], function (declare,types,domConstruct,Renderer) {
+], (declare, types, domConstruct, Renderer) => {
     /**
      * The list renderer does nothing since the xgrid/Base is already inherited from
      * dgrid/OnDemandList and its rendering as list already.
@@ -30378,7 +30408,7 @@ define('xgrid/TreeRenderer',[
     "dojo/keys",
     "dojo/on",
     "xide/$"
-], function (declare, Renderer, Tree, keys, on, $) {
+], (declare, Renderer, Tree, keys, on, $) => {
 
     function KEYBOARD_HANDLER(evt) {
         this.onTreeKey(evt);
@@ -30386,7 +30416,8 @@ define('xgrid/TreeRenderer',[
         if (thiz.isThumbGrid) {
             return;
         }
-        if (evt.keyCode == keys.LEFT_ARROW || evt.keyCode == keys.RIGHT_ARROW || evt.keyCode == keys.HOME || evt.keyCode == keys.END) {} else {
+        if (evt.keyCode == keys.LEFT_ARROW || evt.keyCode == keys.RIGHT_ARROW || evt.keyCode == keys.HOME || evt.keyCode == keys.END) {
+        } else {
             return;
         }
         var target = evt.target;
@@ -30455,7 +30486,7 @@ define('xgrid/TreeRenderer',[
         }
 
         function expand(what, expand) {
-            _.each(what, function (item) {
+            _.each(what, item => {
                 var _row = thiz.row(item);
                 if (_row && _row.element) {
                     thiz.expand(_row, expand, true);
@@ -30477,10 +30508,7 @@ define('xgrid/TreeRenderer',[
                         if (down) {
                             return this.select(down, null, true, defaultSelectArgs);
                         } else {
-                            on.emit(this.contentNode, "keydown", {
-                                keyCode: 36,
-                                force: true
-                            });
+                            on.emit(this.contentNode, "keydown", { keyCode: 36, force: true });
                         }
                     }
                 }
@@ -30525,7 +30553,7 @@ define('xgrid/TreeRenderer',[
      */
     var Implementation = {
         _expandOnClickHandle: null,
-        _patchTreeClick: function () {
+        _patchTreeClick:function(){
             this._expandOnClickHandle = this.on("click", this.onTreeClick.bind(this));
             $(this.domNode).addClass('openTreeOnClick');
         },
@@ -30544,7 +30572,8 @@ define('xgrid/TreeRenderer',[
         activateRenderer: function () {
             this._showHeader(true);
             if (this.expandOnClick) {
-                this._patchTreeClick();
+                this._expandOnClickHandle = this.on("click", this.onTreeClick.bind(this));
+                $(this.domNode).addClass('openTreeOnClick');
             }
         },
         __getParent: function (item) {
@@ -30574,7 +30603,7 @@ define('xgrid/TreeRenderer',[
             this.inherited(arguments);
         },
         onTreeClick: function (e) {
-            if (e.target.className.indexOf('expando') !== -1) {
+            if(e.target.className.indexOf('expando')!==-1){
                 return;
             }
             var row = this.row(e);
@@ -31307,7 +31336,7 @@ define('xgrid/Selection',[
     'dojo/Deferred',
     'xide/lodash',
     'xide/$'
-], function (declare, has, types, utils, Selection, domClass, on, Deferred, _, $) {
+], (declare, has, types, utils, Selection, domClass, on, Deferred, _, $) => {
 
     /////////////////////////////////////////////////////////////////////
     //
@@ -31334,7 +31363,7 @@ define('xgrid/Selection',[
     function rows(selection) {
         var result = [];
         if (selection && selection.rows) {
-            selection.rows.forEach(function (row) {
+            selection.rows.forEach(row => {
                 result.push(row.id);
             });
         }
@@ -31347,9 +31376,7 @@ define('xgrid/Selection',[
      * @returns {*|Array}
      */
     function allArraysAlike(arrays) {
-        return _.all(arrays, function (array) {
-            return array.length == arrays[0].length && _.difference(array, arrays[0]).length == 0;
-        });
+        return _.all(arrays, array => array.length == arrays[0].length && _.difference(array, arrays[0]).length == 0);
     }
 
     /**
@@ -31372,11 +31399,9 @@ define('xgrid/Selection',[
      * @returns {boolean}
      */
     function isSame(items, now, idProperty) {
-        var newSelection = items ? items.map(function (item) {
-            return item ? item.data || item : {};
-        }) : [];
-        var idsNew = newSelection.map(function (x) { return x[idProperty]; });
-        var idsNow = now.map(function (x) { return x[idProperty]; });
+        var newSelection = items ? items.map(item => item ? item.data || item : {}) : [];
+        var idsNew = newSelection.map(x => x[idProperty]);
+        var idsNow = now.map(x => x[idProperty]);
         return (idsNew.join(',') === idsNow.join(','));
     }
 
@@ -31385,7 +31410,7 @@ define('xgrid/Selection',[
      * @param self {module:xgrid/Base}
      */
     function clearFocused(self) {
-        $(self.domNode).find('.dgrid-focus').each(function (i, el) {
+        $(self.domNode).find('.dgrid-focus').each((i, el) => {
             $(el).removeClass('dgrid-focus');
         });
     }
@@ -31439,7 +31464,7 @@ define('xgrid/Selection',[
             var collection = this.collection;
             var idProp = collection.idProperty;
             if (selection.selection && idProp) {
-                _.each(selection.selection, function (item) {
+                _.each(selection.selection, item => {
                     if (item && item[idProp]) {
                         thisState.selection.push(item[idProp]);
                     }
@@ -31471,7 +31496,7 @@ define('xgrid/Selection',[
 
             this._refreshInProgress = res;
 
-            res && res.then && res.then(function () {
+            res && res.then && res.then(() => {
                 thiz._refreshInProgress = null;
                 active && _restore && thiz._restoreSelection(_restore, 1, !active, 'restore');
             });
@@ -31505,7 +31530,7 @@ define('xgrid/Selection',[
             this.clearSelection();
             this._lastSelection = null;
             this._lastFocused = null;
-            $(this.domNode).find('.dgrid-focus').each(function (i, el) {
+            $(this.domNode).find('.dgrid-focus').each((i, el) => {
                 $(el).removeClass('dgrid-focus');
             });
             this._emit('selectionChanged', {
@@ -31518,7 +31543,7 @@ define('xgrid/Selection',[
             var selection = items || this._getSelection() || [];
             var newSelection = [],
                 all = this.getRows();
-            _.each(all, function (data) {
+            _.each(all, data => {
                 if (selection.indexOf(data) === -1) {
                     newSelection.push(data);
                 }
@@ -31682,16 +31707,16 @@ define('xgrid/Selection',[
         postCreate: function () {
             var thiz = this;
             if (this.options[types.GRID_OPTION.CLEAR_SELECTION_ON_CLICK] === true) {
-                var clickHandler = function (evt) {
+                var clickHandler = evt => {
                     if (evt && evt.target && domClass.contains(evt.target, 'dgrid-content')) {
                         this.deselectAll();
                     }
-                }.bind(this);
-                this.on("click", function (evt) {
+                };
+                this.on("click", evt => {
                     clickHandler(evt);
-                }.bind(this));
+                });
             }
-            this.on("dgrid-select", function (data) {
+            this.on("dgrid-select", data => {
                 if (!equals(thiz._lastSelection, data)) {
                     delete thiz._lastSelection;
                     thiz._lastSelection = data;
@@ -31816,12 +31841,12 @@ define('xgrid/Selection',[
             //indices to items
             if (_.isNumber(items[0])) {
                 var rows = self.getRows();
-                _.each(items, function (item) {
+                _.each(items, item => {
                     _newItems.push(rows[item]);
                 });
                 items = _newItems;
             } else if (_.isString(items[0])) {
-                _.each(items, function (item) {
+                _.each(items, item => {
                     var _item = coll.getSync(item);
                     if (_item) {
                         _newItems.push(_item);
@@ -31830,7 +31855,7 @@ define('xgrid/Selection',[
 
                 items = _newItems;
             } else if (items && items[0] && items[0].tagName) {
-                _.each(items, function (item) {
+                _.each(items, item => {
                     _newItems.push(self.row(item).data);
                 });
                 items = _newItems;
@@ -31850,7 +31875,7 @@ define('xgrid/Selection',[
             }
 
             var _last = this._lastSelection ? this._lastSelection.rows : [];
-            var now = _last.map(function (x) { return x.data; });
+            var now = _last.map(x => x.data);
 
             var isEqual = isSame(items, now, idProperty);
 
@@ -31901,7 +31926,7 @@ define('xgrid/Selection',[
             }
 
             if (delay && items.length) {
-                this._selectTimer = setTimeout(function () {
+                this._selectTimer = setTimeout(() => {
                     if (self.destroyed || !self.collection) {
                         return;
                     }
@@ -31954,7 +31979,7 @@ define('xgrid/Selection',[
         startup: function () {
             var result = this.inherited(arguments);
             //we want keyboard navigation also when nothing is selected
-            this.addHandle('keyup', on(this.domNode, 'keyup', function (event) {
+            this.addHandle('keyup', on(this.domNode, 'keyup', event => {
                 // For now, don't squash browser-specific functionality by letting
                 // ALT and META function as they would natively
                 if (event.metaKey || event.altKey) {
@@ -31966,7 +31991,7 @@ define('xgrid/Selection',[
                 if (handler && !handledEvent(event) && this._getSelection().length == 0) {
                     handler.call(this, event);
                 }
-            }.bind(this)));
+            }));
             return result;
         }
     };
@@ -31986,7 +32011,7 @@ define('xgrid/Keyboard',[
 	'dgrid/util/misc',
 	'dojo/_base/sniff',
 	'dcl/dcl'
-], function (declare, aspect, domClass, on, lang, has, miscUtil,dcl) {
+], (declare, aspect, domClass, on, lang, has, miscUtil, dcl) => {
 
 	var delegatingInputTypes = {
 			checkbox: 1,
@@ -31997,9 +32022,8 @@ define('xgrid/Keyboard',[
 		hasGridRowClass = /\bdgrid-row\b/,
 		_debug = false;
 
-    has.add("dom-contains", function(global, doc, element){
-        return !!element.contains; // not supported by FF < 9
-    });
+    has.add("dom-contains", (global, doc, element) => // not supported by FF < 9
+    !!element.contains);
 
     function contains(parent, node){
         // summary:
@@ -32012,7 +32036,7 @@ define('xgrid/Keyboard',[
         }
     }
 
-	var _upDownSelect = function(event,who,steps) {
+	var _upDownSelect = (event, who, steps) => {
 
 		var prev     = steps < 0,
 			selector = prev ? 'first:' : 'last',
@@ -32061,7 +32085,7 @@ define('xgrid/Keyboard',[
 		}
 		return n;
 	};
-	var _rightLeftSelect = function(event,who,steps) {
+	var _rightLeftSelect = (event, who, steps) => {
 
 		var prev     = steps < 0,
 			selector = prev ? 'first:' : 'last',
@@ -32196,7 +32220,7 @@ define('xgrid/Keyboard',[
 					aspect.after(grid, 'renderHeader', initHeader, true);
 				}
 				else {
-					aspect.after(grid, 'renderArray', function (rows) {
+					aspect.after(grid, 'renderArray', rows => {
 						// summary:
 						//		Ensures the first element of a grid is always keyboard selectable after data has been
 						//		retrieved if there is not already a valid focused element.
@@ -32224,13 +32248,13 @@ define('xgrid/Keyboard',[
 					});
 				}
 
-				grid._listeners.push(on(areaNode, 'mousedown', function (event) {
+				grid._listeners.push(on(areaNode, 'mousedown', event => {
 					if (!handledEvent(event)) {
 						grid._focusOnNode(event.target, isHeader, event);
 					}
 				}));
 
-				grid._listeners.push(on(areaNode, 'keydown', function (event) {
+				grid._listeners.push(on(areaNode, 'keydown', event => {
 					//console.log('keyboardkey down : ',event);
 					// For now, don't squash browser-specific functionalities by letting
 					// ALT and META function as they would natively
@@ -32302,7 +32326,7 @@ define('xgrid/Keyboard',[
 				// if no replacement row was immediately inserted.
 				// Pass original row's id in case it was re-inserted in a renderArray
 				// call (and thus was found, but couldn't be focused immediately)
-				setTimeout(function () {
+				setTimeout(() => {
 					if (self._removedFocus) {
 						self._restoreFocus(focusedRow.id);
 					}
@@ -32741,395 +32765,391 @@ define('xgrid/ColumnHider',[
     'dgrid/util/misc',
     'xide/types',
     'xide/utils'
-], function (declare, has, misc,types,utils) {
+], (declare, has, misc, types, utils) => /*
+ *	Column Hider plugin for dgrid
+ *	Originally contributed by TRT 2011-09-28
+ *
+ *	A dGrid plugin that attaches a menu to a dgrid, along with a way of opening it,
+ *	that will allow you to show and hide columns.  A few caveats:
+ *
+ *	1. Menu placement is entirely based on CSS definitions.
+ *	2. If you want columns initially hidden, you must add "hidden: true" to your
+ *		column definition.
+ *	3. This implementation does NOT support ColumnSet, and has not been tested
+ *		with multi-subrow records.
+ *	4. Column show/hide is controlled via straight up HTML checkboxes.  If you
+ *		are looking for something more fancy, you'll probably need to use this
+ *		definition as a template to write your own plugin.
+ *
+ */
+declare('xgrid.ColumnHider', null, {
+    columnHiderActionRootCommand:'View/Columns',
+    // i18nColumnHider: Object
+    //		This object contains all of the internationalized strings for
+    //		the ColumnHider extension as key/value pairs.
+    i18nColumnHider: {},
 
-    /*
-     *	Column Hider plugin for dgrid
-     *	Originally contributed by TRT 2011-09-28
+    // _columnHiderRules: Object
+    //		Hash containing handles returned from addCssRule.
+    _columnHiderRules: null,
+    _runAction:function(action,update,value){
+        if(action && action.command.indexOf(this.columnHiderActionRootCommand)!=-1 ){
+            var col = action.column;
+            var isHidden = this.isColumnHidden(col.id);
+            this.showColumn(col.id,isHidden);
+            update!==false && action.set('value', !this.isColumnHidden(col.id));
+        }
+        return this.inherited(arguments);
+    },
+    /**
      *
-     *	A dGrid plugin that attaches a menu to a dgrid, along with a way of opening it,
-     *	that will allow you to show and hide columns.  A few caveats:
-     *
-     *	1. Menu placement is entirely based on CSS definitions.
-     *	2. If you want columns initially hidden, you must add "hidden: true" to your
-     *		column definition.
-     *	3. This implementation does NOT support ColumnSet, and has not been tested
-     *		with multi-subrow records.
-     *	4. Column show/hide is controlled via straight up HTML checkboxes.  If you
-     *		are looking for something more fancy, you'll probably need to use this
-     *		definition as a template to write your own plugin.
-     *
+     * @param permissions
+     * @param actions
+     * @returns {Array}
      */
-	return declare('xgrid.ColumnHider',null, {
-        columnHiderActionRootCommand:'View/Columns',
-		// i18nColumnHider: Object
-		//		This object contains all of the internationalized strings for
-		//		the ColumnHider extension as key/value pairs.
-		i18nColumnHider: {},
+    getColumnHiderActions:function(permissions,actions){
+        var root = this.columnHiderActionRootCommand,
+            thiz = this,
+            columnActions = [],
+            VISIBILITY = types.ACTION_VISIBILITY,
+            node = this.domNode;
 
-		// _columnHiderRules: Object
-		//		Hash containing handles returned from addCssRule.
-		_columnHiderRules: null,
-        _runAction:function(action,update,value){
-            if(action && action.command.indexOf(this.columnHiderActionRootCommand)!=-1 ){
-                var col = action.column;
-                var isHidden = this.isColumnHidden(col.id);
-                this.showColumn(col.id,isHidden);
-                update!==false && action.set('value', !this.isColumnHidden(col.id));
-            }
-            return this.inherited(arguments);
-        },
+        actions = actions || [];
+        var rootAction = _.find(actions,{
+            command:root
+        });
+        if(!rootAction) {
+            columnActions.push(this.createAction({
+                label:'Columns',
+                command:root,
+                icon:'fa-columns',
+                tab:'View',
+                group:'Columns',
+                toggleGroup:thiz.id + 'Columns',
+                onCreate:function(action){
+                    action.setVisibility(VISIBILITY.RIBBON,{
+                        expand:true
+                    }).setVisibility(VISIBILITY.ACTION_TOOLBAR, false);
+                }
+            }));
+        }
         /**
          *
-         * @param permissions
-         * @param actions
-         * @returns {Array}
+         * @param col
+         * @private
          */
-		getColumnHiderActions:function(permissions,actions){
-            var root = this.columnHiderActionRootCommand,
-                thiz = this,
-                columnActions = [],
-                VISIBILITY = types.ACTION_VISIBILITY,
-                node = this.domNode;
+        function _createEntry(col) {
 
-            actions = actions || [];
-            var rootAction = _.find(actions,{
-                command:root
-            });
-            if(!rootAction) {
-                columnActions.push(this.createAction({
-                    label:'Columns',
-                    command:root,
-                    icon:'fa-columns',
-                    tab:'View',
-                    group:'Columns',
-                    toggleGroup:thiz.id + 'Columns',
-                    onCreate:function(action){
-                        action.setVisibility(VISIBILITY.RIBBON,{
-                            expand:true
-                        }).setVisibility(VISIBILITY.ACTION_TOOLBAR, false);
-                    }
-                }));
+            var id = col.id,
+                label = 'Show ' + ( col.label || col.field || ''),
+                icon = col.icon || 'fa-cogs';
+
+            // Allow cols to opt out of the hider (e.g. for selector column).
+            if (col.unhidable) {
+                return;
             }
-            /**
-             *
-             * @param col
-             * @private
-             */
-            function _createEntry(col) {
+            var _action = thiz.createAction(label, root + '/' + label , icon, null, 'View', 'Columns', 'item|view',
 
-                var id = col.id,
-                    label = 'Show ' + ( col.label || col.field || ''),
-                    icon = col.icon || 'fa-cogs';
+                action => {
 
-                // Allow cols to opt out of the hider (e.g. for selector column).
-                if (col.unhidable) {
-                    return;
-                }
-                var _action = thiz.createAction(label, root + '/' + label , icon, null, 'View', 'Columns', 'item|view',
-
-                    //oncreate
-                    function(action){
-
-                        var widgetImplementation = {
-                            postMixInProperties: function() {
-                                this.inherited(arguments);
-                                this.checked = this.item.get('value') === true;
-                            },
-                            startup:function(){
-                                this.inherited(arguments);
-                                this.on('change',function(val){
-                                    thiz.showColumn(id,val);
-                                });
-                            }
-                        };
-                        var widgetArgs  ={
-                            checked:!col.hidden,
-                            iconClass:icon,
-                            style:'float:inherit;'
-                        };
+                    var widgetImplementation = {
+                        postMixInProperties: function() {
+                            this.inherited(arguments);
+                            this.checked = this.item.get('value') === true;
+                        },
+                        startup:function(){
+                            this.inherited(arguments);
+                            this.on('change',val => {
+                                thiz.showColumn(id,val);
+                            });
+                        }
+                    };
+                    var widgetArgs  ={
+                        checked:!col.hidden,
+                        iconClass:icon,
+                        style:'float:inherit;'
+                    };
 
 
-                        var _visibilityMixin = {
-                            //widgetClass:declare.classFactory('_Checked', [CheckedMenuItem,_ActionValueWidgetMixin], null, widgetImplementation ,null),
-                            widgetArgs:widgetArgs,
-                            actionType : 'multiToggle'
-                        };
+                    var _visibilityMixin = {
+                        //widgetClass:declare.classFactory('_Checked', [CheckedMenuItem,_ActionValueWidgetMixin], null, widgetImplementation ,null),
+                        widgetArgs:widgetArgs,
+                        actionType : 'multiToggle'
+                    };
 
-                        action.actionType = 'multiToggle';
-
-
-                        action.setVisibility(types.ACTION_VISIBILITY_ALL,utils.cloneKeys(_visibilityMixin,false));
-
-                        label = action.label.replace('Show ','');
+                    action.actionType = 'multiToggle';
 
 
-                        //for ribbons we collapse into 'Checkboxes'
-                        /*
-                        action.setVisibility(VISIBILITY.RIBBON,{
-                            widgetClass:declare.classFactory('_CheckedGroup', [ActionValueWidget], null,{
-                                iconClass:"",
-                                postMixInProperties: function() {
-                                    this.inherited(arguments);
-                                    this.checked = this.item.get('value') == true;
-                                },
-                                startup:function(){
-                                    this.inherited(arguments);
-                                    this.widget.on('change', function (val) {
-                                        thiz.showColumn(id,val);
-                                    }.bind(this));
-                                }
-                            } ,null),
-                            widgetArgs:{
-                                renderer:CheckBox,
-                                checked:!col.hidden,
-                                label:action.label.replace('Show ','')
-                            }
-                        });
-                        */
+                    action.setVisibility(types.ACTION_VISIBILITY_ALL,utils.cloneKeys(_visibilityMixin,false));
 
-                    }, /*handler*/ null ,
-                    {
-                        column:col,
-                        filterGroup:"item|view",
-                        tab:'View',
-                        value:!col.hidden,
-                        addPermission:true
-                    },
-                    null, null, permissions, node,thiz,thiz);
+                    label = action.label.replace('Show ','');
 
-                if(_action){
-                    columnActions.push(_action);
-                }
 
-                /**
-
-                columnActions.push(_ActionMixin.createActionParameters(label, root + '/' + label, 'Columns', icon, function () {
-                    console.log('handler');
-
-                }, '', null, null, thiz, thiz, {
-                    column:col,
-                    filterGroup:"item|view",
-                    tab:'View',
-                    value:!col.hidden,
-                    onCreate:function(action){
-
-                        var _action = this;
-
-                        action.owner = thiz;
-
-                        var widgetImplementation = {
+                    //for ribbons we collapse into 'Checkboxes'
+                    /*
+                    action.setVisibility(VISIBILITY.RIBBON,{
+                        widgetClass:declare.classFactory('_CheckedGroup', [ActionValueWidget], null,{
+                            iconClass:"",
                             postMixInProperties: function() {
                                 this.inherited(arguments);
                                 this.checked = this.item.get('value') == true;
                             },
                             startup:function(){
                                 this.inherited(arguments);
-                                this.on('change',function(val){
+                                this.widget.on('change', function (val) {
                                     thiz.showColumn(id,val);
-                                })
-                            },
-                            destroy:function(){
-
-                                this.inherited(arguments);
+                                }.bind(this));
                             }
-                        };
-                        var widgetArgs  ={
+                        } ,null),
+                        widgetArgs:{
+                            renderer:CheckBox,
                             checked:!col.hidden,
-                            iconClass:icon,
-                            style:'float:inherit;'
-                        };
-
-                        var _visibilityMixin = {
-                            widgetClass:declare.classFactory('_Checked', [CheckedMenuItem,_ActionValueWidgetMixin], null, widgetImplementation ,null),
-                            widgetArgs:widgetArgs
-                        };
-
-                        action.setVisibility(types.ACTION_VISIBILITY_ALL,_visibilityMixin);
-
-                        label = action.label.replace('Show ','');
-
-
-                        //for ribbons we collapse into 'Checkboxes'
-                        action.setVisibility(VISIBILITY.RIBBON,{
-                            widgetClass:declare.classFactory('_CheckedGroup', [ActionValueWidget], null,{
-                                iconClass:"",
-                                postMixInProperties: function() {
-                                    this.inherited(arguments);
-                                    this.checked = this.item.get('value') == true;
-                                },
-                                startup:function(){
-                                    this.inherited(arguments);
-                                    this.widget.on('change', function (val) {
-                                        thiz.showColumn(id,val);
-                                    }.bind(this));
-                                }
-                            } ,null),
-                            widgetArgs:{
-                                renderer:CheckBox,
-                                checked:!col.hidden,
-                                label:action.label.replace('Show ','')
-                            }
-                        });
-
-                    }
-                }));
-
-                */
-
-            }
-            var subRows = this.subRows,
-                first = true,
-                srLength, cLength, sr, c;
-            for (sr = 0, srLength = subRows.length; sr < srLength; sr++) {
-                for (c = 0, cLength = subRows[sr].length; c < cLength; c++) {
-                    _createEntry(subRows[sr][c]);
-                    if (first) {
-                        first = false;
-                    }
-                }
-            }
-            return columnActions;
-
-        },
-        resize:function(){
-            this.inherited(arguments);
-            this._checkHiddenColumns();
-        },
-        _checkHiddenColumns:function(){
-            var subRows = this.subRows,
-                srLength, cLength, sr, c,
-                totalWidth = $(this.domNode).width();
-
-            for (sr = 0, srLength = subRows.length; sr < srLength; sr++) {
-                for (c = 0, cLength = subRows[sr].length; c < cLength; c++) {
-                    var col = subRows[sr][c];
-                    if(col.minWidth){
-                        if(totalWidth < col.minWidth){
-                            if(!col.unhidable) {
-                                this.showColumn(col.id,false);
-                            }
-                        }else{
-                            this.showColumn(col.id,true);
+                            label:action.label.replace('Show ','')
                         }
-                    }
+                    });
+                    */
+
+                }, /*handler*/ null ,
+                {
+                    column:col,
+                    filterGroup:"item|view",
+                    tab:'View',
+                    value:!col.hidden,
+                    addPermission:true
+                },
+                null, null, permissions, node,thiz,thiz);
+
+            if(_action){
+                columnActions.push(_action);
+            }
+
+            /**
+
+            columnActions.push(_ActionMixin.createActionParameters(label, root + '/' + label, 'Columns', icon, function () {
+                console.log('handler');
+
+            }, '', null, null, thiz, thiz, {
+                column:col,
+                filterGroup:"item|view",
+                tab:'View',
+                value:!col.hidden,
+                onCreate:function(action){
+
+                    var _action = this;
+
+                    action.owner = thiz;
+
+                    var widgetImplementation = {
+                        postMixInProperties: function() {
+                            this.inherited(arguments);
+                            this.checked = this.item.get('value') == true;
+                        },
+                        startup:function(){
+                            this.inherited(arguments);
+                            this.on('change',function(val){
+                                thiz.showColumn(id,val);
+                            })
+                        },
+                        destroy:function(){
+
+                            this.inherited(arguments);
+                        }
+                    };
+                    var widgetArgs  ={
+                        checked:!col.hidden,
+                        iconClass:icon,
+                        style:'float:inherit;'
+                    };
+
+                    var _visibilityMixin = {
+                        widgetClass:declare.classFactory('_Checked', [CheckedMenuItem,_ActionValueWidgetMixin], null, widgetImplementation ,null),
+                        widgetArgs:widgetArgs
+                    };
+
+                    action.setVisibility(types.ACTION_VISIBILITY_ALL,_visibilityMixin);
+
+                    label = action.label.replace('Show ','');
+
+
+                    //for ribbons we collapse into 'Checkboxes'
+                    action.setVisibility(VISIBILITY.RIBBON,{
+                        widgetClass:declare.classFactory('_CheckedGroup', [ActionValueWidget], null,{
+                            iconClass:"",
+                            postMixInProperties: function() {
+                                this.inherited(arguments);
+                                this.checked = this.item.get('value') == true;
+                            },
+                            startup:function(){
+                                this.inherited(arguments);
+                                this.widget.on('change', function (val) {
+                                    thiz.showColumn(id,val);
+                                }.bind(this));
+                            }
+                        } ,null),
+                        widgetArgs:{
+                            renderer:CheckBox,
+                            checked:!col.hidden,
+                            label:action.label.replace('Show ','')
+                        }
+                    });
+
                 }
-            }
-        },
-        startup:function(){
-            if(this._started){
-                return;
-            }
+            }));
 
-            this._columnHiderCheckboxes = {};
-            this._columnHiderRules = {};
-            var res = this.inherited(arguments);
-            this._checkHiddenColumns();
-            var subRows = this.subRows,
-                srLength, cLength, sr, c,
-                thiz = this;
+            */
 
-            for (sr = 0, srLength = subRows.length; sr < srLength; sr++) {
-                for (c = 0, cLength = subRows[sr].length; c < cLength; c++) {
-
-                    var col = subRows[sr][c],
-                        id = col.id;
-
-                    if (col.hidden===true) {
-                        // Hide the column (reset first to avoid short-circuiting logic)
-                        col.hidden = false;
-                        thiz._hideColumn(id);
-                        col.hidden = true;
-                    }
+        }
+        var subRows = this.subRows,
+            first = true,
+            srLength, cLength, sr, c;
+        for (sr = 0, srLength = subRows.length; sr < srLength; sr++) {
+            for (c = 0, cLength = subRows[sr].length; c < cLength; c++) {
+                _createEntry(subRows[sr][c]);
+                if (first) {
+                    first = false;
                 }
-            }
-            if(this.getActionStore){
-                this.getActionStore().on('update',function(evt){
-                    var action = evt.target;
-                    if(action.command.indexOf('View/Columns')!==-1){
-                        var col = action.column;
-                        thiz.showColumn(col.id,action.get('value'));
-                        thiz.onAfterAction(action);
-
-                    }
-                });
-            }
-            return res;
-
-        },
-		left: function (cell, steps) {
-			return this.right(cell, -steps);
-		},
-		right: function (cell, steps) {
-			if (!cell.element) {
-				cell = this.cell(cell);
-			}
-			var nextCell = this.inherited(arguments),
-				prevCell = cell;
-
-			// Skip over hidden cells
-			while (nextCell.column.hidden) {
-				nextCell = this.inherited(arguments, [nextCell, steps > 0 ? 1 : -1]);
-				if (prevCell.element === nextCell.element) {
-					// No further visible cell found - return original
-					return cell;
-				}
-				prevCell = nextCell;
-			}
-			return nextCell;
-		},
-		isColumnHidden: function (id) {
-			// summary:
-			//		Convenience method to determine current hidden state of a column
-			return !!this._columnHiderRules[id];
-		},
-		_hideColumn: function (id) {
-			// summary:
-			//		Hides the column indicated by the given id.
-
-			// Use misc function directly, since we clean these up ourselves anyway
-			var grid = this,
-                domId = this.template ? this.template.id : this.domNode.id,
-                selectorPrefix = '#' + misc.escapeCssIdentifier(domId) + ' .dgrid-column-',
-				tableRule; // used in IE8 code path
-
-			if (this._columnHiderRules[id]) {
-				return;
-			}
-
-			this._columnHiderRules[id] = misc.addCssRule(selectorPrefix + misc.escapeCssIdentifier(id, '-'), 'display: none;');
-            
-			if (has('ie') === 8 || has('ie') === 10) {
-				// Work around IE8 display issue and IE10 issue where
-				// header/body cells get out of sync when ColumnResizer is also used
-				tableRule = misc.addCssRule('.dgrid-row-table', 'display: inline-table;');
-				window.setTimeout(function () {
-					tableRule.remove();
-					grid.resize();
-				}, 0);
-			}
-		},
-		_showColumn: function (id) {
-			// summary:
-			//		Shows the column indicated by the given id
-			//		(by removing the rule responsible for hiding it).
-
-			if (this._columnHiderRules[id]) {
-				this._columnHiderRules[id].remove();
-				delete this._columnHiderRules[id];
-			}
-		},
-        showColumn:function(id,show){
-            if(this.isColumnHidden(id)){
-                if(show) {
-                    this._showColumn(id);
-                }
-            }else if(!show){
-                this._hideColumn(id);
             }
         }
-	});
-});
+        return columnActions;
+
+    },
+    resize:function(){
+        this.inherited(arguments);
+        this._checkHiddenColumns();
+    },
+    _checkHiddenColumns:function(){
+        var subRows = this.subRows,
+            srLength, cLength, sr, c,
+            totalWidth = $(this.domNode).width();
+
+        for (sr = 0, srLength = subRows.length; sr < srLength; sr++) {
+            for (c = 0, cLength = subRows[sr].length; c < cLength; c++) {
+                var col = subRows[sr][c];
+                if(col.minWidth){
+                    if(totalWidth < col.minWidth){
+                        if(!col.unhidable) {
+                            this.showColumn(col.id,false);
+                        }
+                    }else{
+                        this.showColumn(col.id,true);
+                    }
+                }
+            }
+        }
+    },
+    startup:function(){
+        if(this._started){
+            return;
+        }
+
+        this._columnHiderCheckboxes = {};
+        this._columnHiderRules = {};
+        var res = this.inherited(arguments);
+        this._checkHiddenColumns();
+        var subRows = this.subRows,
+            srLength, cLength, sr, c,
+            thiz = this;
+
+        for (sr = 0, srLength = subRows.length; sr < srLength; sr++) {
+            for (c = 0, cLength = subRows[sr].length; c < cLength; c++) {
+
+                var col = subRows[sr][c],
+                    id = col.id;
+
+                if (col.hidden===true) {
+                    // Hide the column (reset first to avoid short-circuiting logic)
+                    col.hidden = false;
+                    thiz._hideColumn(id);
+                    col.hidden = true;
+                }
+            }
+        }
+        if(this.getActionStore){
+            this.getActionStore().on('update',evt => {
+                var action = evt.target;
+                if(action.command.indexOf('View/Columns')!==-1){
+                    var col = action.column;
+                    thiz.showColumn(col.id,action.get('value'));
+                    thiz.onAfterAction(action);
+
+                }
+            });
+        }
+        return res;
+
+    },
+    left: function (cell, steps) {
+        return this.right(cell, -steps);
+    },
+    right: function (cell, steps) {
+        if (!cell.element) {
+            cell = this.cell(cell);
+        }
+        var nextCell = this.inherited(arguments),
+            prevCell = cell;
+
+        // Skip over hidden cells
+        while (nextCell.column.hidden) {
+            nextCell = this.inherited(arguments, [nextCell, steps > 0 ? 1 : -1]);
+            if (prevCell.element === nextCell.element) {
+                // No further visible cell found - return original
+                return cell;
+            }
+            prevCell = nextCell;
+        }
+        return nextCell;
+    },
+    isColumnHidden: function (id) {
+        // summary:
+        //		Convenience method to determine current hidden state of a column
+        return !!this._columnHiderRules[id];
+    },
+    _hideColumn: function (id) {
+        // summary:
+        //		Hides the column indicated by the given id.
+
+        // Use misc function directly, since we clean these up ourselves anyway
+        var grid = this,
+            domId = this.template ? this.template.id : this.domNode.id,
+            selectorPrefix = '#' + misc.escapeCssIdentifier(domId) + ' .dgrid-column-',
+            tableRule; // used in IE8 code path
+
+        if (this._columnHiderRules[id]) {
+            return;
+        }
+
+        this._columnHiderRules[id] = misc.addCssRule(selectorPrefix + misc.escapeCssIdentifier(id, '-'), 'display: none;');
+        
+        if (has('ie') === 8 || has('ie') === 10) {
+            // Work around IE8 display issue and IE10 issue where
+            // header/body cells get out of sync when ColumnResizer is also used
+            tableRule = misc.addCssRule('.dgrid-row-table', 'display: inline-table;');
+            window.setTimeout(() => {
+                tableRule.remove();
+                grid.resize();
+            }, 0);
+        }
+    },
+    _showColumn: function (id) {
+        // summary:
+        //		Shows the column indicated by the given id
+        //		(by removing the rule responsible for hiding it).
+
+        if (this._columnHiderRules[id]) {
+            this._columnHiderRules[id].remove();
+            delete this._columnHiderRules[id];
+        }
+    },
+    showColumn:function(id,show){
+        if(this.isColumnHidden(id)){
+            if(show) {
+                this._showColumn(id);
+            }
+        }else if(!show){
+            this._hideColumn(id);
+        }
+    }
+}));
 
 define('dgrid/_StoreMixin',[
 	'dojo/_base/declare',
@@ -34483,26 +34503,24 @@ define('dgrid/OnDemandGrid',[
 /** @module xgrid/Defaults **/
 define('xgrid/Defaults',[
     'xdojo/declare'
-], function (declare) {
-    /**
-     * xGrid defaults
-     * */
-    return declare('xgrid/Defaults', null, {
-        minRowsPerPage: 100,
-        keepScrollPosition: true,
-        rowsPerPage: 30,
-        deselectOnRefresh: false,
-        cellNavigation: false,
-        _skipFirstRender: false,
-        loadingMessage: null,
-        preload: null,
-        childSelector: ".dgrid-row",
-        addUiClasses: false,
-        noDataMessage: '<span class="textWarning">No data....</span>',
-        showExtraSpace:true,
-        expandOnClick:true
-    });
-});
+], declare => /**
+ * xGrid defaults
+ * */
+declare('xgrid/Defaults', null, {
+    minRowsPerPage: 100,
+    keepScrollPosition: true,
+    rowsPerPage: 30,
+    deselectOnRefresh: false,
+    cellNavigation: false,
+    _skipFirstRender: false,
+    loadingMessage: null,
+    preload: null,
+    childSelector: ".dgrid-row",
+    addUiClasses: false,
+    noDataMessage: '<span class="textWarning">No data....</span>',
+    showExtraSpace:true,
+    expandOnClick:true
+}));
 
 /** @module xgrid/Layout **/
 define('xgrid/Layout',[
@@ -34511,7 +34529,7 @@ define('xgrid/Layout',[
     'xide/widgets/TemplatedWidgetBase',
     'xide/registry',
     'xide/$'
-], function (declare, utils, TemplatedWidgetBase, registry,$) {
+], (declare, utils, TemplatedWidgetBase, registry, $) => {
     var template = '<div tabindex="-1" attachTo="template" class="grid-template" style="width: 100%;height: 100%;overflow: hidden;position: relative;padding: 0px;margin: 0px">'+
         '<div tabindex="-1" attachTo="header" class="grid-header row" style="width: 100%;height: auto"></div>'+
         '<div tabindex="0" attachTo="grid" class="grid-body row"></div>'+
@@ -34613,7 +34631,7 @@ define('xgrid/Focus',[
     "xdojo/declare",
     "xide/types",
     "xide/utils"
-], function (declare,types,utils) {
+], (declare, types, utils) => {
 
     var Implementation = {
         _focused:false,
@@ -34672,7 +34690,7 @@ define('xgrid/Focus',[
 define('xgrid/Clipboard',[
     "xdojo/declare",
     'xide/types'
-], function (declare,types) {
+], (declare, types) => {
 
     var Implementation = {
         runAction:function(action){
@@ -34792,7 +34810,7 @@ define('xgrid/Actions',[
     'xide/lodash',
     'xide/$',
     'xide/console'
-], function (declare, types, ActionProvider, DefaultActions, _, $, console) {
+], (declare, types, ActionProvider, DefaultActions, _, $, console) => {
     var _debug = false;
     /**
      * @class module:xgrid/Actions
@@ -34942,7 +34960,7 @@ define('xgrid/Actions',[
                         thiz.select([], null, false);
                         thiz.deselectAll();
                         if (evt.type !== 'contextmenu') {
-                            setTimeout(function () {
+                            setTimeout(() => {
                                 thiz.domNode.focus();
                                 document.activeElement = thiz.domNode;
                                 $(thiz.domNode).focus();
@@ -34952,11 +34970,11 @@ define('xgrid/Actions',[
                 }
             }
             this.on("contextmenu", clickHandler.bind(this));
-            this._on('selectionChanged', function (evt) {
+            this._on('selectionChanged', evt => {
                 this._onSelectionChanged(evt);
-            }.bind(this));
+            });
 
-            this._on('onAddActions', function (evt) {
+            this._on('onAddActions', evt => {
                 var actions = evt.actions,
                     action = types.ACTION.HEADER;
 
@@ -35005,12 +35023,22 @@ define('xgrid/typesLite',[
     'xgrid/Clipboard',
     'xgrid/Actions',
     'xlang/i18'
-], function (declare,types,
-             Selection,_GridKeyboardSelection,ColumnHider,
-             EventedMixin, OnDemandGrid,Defaults,Layout,Focus,
-             ListRenderer,
-             Clipboard,Actions,i18)
-{
+], (
+ declare,
+ types,
+ Selection,
+ _GridKeyboardSelection,
+ ColumnHider,
+ EventedMixin,
+ OnDemandGrid,
+ Defaults,
+ Layout,
+ Focus,
+ ListRenderer,
+ Clipboard,
+ Actions,
+ i18
+) => {
     /**
      * Grid Bases
      * @enum module:xgrid/types/GRID_BASES
@@ -35189,11 +35217,21 @@ define('xgrid/BaseLite',[
     'xgrid/ThumbRenderer',
     'xgrid/TreeRenderer',
     'dgrid/util/misc'
-], function (declare,types,
-             xTypes,ObjectUtils,utils,
-             OnDemandGrid,Defaults,Layout,Focus,
-             ListRenderer,ThumbRenderer,TreeRenderer,
-             miscUtil){
+], (
+    declare,
+    types,
+    xTypes,
+    ObjectUtils,
+    utils,
+    OnDemandGrid,
+    Defaults,
+    Layout,
+    Focus,
+    ListRenderer,
+    ThumbRenderer,
+    TreeRenderer,
+    miscUtil
+) => {
 
     var BASE_CLASSES = ['EVENTED','GRID','EDITOR','RENDERER','DEFAULTS','LAYOUT','FOCUS','i18'];
     var DEFAULT_GRID_FEATURES = types.DEFAULT_GRID_FEATURES_LITE;
@@ -35371,11 +35409,11 @@ define('xgrid/BaseLite',[
             return utils.isDescendant(this.domNode,testNode || document.activeElement);
         },
         _showHeader:function(show){
-            $(this.domNode).find('.dgrid-header').each(function(i,el){
+            $(this.domNode).find('.dgrid-header').each((i, el) => {
                 $(el).css('display',show ? '' : 'none' );
             });
 
-            $(this.domNode).find('.dgrid-scroller').each(function(i,el){
+            $(this.domNode).find('.dgrid-scroller').each((i, el) => {
                 $(el).css('margin-top',show ? 26 : 0 );
             });
 
@@ -35397,7 +35435,7 @@ define('xgrid/BaseLite',[
             var result = [],
                 self = this;
             var nodes = $(self.domNode).find('.dgrid-row');
-            _.each(nodes,function(node){
+            _.each(nodes,node => {
                 var _row = self.row(node);
                 if(_row && _row.element){
                     result.push(_row[domNodes ? 'element' : 'data']);
@@ -35419,7 +35457,7 @@ define('xgrid/BaseLite',[
             }
 
             var self = this;
-            this.showExtraSpace && this.on('dgrid-refresh-complete',function(){
+            this.showExtraSpace && this.on('dgrid-refresh-complete',() => {
                 var rows = self.getRows();
                 var _extra = $(self.contentNode).find('.dgrid-extra');
                 if(!rows.length){
@@ -35429,10 +35467,10 @@ define('xgrid/BaseLite',[
                 if(!_extra.length){
                     _extra = $('<div class="dgrid-extra" style="width:100%;height:80px"></div>');
                     $(self.contentNode).append(_extra);
-                    _extra.on('click',function(){
+                    _extra.on('click',() => {
                         self.deselectAll();
                     });
-                    _extra.on('contextmenu',function(){
+                    _extra.on('contextmenu',() => {
                         self.deselectAll();
                     })
                 }
@@ -35466,9 +35504,7 @@ define('xgrid/BaseLite',[
      * @private
      */
     function _contains(left, keys) {
-        return keys.some(function (v) {
-            return left.indexOf(v) >= 0;
-        });
+        return keys.some(v => left.indexOf(v) >= 0);
     }
 
     /**
@@ -35589,7 +35625,7 @@ define('xgrid/GridLite',[
     'dojo/_base/declare',
     'xide/types',
     './BaseLite'
-],function (declare,types,Base) {
+],(declare, types, Base) => {
     /**
      *
      * Please read {@link module:xgrid/types}
@@ -35616,7 +35652,7 @@ define('xgrid/MultiRenderer',[
     'xide/types',
     'xgrid/Renderer',
     'dojo/_base/kernel'
-], function (declare, types, Renderer,dojo) {
+], (declare, types, Renderer, dojo) => {
     /**
      * @class module:xgrid/MultiRenderer
      * @extends module:xgrid/Renderer
@@ -35635,7 +35671,7 @@ define('xgrid/MultiRenderer',[
                 if(parentAction) {
                     parentAction.set('icon', action.get('icon'));
                     var rendererActions = parentAction.getChildren();
-                    _.each(rendererActions, function (child) {
+                    _.each(rendererActions, child => {
                         child._oldIcon && child.set('icon', child._oldIcon);
                     });
                 }
@@ -35779,7 +35815,7 @@ define('xgrid/MultiRenderer',[
                 return renderActions;
             }
 
-            _.each(renderers,function (Renderer) {
+            _.each(renderers,Renderer => {
                 var impl = Renderer.Implementation || Renderer.prototype;
                 if (impl._getLabel) {
                     createEntry(impl._getLabel(), impl._getIcon(), Renderer);
@@ -35792,9 +35828,9 @@ define('xgrid/MultiRenderer',[
         },
         startup: function () {
             var thiz = this;
-            this._on('onAddGridActions', function (evt) {
+            this._on('onAddGridActions', evt => {
                 var renderActions = thiz.getRendererActions(thiz.getRenderers(), evt.actions);
-                renderActions.forEach(function (action) {
+                renderActions.forEach(action => {
                     evt.actions.push(action);
                 });
             });
@@ -35844,7 +35880,7 @@ define('xgrid/MultiRenderer',[
             //refresh, then restore sel/focus
             var refresh = this.refresh();
 
-            refresh && refresh.then && refresh.then(function(){
+            refresh && refresh.then && refresh.then(() => {
                 self._emit('onChangedRenderer', args);
             });
             return refresh;
@@ -35868,7 +35904,7 @@ define('xgrid/MultiRenderer',[
     }
 
     //@TODO: this should be all public methods in dgrid/List ?
-    _.each(['row','removeRow','renderRow','insertRow','activateRenderer','deactivateRenderer'],function(method){
+    _.each(['row','removeRow','renderRow','insertRow','activateRenderer','deactivateRenderer'],method => {
         forward(Implementation,method);
     });
 
@@ -36052,7 +36088,7 @@ define('xgrid/KeyboardNavigation',[
 	"dojo/_base/lang", // hitch
 	"dojo/on",
 	"xide/utils"
-], function(declare, keys, lang, on, utils){
+], (declare, keys, lang, on, utils) => {
 
 	//@TODO: port hitch
 	var hitch = lang.hitch;

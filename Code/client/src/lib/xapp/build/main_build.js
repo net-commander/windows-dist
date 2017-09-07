@@ -67934,9 +67934,21 @@ define('xaction/ActionProvider',[
     'xide/mixins/EventedMixin',
     'xaction/DefaultActions',
     'xide/lodash'
-], function (declare, dcl, types, utils, Path, ActionStore, Action, Keyboard, EventedMixin, DefaultActions,_) {
+], (
+    declare,
+    dcl,
+    types,
+    utils,
+    Path,
+    ActionStore,
+    Action,
+    Keyboard,
+    EventedMixin,
+    DefaultActions,
+    _
+) => {
 
-    var Implementation = {
+    const Implementation = {
         /**
          * @type module:xaction/ActionStore
          */
@@ -67944,10 +67956,10 @@ define('xaction/ActionProvider',[
         actions: null,
         allowActionOverride: true,
         sortGroups: function (groups, groupMap) {
-            groups = groups.sort(function (a, b) {
+            groups = groups.sort((a, b) => {
                 if (groupMap[a] != null && groupMap[b] != null) {
-                    var orderA = groupMap[a];
-                    var orderB = groupMap[b];
+                    const orderA = groupMap[a];
+                    const orderB = groupMap[b];
                     return orderB - orderA;
                 }
                 return 100;
@@ -67966,9 +67978,9 @@ define('xaction/ActionProvider',[
          * Update all actions referencing widgets
          */
         refreshActions: function () {
-            var allActions = this.getActions();
-            for (var i = 0; i < allActions.length; i++) {
-                var action = allActions[i];
+            const allActions = this.getActions();
+            for (let i = 0; i < allActions.length; i++) {
+                const action = allActions[i];
                 if (action.refresh) {
                     action.refresh();
                 }
@@ -67981,10 +67993,10 @@ define('xaction/ActionProvider',[
             return mixed;
         },
         clearActions: function () {
-            var store = this.getActionStore(),
-                actions = store ? store.query() : [];
+            const store = this.getActionStore();
+            const actions = store ? store.query() : [];
 
-            _.each(actions, function (action) {
+            _.each(actions, action => {
                 action && store.removeSync(action.command);
             });
             store && store.setData([]);
@@ -68010,17 +68022,17 @@ define('xaction/ActionProvider',[
          */
         __createAction: function (title, command, group, icon, handler, accelKey, keyCombo, keyProfile, keyTarget, keyScope, mixin) {
             icon = icon || types.ACTION_ICON[command];
-            var args = {accelKey: accelKey};
+            const args = {accelKey: accelKey};
             utils.mixin(args, mixin);
-            var action = Action.createDefault(title, icon, command, group, handler, args);
+            const action = Action.createDefault(title, icon, command, group, handler, args);
             if (keyCombo) {
-                var keyboardMappings;
+                let keyboardMappings;
                 if (this.keyboardMappings) {
                     keyboardMappings = this.keyboardMappings;
                 } else {
                     action.keyboardMappings = keyboardMappings = [];
                 }
-                var mapping = Keyboard.defaultMapping(keyCombo, handler, keyProfile || types.KEYBOARD_PROFILE.DEFAULT, keyTarget, keyScope, [action]);
+                let mapping = Keyboard.defaultMapping(keyCombo, handler, keyProfile || types.KEYBOARD_PROFILE.DEFAULT, keyTarget, keyScope, [action]);
                 mapping = this.registerKeyboardMapping(mapping);
                 keyboardMappings.push(mapping);
                 action.keyboardMappings = keyboardMappings;
@@ -68031,19 +68043,19 @@ define('xaction/ActionProvider',[
             action = action || this.getAction(action);
             if (action) {
                 action.set(what, value);
-                setTimeout(function () {
-                    action.getReferences().forEach(function (ref) {
+                setTimeout(() => {
+                    action.getReferences().forEach(ref => {
                         ref.set(what, value);
                     });
                 }, 100);
             }
         },
         _completeActions: function (actions) {
-            var result = [];
-            var keyTarget = this.getKeyTarget ? this.getKeyTarget() : null;
-            for (var i = 0; i < actions.length; i++) {
-                var config = actions[i],
-                    action;
+            const result = [];
+            const keyTarget = this.getKeyTarget ? this.getKeyTarget() : null;
+            for (let i = 0; i < actions.length; i++) {
+                const config = actions[i];
+                let action;
 
                 if (!config) {
                     continue;
@@ -68079,7 +68091,7 @@ define('xaction/ActionProvider',[
         },
         createActionStore: function () {
             if (!this.actionStore) {
-                var _actions = this._completeActions(this.actions || []);
+                const _actions = this._completeActions(this.actions || []);
                 this.actionStore = new ActionStore({
                     id: utils.createUUID(),
                     data: _actions,
@@ -68106,7 +68118,7 @@ define('xaction/ActionProvider',[
             if (!mixed && allowCache !== false && this.__actions) {
                 return this.__actions;
             }
-            var query = mixed;
+            let query = mixed;
             //no query or function given
             if (!mixed) {
                 query = {
@@ -68132,11 +68144,11 @@ define('xaction/ActionProvider',[
             this.createActionStore();
         },
         addActions: function (actions) {
-            var store = this.getActionStore();
+            const store = this.getActionStore();
             if (!store['subscribedToUpdates_' + this.id]) {
                 store['subscribedToUpdates_' + this.id] = true;
-                this.addHandle('update', store.on('update', function (evt) {
-                    var action = evt.target;
+                this.addHandle('update', store.on('update', evt => {
+                    const action = evt.target;
                     if (action._isCreating || !evt.property) {
                         return;
                     }
@@ -68146,7 +68158,7 @@ define('xaction/ActionProvider',[
 
                 }));
             }
-            var result = [];
+            const result = [];
             this._emit('onAddActions', {
                 actions: actions,
                 permissions: this.permissions,
@@ -68154,9 +68166,9 @@ define('xaction/ActionProvider',[
             });
 
             //remove existing
-            this.allowActionOverride && _.each(actions, function (action) {
+            this.allowActionOverride && _.each(actions, action => {
                 if (action) {
-                    var existing = store.getSync(action.command);
+                    const existing = store.getSync(action.command);
                     if (existing) {
                         store.removeSync(existing.command);
                     }
@@ -68164,17 +68176,17 @@ define('xaction/ActionProvider',[
             });
             actions = this._completeActions(actions);
 
-            _.each(actions, function (action) {
+            _.each(actions, action => {
                 if (this.allowActionOverride && store.getSync(action.command)) {
                     store.removeSync(action.command);
                 }
-                var _action = store.putSync(action);
+                const _action = store.putSync(action);
                 result.push(_action);
                 _action._isCreating = true;
                 _action.onCreate && _action.onCreate(_action);
                 this._emit('onAddAction', _action);
                 _action._isCreating = false;
-            }.bind(this));
+            });
             return result;
 
         },
@@ -68201,23 +68213,23 @@ define('xaction/ActionProvider',[
          * @returns {*}
          */
         createAction2: function (options) {
-            var thiz = this,
-                action = null,
-                mixin = options.mixin || {},
-                owner = options.owner || mixin.owner || thiz,
-                permissions = options.permissions || this.permissions || [],
-                command = options.command,
-                keycombo = options.keycombo,
-                label = options.label,
-                icon = options.icon,
-                tab = options.tab,
-                group = options.group,
-                filterGroup = options.filterGroup,
-                onCreate = options.onCreate,
-                handler = options.handler,
-                container = options.container || thiz.domNode,
-                shouldShow = options.shouldShow,
-                shouldDisable = options.shouldDisable;
+            const thiz = this;
+            let action = null;
+            const mixin = options.mixin || {};
+            const owner = options.owner || mixin.owner || thiz;
+            const permissions = options.permissions || this.permissions || [];
+            const command = options.command;
+            let keycombo = options.keycombo;
+            const label = options.label;
+            const icon = options.icon;
+            const tab = options.tab;
+            const group = options.group;
+            const filterGroup = options.filterGroup;
+            const onCreate = options.onCreate;
+            let handler = options.handler;
+            const container = options.container || thiz.domNode;
+            const shouldShow = options.shouldShow;
+            const shouldDisable = options.shouldDisable;
 
             utils.mixin(mixin, {
                 owner: owner,
@@ -68265,8 +68277,8 @@ define('xaction/ActionProvider',[
             if (arguments.length == 1) {
                 return this.createAction2(arguments[0]);
             }
-            var thiz = this,
-                action = null;
+            const thiz = this;
+            let action = null;
 
             mixin = mixin || {};
             utils.mixin(mixin, {owner: owner || thiz});
@@ -68288,8 +68300,8 @@ define('xaction/ActionProvider',[
             }
         },
         addAction: function (where, action) {
-            var actions = where || [];
-            var eventCallbackResult = this._emit('addAction', action);
+            const actions = where || [];
+            const eventCallbackResult = this._emit('addAction', action);
             if (eventCallbackResult === false) {
                 return false;
             } else if (_.isObject(eventCallbackResult)) {
@@ -68305,8 +68317,8 @@ define('xaction/ActionProvider',[
          * @returns {boolean}
          */
         _addAction: function (where, action) {
-            var actions = where || [],
-                eventCallbackResult = this._emit('addAction', action);
+            const actions = where || [];
+            const eventCallbackResult = this._emit('addAction', action);
 
             if (eventCallbackResult === false) {
                 return false;
@@ -68328,7 +68340,7 @@ define('xaction/ActionProvider',[
      * @class module:xide/mixins/ActionProvider
      * @extends module:xide/mixins/EventedMixin
      */
-    var Module = declare("xaction/ActionProvider", [EventedMixin, Keyboard], Implementation);
+    const Module = declare("xaction/ActionProvider", [EventedMixin, Keyboard], Implementation);
     Module.dcl = dcl([EventedMixin.dcl, Keyboard.dcl], Implementation);
     return Module;
 });
@@ -68341,11 +68353,11 @@ define('xaction/DefaultActions',[
     'xide/types',
     'xide/utils',
     'xlang/i18'
-], function (dcl,inherited,declare,types,utils,i18) {
+], (dcl, inherited, declare, types, utils, i18) => {
     /**
      * @mixin module:xide/action/DefaultActions
      */
-    var Module = declare("xaction/DefaultActions", null , {});
+    const Module = declare("xaction/DefaultActions", null , {});
     /**
      *
      * @param title
@@ -68361,21 +68373,31 @@ define('xaction/DefaultActions',[
      * @param mixin
      * @returns {{title: *, command: *, group: *, icon: *, handler: *, accelKey: *, keyCombo: *, keyProfile: *, keyTarget: *, keyScope: *}}
      */
-    Module.createActionParameters=function(title, command, group, icon, handler, accelKey, keyCombo, keyProfile, keyTarget, keyScope,mixin){
-        return {
-            title:title,
-            command: command,
-            group: group,
-            icon: icon,
-            handler: handler,
-            accelKey: accelKey,
-            keyCombo: keyCombo,
-            keyProfile: keyProfile,
-            keyTarget: keyTarget,
-            keyScope: keyScope,
-            mixin:mixin
-        };
-    };
+    Module.createActionParameters=(
+        title,
+        command,
+        group,
+        icon,
+        handler,
+        accelKey,
+        keyCombo,
+        keyProfile,
+        keyTarget,
+        keyScope,
+        mixin
+    ) => ({
+        title:title,
+        command: command,
+        group: group,
+        icon: icon,
+        handler: handler,
+        accelKey: accelKey,
+        keyCombo: keyCombo,
+        keyProfile: keyProfile,
+        keyTarget: keyTarget,
+        keyScope: keyScope,
+        mixin:mixin
+    });
     /**
      *
      * @param label
@@ -68393,7 +68415,21 @@ define('xaction/DefaultActions',[
      * @param container
      * @returns {*}
      */
-    var createAction = function(label,command,icon,keycombo,tab,group,filterGroup,onCreate,handler,mixin,shouldShow,shouldDisable,container){
+    const createAction = (
+        label,
+        command,
+        icon,
+        keycombo,
+        tab,
+        group,
+        filterGroup,
+        onCreate,
+        handler,
+        mixin,
+        shouldShow,
+        shouldDisable,
+        container
+    ) => {
         if(keycombo) {
             if (_.isString(keycombo)) {
                 keycombo = [keycombo];
@@ -68403,12 +68439,12 @@ define('xaction/DefaultActions',[
         mixin = utils.mixin({
             filterGroup:filterGroup || "item|view",
             tab:tab||'File',
-            onCreate: onCreate || function (action){},
-            shouldShow:shouldShow||function(){return true;},
-            shouldDisable:shouldDisable||function(){return false;}
+            onCreate: onCreate || (action => {}),
+            shouldShow:shouldShow||(() => true),
+            shouldDisable:shouldDisable||(() => false)
         },mixin);
 
-        var _action = Module.createActionParameters(
+        const _action = Module.createActionParameters(
             label,
             command,
             group || 'File',//Group
@@ -68439,9 +68475,9 @@ define('xaction/DefaultActions',[
      * @private
      */
     function _afterAction(dfdResult,event,action) {
-        var who = this;
+        const who = this;
         // call onAfterAction with this results
-        var onAfterActionDfd = null;
+        let onAfterActionDfd = null;
         who.onAfterAction && (onAfterActionDfd = who.onAfterAction(action, dfdResult, event));
 
         who._emit && who._emit('onAfterAction', {
@@ -68461,8 +68497,8 @@ define('xaction/DefaultActions',[
      * @param event
      */
     function defaultHandler(action,event){
-        var actionDfd,
-            who = this;
+        let actionDfd;
+        const who = this;
 
         who && who.onBeforeAction && who.onBeforeAction(action);
         if(who.runAction){
@@ -68471,7 +68507,7 @@ define('xaction/DefaultActions',[
             actionDfd = action.handler.apply(who,[action,null,event]);
         }
         if(actionDfd && actionDfd.then){
-            actionDfd.then(function(actionResult){
+            actionDfd.then(actionResult => {
                 _afterAction.apply(who,[actionResult,event,action]);
             });
 
@@ -68524,14 +68560,14 @@ define('xaction/DefaultActions',[
             return false;
         }
 
-        var root = 'File/',
-            thiz = this,
-            renderActions = [],
-            VISIBILITY = types.ACTION_VISIBILITY,
-            result = [],
-            ACTION = types.ACTION,
-            ACTION_ICON = types.ACTION_ICON,
-            creator = owner || grid;
+        const root = 'File/';
+        const thiz = this;
+        const renderActions = [];
+        const VISIBILITY = types.ACTION_VISIBILITY;
+        let result = [];
+        const ACTION = types.ACTION;
+        const ACTION_ICON = types.ACTION_ICON;
+        const creator = owner || grid;
 
         /**
          *
@@ -68549,7 +68585,7 @@ define('xaction/DefaultActions',[
          * @param shouldDisable
          */
         function addAction(label,command,icon,keycombo,tab,group,filterGroup,onCreate,handler,mixin,shouldShow,shouldDisable){
-            var action = null;
+            let action = null;
             mixin = mixin || {};
             utils.mixin(mixin,{owner:owner || grid});
 
@@ -68670,10 +68706,8 @@ define('xaction/DefaultActions',[
         //
         //  File
         //
-        addAction('Extract','File/Extract',ACTION_ICON.EXTRACT,['ctrl e'],'Home','File','item|view',null,null,null,null,function(){
-            return true;
-            //return shouldDisableDefaultFileOnly.apply(this,arguments);
-        });
+        addAction('Extract','File/Extract',ACTION_ICON.EXTRACT,['ctrl e'],'Home','File','item|view',null,null,null,null,() => //return shouldDisableDefaultFileOnly.apply(this,arguments);
+        true);
 
         result.push(creator.createAction({
             label: 'Download',
@@ -68736,26 +68770,27 @@ define('xaction/DefaultActions',[
         //  Selection
         //
         if(hasAction(permissions,ACTION.SELECTION)) {
-            result.push(createAction('Select', 'File/Select', 'fa-hand-o-up', null, 'Home', 'Select', 'item|view', function(action){
+            result.push(createAction('Select', 'File/Select', 'fa-hand-o-up', null, 'Home', 'Select', 'item|view', action => {
                 action.setVisibility(VISIBILITY.RIBBON,{
                     expand:true
                 });
             }, null, null, null, null,grid.domNode));
 
-            var _mixin = {
-                    owner:owner || grid
-                },
-                container = grid.domNode;
+            const _mixin = {
+                          owner:owner || grid
+                      };
 
-            result.push(createAction('Select all', 'File/Select/All', 'fa-th', ['ctrl a'], 'Home', 'Select', 'item|view', null, function(){
+            const container = grid.domNode;
+
+            result.push(createAction('Select all', 'File/Select/All', 'fa-th', ['ctrl a'], 'Home', 'Select', 'item|view', null, () => {
                 grid.selectAll();
             }, _mixin, null, null,container));
 
-            result.push(createAction('Select none', 'File/Select/None', 'fa-square-o', 'ctrl d', 'Home', 'Select', 'item|view', null, function(){
+            result.push(createAction('Select none', 'File/Select/None', 'fa-square-o', 'ctrl d', 'Home', 'Select', 'item|view', null, () => {
                 grid.deselectAll();
             }, _mixin, null, null,container));
 
-            result.push(createAction('Invert selection', 'File/Select/Invert', 'fa-square', ['ctrl i'], 'Home', 'Select', 'item|view', null, function(){
+            result.push(createAction('Invert selection', 'File/Select/Invert', 'fa-square', ['ctrl i'], 'Home', 'Select', 'item|view', null, () => {
                 grid.invertSelection();
             }, _mixin, null, null,container));
         }
@@ -69977,9 +70012,9 @@ define('xaction/Action',[
     'xide/utils',
     'xide/mixins/EventedMixin',
     'xide/cache/Circular'
-], function (dcl, Base, types, ObjectUtils, utils, EventedMixin, Circular) {
+], (dcl, Base, types, ObjectUtils, utils, EventedMixin, Circular) => {
 
-    var Cache = null;//new Circular(100);
+    const Cache = null;//new Circular(100);
     /***
      * Extend the core types for action visibility(main menu,...) options/enums:
      * 1. 'Main menu',
@@ -70076,22 +70111,20 @@ define('xaction/Action',[
              * @returns {module:xide/types/ACTION_VISIBILITY}
              */
             factory: function () {
-
-                var _in = arguments[1] || utils.clone(types.ACTION_VISIBILITY),
-                    _args = arguments;
+                const _in = arguments[1] || utils.clone(types.ACTION_VISIBILITY);
+                const _args = arguments;
 
                 //
                 // A mode when we have the arguments like (1,1,1,2).
                 //  This clones types.ACTION_VISIBILITY and blends in an integer mask
 
                 if (_args[0].length > 0 && _.isNumber(_args[0][0])) {
-
-                    var _FlagArgs = _args[0],
-                        _val = null,
-                        _index = 0;
+                    const _FlagArgs = _args[0];
+                    const _val = null;
+                    let _index = 0;
 
                     //integer case, sets this[propIndex] to something
-                    _.each(_in, function (index, prop) {
+                    _.each(_in, (index, prop) => {
                         if (typeof _in[prop] !== 'function') {
                             if (_index < _FlagArgs.length) {
                                 //set the value per key but preserve the actualy key by storing
@@ -70129,7 +70162,7 @@ define('xaction/Action',[
      * @class module:xaction/Action
      * @augments xide/model/Base
      */
-    var Module = dcl([Base.dcl, EventedMixin.dcl], {
+    const Module = dcl([Base.dcl, EventedMixin.dcl], {
         declaredClass: "xaction/Action",
         disabled: false,
         destroy: function () {
@@ -70275,18 +70308,17 @@ define('xaction/Action',[
          */
         setVisibility: function () {
             if (arguments.length == 2 && _.isString(arguments[0]) && arguments[0] == types.ACTION_VISIBILITY_ALL) {
-                var _obj = arguments[1],
-                    _vis = types.ACTION_VISIBILITY,
-                    thiz = this;
+                const _obj = arguments[1];
+                const _vis = types.ACTION_VISIBILITY;
+                const thiz = this;
 
                 //track vis key in all
-                [_vis.MAIN_MENU, _vis.ACTION_TOOLBAR, _vis.CONTEXT_MENU, _vis.RIBBON].forEach(function (vis) {
+                [_vis.MAIN_MENU, _vis.ACTION_TOOLBAR, _vis.CONTEXT_MENU, _vis.RIBBON].forEach(vis => {
                     thiz.setVisibility(vis, utils.cloneKeys(_obj, false));
                 });
                 return this;
-
             }
-            var _args = _.isArray(arguments[0]) ? arguments[0] : arguments;
+            const _args = _.isArray(arguments[0]) ? arguments[0] : arguments;
             this.visibility_ = types.ACTION_VISIBILITY.factory(_args, this.visibility_);
             return this;
         },
@@ -70317,8 +70349,8 @@ define('xaction/Action',[
          * @returns {boolean}
          */
         shouldDestroyWidget: function (_visibility, who, newItem) {
-            var visibility = this.getVisibility != null ? this.getVisibility(_visibility) : null;
-            var destroy = true;
+            const visibility = this.getVisibility != null ? this.getVisibility(_visibility) : null;
+            let destroy = true;
             if (visibility && visibility.permanent) {
                 destroy = !(_.isFunction(visibility.permanent) ? visibility.permanent(this, who, newItem) : visibility.permanent);
             }
@@ -70350,9 +70382,9 @@ define('xaction/Action',[
      * @returns {module:xaction/Action}
      */
     Module.create = function (label, icon, command, permanent, operation, btypes, group, visibility, register, handler, mixin) {
-        var _action = null;
+        let _action = null;
 
-        var _args = {
+        const _args = {
             permanent: permanent,
             command: command,
             icon: icon,
@@ -70394,9 +70426,7 @@ define('xaction/Action',[
      * @param mixin
      * @returns {module:xaction/Action}
      */
-    Module.createDefault = function (label, icon, command, group, handler, mixin) {
-        return Module.create(label, icon, command, false, null, null, group || 'nogroup', null, false, handler, mixin);
-    };
+    Module.createDefault = (label, icon, command, group, handler, mixin) => Module.create(label, icon, command, false, null, null, group || 'nogroup', null, false, handler, mixin);
     return Module;
 });
 ;
@@ -70494,12 +70524,12 @@ define('xaction/ActionStore',[
     'xide/data/ObservableStore',
     'dstore/Trackable',
     'xaction/ActionModel'
-], function (declare, TreeMemory, utils, ObservableStore, Trackable, ActionModel) {
+], (declare, TreeMemory, utils, ObservableStore, Trackable, ActionModel) => {
     /**
      * Default properties to be observed (in ObservableStore)
      * @type {string[]}
      */
-    var DEFAULT_ACTION_PROPERTIES = [
+    const DEFAULT_ACTION_PROPERTIES = [
         "value",
         "icon",
         "disabled",
@@ -70535,10 +70565,8 @@ define('xaction/ActionStore',[
         }, mixin));
     }
 
-    var Module = createClass(null, null, null, null, null);
-    Module.createDefault = function (args) {
-        return new Module(args);
-    };
+    const Module = createClass(null, null, null, null, null);
+    Module.createDefault = args => new Module(args);
     Module.createClass = createClass;
     Module.DEFAULT_ACTION_PROPERTIES = DEFAULT_ACTION_PROPERTIES;
     return Module;
@@ -70552,9 +70580,9 @@ define('xaction/ActionModel',[
     "xide/data/Source",
     'xide/model/Path',
     'xide/utils'
-], function (dcl, Action, Model, Source, Path, utils) {
-    var debug = false;
-    var count = 0;
+], (dcl, Action, Model, Source, Path, utils) => {
+    const debug = false;
+    const count = 0;
     /**
      * @class module:xaction/ActionModel
      * @extends module:xide/data/Source
@@ -70592,7 +70620,7 @@ define('xaction/ActionModel',[
             }
         },
         refreshReferences: function (property, value) {
-            _.each(this.getReferences(), function (ref) {
+            _.each(this.getReferences(), ref => {
                 ref.set(property, value);
             }, this);
         },
@@ -70612,13 +70640,13 @@ define('xaction/ActionModel',[
             this.items = this.getChildren();
         },
         getParent: function () {
-            var segments = this.command.split('/');
+            const segments = this.command.split('/');
             if (segments.length > 1) {
                 return this._store.getSync(segments.slice(0, segments.length - 1).join('/'));
             }
         },
         getParentCommand: function () {
-            var segments = this.command.split('/');
+            const segments = this.command.split('/');
             if (segments.length > 1) {
                 return segments.slice(0, segments.length - 1).join('/');
             }
@@ -70633,8 +70661,8 @@ define('xaction/ActionModel',[
             return new Path(path).getChildren(utils.pluck(items, 'command'), false);
         },
         getChildren: function () {
-            var children = this.getItemsAtBranch(this._store.getAll(), this.command),
-                self = this;
+            const children = this.getItemsAtBranch(this._store.getAll(), this.command);
+            const self = this;
 
             //return an action from both stores
             function getAction(command) {
@@ -70643,8 +70671,8 @@ define('xaction/ActionModel',[
 
             //command strings to actions
             function toActions(paths) {
-                var result = [];
-                _.each(paths, function (path) {
+                const result = [];
+                _.each(paths, path => {
                     result.push(getAction(path));
                 });
                 return result;
@@ -81504,7 +81532,7 @@ define('xide/utils/StringUtils',[
 define('xaction/types',[
     'xide/types',
     'dojo/_base/lang'
-],function(types,lang){
+],(types, lang) => {
 
     lang.mixin(types.EVENTS,{
         ON_ACTION_CHANGE_CONTEXT: 'onChangeActionContext',
