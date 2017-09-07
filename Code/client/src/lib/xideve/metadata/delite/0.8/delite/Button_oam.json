@@ -16,21 +16,26 @@
     "property": {
         "label": {
             "datatype": "string",
-            "defaultValue": "Defult"
-        },
-        "id": {
-            "datatype": "string"
+            "defaultValue": "Default",
+            "title":"Label"
         },
         "iconClass": {
-            "datatype": "string"
+            "datatype": "iconClass",
+            "title":"Icon Class"
         },
         "disabled": {
             "datatype": "boolean",
-            "defaultValue": true
+            "defaultValue": true,
+            "title":"Disabled"
         },
         "state": {
             "datatype": "widgetState",
-            "defaultValue": "this"
+            "defaultValue": "this",
+            "title":"State"
+        },
+        "id": {
+            "datatype": "string",
+            "title":"ID"
         }
     },
     "content": "<button is='d-button' label=''></button>",

@@ -28,8 +28,8 @@ define([
              Path, Runtime, Workbench, Library,
              metadata, Preferences,html,iframe) {
 
-    var debugContent = true;
-    console.log('has debug : ',has('debug'));
+    var debugContent = false;
+    // console.log('has debug : ',has('debug'));
     /**
      *
      * @mixin module:xideve/delite/_ContextDojo
@@ -666,7 +666,6 @@ define([
 //			lang.mixin(failureInfo, e);
 
             } finally {
-                console.log('got loaded');
                 if (callback) {
                     if (promise) {
                         promise.then(function(){

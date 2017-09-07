@@ -1,6 +1,7 @@
 define([
     "xapp/build/xapp.min"
 ], function (dcl,has,xapp) {
+    
     console.log('Checkpoint 1.2 build ready');
 
     if(typeof logError==='undefined'){

@@ -73954,7 +73954,7 @@ define('xapp/manager/Application',[
     //'dojo/dom-construct',
     "xide/manager/ManagerBase"
 ], function (dcl, Deferred, types, utils, ManagerBase) {
-    var debugBootstrap = true;
+    var debugBootstrap = false;
     var debugBlocks = false;
     //Application
     var Module = dcl([ManagerBase], {
@@ -74112,8 +74112,7 @@ define('xapp/manager/Application',[
 
     return Module;
 
-});
-;
+});;
 /** @module xapp/manager/Context */
 define('xapp/manager/Context',[
     "dcl/dcl",
@@ -74132,8 +74131,8 @@ define('xapp/manager/Context',[
 ], function (dcl, ContextBase, PluginManager, Application, ResourceManager, EventedMixin, types, utils, _WidgetPickerMixin, Reloadable, Types, has, Deferred) {
     var isIDE = has('xcf-ui');
     var debugWire = false;
-    var debugBoot = true;
-    var debugRun = true;
+    var debugBoot = false;
+    var debugRun = false;
     var Instance = null;
     var NotifierClass = dcl([EventedMixin.dcl], {});
     var Notifier = new NotifierClass({});
@@ -74906,8 +74905,7 @@ define('xapp/manager/Context',[
     Module.notifier = Notifier;
     return Module;
 
-});
-;
+});;
 define('xapp/manager/_WidgetPickerMixin',[
     "dcl/dcl",
     'dojo/_base/declare',
