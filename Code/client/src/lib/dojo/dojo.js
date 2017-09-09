@@ -1585,7 +1585,7 @@
 
 				var mid = module.mid;
 				if(module.injected === arrived){
-					console.error('multiple define!',module);
+					// console.error('multiple define!',module);
 					//signal(error, makeError("multipleDefine", module));
 					//return module;
 				}
