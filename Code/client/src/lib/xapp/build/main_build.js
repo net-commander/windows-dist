@@ -48456,8 +48456,8 @@ define('xblox/model/Scope',[
     function mergeNewModule(block, source) {
         for (var i in source) {
             var o = source[i]
-            if (o && _.isFunction(o) /* && lang.isFunction(target[i]) */) {
-                block[i] = o// swap
+            if (o && _.isFunction(o) /* && lang.isFunction(target[i]) */ ) {
+                block[i] = o // swap
             }
         }
     }
@@ -48562,9 +48562,9 @@ define('xblox/model/Scope',[
                 }
                 return url
             }
-            var parts = utils.parse_url(url)// strip scheme
+            var parts = utils.parse_url(url) // strip scheme
 
-            parts = utils.urlArgs(parts.host)// go on with query string
+            parts = utils.urlArgs(parts.host) // go on with query string
             var _device = deviceManager.getItemById(parts.device.value)
             if (_device) {
                 var info = deviceManager.toDeviceControlInfo(_device)
@@ -48730,19 +48730,59 @@ define('xblox/model/Scope',[
                 }
                 result.push(item)
             }
-            result = result.concat([{label: 'onclick', value: 'onclick'},
-                {label: 'ondblclick', value: 'ondblclick'},
-                {label: 'onmousedown', value: 'onmousedown'},
-                {label: 'onmouseup', value: 'onmouseup'},
-                {label: 'onmouseover', value: 'onmouseover'},
-                {label: 'onmousemove', value: 'onmousemove'},
-                {label: 'onmouseout', value: 'onmouseout'},
-                {label: 'onkeypress', value: 'onkeypress'},
-                {label: 'onkeydown', value: 'onkeydown'},
-                {label: 'onkeyup', value: 'onkeyup'},
-                {label: 'onfocus', value: 'onfocus'},
-                {label: 'onblur', value: 'onblur'},
-                {label: 'onchange', value: 'onchange'}])
+            result = result.concat([{
+                    label: 'onclick',
+                    value: 'onclick'
+                },
+                {
+                    label: 'ondblclick',
+                    value: 'ondblclick'
+                },
+                {
+                    label: 'onmousedown',
+                    value: 'onmousedown'
+                },
+                {
+                    label: 'onmouseup',
+                    value: 'onmouseup'
+                },
+                {
+                    label: 'onmouseover',
+                    value: 'onmouseover'
+                },
+                {
+                    label: 'onmousemove',
+                    value: 'onmousemove'
+                },
+                {
+                    label: 'onmouseout',
+                    value: 'onmouseout'
+                },
+                {
+                    label: 'onkeypress',
+                    value: 'onkeypress'
+                },
+                {
+                    label: 'onkeydown',
+                    value: 'onkeydown'
+                },
+                {
+                    label: 'onkeyup',
+                    value: 'onkeyup'
+                },
+                {
+                    label: 'onfocus',
+                    value: 'onfocus'
+                },
+                {
+                    label: 'onblur',
+                    value: 'onblur'
+                },
+                {
+                    label: 'onchange',
+                    value: 'onchange'
+                }
+            ])
 
             // select the event we are listening to
             for (var i = 0; i < result.length; i++) {
@@ -48812,7 +48852,9 @@ define('xblox/model/Scope',[
             if (!this.blockStore) {
                 return []
             }
-            query = query || {id: /\S+/}// all blocks
+            query = query || {
+                id: /\S+/
+            } // all blocks
             var result = _.isEmpty(query) ? this.blockStore.data : this.blockStore.query(query, null, true);
             if (!isIDE && allowCache !== false) {
                 var hash = MD5(JSON.stringify(query), 1)
@@ -48991,12 +49033,12 @@ define('xblox/model/Scope',[
         },
         isScript: function (val) {
             return this.isString(val) && (
-                    val.indexOf('return') != -1 ||
-                    val.indexOf(';') != -1 ||
-                    val.indexOf('[') != -1 ||
-                    val.indexOf('{') != -1 ||
-                    val.indexOf('}') != -1
-                )
+                val.indexOf('return') != -1 ||
+                val.indexOf(';') != -1 ||
+                val.indexOf('[') != -1 ||
+                val.indexOf('{') != -1 ||
+                val.indexOf('}') != -1
+            )
         },
         /**
          * Serializes all variables
@@ -49025,8 +49067,7 @@ define('xblox/model/Scope',[
                 }
                 if (!this.isScript(_varVal) && _varVal.indexOf("'") == -1) {
                     _varVal = "'" + _varVal + "'"
-                }
-                else if (this.isScript(_varVal)) {
+                } else if (this.isScript(_varVal)) {
                     _varVal = this.expressionModel.parseVariable(this, _var)
                 }
                 if (_varVal === "''") {
@@ -49059,8 +49100,7 @@ define('xblox/model/Scope',[
                 }
                 if (!this.isScript(_varVal) && _varVal.indexOf("'") == -1) {
                     _varVal = "'" + _varVal + "'"
-                }
-                else if (this.isScript(_varVal)) {
+                } else if (this.isScript(_varVal)) {
                     // _varVal = "''";
                     _varVal = this.expressionModel.parseVariable(this, _var)
                 }
@@ -49093,7 +49133,7 @@ define('xblox/model/Scope',[
                 if (!variableClassProto) {
                     continue;
                 }
-                result.push(new variableClassProto(variable))// looks like a leak but the instance is tracked and destroyed in this scope
+                result.push(new variableClassProto(variable)) // looks like a leak but the instance is tracked and destroyed in this scope
             }
             return result
         },
@@ -49140,7 +49180,7 @@ define('xblox/model/Scope',[
                 }
             }
             var result = [];
-            newBlocks = this.blocksFromJson(blocksJSON);// add it to our scope
+            newBlocks = this.blocksFromJson(blocksJSON); // add it to our scope
             _.each(newBlocks, function (block) {
                 result.push(store.getSync(block.id));
             })
@@ -49162,7 +49202,7 @@ define('xblox/model/Scope',[
             }
 
             this.blocksToJson(newBlocks)
-            this.blocksFromJson(newBlocks)// add it us
+            this.blocksFromJson(newBlocks) // add it us
             return newBlocks
         },
         /**
@@ -49288,8 +49328,7 @@ define('xblox/model/Scope',[
             }
             return result
         },
-        _createBlockStore: function () {
-        },
+        _createBlockStore: function () {},
         blockFromJson: function (block) {
             block['scope'] = this
             if (block._containsChildrenIds == null) {
@@ -49431,8 +49470,7 @@ define('xblox/model/Scope',[
                             if (child.postCreate) {
                                 child.postCreate()
                             }
-                        }
-                        else if (typeof block._children[propName] == 'object') {
+                        } else if (typeof block._children[propName] == 'object') {
                             // multiple blocks
                             block[propName] = []
                             for (var j = 0; j < block._children[propName].length; j++) {
@@ -49474,6 +49512,39 @@ define('xblox/model/Scope',[
          * @param url {String}
          * @returns {module:xblox/model/Block[]}
          */
+        resolveDevice: function (url) {
+            var blockScope = this,
+                ctx = this.ctx,
+                driver = this.driver,
+                device = this.device,
+                deviceManager = ctx.getDeviceManager(),
+                driverManager = ctx.getDriverManager()
+
+            if (url.indexOf('://') == -1) {
+                var _block = this.getBlockById(url)
+                if (_block) {
+                    return _block
+                }
+                return url
+            }
+            var parts = utils.parse_url(url) // strip scheme
+
+            parts = utils.urlArgs(parts.host) // go on with query string
+            var _device = deviceManager.getItemById(parts.device.value)
+            // support device by name
+            if (!_device) {
+                var _instance = deviceManager.getInstanceByName(parts.device.value)
+                if (_instance) {
+                    _device = _instance.device
+                }
+            }
+            return device;
+        },
+        /**
+         *
+         * @param url {String}
+         * @returns {module:xblox/model/Block[]}
+         */
         resolveBlock: function (url) {
             var blockScope = this,
                 ctx = this.ctx,
@@ -49489,9 +49560,9 @@ define('xblox/model/Scope',[
                 }
                 return url
             }
-            var parts = utils.parse_url(url)// strip scheme
+            var parts = utils.parse_url(url) // strip scheme
 
-            parts = utils.urlArgs(parts.host)// go on with query string
+            parts = utils.urlArgs(parts.host) // go on with query string
             var _device = deviceManager.getItemById(parts.device.value)
             // support device by name
             if (!_device) {
@@ -49633,8 +49704,7 @@ define('xblox/model/Scope',[
                                 found = _.find(result, {
                                     id: sBlock.id
                                 })
-                                if (found) {
-                                } else {
+                                if (found) {} else {
                                     result.push(sBlock)
                                 }
                                 result = result.concat(this.flatten([sBlock]))
@@ -49653,8 +49723,8 @@ define('xblox/model/Scope',[
         },
         solveBlock: function (mixed, settings, force, isInterface) {
             settings = settings || {
-                    highlight: false
-                }
+                highlight: false
+            }
             var block = null
             if (this.isString(mixed)) {
                 block = this.getBlockByName(mixed)
@@ -49764,7 +49834,7 @@ define('xblox/model/Scope',[
         },
 
         init: function () {
-            this.getExpressionModel()// create
+            this.getExpressionModel() // create
             this.subscribe(types.EVENTS.ON_DRIVER_VARIABLE_CHANGED, this._onVariableChanged)
             var thiz = this
 
@@ -49878,7 +49948,7 @@ define('xblox/model/Scope',[
                     // keep all root-level items
 
                     if (groupItems[i].parentId == null && // must be root
-                        groupItems[i] != source// cant be source
+                        groupItems[i] != source // cant be source
                     ) {
                         var itemIndex = store.storage.index[item.id];
                         var add = before ? itemIndex >= targetIndex : itemIndex <= targetIndex;
@@ -49984,8 +50054,7 @@ define('xblox/model/Scope',[
     })
     dcl.chainAfter(Module, 'destroy')
     return Module
-})
-;
+});
 /** @module xblox/model/Expression */
 define('xblox/model/Expression',[
     "xdojo/declare",
