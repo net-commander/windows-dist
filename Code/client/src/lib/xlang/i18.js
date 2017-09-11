@@ -391,8 +391,8 @@ define(['xdojo/declare','xide/utils/ObjectUtils','dcl/dcl'], function (declare,u
         'modified':'modify',
         'list':'viewlist',
         'thumb':'viewicons',
-        'type':'kind',
-        'move':'moveFiles'
+        'type':'kind'
+        // 'move':'moveFiles'
         /*'view':'cmdview'*/
     };
 
@@ -418,10 +418,10 @@ define(['xdojo/declare','xide/utils/ObjectUtils','dcl/dcl'], function (declare,u
     };
 
     function localize(str){
-
-
-
         str = str || '';
+        if(str==='move'){
+            debugger;
+        }
 
         if(str ==='Invert selection '){
             //debugger;

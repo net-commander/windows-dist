@@ -4704,21 +4704,7 @@ define('xaction/DefaultActions',[
         //  New
         //
         if(hasAction(permissions,ACTION.NEW_DIRECTORY)|| hasAction(permissions,ACTION.NEW_FILE)) {
-
             addAction('New','File/New','fa-magic',null,'Home','New','item|view',null,null,{},null,null);
-/*
-            result.push(creator.createAction({
-                label: 'New',
-                command: 'File/New',
-                icon: 'fa-magic',
-                tab: 'Home',
-                group: 'File',
-                keycombo: ['ctrl down'],
-                mixin:{
-                    quick:true
-                }
-            }));*/
-
         }
         addAction('New Folder',ACTION.NEW_DIRECTORY,'fa-folder',['f7'],'Home','New','item|view',null,null,{quick:true},null,null);
         addAction('New File',ACTION.NEW_FILE,'el-icon-file',['ctrl f4'],'Home','New','item|view',null,null,{quick:true},null,null);
@@ -20842,7 +20828,6 @@ define('xaction/Action',[
      */
     Module.create = function (label, icon, command, permanent, operation, btypes, group, visibility, register, handler, mixin) {
         let _action = null;
-
         const _args = {
             permanent: permanent,
             command: command,
@@ -20863,15 +20848,6 @@ define('xaction/Action',[
             //console.log('-create!');
             _action = new Module(_args);
         }
-        /*
-         var VISIBILITY = types.ACTION_VISIBILITY,
-         VISIBILITIES = [
-         VISIBILITY.ACTION_TOOLBAR,
-         VISIBILITY.RIBBON,
-         VISIBILITY.MAIN_MENU,
-         VISIBILITY.CONTEXT_MENU
-         ];
-         */
         utils.mixin(_action, mixin);
         return _action;
     };
@@ -24159,7 +24135,7 @@ define('xide/widgets/_MenuMixin4',[
     'xaction/Action',
     'xaction/DefaultActions',
     "xide/popup"
-], function (dcl, types, utils, registry, Action, DefaultActions,popup) {
+], function (dcl, types, utils, registry, Action, DefaultActions, popup) {
 
     var createCallback = function (func, menu, item) {
         return function (event) {
@@ -24191,7 +24167,7 @@ define('xide/widgets/_MenuMixin4',[
         hideSubsFirst: false,
         collapseSmallGroups: 0,
         containerClass: '',
-        lastTree:null,
+        lastTree: null,
         onActionAdded: function (actions) {
             this.setActionStore(this.getActionStore(), actions.owner || this, false, true, actions);
         },
@@ -24216,8 +24192,8 @@ define('xide/widgets/_MenuMixin4',[
         removeCustomActions: function () {
             var oldStore = this.store;
             var oldActions = oldStore._find({
-                    custom: true
-                });
+                custom: true
+            });
 
             var menuData = this.menuData;
             _.each(oldActions, function (action) {
@@ -24363,6 +24339,7 @@ define('xide/widgets/_MenuMixin4',[
                     if (isFirst) {
                         $sub.css('display', 'initial');
                         $sub.css('position', 'initial');
+
                         function close() {
                             var _wrapper = $sub.data('_popupWrapper');
                             popup.close({
@@ -24377,8 +24354,7 @@ define('xide/widgets/_MenuMixin4',[
                             $sub.on('mouseleave', function () {
                                 close();
                             });
-                            _root.on('mouseleave', function () {
-                            });
+                            _root.on('mouseleave', function () {});
                         }
 
                         popup.open({
@@ -24464,7 +24440,7 @@ define('xide/widgets/_MenuMixin4',[
                     divider += '"></li>';
                     item.widget = divider;
                     $menu.append(divider);
-                    divider.data('item',item);
+                    divider.data('item', item);
 
                 } else if (typeof item.header !== 'undefined' && !item.widget) {
                     var header = item.vertical ? '<li class="divider-vertical' : '<li class="nav-header testClass';
@@ -24473,7 +24449,7 @@ define('xide/widgets/_MenuMixin4',[
                     header = $(header);
                     item.widget = header;
                     $menu.append(header);
-                    header.data('item',item);
+                    header.data('item', item);
 
                 } else if (typeof item.menu_item_src !== 'undefined') {
 
@@ -24515,14 +24491,13 @@ define('xide/widgets/_MenuMixin4',[
                     }
 
                     if (typeof item.action !== 'undefined' && !item.widget) {
-                        if (item.addClickHandler && item.addClickHandler() === false) {
-                        } else {
+                        if (item.addClickHandler && item.addClickHandler() === false) {} else {
                             var $action = item.action;
                             if ($sub && $sub.find) {
                                 var trigger = $sub.find('a');
                                 trigger.addClass('context-event');
                                 var handler = createCallback($action, item, $sub);
-                                trigger.data('handler',handler).on('click',handler);
+                                trigger.data('handler', handler).on('click', handler);
                             }
                         }
                     }
@@ -24580,7 +24555,7 @@ define('xide/widgets/_MenuMixin4',[
             return $menu;
         },
         buildMenu: function (data, id, subMenu) {
-            var subClass = (subMenu) ? (' dropdown-context-sub ' + this.containerClass ) : ' scrollable-menu ';
+            var subClass = (subMenu) ? (' dropdown-context-sub ' + this.containerClass) : ' scrollable-menu ';
             var $menu = $('<ul tabindex="-1" aria-expanded="true" role="menu" class="dropdown-menu dropdown-context' + subClass + '" id="dropdown-' + id + '"></ul>');
             if (!subMenu) {
                 this._rootMenu = $menu;
@@ -24662,146 +24637,6 @@ define('xide/widgets/_MenuMixin4',[
                 value = visibility[prop];
             }
             return value;
-        },
-        toMenuItem: function (action, owner, label, icon, visibility, showKeyCombo, lazy) {
-            var self = this,
-                labelLocalized = self.localize(label),
-                actionType = visibility.actionType || action.actionType;
-
-            var item = {
-                text: labelLocalized,
-                icon: icon,
-                data: action,
-                owner: owner,
-                command: action.command,
-                lazy: lazy,
-                addClickHandler: function () {
-                    return actionType !== types.ACTION_TYPE.MULTI_TOGGLE;
-
-                },
-                render: function (data, $menu) {
-                    if (self.renderItem) {
-                        return self.renderItem(this, data, $menu, this.data, owner, label, icon, visibility, showKeyCombo, lazy);
-                    }
-                    var action = this.data;
-                    var parentAction = action.getParent ? action.getParent() : null;
-                    var closeOnClick = self.getActionProperty(action, visibility, 'closeOnClick');
-                    var keyComboString = ' \n';
-                    var element = null;
-                    if (action.keyboardMappings && showKeyCombo !== false) {
-                        var mappings = action.keyboardMappings;
-                        var keyCombos = mappings[0].keys;
-                        if (keyCombos && keyCombos.length) {
-                            keyComboString += '' + keyCombos.join(' | ').toUpperCase() + '';
-                        }
-                    }
-
-                    if (actionType === types.ACTION_TYPE.MULTI_TOGGLE) {
-                        element = '<li tabindex="-1" class="" >';
-                        var id = action._store.id + '_' + action.command + '_' + self.id;
-                        var checked = action.get('value');
-                        //checkbox-circle
-                        element += '<div class="action-checkbox checkbox checkbox-success ">';
-                        element += '<input id="' + id + '" type="checkbox" ' + (checked === true ? 'checked' : '') + '>';
-                        element += '<label for="' + id + '">';
-                        element += self.localize(data.text);
-                        element += '</label>';
-                        element += '<span style="max-width:100px;margin-right:20px" class="text-muted pull-right ellipsis keyboardShortCut">' + keyComboString + '</span>';
-                        element += '</li>';
-
-                        $menu.addClass('noclose');
-                        var result = $(element);
-                        var checkBox = result.find('INPUT');
-                        checkBox.on('change', function (e) {
-                            action._originReference = data;
-                            action._originEvent = e;
-                            action.set('value', checkBox[0].checked);
-                            action._originReference = null;
-                        });
-                        self.setVisibilityField(action, 'widget', data);
-                        return result;
-                    }
-                    closeOnClick === false && $menu.addClass('noclose');
-                    if (actionType === types.ACTION_TYPE.SINGLE_TOGGLE && parentAction) {
-                        var value = action.value || action.get('value');
-                        var parentValue = parentAction.get('value');
-                        if (value == parentValue) {
-                            icon = 'fa fa-check';
-                        }
-                    }
-
-                    var title = data.text || labelLocalized || self.localize(action.title);
-
-
-                    //default:
-                    element = '<li tabindex="-1"><a title="' + title + ' ' + keyComboString + '">';
-                    var _icon = data.icon || icon;
-
-                    //icon
-                    if (typeof _icon !== 'undefined') {
-                        //already html string
-                        if (/<[a-z][\s\S]*>/i.test(_icon)) {
-                            element += _icon;
-                        } else {
-                            element += '<span class="icon ' + _icon + '"/> ';
-                        }
-                    }
-                    element += data.text;
-                    element += '<span style="max-width:100px" class="text-muted pull-right ellipsis keyboardShortCut">' + (showKeyCombo ? keyComboString : "") + '</span></a></li>';
-                    self.setVisibilityField(action, 'widget', data);
-                    return $(element);
-                },
-                get: function (key) {
-                },
-                set: function (key, value) {
-                    //_debugWidgets && _.isString(value) && console.log('set ' + key + ' ' + value);
-                    var widget = this.widget;
-
-                    function updateCheckbox(widget, checked) {
-                        var what = widget.find("input[type=checkbox]");
-                        if (what) {
-                            if (checked) {
-                                what.prop("checked", true);
-                            } else {
-                                what.removeAttr('checked');
-                            }
-                        }
-                    }
-
-                    if (widget) {
-                        if (key === 'disabled') {
-                            if (widget.toggleClass) {
-                                widget.toggleClass('disabled', value);
-                            }
-                        }
-                        if (key === 'icon') {
-                            var _iconNode = widget.find('.icon');
-                            if (_iconNode) {
-                                _iconNode.attr('class', 'icon');
-                                this._lastIcon = this.icon;
-                                this.icon = value;
-                                _iconNode.addClass(value);
-                            }
-                        }
-                        if (key === 'value') {
-                            if (actionType === types.ACTION_TYPE.MULTI_TOGGLE ||
-                                actionType === types.ACTION_TYPE.SINGLE_TOGGLE) {
-                                updateCheckbox(widget, value);
-                            }
-                        }
-                    }
-                },
-                action: function (e, data, menu) {
-                    _debug && console.log('menu action', data);
-                    return self.onRunAction(data.data, owner, e);
-                },
-                destroy: function () {
-                    if (this.widget) {
-                        this.widget.remove();
-                    }
-                }
-            };
-            return item;
         },
         attach: function (selector, data) {
             this.target = selector;
@@ -25022,10 +24857,10 @@ define('xide/widgets/_MenuMixin4',[
         hideSubsFirst: false,
         collapseSmallGroups: 0,
         containerClass: '',
-        lastTree:null,
-        ITEM_TAG : "li",
-        CONTAINER_TAG : "ul",
-        ITEM_CLASS : "actionItem",
+        lastTree: null,
+        ITEM_TAG: "li",
+        CONTAINER_TAG: "ul",
+        ITEM_CLASS: "actionItem",
         onActionAdded: function (actions) {
             this.setActionStore(this.getActionStore(), actions.owner || this, false, true, actions);
         },
@@ -25197,6 +25032,7 @@ define('xide/widgets/_MenuMixin4',[
                     if (isFirst) {
                         $sub.css('display', 'initial');
                         $sub.css('position', 'initial');
+
                         function close() {
                             var _wrapper = $sub.data('_popupWrapper');
                             popup.close({
@@ -25211,8 +25047,7 @@ define('xide/widgets/_MenuMixin4',[
                             $sub.on('mouseleave', function () {
                                 close();
                             });
-                            _root.on('mouseleave', function () {
-                            });
+                            _root.on('mouseleave', function () {});
                         }
 
                         popup.open({
@@ -25301,7 +25136,7 @@ define('xide/widgets/_MenuMixin4',[
                     divider += '">' + ITEM_TAG_END;
                     item.widget = divider;
                     $menu.append(divider);
-                    divider.data('item',item);
+                    divider.data('item', item);
 
                 } else if (typeof item.header !== 'undefined' && !item.widget) {
                     var header = item.vertical ? '<li class="divider-vertical' : '<li class="nav-header testClass';
@@ -25310,7 +25145,7 @@ define('xide/widgets/_MenuMixin4',[
                     header = $(header);
                     item.widget = header;
                     $menu.append(header);
-                    header.data('item',item);
+                    header.data('item', item);
 
                 } else if (typeof item.menu_item_src !== 'undefined') {
 
@@ -25331,7 +25166,7 @@ define('xide/widgets/_MenuMixin4',[
                             sub_menu += '<span class="icon ' + item.icon + '"></span> ';
                         }
                         sub_menu += item.text + '';
-                        sub_menu += '</a>'+ITEM_TAG_END;
+                        sub_menu += '</a>' + ITEM_TAG_END;
                         $sub = $(sub_menu);
 
                     } else {
@@ -25355,16 +25190,15 @@ define('xide/widgets/_MenuMixin4',[
                     }
 
                     if (typeof item.action !== 'undefined' && !item.widget) {
-                        if (item.addClickHandler && item.addClickHandler() === false) {
-                        } else {
+                        if (item.addClickHandler && item.addClickHandler() === false) {} else {
                             var $action = item.action;
                             if ($sub && $sub.find) {
                                 var trigger = $sub.find('a');
                                 trigger.addClass('context-event');
                                 var handler = createCallback($action, item, $sub);
-                                trigger.data('handler',handler).on('click',handler);
+                                trigger.data('handler', handler).on('click', handler);
                                 //trigger.data('handler',handler).on('click',function(e){
-                                    //return func(event, menu, item);
+                                //return func(event, menu, item);
                                 //});
 
                                 /*
@@ -25403,7 +25237,7 @@ define('xide/widgets/_MenuMixin4',[
                         var subMenuData = self.buildMenu(item.subMenu, id, true);
                         $menu.subMenuData = subMenuData;
                         item.subMenuData = subMenuData;
-                        $menu.find(this.ITEM_TAG +':last').append(subMenuData);
+                        $menu.find(this.ITEM_TAG + ':last').append(subMenuData);
                         subMenuData.attr('level', item.subMenu.level);
                         if (self.hideSubsFirst) {
                             subMenuData.css('display', 'none');
@@ -25427,7 +25261,7 @@ define('xide/widgets/_MenuMixin4',[
             return $menu;
         },
         buildMenu: function (data, id, subMenu) {
-            var subClass = (subMenu) ? (' dropdown-context-sub ' + this.containerClass ) : ' scrollable-menu ';
+            var subClass = (subMenu) ? (' dropdown-context-sub ' + this.containerClass) : ' scrollable-menu ';
             var $menu = $('<ul tabindex="-1" aria-expanded="true" role="menu" class="dropdown-menu dropdown-context' + subClass + '" id="dropdown-' + id + '"></ul>');
             if (!subMenu) {
                 this._rootMenu = $menu;
@@ -25511,11 +25345,11 @@ define('xide/widgets/_MenuMixin4',[
         },
         toMenuItem: function (action, owner, label, icon, visibility, showKeyCombo, lazy) {
             var self = this,
-                labelLocalized = self.localize(label),
+            labelLocalized = action.localize !== false ? self.localize(label) : label,
                 actionType = visibility.actionType || action.actionType;
 
             var ITEM_CLASS = this.ITEM_CLASS;
-            var ITEM_TAG_START = '<' + this.ITEM_TAG + ' class="'+ ITEM_CLASS + '" ';
+            var ITEM_TAG_START = '<' + this.ITEM_TAG + ' class="' + ITEM_CLASS + '" ';
             var ITEM_TAG_END = '</' + this.ITEM_TAG + '>';
 
             var item = {
@@ -25583,7 +25417,7 @@ define('xide/widgets/_MenuMixin4',[
                     var title = data.text || labelLocalized || self.localize(action.title);
 
                     //default:
-                    element = ITEM_TAG_START +  'class="'+ITEM_CLASS + '" ' +  'tabindex="-1"><a title="' + title + ' ' + keyComboString + '">';
+                    element = ITEM_TAG_START + 'class="' + ITEM_CLASS + '" ' + 'tabindex="-1"><a title="' + title + ' ' + keyComboString + '">';
                     var _icon = data.icon || icon;
 
                     //icon
@@ -25596,12 +25430,11 @@ define('xide/widgets/_MenuMixin4',[
                         }
                     }
                     element += data.text;
-                    element += '<span style="max-width:100px" class="text-muted pull-right ellipsis keyboardShortCut">' + (showKeyCombo ? keyComboString : "") + '</span></a>'+ITEM_TAG_END;
+                    element += '<span style="max-width:100px" class="text-muted pull-right ellipsis keyboardShortCut">' + (showKeyCombo ? keyComboString : "") + '</span></a>' + ITEM_TAG_END;
                     self.setVisibilityField(action, 'widget', data);
                     return $(element);
                 },
-                get: function (key) {
-                },
+                get: function (key) {},
                 set: function (key, value) {
                     //_debugWidgets && _.isString(value) && console.log('set ' + key + ' ' + value);
                     var widget = this.widget;
@@ -25865,9 +25698,6 @@ define('xide/widgets/_MenuMixin4',[
     dcl.chainAfter(Module, 'destroy');
     return Module;
 });
-
-
-
 define('xide/widgets/_MenuKeyboard',[
     "dcl/dcl",
     "xide/$",
@@ -26393,7 +26223,7 @@ define('xide/widgets/ContextMenu',[
         },
         setActionStore: function (store, owner, subscribe, update, itemActions) {
             if (!update) {
-                if(this.store==store){
+                if (this.store == store) {
                     return;
                 }
                 this._clear();
@@ -26405,7 +26235,7 @@ define('xide/widgets/ContextMenu',[
                 rootContainer = $(self.getRootContainer());
 
             this.store = store;
-            if(!store){
+            if (!store) {
                 return;
             }
             var tree = update ? self.lastTree : self.buildActionTree(store, owner);
@@ -26456,15 +26286,21 @@ define('xide/widgets/ContextMenu',[
                             if (!isDynamicAction && group && groupedActions[group] && groupedActions[group].length >= 1) {
                                 if (lastGroup !== group) {
                                     var name = groupedActions[group].length >= 2 ? i18.localize(group) : "";
-                                    lastHeader = {header: name};
+                                    lastHeader = {
+                                        header: name
+                                    };
                                     data.push(lastHeader);
                                     lastGroup = group;
                                 }
+                            }
+                            if (action.command === "Widget/Move/MoveToBackward") {
+                                debugger;
                             }
                             var item = self.toMenuItem(action, owner, label, icon, visibility || {}, true);
                             data.push(item);
                             visibility.widget = item;
                             self.addReference(action, item);
+
                             function parseChildren(command, parent) {
                                 var childPaths = new Path(command).getChildren(allActionPaths, false),
                                     isContainer = childPaths.length > 0,
@@ -26476,7 +26312,6 @@ define('xide/widgets/ContextMenu',[
                                         var _item = self.toMenuItem(child, owner, _renderData.label, _renderData.icon, _renderData.visibility, true);
                                         self.addReference(child, _item);
                                         subs.push(_item);
-
                                         var _childPaths = new Path(child.command).getChildren(allActionPaths, false),
                                             _isContainer = _childPaths.length > 0;
                                         if (_isContainer) {

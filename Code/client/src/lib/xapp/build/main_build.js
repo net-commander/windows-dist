@@ -68795,21 +68795,7 @@ define('xaction/DefaultActions',[
         //  New
         //
         if(hasAction(permissions,ACTION.NEW_DIRECTORY)|| hasAction(permissions,ACTION.NEW_FILE)) {
-
             addAction('New','File/New','fa-magic',null,'Home','New','item|view',null,null,{},null,null);
-/*
-            result.push(creator.createAction({
-                label: 'New',
-                command: 'File/New',
-                icon: 'fa-magic',
-                tab: 'Home',
-                group: 'File',
-                keycombo: ['ctrl down'],
-                mixin:{
-                    quick:true
-                }
-            }));*/
-
         }
         addAction('New Folder',ACTION.NEW_DIRECTORY,'fa-folder',['f7'],'Home','New','item|view',null,null,{quick:true},null,null);
         addAction('New File',ACTION.NEW_FILE,'el-icon-file',['ctrl f4'],'Home','New','item|view',null,null,{quick:true},null,null);
@@ -69266,8 +69252,8 @@ define('xlang/i18',['xdojo/declare','xide/utils/ObjectUtils','dcl/dcl'], functio
         'modified':'modify',
         'list':'viewlist',
         'thumb':'viewicons',
-        'type':'kind',
-        'move':'moveFiles'
+        'type':'kind'
+        // 'move':'moveFiles'
         /*'view':'cmdview'*/
     };
 
@@ -69293,10 +69279,10 @@ define('xlang/i18',['xdojo/declare','xide/utils/ObjectUtils','dcl/dcl'], functio
     };
 
     function localize(str){
-
-
-
         str = str || '';
+        if(str==='move'){
+            debugger;
+        }
 
         if(str ==='Invert selection '){
             //debugger;
@@ -70452,7 +70438,6 @@ define('xaction/Action',[
      */
     Module.create = function (label, icon, command, permanent, operation, btypes, group, visibility, register, handler, mixin) {
         let _action = null;
-
         const _args = {
             permanent: permanent,
             command: command,
@@ -70473,15 +70458,6 @@ define('xaction/Action',[
             //console.log('-create!');
             _action = new Module(_args);
         }
-        /*
-         var VISIBILITY = types.ACTION_VISIBILITY,
-         VISIBILITIES = [
-         VISIBILITY.ACTION_TOOLBAR,
-         VISIBILITY.RIBBON,
-         VISIBILITY.MAIN_MENU,
-         VISIBILITY.CONTEXT_MENU
-         ];
-         */
         utils.mixin(_action, mixin);
         return _action;
     };

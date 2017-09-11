@@ -28,7 +28,7 @@ define([
         },
         getBlockSettings: function () {
             return {
-                highlight:true
+                highlight: true
             }
         },
         _disableDesignMode: function () {
@@ -50,6 +50,7 @@ define([
                 connect.connect(containerNode, "onmousedown", this, "onMouseDown"),
                 connect.connect(containerNode, "onclick", this, "onMouseClick"),
                 connect.connect(containerNode, "onmousemove", this, "onMouseMove"),
+                connect.connect(containerNode, "contextmenu", this, "contextmenu"),
                 connect.connect(containerNode, "onmouseup", this, "onMouseUp"),
                 connect.connect(containerNode, "onmouseover", this, "onMouseOver"),
                 connect.connect(containerNode, "onmouseout", this, "onMouseOut")
@@ -79,22 +80,20 @@ define([
             if (this.eventHandler && this.eventHandler['click']) {
                 this.eventHandler['click'](e);
             }
-            $('body').trigger('click',e);
+            $('body').trigger('click', e);
         },
         onMouseDown: function (event) {
             if (this._activeTool && this._activeTool.onMouseDown && !this._blockChange) {
                 this._activeTool.onMouseDown(event);
             }
             this.blockChange(false);
-            $('body').trigger('mousedown',event);
+            $('body').trigger('mousedown', event);
         },
-        onDblClick: function (event) {
-        },
+        onDblClick: function (event) {},
         onMouseMove: function (event) {
             if (this._activeTool && this._activeTool.onMouseMove && !this._blockChange) {
                 this._activeTool.onMouseMove(event);
             }
-            //$('body').trigger('mousemove',event);
         },
         onMouseUp: function (event) {
             if (this._activeTool && this._activeTool.onMouseUp) {
@@ -102,17 +101,22 @@ define([
             }
             this.blockChange(false);
             Topic.publish("/davinci/ve/context/mouseup", event);
-            $('body').trigger('mouseup',event);
+            $('body').trigger('mouseup', event);
         },
         onMouseOver: function (event) {
             if (this._activeTool && this._activeTool.onMouseOver) {
                 this._activeTool.onMouseOver(event);
             }
+            $('body').trigger('mouseover', event);
         },
         onMouseOut: function (event) {
             if (this._activeTool && this._activeTool.onMouseOut) {
                 this._activeTool.onMouseOut(event);
             }
+            $('body').trigger('mouseout', event);
+        },
+        contextmenu: function (event) {
+            $('body').trigger('contextmenu', event);
         },
         /**
          * Perform any visual updates in response to mousemove event while performing a
@@ -132,16 +136,16 @@ define([
          *        {string|undefined} beforeAfter  either 'before' or 'after' or undefined (which means default behavior)
          *        {string|array} widgetType  widget type (e.g., 'dijit.form.Button')
          */
-        getScrollOffset:function(){
-            if(this.rootNode) {
+        getScrollOffset: function () {
+            if (this.rootNode) {
                 return {
-                    x:this.rootNode.parentNode.scrollLeft,
-                    y:this.rootNode.parentNode.scrollTop
+                    x: this.rootNode.parentNode.scrollLeft,
+                    y: this.rootNode.parentNode.scrollTop
                 }
-            }else{
+            } else {
                 return {
-                    x:0,
-                    y:0
+                    x: 0,
+                    y: 0
                 }
             }
         },
@@ -150,7 +154,7 @@ define([
                 cp = this._chooseParent,
                 widgets = params.widgets,
                 data = params.data,
-//			eventTarget = params.eventTarget,
+                //			eventTarget = params.eventTarget,
                 position = params.position,
                 absolute = params.absolute,
                 currentParent = params.currentParent,
@@ -162,17 +166,17 @@ define([
                 beforeAfter = params.beforeAfter,
                 widgetType = dojo.isArray(data) ? data[0].type : data.type;
 
-            doSnapLinesX=true;
-            doSnapLinesY=true;
+            doSnapLinesX = true;
+            doSnapLinesY = true;
             var offset = context.getScrollOffset();
-            position.x-=offset.x;
-            position.y-=offset.y;
+            position.x -= offset.x;
+            position.y -= offset.y;
             // inner function that gets called recurively for each widget in document
             // The "this" object for this function is the Context object
             var _updateThisWidget = function (widget) {
 
-                if(!widget){
-                    console.error('-error:_updateThisWidget:invalid widget',data);
+                if (!widget) {
+                    console.error('-error:_updateThisWidget:invalid widget', data);
                     return;
                 }
 
@@ -213,7 +217,7 @@ define([
             }
             cp.findParentsXYAfterTraversal(params);
             if (differentXY) {
-                if(currentParent){
+                if (currentParent) {
                     //console.log('current parent : ' + position.x + ' :  ' + position.y ,currentParent);
                 }
                 cp.dragUpdateCandidateParents({
@@ -255,7 +259,7 @@ define([
             if (this._activeTool && this._activeTool.onKeyDown) {
                 this._activeTool.onKeyDown(event);
             }
-            $('body').trigger('keydown',event);
+            $('body').trigger('keydown', event);
         },
         onKeyUp: function (event) {
             //FIXME: Research task. This routine doesn't get fired when using CreateTool and drag/drop from widget palette.
@@ -264,7 +268,7 @@ define([
             if (this._activeTool && this._activeTool.onKeyUp) {
                 this._activeTool.onKeyUp(event);
             }
-            $('body').trigger('keyup',event);
+            $('body').trigger('keyup', event);
         },
         onContentChange: function () {
 
@@ -327,7 +331,7 @@ define([
                 this._activeTool.activate(this);
                 this.publish("/davinci/ve/activeToolChanged", [this, tool]);
             } catch (e) {
-                logError(e,'setActiveTool');
+                logError(e, 'setActiveTool');
             }
         },
         // Returns true if inline edit is showing
@@ -338,7 +342,7 @@ define([
         },
 
         select: function (widget, add, inline) {
-            if (!widget /*|| widget == this.rootWidget*/) {
+            if (!widget /*|| widget == this.rootWidget*/ ) {
                 if (!add) {
                     this.deselect(); // deselect all
                 }
@@ -440,7 +444,7 @@ define([
         },
         deselectInvisible: function () {
             function isHidden(node) {
-                if ((node.nodeType == 1 /*ELEMENT_NODE*/) && (domStyle.get(node, "display") == 'none')) {
+                if ((node.nodeType == 1 /*ELEMENT_NODE*/ ) && (domStyle.get(node, "display") == 'none')) {
                     return true;
                 }
                 if (node.parentNode) {
@@ -476,9 +480,9 @@ define([
         },
         getFlowLayout: function () {
 
-             var bodyElement = this.getDocumentElement().getChildElement("body"),
-                 flowLayout = bodyElement && bodyElement.getAttribute(PREF_LAYOUT_ATTR),
-                 flowLayoutP6 = bodyElement && bodyElement.getAttribute(PREF_LAYOUT_ATTR_P6);
+            var bodyElement = this.getDocumentElement().getChildElement("body"),
+                flowLayout = bodyElement && bodyElement.getAttribute(PREF_LAYOUT_ATTR),
+                flowLayoutP6 = bodyElement && bodyElement.getAttribute(PREF_LAYOUT_ATTR_P6);
             if (!flowLayout && flowLayoutP6) {
                 flowLayout = flowLayoutP6;
                 this.editor._visualChanged();

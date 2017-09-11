@@ -317,7 +317,8 @@ define([
                     connect.connect(containerNode, "onmousemove", this, "onMouseMove"),
                     connect.connect(containerNode, "onmouseup", this, "onMouseUp"),
                     connect.connect(containerNode, "onmouseover", this, "onMouseOver"),
-                    connect.connect(containerNode, "onmouseout", this, "onMouseOut")
+                    connect.connect(containerNode, "onmouseout", this, "onMouseOut"),
+                    connect.connect(containerNode, "contextmenu", this, "contextmenu")
                 ];
 
 

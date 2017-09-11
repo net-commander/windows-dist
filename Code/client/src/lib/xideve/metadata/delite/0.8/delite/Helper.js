@@ -123,6 +123,13 @@ define(function () {
             widget._srcElement.setAttribute('id', widget.id);
             //console.log('-create ',widget.id);
         },
+        onAdded: function (target, src) {
+            if(src.type==='xblox/RunScript'){
+                return target;
+            }else{
+                return src;
+            }
+        },
         _getChildren: function (widget, attach) {
 
             var dijitWidget = widget.dijitWidget;
