@@ -124,6 +124,7 @@ define(function () {
             //console.log('-create ',widget.id);
         },
         onAdded: function (target, src) {
+            debugger;
             if(src.type==='xblox/RunScript'){
                 return target;
             }else{

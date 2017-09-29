@@ -2,9 +2,8 @@ define(function() {
 
     var BlockHelper = function() {};
     BlockHelper.prototype = {
-
         updateWidget: function(){
-            console.error('updateWidget',arguments);
+            // console.error('updateWidget',arguments);
         },
         _getWidgetClassText: function(id, className){
             return "";
@@ -46,7 +45,6 @@ define(function() {
         __getWidgetNameText:function(widget){
             if(widget.domNode && widget.domNode.label){
                 var text = "<span class='propertiesTitleWidgetName'>";
-                //text+=this._remove_prefix(type);
                 text+="</span> ";
                 return ""
             }
@@ -73,42 +71,13 @@ define(function() {
                 return undefined;
             }
             var data = widget._getData(options);
-            var _uniqueId = dijit.getUniqueId(widget.type.replace(/\./g,"_"));
-            //_uniqueId = _uniqueId.replace('delite/','d-').toLowerCase();
-            
-            //delite/Slider_2
-            if(widget.id==='no_id') {
-
-                /*widget.id = _uniqueId;
-                data.properties['id'] = _uniqueId;
-                data.properties.id = _uniqueId;*/
-            }
-            //console.log('get data',data);
+            var _uniqueId = dijit.getUniqueId(widget.type.replace(/\./g,"_"));            
             return data;
-
-            /*
-             console.error('get data');
-
-             var widgetData = widget._getData( options);
-             var value = widget._srcElement.getAttribute('data');
-             if(widgetData && widgetData.properties){
-             if(widgetData.properties['isTempID']){
-             delete widgetData.properties.id; // delete temp id so it does not make it's way out to the source
-             }
-             }
-             if (value){
-
-             //widgetData.properties.data = JSON.parse(value);
-             }
-             */
-            return widgetData;
         },
         __create: function(widget) {
             widget._srcElement.setAttribute('id',widget.id);
-            //console.error('-create ',widget);
         },
         __getChildren: function(widget, attach) {
-
             var dijitWidget = widget.dijitWidget;
             // First, get children from slider's containerNode.
             var children = [];//widget._getChildren(attach);
@@ -151,28 +120,7 @@ define(function() {
 
             return undefined;
         }
-
-        // FIXME: Original code from dojoy days. Commented out because currently untested.
-        // Need to review and decide whether to resurrect.	
-        // 
-        // this.getPropertyValue = function(/*Widget*/ widget, /*String*/ name){
-        // 	// summary:
-        // 	//		Mask label attribute if the button's tag is BUTTON.
-        // 	//
-        // 	if(!widget || !name){
-        // 		return undefined;
-        // 	}
-
-        // 	var context = widget.getContext();
-
-        // 	if (context && widget.getTagName() == "BUTTON" && name == "label") {
-        // 		return undefined;
-        // 	}
-
-        // 	return widget._getPropertyValue(name);
-        // };
     };
-
     return BlockHelper;
 
 });

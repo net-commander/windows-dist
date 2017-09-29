@@ -87,6 +87,7 @@ define([
          * @param variable {xblox/model/variables/Variable}
          */
         initWithVariable:function(widget,block,variable,blockInput,updateCB){
+            
             var wizardStruct = this.createWizard('Variable Wizard');
             var dialog = wizardStruct.dialog;
             var wizard = wizardStruct.wizard,

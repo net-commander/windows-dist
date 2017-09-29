@@ -1,4 +1,4 @@
-require.config({"config":{"delite/theme":{"layersMap":{"delite/themes/{{theme}}/common.css":"themes/layer_{{theme}}.css","deliteful/Accordion/themes/{{theme}}/Accordion.css":"themes/layer_{{theme}}.css","xdeliteful/Script.css":"themes/layer_{{theme}}.css","xdeliteful/Bar/themes/Bar.css":"themes/layer_{{theme}}.css","deliteful/list/List/themes/{{theme}}/List.css":"themes/layer_{{theme}}.css","delite/Scrollable/themes/{{theme}}/Scrollable.css":"themes/layer_{{theme}}.css","deliteful/ProgressBar/themes/{{theme}}/ProgressBar.css":"themes/layer_{{theme}}.css","deliteful/StarRating/themes/{{theme}}/StarRating.css":"themes/layer_{{theme}}.css","xdeliteful/Button/themes/{{theme}}/Button.css":"themes/layer_{{theme}}.css","deliteful/LinearLayout/themes/{{theme}}/LinearLayout.css":"themes/layer_{{theme}}.css","deliteful/SidePane/themes/{{theme}}/SidePane.css":"themes/layer_{{theme}}.css","deliteful/Panel/themes/{{theme}}/Panel.css":"themes/layer_{{theme}}.css","deliteful/ViewStack/themes/{{theme}}/ViewStack.css":"themes/layer_{{theme}}.css","deliteful/ProgressIndicator/themes/{{theme}}/ProgressIndicator.css":"themes/layer_{{theme}}.css","deliteful/Switch/themes/{{theme}}/Switch.css":"themes/layer_{{theme}}.css","deliteful/ToggleButton/themes/{{theme}}/ToggleButton.css":"themes/layer_{{theme}}.css","deliteful/RadioButton/themes/{{theme}}/RadioButton.css":"themes/layer_{{theme}}.css","deliteful/Checkbox/themes/{{theme}}/Checkbox.css":"themes/layer_{{theme}}.css","deliteful/Select/themes/{{theme}}/Select.css":"themes/layer_{{theme}}.css","deliteful/Combobox/themes/{{theme}}/Combobox.css":"themes/layer_{{theme}}.css","delite/DialogUnderlay/themes/{{theme}}/DialogUnderlay.css":"themes/layer_{{theme}}.css","deliteful/Slider/themes/{{theme}}/Slider.css":"themes/layer_{{theme}}.css","deliteful/Button/themes/{{theme}}/Button.css":"themes/layer_{{theme}}.css"}}}});require.config({"config":{"requirejs-dplugins/i18n":{"bundlesMap":{"nls/main_build":["deliteful/list/List/nls/List","deliteful/StarRating/nls/StarRating","deliteful/Combobox/nls/Combobox"]},"localesMap":{"nls/main_build":["root"]}}}});require.config({config:{'ecma402/impl/load':{"af":true,"af-NA":true,"am":true,"ar":true,"ar-AE":true,"ar-BH":true,"ar-DZ":true,"ar-EG":true,"ar-IQ":true,"ar-JO":true,"ar-KW":true,"ar-LB":true,"ar-LY":true,"ar-MA":true,"ar-OM":true,"ar-QA":true,"ar-SA":true,"ar-SD":true,"ar-SY":true,"ar-TN":true,"ar-YE":true,"as":true,"az":true,"be":true,"bg":true,"bn":true,"bn-IN":true,"ca":true,"cs":true,"cy":true,"da":true,"de":true,"de-AT":true,"de-LU":true,"de-CH":true,"el":true,"en":true,"en-AU":true,"en-BE":true,"en-CM":true,"en-CA":true,"en-GB":true,"en-GH":true,"en-HK":true,"en-IE":true,"en-IN":true,"en-KE":true,"en-MU":true,"en-NG":true,"en-NZ":true,"en-PH":true,"en-SG":true,"en-TT":true,"en-ZA":true,"en-ZM":true,"es":true,"es-AR":true,"es-BO":true,"es-CL":true,"es-CO":true,"es-CR":true,"es-DO":true,"es-EC":true,"es-GT":true,"es-HN":true,"es-MX":true,"es-NI":true,"es-PA":true,"es-PE":true,"es-PR":true,"es-PY":true,"es-SV":true,"es-US":true,"es-UY":true,"es-VE":true,"eu":true,"fil":true,"fi":true,"fr":true,"fr-BE":true,"fr-CA":true,"fr-CD":true,"fr-CH":true,"fr-CI":true,"fr-CM":true,"fr-DZ":true,"fr-LU":true,"fr-MR":true,"fr-MA":true,"fr-SN":true,"fr-TN":true,"gl":true,"gu":true,"ha":true,"he":true,"hi":true,"hr":true,"hu":true,"hy":true,"id":true,"ig":true,"is":true,"it":true,"it-CH":true,"ja":true,"ka":true,"kk":true,"km":true,"kn":true,"ko":true,"kok":true,"lg":true,"lt":true,"lv":true,"mk":true,"ml":true,"mn":true,"mr":true,"ms":true,"mt":true,"nb":true,"ne":true,"ne-IN":true,"nl":true,"nl-BE":true,"nn":true,"om":true,"or":true,"pa":true,"pl":true,"pt":true,"pt-AO":true,"pt-MZ":true,"pt-PT":true,"ro":true,"root":true,"ru":true,"rw":true,"si":true,"sk":true,"sl":true,"sr":true,"sr-Latn":true,"sq":true,"sv":true,"sw":true,"sw-KE":true,"ta":true,"te":true,"th":true,"tr":true,"uk":true,"ur":true,"ur-IN":true,"uz":true,"uz-Cyrl":true,"vi":true,"yo":true,"zh":true,"zh-Hans":true,"zh-Hans-SG":true,"zh-Hant":true,"zh-Hant-HK":true,"_layerMid":"cldr/main_build"}}});require.config({"config":{"requirejs-dplugins/css":{"layersMap":{"deliteful/ViewStack/transitions/slide.css":"main_build.css","deliteful/ViewStack/transitions/reveal.css":"main_build.css"}}}});define('xapp/mainr',[
+require.config({"config":{"requirejs-dplugins/i18n":{"bundlesMap":{"nls/main_build":["deliteful/list/List/nls/List","deliteful/StarRating/nls/StarRating","deliteful/Combobox/nls/Combobox"]},"localesMap":{"nls/main_build":["root"]}}}});require.config({config:{'ecma402/impl/load':{"af":true,"af-NA":true,"am":true,"ar":true,"ar-AE":true,"ar-BH":true,"ar-DZ":true,"ar-EG":true,"ar-IQ":true,"ar-JO":true,"ar-KW":true,"ar-LB":true,"ar-LY":true,"ar-MA":true,"ar-OM":true,"ar-QA":true,"ar-SA":true,"ar-SD":true,"ar-SY":true,"ar-TN":true,"ar-YE":true,"as":true,"az":true,"be":true,"bg":true,"bn":true,"bn-IN":true,"ca":true,"cs":true,"cy":true,"da":true,"de":true,"de-AT":true,"de-LU":true,"de-CH":true,"el":true,"en":true,"en-AU":true,"en-BE":true,"en-CM":true,"en-CA":true,"en-GB":true,"en-GH":true,"en-HK":true,"en-IE":true,"en-IN":true,"en-KE":true,"en-MU":true,"en-NG":true,"en-NZ":true,"en-PH":true,"en-SG":true,"en-TT":true,"en-ZA":true,"en-ZM":true,"es":true,"es-AR":true,"es-BO":true,"es-CL":true,"es-CO":true,"es-CR":true,"es-DO":true,"es-EC":true,"es-GT":true,"es-HN":true,"es-MX":true,"es-NI":true,"es-PA":true,"es-PE":true,"es-PR":true,"es-PY":true,"es-SV":true,"es-US":true,"es-UY":true,"es-VE":true,"eu":true,"fil":true,"fi":true,"fr":true,"fr-BE":true,"fr-CA":true,"fr-CD":true,"fr-CH":true,"fr-CI":true,"fr-CM":true,"fr-DZ":true,"fr-LU":true,"fr-MR":true,"fr-MA":true,"fr-SN":true,"fr-TN":true,"gl":true,"gu":true,"ha":true,"he":true,"hi":true,"hr":true,"hu":true,"hy":true,"id":true,"ig":true,"is":true,"it":true,"it-CH":true,"ja":true,"ka":true,"kk":true,"km":true,"kn":true,"ko":true,"kok":true,"lg":true,"lt":true,"lv":true,"mk":true,"ml":true,"mn":true,"mr":true,"ms":true,"mt":true,"nb":true,"ne":true,"ne-IN":true,"nl":true,"nl-BE":true,"nn":true,"om":true,"or":true,"pa":true,"pl":true,"pt":true,"pt-AO":true,"pt-MZ":true,"pt-PT":true,"ro":true,"root":true,"ru":true,"rw":true,"si":true,"sk":true,"sl":true,"sr":true,"sr-Latn":true,"sq":true,"sv":true,"sw":true,"sw-KE":true,"ta":true,"te":true,"th":true,"tr":true,"uk":true,"ur":true,"ur-IN":true,"uz":true,"uz-Cyrl":true,"vi":true,"yo":true,"zh":true,"zh-Hans":true,"zh-Hans-SG":true,"zh-Hant":true,"zh-Hant-HK":true,"_layerMid":"cldr/main_build"}}});define('xapp/mainr',[
     "deliteful/Button",
     "xblox/RunScript",
     "delite/Container",
@@ -67139,7 +67139,7 @@ define('xide/manager/Context_UI',[
     'xaction/ActionProvider',
     'xide/lodash',
     'xide/manager/Router'
-], function (dcl, Deferred, has, types, utils, EventedMixin, _require, PluginManager,WindowManager, NotificationManager, SettingsManager, Registry, ActionProvider, _,Router) {
+], function (dcl, Deferred, has, types, utils, EventedMixin, _require, PluginManager, WindowManager, NotificationManager, SettingsManager, Registry, ActionProvider, _, Router) {
 
 
     !has('host-browser') && has.add('xlog', function () {
@@ -67162,27 +67162,29 @@ define('xide/manager/Context_UI',[
         settingsManager: null,
         trackingManager: null,
         mainView: null,
-        registerRoute:function(config){
-            if(!this.routes){
+        registerRoute: function (config) {
+            if (!this.routes) {
                 this.routes = [];
             }
             this.routes.push(config);
         },
-        ready:function(){
+        ready: function () {
             this.getRouter();
         },
-        routes:null,
+        routes: null,
         /**
          * @type {module:xide/manager/Router}
          */
-        router:null,
+        router: null,
         /**
          *
          * @returns {module:xide/manager/Router}
          */
-        getRouter:function(){
-            if(!this.router || !this.router.match){
-                this.router = new Router({routes:this.routes});
+        getRouter: function () {
+            if (!this.router || !this.router.match) {
+                this.router = new Router({
+                    routes: this.routes
+                });
             }
             return this.router;
         },
@@ -67225,6 +67227,119 @@ define('xide/manager/Context_UI',[
                 actionDfd = action.handler.apply(who, [action]);
             }
             return actionDfd;
+        },
+        getOpenFiles: function () {
+            var settingsManager = this.getSettingsManager();
+
+            var settingsStore = settingsManager.getStore() || {
+                getSync: function () {}
+            };
+
+            var props = settingsStore.getSync('openFiles') || {
+                value: {
+                    files: []
+                }
+            };
+            var fileManager = this.getFileManager();
+            const out = [];
+            _.each(props.value.files, (item) => {
+                var store = fileManager.getStore(item.mount);
+                store.getItem('.',true).then(()=>{
+                    console.log('g',store);
+                })
+                /*
+                store.getItem(item.path, true).then((item)=>{
+                    console.log('loaded',item);
+                })
+                console.log('get store:  ', store);*/
+                /*
+                item.getPath = function () {
+                    return item.path;
+                }
+                */
+            });
+            return props.value.files;
+        },
+        trackEditor: function (item, editor) {
+            var settingsManager = this.getSettingsManager();
+
+            var settingsStore = settingsManager.getStore() || {
+                getSync: function () {}
+            };
+
+            var props = settingsStore.getSync('openFiles') || {
+                value: {
+                    files: []
+                }
+            };
+
+            var value = props.value;
+            if (_.find(value.files, {
+                    path: item.path,
+                    mount: item.mount
+                })) {
+                return;
+            }
+            value.files.push({
+                path: item.path,
+                mount: item.mount
+            })
+
+            settingsManager.write2(null, '.', {
+                id: 'openFiles'
+            }, {
+                value: value
+            }, true, null).then(function () {
+
+            });
+        },
+        untrackEditor: function (item, editor) {
+            var settingsManager = this.getSettingsManager();
+            var settingsStore = settingsManager.getStore() || {
+                getSync: function () {}
+            };
+
+            var props = settingsStore.getSync('openFiles') || {
+                value: {
+                    files: []
+                }
+            };
+            var value = props.value;
+            var data = _.find(value.files, {
+                path: item.path,
+                mount: item.mount
+            });
+            value.files.remove(data);
+            settingsManager.write2(null, '.', {
+                id: 'openFiles'
+            }, {
+                value: value
+            }, true, null).then(function () {
+
+            });
+        },
+        openItem: function (item, isBack, select) {
+            if (!item) {
+                return;
+            }
+
+            var editors = Registry.getEditors(item);
+            var defaultEditor = _.find(editors, function (editor) {
+                return editor.isDefault === true;
+            });
+            if (defaultEditor) {
+                return defaultEditor.onEdit(item, this);
+            }
+            return this.getWindowManager().openItem(item, null, {
+                register: true
+            });
+        },
+        onComponentsReady: function () {
+            return;
+            const filesToOpen = this.getOpenFiles();
+            _.each(filesToOpen, (item) => {
+                // this.openItem(item);
+            }, this);
         },
         /***********************************************************************/
         /*
@@ -67293,6 +67408,15 @@ define('xide/manager/Context_UI',[
 
             root.set('loading', true);
             var editor = utils.addWidget(ctrArgs.editorClass, ctrArgsFinal, thiz, root, true, null, null, null, editorOverrides);
+
+            console.log('create editor!', editor);
+
+            this.trackEditor(item, editor);
+
+            editor._on('destroy', function () {
+                thiz.untrackEditor(item);
+            });
+
 
             //- tell everybody
             thiz.publish(types.EVENTS.ON_CREATE_EDITOR_END, {

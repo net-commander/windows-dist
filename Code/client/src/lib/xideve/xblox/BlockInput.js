@@ -40,7 +40,7 @@ define([
          * @param variable {xblox/model/variables/Variable}
          */
         initWithVariable: function (widget, proxy, variable) {
-
+            
             var thiz = this;
             var proxy = widget.domNode;
 
@@ -141,7 +141,6 @@ define([
 
         },
         show: function (widgetId) {
-
             this._widget = Widget.byId(widgetId);
             this.publish(types.EVENTS.ON_SHOW_BLOCK_SMART_INPUT, {
                 input: this,

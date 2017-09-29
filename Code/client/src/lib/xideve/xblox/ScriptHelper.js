@@ -2,7 +2,7 @@ define(function() {
 
     var BlockHelper = function() {};
     BlockHelper.prototype = {
-        onAdded: function (target, src) {
+        _onAdded: function (target, src) {
             if(src.type==='xblox/RunScript'){
                 return target;
             }else{
