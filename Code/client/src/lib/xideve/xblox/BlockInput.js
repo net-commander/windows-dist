@@ -11,7 +11,6 @@ define([
     "davinci/ve/widget",
     "xide/types",
     "davinci/ve/commands/ModifyCommand",
-
     "xide/widgets/TemplatedWidgetBase",
     "xide/views/_Panel",
     "xide/factory",
@@ -166,6 +165,5 @@ define([
             // redraw the box around the
             context.select(this._widget, null, false);
         }
-
     });
 });

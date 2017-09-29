@@ -2,7 +2,6 @@ define(function () {
     var ButtonHelper = function () {};
     ButtonHelper.prototype = {
         _isAllowed: function (args) {
-            console.log('isAllowed', args);
             if (args.parentType === 'delite/ViewStack' || args.parentType === 'delite/Accordion') {
                 return true;
             } else if (args.parentType === 'delite/Panel') {
@@ -124,7 +123,6 @@ define(function () {
             //console.log('-create ',widget.id);
         },
         onAdded: function (target, src) {
-            debugger;
             if(src.type==='xblox/RunScript'){
                 return target;
             }else{
@@ -136,10 +134,8 @@ define(function () {
             var dijitWidget = widget.dijitWidget;
             // First, get children from slider's containerNode.
             var children = []; //widget._getChildren(attach);
-
-            //console.log('-get children',children);
-
             return children;
+
 
             function getWidget(node) {
                 if (attach) {
