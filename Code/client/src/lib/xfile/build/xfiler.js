@@ -27777,7 +27777,6 @@ define('xfile/FileActions',[
     "xide/views/_Dialog",
     "xide/views/_PanelDialog",
     'xfile/views/FilePicker'
-    //"dojo/text!xfile/newscene.html"
 ], function (dcl, declare, has, Deferred, utils, types, factory, Path, DefaultActions, Registry, Default, aspect, FileOperationDialog, FilePreview, _CIDialog, _Dialog, _PanelDialog, FilePicker, newscene) {
     var ACTION = types.ACTION;
     var _debug = false;
