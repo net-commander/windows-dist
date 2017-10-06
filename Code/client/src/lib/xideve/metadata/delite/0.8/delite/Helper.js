@@ -63,7 +63,6 @@ define(function () {
 
             if (widget.domNode && widget.domNode.label) {
                 var text = "<span class='propertiesTitleWidgetName'>";
-                //text+=this._remove_prefix(type);
                 text += "</span> ";
                 return ""
             }
@@ -93,49 +92,28 @@ define(function () {
             var data = widget._getData(options);
             var _uniqueId = dijit.getUniqueId(widget.type.replace(/\./g, "_"));
             _uniqueId = _uniqueId.replace('delite/', 'd-').toLowerCase();
-            //delite/Slider_2
             if (widget.id === 'no_id') {
                 widget.id = _uniqueId;
                 data.properties['id'] = _uniqueId;
                 data.properties.id = _uniqueId;
             }
             return data;
-
-            /*
-            console.error('get data');
-
-            var widgetData = widget._getData( options);
-            var value = widget._srcElement.getAttribute('data');
-            if(widgetData && widgetData.properties){
-                if(widgetData.properties['isTempID']){
-                    delete widgetData.properties.id; // delete temp id so it does not make it's way out to the source
-                }
-            }
-            if (value){
-
-                //widgetData.properties.data = JSON.parse(value);
-            }
-            */
-            return widgetData;
         },
         create: function (widget) {
             widget._srcElement.setAttribute('id', widget.id);
-            //console.log('-create ',widget.id);
         },
         onAdded: function (target, src) {
-            if(src.type==='xblox/RunScript'){
+            if (src.type === 'xblox/RunScript') {
                 return target;
-            }else{
+            } else {
                 return src;
             }
         },
         _getChildren: function (widget, attach) {
-
             var dijitWidget = widget.dijitWidget;
             // First, get children from slider's containerNode.
             var children = []; //widget._getChildren(attach);
             return children;
-
 
             function getWidget(node) {
                 if (attach) {
@@ -159,9 +137,6 @@ define(function () {
 
                 }
             });
-
-            console.log('-get children', children);
-
             return children;
 
         },
