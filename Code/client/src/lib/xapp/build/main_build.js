@@ -73197,7 +73197,6 @@ define('xblox/_State',[
          * Delite created callback
          */
         createdCallback: function () {
-            //console.error('createdCallback', this);
             debugCreated && console.info('createdCallback', this);
             if (!this._targetReference) {
                 this._setupTargetReference();
