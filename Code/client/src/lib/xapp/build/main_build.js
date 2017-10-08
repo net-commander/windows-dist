@@ -45777,12 +45777,18 @@ define('xcf/manager/DriverManager',[
             var _driver = this.getItemById(parts.driver.value),
                 block = null;
 
+            var wasUnloaded = false;
             if (_driver && !_driver.blockScope) {
+                wasUnloaded = true;
                 this.createDriverBlockScope(_driver);
             }
 
             if (_driver && _driver.blockScope) {
                 block = _driver.blockScope.getBlockById(parts.block.value);
+            }
+            if(wasUnloaded){
+                _driver.blockScope.destroy();
+                delete _driver.blockScope;
             }
             return block;
         },
