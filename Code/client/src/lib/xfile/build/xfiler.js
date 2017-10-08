@@ -26089,6 +26089,16 @@ define('xide/widgets/ContextMenu',[
             }
 
             function constextMenuHandler(e) {
+                if (self.delegate && self.delegate.row) {
+                    var row = self.delegate.row(e);
+                    if (row && row.data && row.data.hasActions) {
+                        var abort = row.data.hasActions()===false;
+                        if(abort){
+                            e.preventDefault();
+                            return;
+                        }
+                    }
+                }
                 if (self.limitTo) {
                     var $target = $(e.target);
                     $target = $target.parent();
