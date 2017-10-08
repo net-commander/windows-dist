@@ -54711,22 +54711,14 @@ define('xblox/model/Block',[
 
     if (!has('host-browser')) {
         bases.push(dcl(null, {
-            getStatusIcon: function () {
-            },
-            getStatusClass: function () {
-            },
-            setStatusClass: function () {
-            },
-            onActivity: function () {
-            },
-            onRun: function () {
-            },
-            onFailed: function () {
-            },
-            onSuccess: function () {
-            },
-            getIconClass: function () {
-            }
+            getStatusIcon: function () {},
+            getStatusClass: function () {},
+            setStatusClass: function () {},
+            onActivity: function () {},
+            onRun: function () {},
+            onFailed: function () {},
+            onSuccess: function () {},
+            getIconClass: function () {}
         }));
     }
     if (Block_UI) {
@@ -54745,38 +54737,38 @@ define('xblox/model/Block',[
          * @memberOf module:xide/types
          */
         BLOCK_FLAGS: {
-            NONE: 0x00000000,	// Reserved for future use
-            ACTIVE: 0x00000001,	// This behavior is active
-            SCRIPT: 0x00000002,	// This behavior is a script
-            RESERVED1: 0x00000004,	// Reserved for internal use
-            USEFUNCTION: 0x00000008,	// Block uses a function and not a graph
-            RESERVED2: 0x00000010,	// Reserved for internal use
-            SINGLE: 0x00000020,	// Only this block will excecuted, child blocks not.
-            WAITSFORMESSAGE: 0x00000040,	// Block is waiting for a message to activate one of its outputs
-            VARIABLEINPUTS: 0x00000080,	// Block may have its inputs changed by editing them
-            VARIABLEOUTPUTS: 0x00000100,	// Block may have its outputs changed by editing them
-            VARIABLEPARAMETERINPUTS: 0x00000200,	// Block may have its number of input parameters changed by editing them
-            VARIABLEPARAMETEROUTPUTS: 0x00000400,	// Block may have its number of output parameters changed by editing them
-            TOPMOST: 0x00004000,	// No other Block includes this one
-            BUILDINGBLOCK: 0x00008000,	// This Block is a building block (eg: not a transformer of parameter operation)
-            MESSAGESENDER: 0x00010000,	// Block may send messages during its execution
-            MESSAGERECEIVER: 0x00020000,	// Block may check messages during its execution
-            TARGETABLE: 0x00040000,	// Block may be owned by a different object that the one to which its execution will apply
-            CUSTOMEDITDIALOG: 0x00080000,	// This Block have a custom Dialog Box for parameters edition .
-            RESERVED0: 0x00100000,	// Reserved for internal use.
-            EXECUTEDLASTFRAME: 0x00200000,	// This behavior has been executed during last process. (Available only in profile mode )
-            DEACTIVATENEXTFRAME: 0x00400000,	// Block will be deactivated next frame
-            RESETNEXTFRAME: 0x00800000,	// Block will be reseted next frame
+            NONE: 0x00000000, // Reserved for future use
+            ACTIVE: 0x00000001, // This behavior is active
+            SCRIPT: 0x00000002, // This behavior is a script
+            RESERVED1: 0x00000004, // Reserved for internal use
+            USEFUNCTION: 0x00000008, // Block uses a function and not a graph
+            RESERVED2: 0x00000010, // Reserved for internal use
+            SINGLE: 0x00000020, // Only this block will excecuted, child blocks not.
+            WAITSFORMESSAGE: 0x00000040, // Block is waiting for a message to activate one of its outputs
+            VARIABLEINPUTS: 0x00000080, // Block may have its inputs changed by editing them
+            VARIABLEOUTPUTS: 0x00000100, // Block may have its outputs changed by editing them
+            VARIABLEPARAMETERINPUTS: 0x00000200, // Block may have its number of input parameters changed by editing them
+            VARIABLEPARAMETEROUTPUTS: 0x00000400, // Block may have its number of output parameters changed by editing them
+            TOPMOST: 0x00004000, // No other Block includes this one
+            BUILDINGBLOCK: 0x00008000, // This Block is a building block (eg: not a transformer of parameter operation)
+            MESSAGESENDER: 0x00010000, // Block may send messages during its execution
+            MESSAGERECEIVER: 0x00020000, // Block may check messages during its execution
+            TARGETABLE: 0x00040000, // Block may be owned by a different object that the one to which its execution will apply
+            CUSTOMEDITDIALOG: 0x00080000, // This Block have a custom Dialog Box for parameters edition .
+            RESERVED0: 0x00100000, // Reserved for internal use.
+            EXECUTEDLASTFRAME: 0x00200000, // This behavior has been executed during last process. (Available only in profile mode )
+            DEACTIVATENEXTFRAME: 0x00400000, // Block will be deactivated next frame
+            RESETNEXTFRAME: 0x00800000, // Block will be reseted next frame
 
-            INTERNALLYCREATEDINPUTS: 0x01000000,	// Block execution may create/delete inputs
-            INTERNALLYCREATEDOUTPUTS: 0x02000000,	// Block execution may create/delete outputs
-            INTERNALLYCREATEDINPUTPARAMS: 0x04000000,	// Block execution may create/delete input parameters or change their type
-            INTERNALLYCREATEDOUTPUTPARAMS: 0x08000000,	// Block execution may create/delete output parameters or change their type
-            INTERNALLYCREATEDLOCALPARAMS: 0x40000000,	// Block execution may create/delete local parameters or change their type
+            INTERNALLYCREATEDINPUTS: 0x01000000, // Block execution may create/delete inputs
+            INTERNALLYCREATEDOUTPUTS: 0x02000000, // Block execution may create/delete outputs
+            INTERNALLYCREATEDINPUTPARAMS: 0x04000000, // Block execution may create/delete input parameters or change their type
+            INTERNALLYCREATEDOUTPUTPARAMS: 0x08000000, // Block execution may create/delete output parameters or change their type
+            INTERNALLYCREATEDLOCALPARAMS: 0x40000000, // Block execution may create/delete local parameters or change their type
 
-            ACTIVATENEXTFRAME: 0x10000000,	// Block will be activated next frame
-            LOCKED: 0x20000000,	// Block is locked for utilisation in xblox
-            LAUNCHEDONCE: 0x80000000	// Block has not yet been launched...
+            ACTIVATENEXTFRAME: 0x10000000, // Block will be activated next frame
+            LOCKED: 0x20000000, // Block is locked for utilisation in xblox
+            LAUNCHEDONCE: 0x80000000 // Block has not yet been launched...
         },
 
         /**
@@ -54787,29 +54779,29 @@ define('xblox/model/Block',[
          * @memberOf module:xide/types
          */
         BLOCK_CALLBACKMASK: {
-            PRESAVE: 0x00000001,	// Emits PRESAVE messages
-            DELETE: 0x00000002,	// Emits DELETE messages
-            ATTACH: 0x00000004,	// Emits ATTACH messages
-            DETACH: 0x00000008,	// Emits DETACH messages
-            PAUSE: 0x00000010,	// Emits PAUSE messages
-            RESUME: 0x00000020,	// Emits RESUME messages
-            CREATE: 0x00000040,	// Emits CREATE messages
-            RESET: 0x00001000,	// Emits RESET messages
-            POSTSAVE: 0x00000100,	// Emits POSTSAVE messages
-            LOAD: 0x00000200,	// Emits LOAD messages
-            EDITED: 0x00000400,	// Emits EDITED messages
-            SETTINGSEDITED: 0x00000800,	// Emits SETTINGSEDITED messages
-            READSTATE: 0x00001000,	// Emits READSTATE messages
-            NEWSCENE: 0x00002000,	// Emits NEWSCENE messages
-            ACTIVATESCRIPT: 0x00004000,	// Emits ACTIVATESCRIPT messages
-            DEACTIVATESCRIPT: 0x00008000,	// Emits DEACTIVATESCRIPT messages
-            RESETINBREAKPOINT: 0x00010000,	// Emits RESETINBREAKPOINT messages
-            RENAME: 0x00020000,	// Emits RENAME messages
-            BASE: 0x0000000E,	// Base flags :attach /detach /delete
-            SAVELOAD: 0x00000301,	// Base flags for load and save
-            PPR: 0x00000130,	// Base flags for play/pause/reset
-            EDITIONS: 0x00000C00,	// Base flags for editions of settings or parameters
-            ALL: 0xFFFFFFFF	// All flags
+            PRESAVE: 0x00000001, // Emits PRESAVE messages
+            DELETE: 0x00000002, // Emits DELETE messages
+            ATTACH: 0x00000004, // Emits ATTACH messages
+            DETACH: 0x00000008, // Emits DETACH messages
+            PAUSE: 0x00000010, // Emits PAUSE messages
+            RESUME: 0x00000020, // Emits RESUME messages
+            CREATE: 0x00000040, // Emits CREATE messages
+            RESET: 0x00001000, // Emits RESET messages
+            POSTSAVE: 0x00000100, // Emits POSTSAVE messages
+            LOAD: 0x00000200, // Emits LOAD messages
+            EDITED: 0x00000400, // Emits EDITED messages
+            SETTINGSEDITED: 0x00000800, // Emits SETTINGSEDITED messages
+            READSTATE: 0x00001000, // Emits READSTATE messages
+            NEWSCENE: 0x00002000, // Emits NEWSCENE messages
+            ACTIVATESCRIPT: 0x00004000, // Emits ACTIVATESCRIPT messages
+            DEACTIVATESCRIPT: 0x00008000, // Emits DEACTIVATESCRIPT messages
+            RESETINBREAKPOINT: 0x00010000, // Emits RESETINBREAKPOINT messages
+            RENAME: 0x00020000, // Emits RENAME messages
+            BASE: 0x0000000E, // Base flags :attach /detach /delete
+            SAVELOAD: 0x00000301, // Base flags for load and save
+            PPR: 0x00000130, // Base flags for play/pause/reset
+            EDITIONS: 0x00000C00, // Base flags for editions of settings or parameters
+            ALL: 0xFFFFFFFF // All flags
         }
 
     });
@@ -54964,8 +54956,7 @@ define('xblox/model/Block',[
             }
             return res;
         },
-        postCreate: function () {
-        },
+        postCreate: function () {},
         /**
          *
          * @param clz
@@ -55009,13 +55000,12 @@ define('xblox/model/Block',[
             }
             return null;
         },
-        pause: function () {
-        },
+        pause: function () {},
         mergeNewModule: function (source) {
             for (var i in source) {
                 var o = source[i];
                 if (o && _.isFunction(o)) {
-                    this[i] = o;//swap
+                    this[i] = o; //swap
                 }
             }
         },
@@ -55035,8 +55025,7 @@ define('xblox/model/Block',[
                 return false;
             }
             var parent = item.getParent();
-            if (parent) {
-            } else {
+            if (parent) {} else {
                 var _next = item.next(null, 1) || item.next(null, -1);
                 if (_next) {
                     item.group = null;
@@ -55155,6 +55144,7 @@ define('xblox/model/Block',[
         },
         next: function (items, dir) {
             items = items || this._store.storage.fullData;
+
             function _next(item, items, dir, step, _dstIndex) {
                 var start = item.indexOf(items, item);
                 var upperItem = items[start + (dir * step)];
@@ -55402,7 +55392,7 @@ define('xblox/model/Block',[
             if (settings.override && settings.override.args) {
                 _inArgs = settings.override.args;
             }
-            if (_inArgs) {//direct json
+            if (_inArgs) { //direct json
                 result = utils.getJson(_inArgs, null, false);
             }
             //try comma separated list
@@ -55419,13 +55409,13 @@ define('xblox/model/Block',[
                             if (splitted[i] === 'true' || splitted[i] === 'false') {
                                 result.push(utils.toBoolean(splitted[i]));
                             } else {
-                                result.push(splitted[i]);//whatever
+                                result.push(splitted[i]); //whatever
                             }
                         }
                     }
                     return result;
                 } else {
-                    result = [this._getArg(_inArgs)];//single argument
+                    result = [this._getArg(_inArgs)]; //single argument
                 }
             }
 
@@ -55515,7 +55505,7 @@ define('xblox/model/Block',[
                 if (this.scope) {
                     block = this.scope.registerBlock(block, publish);
                 }
-                if(has('debug')) {
+                if (has('debug')) {
                     if (block.id === this.id) {
                         console.error('adding new block to our self');
                         debugger;
@@ -55587,7 +55577,9 @@ define('xblox/model/Block',[
          * @return  list of commands to send
          */
         _solve: function (scope, settings) {
-            settings = settings || {highlight: false};
+            settings = settings || {
+                highlight: false
+            };
             var ret = [];
             for (var n = 0; n < this.items.length; n++) {
                 var block = this.items[n];
@@ -55602,7 +55594,9 @@ define('xblox/model/Block',[
          * @return  list of commands to send
          */
         solve: function (scope, settings) {
-            settings = settings || {highlight: false};
+            settings = settings || {
+                highlight: false
+            };
             var ret = [];
             for (var n = 0; n < this.items.length; n++) {
                 var block = this.items[n];
@@ -55623,7 +55617,8 @@ define('xblox/model/Block',[
             settings = this._lastRunSettings || settings;
             this._currentIndex = 0;
             this._return = [];
-            var ret = [], items = this[this._getContainer()];
+            var ret = [],
+                items = this[this._getContainer()];
 
             if (items.length) {
                 var res = this.runFrom(items, 0, settings);
@@ -55637,7 +55632,7 @@ define('xblox/model/Block',[
         runFrom: function (blocks, index, settings) {
             var thiz = this;
             blocks = blocks || this.items;
-            if(!this._return){
+            if (!this._return) {
                 this._return = [];
             }
             var onFinishBlock = function (block, results) {
@@ -55670,14 +55665,11 @@ define('xblox/model/Block',[
             return this._return;
         },
         serializeField: function (name) {
-            return this.ignoreSerialize.indexOf(name) == -1;//is not in our array
+            return this.ignoreSerialize.indexOf(name) == -1; //is not in our array
         },
-        onLoad: function () {
-        },
-        activate: function () {
-        },
-        deactivate: function () {
-        },
+        onLoad: function () {},
+        activate: function () {},
+        deactivate: function () {},
         _get: function (what) {
             if (this.override) {
                 return (what in this.override ? this.override[what] : this[what]);
@@ -55693,6 +55685,7 @@ define('xblox/model/Block',[
             this.stop(true);
             this.reset();
             this._destroyed = true;
+            delete this.virtual;
         },
         reset: function () {
             this._lastSettings = {};
@@ -55714,12 +55707,9 @@ define('xblox/model/Block',[
     //that's really weird: using dynamic base classes nor Block.extend doesnt work.
     //however, move dojo complete out of blox
     if (!Block.prototype.onSuccess) {
-        Block.prototype.onSuccess = function () {
-        };
-        Block.prototype.onRun = function () {
-        };
-        Block.prototype.onFailed = function () {
-        };
+        Block.prototype.onSuccess = function () {};
+        Block.prototype.onRun = function () {};
+        Block.prototype.onFailed = function () {};
     }
     dcl.chainAfter(Block, 'stop');
     dcl.chainAfter(Block, 'destroy');
