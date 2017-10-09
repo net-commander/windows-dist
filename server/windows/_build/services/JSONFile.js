@@ -50,6 +50,10 @@ class JSONFileService extends Base_1.BaseService {
     set(section, path = '.', searchQuery = null, value, decodeValue = true) {
         let data = this.readConfig(this._getConfigPath(arguments));
         const dataAt = dotProp.get(data, this.root + path + section);
+        if (!_.find(dataAt, searchQuery)) {
+            const at = dotProp.get(data, this.root + path + section);
+            at.push(searchQuery);
+        }
         dataAt && _.extend(_.find(dataAt, searchQuery), value);
         return data;
     }
