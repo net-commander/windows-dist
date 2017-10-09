@@ -26857,7 +26857,7 @@ define('xdocker/Docker2',[
                 });
                 panel._on(types.DOCKER.EVENT.SELECT, function (what) {
                     panel.silent !== true && select(true, 'select');
-
+                    docker._emit(types.DOCKER.EVENT.SELECT, panel);
                 });
 
                 panel._on(types.DOCKER.EVENT.MOVE_STARTED, function () {
