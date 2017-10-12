@@ -69043,7 +69043,7 @@ define('xlang/i18',['xdojo/declare','xide/utils/ObjectUtils','dcl/dcl'], functio
             'errReplace': 'Unable to replace "$1".',
             'errSave': 'Unable to save "$1".',
             'errCopy': 'Unable to copy "$1".',
-            'errMove': 'Unable to move "$1".',
+            //'errMove': 'Unable to move "$1".',
             'errCopyInItself': 'Unable to copy "$1" into itself.',
             'errRm': 'Unable to remove "$1".',
             'errRmSrc': 'Unable remove source file(s).',
