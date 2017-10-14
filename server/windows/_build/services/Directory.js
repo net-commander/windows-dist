@@ -430,6 +430,15 @@ class DirectoryService extends Base_1.BaseService {
             // v1 VFS
             try {
                 const root = this.resolvePath(mount, '', this._getRequest(args));
+                // back compat : support filenames
+                const abs = this.resolvePath(mount, path, this._getRequest(args));
+                try {
+                    const stat = fs.lstatSync(abs);
+                    if (stat.isFile()) {
+                        path = _path.dirname(path);
+                    }
+                }
+                catch (e) { }
                 vfs.readdir(path, {}, (err, meta) => {
                     if (err) {
                         console.error('error reading directory ' + path);
@@ -439,10 +448,15 @@ class DirectoryService extends Base_1.BaseService {
                         reject('something wrong');
                     }
                     const nodes = [];
-                    meta.stream.on('data', (data) => nodes.push(self.mapNode(data, mount, root)));
-                    meta.stream.on('end', () => {
-                        resolve(nodes);
-                    });
+                    try {
+                        meta.stream.on('data', (data) => nodes.push(self.mapNode(data, mount, root)));
+                        meta.stream.on('end', () => {
+                            resolve(nodes);
+                        });
+                    }
+                    catch (e) {
+                        reject(e);
+                    }
                 });
             }
             catch (e) {
