@@ -10965,7 +10965,7 @@ define('xide/mixins/EventedMixin',[
     'xide/factory'
 ], function (array, dcl, declare, has, types, factory) {
 
-    var toString = Object.prototype.toString;
+    const toString = Object.prototype.toString;
     /**
      * Adds convenient functions for events to the consumer, generalizing dojo.subscribe/publish or dojo.on.
      * This mixin can be applied to anything dijit/_Widget based or custom functional classes(needs to call destroy!)
@@ -10974,7 +10974,7 @@ define('xide/mixins/EventedMixin',[
      *
      * @class module:xide/mixins/EventedMixin
      */
-    var Impl = {
+    const Impl = {
 
         _didRegisterSubscribers: false,
 
@@ -11081,20 +11081,19 @@ define('xide/mixins/EventedMixin',[
             if (!this.__events) {
                 this.__events = {};
             }
-            var self = this,
-                events = factory.subscribe(keys, cb, to || self, self.filterSubscribe.bind(self)),
-                container = self.__events;
+            const self = this;
+            const events = factory.subscribe(keys, cb, to || self, self.filterSubscribe.bind(self));
+            const container = self.__events;
 
             //replay on local tracking map
-            for (var i = 0, l = events.length; i < l; i++) {
-                var _type = events[i].type;
+            for (let i = 0, l = events.length; i < l; i++) {
+                const _type = events[i].type;
                 if (!container[_type]) {
                     container[_type] = [];
                 }
                 container[_type].push(events[i]);
             }
             return events;
-
         },
         /**
          * Publish an event (uses dojo.publish)
@@ -11109,7 +11108,7 @@ define('xide/mixins/EventedMixin',[
          *
          */
         publish: function (keys, data, from, delay) {
-            var self = this;
+            const self = this;
             if (delay > 0) {
                 setTimeout(function () {
                     factory.publish(keys, data, from || self, self.filterPublish.bind(self));
@@ -11132,7 +11131,7 @@ define('xide/mixins/EventedMixin',[
          */
         _destroyHandles: function () {
             if (this.__events) {
-                for (var type in this.__events) {
+                for (const type in this.__events) {
                     array.forEach(this.__events[type], function (item) {
                         if (item && item.remove) {
                             item.remove();
@@ -11167,7 +11166,7 @@ define('xide/mixins/EventedMixin',[
          * ```
          */
         once: function (type, listener) {
-            var self = this;
+            const self = this;
 
             function wrapped() {
                 self.unsubscribe(type, listener);
@@ -11210,7 +11209,7 @@ define('xide/mixins/EventedMixin',[
 
             if (!this._didRegisterSubscribers && this.subscribers) {
                 for (var i = 0; i < this.subscribers.length; i++) {
-                    var subscriber = this.subscribers[i];
+                    const subscriber = this.subscribers[i];
                     this._on(subscriber.event, subscriber.handler, subscriber.owner);
                 }
                 this._didRegisterSubscribers = true;
@@ -11219,13 +11218,13 @@ define('xide/mixins/EventedMixin',[
             if (arguments[2] === true)
                 throw new Error("Please use emit.sticky() instead of passing sticky=true for event: " + type);
 
-            var handler = this.__events[type],
-                eventArgs = arguments.length > 1 ? arguments[2] : null;
+            const handler = this.__events[type];
+            const eventArgs = arguments.length > 1 ? arguments[2] : null;
 
             if (!handler)
                 return;
 
-            var returnValue;
+            let returnValue;
 
             if (typeof handler == 'function') {
                 switch (arguments.length) {
@@ -11245,11 +11244,12 @@ define('xide/mixins/EventedMixin',[
 
             else if (_.isArray(handler)) {
                 var args = Array.prototype.slice.call(arguments, 1);
-                var listeners = handler.slice(), temp;
-                var _listener = null;
-                var who = null;
+                const listeners = handler.slice();
+                let temp;
+                let _listener = null;
+                let who = null;
 
-                for (var i = 0, l = listeners.length; i < l; i++) {
+                for (let i = 0, l = listeners.length; i < l; i++) {
 
                     _listener = listeners[i];
                     who = _listener.owner || this;
@@ -11302,11 +11302,11 @@ define('xide/mixins/EventedMixin',[
                 this.__events[type] = [];
                 return this;
             }
-            var list = this.__events[type];
+            const list = this.__events[type];
             if (_.isArray(list)) {
-                var _remove = [];
+                const _remove = [];
                 _.each(list, function (handle, a, b) {
-                    var which = handle.handler == listener ? handle.handler : handle.handler.listener == listener ? handle.handler.listener : null;
+                    const which = handle.handler == listener ? handle.handler : handle.handler.listener == listener ? handle.handler.listener : null;
                     if (which) {
                         _remove.push(handle);
                     }
@@ -11371,9 +11371,7 @@ define('xide/mixins/EventedMixin',[
          * @returns {{handler: *, owner: (exports|module.exports|module:xide/mixins/EventedMixin), type: *, element: (*|jQuery|HTMLElement), selector: *, remove: _handle.remove}}
          */
         __on: function (element, type, selector, handler) {
-
-            var _handler = handler;
-
+            const _handler = handler;
             if (typeof selector == 'function' && !handler) {
                 //no selector given
                 handler = selector;
@@ -11387,8 +11385,8 @@ define('xide/mixins/EventedMixin',[
             if (!this.__events[type]) {
                 this.__events[type] = [];
             }
-            var eventList = this.__events[type];
-            var _handle = {
+            const eventList = this.__events[type];
+            const _handle = {
                 handler: _handler,
                 owner: this,
                 type: type,
@@ -11419,9 +11417,7 @@ define('xide/mixins/EventedMixin',[
                     this.__events[type] = [];
                 }
 
-                var eventList = this.__events[type];
-
-
+                const eventList = this.__events[type];
                 if (!eventList) {
                     // Optimize the case of one listener. Don't need the extra array object.
                     this.__events[type] = listener;
@@ -11432,7 +11428,7 @@ define('xide/mixins/EventedMixin',[
                         return console.warn("adding same listener twice", type);
 
                     // If we've already got an array, just append.
-                    var _handle = {
+                    const _handle = {
                         handler: listener,
                         owner: owner || this,
                         type: type,
@@ -11455,7 +11451,7 @@ define('xide/mixins/EventedMixin',[
     };
 
     //package via declare
-    var Module = declare(null, Impl);
+    const Module = declare(null, Impl);
     //static access to Impl.
     Module.Impl = Impl;
     Module.dcl = dcl(null, Impl);
@@ -38397,7 +38393,7 @@ define('xide/factory/Clients',[
     'xide/client/WebSocket'
 ], function (factory,utils,types,WebSocket)
 {
-    var debug = false;
+    const debug = false;
     /**
      * Low Level Web-Socket-Client factory method
      * @param ctrArgs
@@ -38415,11 +38411,11 @@ define('xide/factory/Clients',[
      * @returns {xide/client/WebSocket} | null
      */
     factory.createClientWithStore=function(store,serviceName,ctrArgs,clientClass){
-
-        var service = utils.queryStoreEx(store,{
+        const service = utils.queryStoreEx(store,{
                 name:serviceName
-            },true,true),
-            _ctorArgs = {};
+            },true,true);
+
+        const _ctorArgs = {};
 
         utils.mixin(_ctorArgs,ctrArgs);
 
@@ -38427,24 +38423,14 @@ define('xide/factory/Clients',[
             console.error('create client with : failed, no such service :  ' + serviceName );
             return;
         }
-
-        //service=service[0];
-
-        /*
-        if(!service.info && service.status==types.SERVICE_STATUS.OFFLINE){
-            console.error('create client with store : failed! Service has no info for '  + serviceName);
-            return;
-        }
-        */
         if(service.status!==types.SERVICE_STATUS.ONLINE){
             debug && console.error('create client with store : failed! Service ' +  serviceName + ' is not online ');
-            //return;
         }
 
-        var host = 'http://' + service.host,
-            port = service.port,
-            channel='',
-            _clientProto = clientClass || WebSocket;
+        let host = 'http://' + service.host;
+        let port = service.port;
+        const channel='';
+        const _clientProto = clientClass || WebSocket;
 
         if(service.info){
             host=service.info.host;
@@ -38452,7 +38438,7 @@ define('xide/factory/Clients',[
         }
 
         try{
-            var client = new _clientProto(_ctorArgs);
+            const client = new _clientProto(_ctorArgs);
             utils.mixin(client,_ctorArgs);
             client.init({
                 options:{
@@ -38485,7 +38471,7 @@ define('xide/client/WebSocket',[
     'xide/client/ClientBase',
     'xdojo/has'
 ], function (dcl, utils, _logMixin, ClientBase,has) {
-    var debug = false;
+    const debug = false;
     return dcl([ClientBase, _logMixin], {
         declaredClass:"xide.client.WebSocket",
         _socket: null,
@@ -38505,9 +38491,9 @@ define('xide/client/WebSocket',[
         },
         connect_sock_js: function (_options) {
             this.options = utils.mixin(this.options, _options);
-            var host = this.options.host;
+            const host = this.options.host;
             //host = host.replace('http://','wss://');
-            var port = this.options.port;
+            const port = this.options.port;
             if (this.options.debug) {
                 this.initLogger(this.options.debug);
             }
@@ -38516,7 +38502,7 @@ define('xide/client/WebSocket',[
                 return;
             }
             debug && console.log("Connecting to " + host + ':' + port, "socket_client");
-            var protocol = [
+            const protocol = [
                 'websocket',
                 'xdr-streaming',
                 'xhr-streaming',
@@ -38528,15 +38514,15 @@ define('xide/client/WebSocket',[
                 'jsonp-polling'
             ];
 
-            var options = {
+            const options = {
                 debug: debug,
                 devel: true,
                 noCredentials:true,
                 nullOrigin:true
             };
             options.transports = protocol;
-            var sock = new SockJS(host + ":" + port, null, options);
-            var thiz = this;
+            const sock = new SockJS(host + ":" + port, null, options);
+            const thiz = this;
 
             sock.onopen = function () {
                 thiz.onConnected();
@@ -38569,9 +38555,9 @@ define('xide/client/WebSocket',[
         },
         connect_socket_io: function (_options) {
             this.options = utils.mixin(this.options, _options);
-            var host = this.options.host;
+            const host = this.options.host;
             //host = host.replace('http://','wss://');
-            var port = this.options.port;
+            const port = this.options.port;
             if (this.options.debug) {
                 this.initLogger(this.options.debug);
             }
@@ -38580,7 +38566,7 @@ define('xide/client/WebSocket',[
                 return;
             }
             debug && console.log("Connecting to " + host + ':' + port, "socket_client");
-            var protocol = [
+            const protocol = [
                 'websocket',
                 'xdr-streaming',
                 'xhr-streaming',
@@ -38592,15 +38578,15 @@ define('xide/client/WebSocket',[
                 'jsonp-polling'
             ];
 
-            var options = {
+            const options = {
                 debug: debug,
                 devel: true,
                 noCredentials:true,
                 nullOrigin:true
             };
             options.transports = protocol;
-            var sock = new SockJS(host + ":" + port, null, options);
-            var thiz = this;
+            const sock = new SockJS(host + ":" + port, null, options);
+            const thiz = this;
 
             sock.onopen = function () {
                 thiz.onConnected();
@@ -38714,8 +38700,8 @@ define('xide/client/WebSocket',[
         },
         emit: function (signal, dataIn, tag) {
             dataIn.tag = tag || 'notag';
-            var data = JSON.stringify(dataIn);
-            var res = this._socket.send(data);
+            const data = JSON.stringify(dataIn);
+            const res = this._socket.send(data);
             debug && console.log('send ',res);
         },
 
@@ -38731,7 +38717,7 @@ define('xide/client/ClientBase',[
     'dojo/_base/unload',
     'xide/utils'
 ], function (dcl,EventedMixin,Base, unload,utils) {
-    var Module = dcl([Base.dcl,EventedMixin.dcl], {
+    const Module = dcl([Base.dcl,EventedMixin.dcl], {
         declaredClass:"xide.client.ClientBase",
         options: null,
         _socket: null,
@@ -38855,7 +38841,7 @@ define('xide/model/Base',[
     "xide/utils"
 ], function (dcl,declare,utils) {
     
-    var Implementation = {
+    const Implementation = {
         declaredClass:"xide/model/Base",
         /**
          * Mixin constructor arguments into this.
@@ -38889,7 +38875,7 @@ define('xide/model/Base',[
         }
     };
 
-    var Module = declare("xide/model/Base",null,Implementation);
+    const Module = declare("xide/model/Base",null,Implementation);
     Module.dcl = dcl(null,Implementation);
     return Module;
 });
@@ -38967,7 +38953,7 @@ define('xide/data/Memory',[
          * @returns {*}
          */
         putSync:function(item){
-            var self = this;
+            const self = this;
             item = this.inherited(arguments);
             item && !item._store && Object.defineProperty(item, '_store', {
                 get: function () {
@@ -38995,41 +38981,41 @@ define('xide/data/_Base',[
      * @extends module:xide/mixins/EventedMixin
      * @lends module:dstore/Memory
      */
-    return declare("xide/data/_Base",EventedMixin, {
-        __all:null,
-        allowCache:true,
-        _find:function (query) {
-            var result = lodash.filter(this.data,query);
-            if(lodash.isArray(result)){
+    return declare("xide/data/_Base", EventedMixin, {
+        __all: null,
+        allowCache: true,
+        _find: function (query) {
+            const result = lodash.filter(this.data, query);
+            if (lodash.isArray(result)) {
                 return result;
-            }else if(lodash.isObject(result)){
+            } else if (lodash.isObject(result)) {
                 return [result];
             }
             return [];
         },
-        notify:function(){
+        notify: function () {
 
         },
-        _query:function(query){
-            var dfd = new Deferred();
-            var collection = this.filter(query);
+        _query: function (query) {
+            const dfd = new Deferred();
+            const collection = this.filter(query);
             when(collection.fetch(), function (data) {
                 dfd.resolve(data);
             });
             return dfd;
         },
         constructor: function () {
-            var store = this;
+            const store = this;
             if (store._getQuerierFactory('filter') || store._getQuerierFactory('sort')) {
 
                 this.queryEngine = function (query, options) {
                     options = options || {};
 
-                    var filterQuerierFactory = store._getQuerierFactory('filter');
-                    var filter = filterQuerierFactory ? filterQuerierFactory(query) : passthrough;
+                    const filterQuerierFactory = store._getQuerierFactory('filter');
+                    const filter = filterQuerierFactory ? filterQuerierFactory(query) : passthrough;
 
-                    var sortQuerierFactory = store._getQuerierFactory('sort');
-                    var sort = passthrough;
+                    const sortQuerierFactory = store._getQuerierFactory('sort');
+                    let sort = passthrough;
                     if (sortQuerierFactory) {
                         sort = sortQuerierFactory(arrayUtil.map(options.sort, function (criteria) {
                             return {
@@ -39039,13 +39025,13 @@ define('xide/data/_Base',[
                         }));
                     }
 
-                    var range = passthrough;
+                    let range = passthrough;
                     if (!isNaN(options.start) || !isNaN(options.count)) {
                         range = function (data) {
-                            var start = options.start || 0,
-                                count = options.count || Infinity;
+                            const start = options.start || 0;
+                            const count = options.count || Infinity;
 
-                            var results = data.slice(start, start + count);
+                            const results = data.slice(start, start + count);
                             results.total = data.length;
                             return results;
                         };
@@ -39056,15 +39042,15 @@ define('xide/data/_Base',[
                     };
                 };
             }
-            var objectStore = this;
+            const objectStore = this;
             // we call notify on events to mimic the old dojo/store/Trackable
             store.on('add,update,delete', function (event) {
-                var type = event.type;
-                var target = event.target;
+                const type = event.type;
+                const target = event.target;
                 objectStore.notify(
                     (type === 'add' || type === 'update') ? target : undefined,
                     (type === 'delete' || type === 'update') ?
-                        ('id' in event ? event.id : store.getIdentity(target)) : undefined);
+                    ('id' in event ? event.id : store.getIdentity(target)) : undefined);
             });
         },
         /**
@@ -39072,37 +39058,39 @@ define('xide/data/_Base',[
          * Then, delete query cache.
          * @returns {*}
          */
-        destroy:function(){
-            this._emit('destroy',this);
-            _.each(this.query(), function (item) {
+        destroy: function () {
+            this._emit('destroy', this);
+            this.query().forEach((item) => {
                 if (item.destroyOnRemove === true) {
                     item.destroy && item.destroy();
                 }
             });
             delete this._queryCache;
-            this._queryCache=null;
+            this._queryCache = null;
         },
-        refreshItem:function(item,property){
-            this.emit('update',{
+        refreshItem: function (item, property) {
+            this.emit('update', {
                 target: item,
-                property:property
+                property: property
             });
         },
-        query: function (query, options,allowCache) {
+        query: function (query, options, allowCache) {
             //no query, return all
-            if(lodash.isEmpty(query)){
-                var self = this;
-                return _.map(this.data,function(item){
+            if (lodash.isEmpty(query)) {
+                const self = this;
+                return _.map(this.data, function (item) {
                     return self.getSync(item[self.idProperty]);
-                },this);
-            }else if(!_.some(query,function (value) { return value == null})){
+                }, this);
+            } else if (!_.some(query, function (value) {
+                    return value == null
+                })) {
                 //no empty props in query, return lodash.filter
                 //return this._find(query);
             }
 
 
-            var hash = query ? MD5(JSON.stringify(query),1) : null;
-            if(has('xcf-ui')) {
+            const hash = query ? MD5(JSON.stringify(query), 1) : null;
+            if (has('xcf-ui')) {
                 if (hash && !has('host-node') && allowCache !== false) {
                     !this._queryCache && (this._queryCache = {});
                     if (this._queryCache[hash]) {
@@ -39136,14 +39124,14 @@ define('xide/data/_Base',[
             options = options || {};
             query = query || {};
 
-            var results = this.filter(query);
-            var queryResults;
+            let results = this.filter(query);
+            let queryResults;
 
             // Apply sorting
-            var sort = options.sort;
+            const sort = options.sort;
             if (sort) {
                 if (Object.prototype.toString.call(sort) === '[object Array]') {
-                    var sortOptions;
+                    let sortOptions;
                     while ((sortOptions = sort.pop())) {
                         results = results.sort(sortOptions.attribute, sortOptions.descending);
                     }
@@ -39152,8 +39140,8 @@ define('xide/data/_Base',[
                 }
             }
 
-            var tracked;
-            var _track = false;
+            let tracked;
+            const _track = false;
             if (_track && results.track && !results.tracking) {
                 // if it is trackable, always track, so that observe can
                 // work properly.
@@ -39162,7 +39150,7 @@ define('xide/data/_Base',[
             }
             if ('start' in options) {
                 // Apply a range
-                var start = options.start || 0;
+                const start = options.start || 0;
                 // object stores support sync results, so try that if available
                 queryResults = results[results.fetchRangeSync ? 'fetchRangeSync' : 'fetchRange']({
                     start: start,
@@ -39180,18 +39168,18 @@ define('xide/data/_Base',[
                     return value;
                 }
 
-                var addHandle = results.on('add', function (event) {
+                const addHandle = results.on('add', function (event) {
                     callback(event.target, -1, convertUndefined(event.index));
                 });
-                var updateHandle = results.on('update', function (event) {
+                const updateHandle = results.on('update', function (event) {
                     if (includeObjectUpdates || event.previousIndex !== event.index || !isFinite(event.index)) {
                         callback(event.target, convertUndefined(event.previousIndex), convertUndefined(event.index));
                     }
                 });
-                var removeHandle = results.on('delete', function (event) {
+                const removeHandle = results.on('delete', function (event) {
                     callback(event.target, convertUndefined(event.previousIndex), -1);
                 });
-                var handle = {
+                const handle = {
                     remove: function () {
                         addHandle.remove();
                         updateHandle.remove();
@@ -39201,22 +39189,23 @@ define('xide/data/_Base',[
                 handle.cancel = handle.remove;
                 return handle;
             };
-            if(!has('xcf-ui') && hash && !has('host-node') && allowCache!==false){
-                !this._queryCache && (this._queryCache={});
-                this._queryCache[hash]=queryResults;
+            if (!has('xcf-ui') && hash && !has('host-node') && allowCache !== false) {
+                !this._queryCache && (this._queryCache = {});
+                this._queryCache[hash] = queryResults;
             }
             return queryResults;
         }
     });
 });;
 /** @module xide/lodash **/
-define('xide/lodash',[],function(){
-
+define('xide/lodash',[],function(app){
     /**
      * temp. wanna be shim for lodash til dojo-2/loader lands here
      */
     if(typeof _ !=="undefined"){
         return _;
+    }else if(app && app._){
+        return app._;
     }else{
         console.error('error loading lodash',global['_']);
     }
@@ -39234,7 +39223,7 @@ define('xide/encoding/MD5',["./_base"], function(base) {
  *	Dojo port by Tom Trenka
  */
 
-	var chrsz=8;
+	const chrsz=8;
 
 	//	MD5 rounds functions
 	function R(n,c){ return (n<<c)|(n>>>(32-c)); }
@@ -39248,15 +39237,15 @@ define('xide/encoding/MD5',["./_base"], function(base) {
 	function core(x,len){
 		x[len>>5]|=0x80<<((len)%32);
 		x[(((len+64)>>>9)<<4)+14]=len;
-		var a= 1732584193;
-		var b=-271733879;
-		var c=-1732584194;
-		var d= 271733878;
-		for(var i=0; i<x.length; i+=16){
-			var olda=a;
-			var oldb=b;
-			var oldc=c;
-			var oldd=d;
+		let a= 1732584193;
+		let b=-271733879;
+		let c=-1732584194;
+		let d= 271733878;
+		for(let i=0; i<x.length; i+=16){
+			const olda=a;
+			const oldb=b;
+			const oldc=c;
+			const oldd=d;
 
 			a=FF(a,b,c,d,x[i+ 0],7 ,-680876936);
 			d=FF(d,a,b,c,x[i+ 1],12,-389564586);
@@ -39335,25 +39324,26 @@ define('xide/encoding/MD5',["./_base"], function(base) {
 	}
 
 	function hmac(data, key){
-		var wa=base.stringToWord(key);
-		if(wa.length>16){
+        let wa=base.stringToWord(key);
+        if(wa.length>16){
 			wa=core(wa, key.length*chrsz);
 		}
-		var l=[], r=[];
-		for(var i=0; i<16; i++){
+        const l=[];
+        const r=[];
+        for(let i=0; i<16; i++){
 			l[i]=wa[i]^0x36363636;
 			r[i]=wa[i]^0x5c5c5c5c;
 		}
-		var h=core(l.concat(base.stringToWord(data)), 512+data.length*chrsz);
-		return core(r.concat(h), 640);
-	}
+        const h=core(l.concat(base.stringToWord(data)), 512+data.length*chrsz);
+        return core(r.concat(h), 640);
+    }
 
 	//	public function
 	base.MD5=function(/* string */data, /* dojox.encoding.digests.outputTypes? */outputType){
 		// summary:
 		//		computes the digest of data, and returns the result according to type outputType
-		var out=outputType || base.outputTypes.Base64;
-		var wa=core(base.stringToWord(data), data.length*chrsz);
+		const out=outputType || base.outputTypes.Base64;
+		const wa=core(base.stringToWord(data), data.length*chrsz);
 		switch(out){
 			case base.outputTypes.Raw:{
 				return wa;	//	word[]
@@ -39374,8 +39364,8 @@ define('xide/encoding/MD5',["./_base"], function(base) {
 	base.MD5._hmac=function(/* string */data, /* string */key, /* dojox.encoding.digests.outputTypes? */outputType){
 		// summary:
 		//		computes the digest of data, and returns the result according to type outputType
-		var out=outputType || base.outputTypes.Base64;
-		var wa=hmac(data, key);
+		const out=outputType || base.outputTypes.Base64;
+		const wa=hmac(data, key);
 		switch(out){
 			case base.outputTypes.Raw:{
 				return wa;	//	word[]
@@ -39401,7 +39391,7 @@ define('xide/encoding/_base',[
 ], function(lang){
 
 	//	These functions are 32-bit word-based.  See _sha-64 for 64-bit word ops.
-	var base = {};//lang.getObject("dojox.encoding.digests", true);
+	const base = {};//lang.getObject("dojox.encoding.digests", true);
 
 	base.outputTypes = {
 		// summary:
@@ -39416,22 +39406,22 @@ define('xide/encoding/_base',[
 	base.addWords = function ( /* word */ a, /* word */ b) {
 		// summary:
 		//		add a pair of words together with rollover
-		var l = (a & 0xFFFF) + (b & 0xFFFF);
-		var m = (a >> 16) + (b >> 16) + (l >> 16);
+		const l = (a & 0xFFFF) + (b & 0xFFFF);
+		const m = (a >> 16) + (b >> 16) + (l >> 16);
 		return (m << 16) | (l & 0xFFFF); //	word
 	};
 
 	//	word-based conversion method, for efficiency sake;
 	//	most digests operate on words, and this should be faster
 	//	than the encoding version (which works on bytes).
-	var chrsz = 8; //	16 for Unicode
-	var mask = (1 << chrsz) - 1;
+	const chrsz = 8; //	16 for Unicode
+	const mask = (1 << chrsz) - 1;
 
 	base.stringToWord = function ( /* string */ s) {
 		// summary:
 		//		convert a string to a word array
-		var wa = [];
-		for (var i = 0, l = s.length * chrsz; i < l; i += chrsz) {
+		const wa = [];
+		for (let i = 0, l = s.length * chrsz; i < l; i += chrsz) {
 			wa[i >> 5] |= (s.charCodeAt(i / chrsz) & mask) << (i % 32);
 		}
 		return wa; //	word[]
@@ -39440,34 +39430,36 @@ define('xide/encoding/_base',[
 	base.wordToString = function ( /* word[] */ wa) {
 		// summary:
 		//		convert an array of words to a string
-		var s = [];
-		for (var i = 0, l = wa.length * 32; i < l; i += chrsz) {
+		const s = [];
+		for (let i = 0, l = wa.length * 32; i < l; i += chrsz) {
 			s.push(String.fromCharCode((wa[i >> 5] >>> (i % 32)) & mask));
 		}
 		return s.join(""); //	string
 	};
 
 	base.wordToHex = function ( /* word[] */ wa) {
-		// summary:
-		//		convert an array of words to a hex tab
-		var h = "0123456789abcdef",
-			s = [];
-		for (var i = 0, l = wa.length * 4; i < l; i++) {
+        // summary:
+        //		convert an array of words to a hex tab
+        const h = "0123456789abcdef";
+
+        const s = [];
+        for (let i = 0, l = wa.length * 4; i < l; i++) {
 			s.push(h.charAt((wa[i >> 2] >> ((i % 4) * 8 + 4)) & 0xF) + h.charAt((wa[i >> 2] >> ((i % 4) * 8)) & 0xF));
 		}
-		return s.join(""); //	string
-	};
+        return s.join(""); //	string
+    };
 
 	base.wordToBase64 = function ( /* word[] */ wa) {
-		// summary:
-		//		convert an array of words to base64 encoding, should be more efficient
-		//		than using dojox.encoding.base64
-		var p = "=",
-			tab = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/",
-			s = [];
-		for (var i = 0, l = wa.length * 4; i < l; i += 3) {
-			var t = (((wa[i >> 2] >> 8 * (i % 4)) & 0xFF) << 16) | (((wa[i + 1 >> 2] >> 8 * ((i + 1) % 4)) & 0xFF) << 8) | ((wa[i + 2 >> 2] >> 8 * ((i + 2) % 4)) & 0xFF);
-			for (var j = 0; j < 4; j++) {
+        // summary:
+        //		convert an array of words to base64 encoding, should be more efficient
+        //		than using dojox.encoding.base64
+        const p = "=";
+
+        const tab = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+        const s = [];
+        for (let i = 0, l = wa.length * 4; i < l; i += 3) {
+			const t = (((wa[i >> 2] >> 8 * (i % 4)) & 0xFF) << 16) | (((wa[i + 1 >> 2] >> 8 * ((i + 1) % 4)) & 0xFF) << 8) | ((wa[i + 2 >> 2] >> 8 * ((i + 2) % 4)) & 0xFF);
+			for (let j = 0; j < 4; j++) {
 				if (i * 8 + j * 6 > wa.length * 32) {
 					s.push(p);
 				} else {
@@ -39475,16 +39467,17 @@ define('xide/encoding/_base',[
 				}
 			}
 		}
-		return s.join(""); //	string
-	};
+        return s.join(""); //	string
+    };
 
 	//	convert to UTF-8
 	base.stringToUtf8 = function (input) {
-		var output = "";
-		var i = -1;
-		var x, y;
+        let output = "";
+        let i = -1;
+        let x;
+        let y;
 
-		while (++i < input.length) {
+        while (++i < input.length) {
 			x = input.charCodeAt(i);
 			y = i + 1 < input.length ? input.charCodeAt(i + 1) : 0;
 			if (0xD800 <= x && x <= 0xDBFF && 0xDC00 <= y && y <= 0xDFFF) {
@@ -39501,8 +39494,8 @@ define('xide/encoding/_base',[
 			else if (x <= 0x1FFFFF)
 				output += String.fromCharCode(0xF0 | ((x >>> 18) & 0x07), 0x80 | ((x >>> 12) & 0x3F), 0x80 | ((x >>> 6) & 0x3F), 0x80 | (x & 0x3F));
 		}
-		return output;
-	};
+        return output;
+    };
 
 	return base;
 });;
@@ -40606,7 +40599,7 @@ define('xide/manager/BeanManager',[
     /**
      * @class module:xide/manager/BeanManager
      */
-    var Base = dcl(null, {
+    const Base = dcl(null, {
         declaredClass: 'xide.manager.BeanManager',
         beanNamespace: 'beanNS',
         beanName: 'beanName',
@@ -40637,7 +40630,7 @@ define('xide/manager/BeanManager',[
         //
         /////////////////////////////////////////////////////////////////////////////////////
         getMetaValue: function (item, title) {
-            var path = this.itemMetaPath || 'user';
+            const path = this.itemMetaPath || 'user';
             return utils.getCIInputValueByName(utils.getAt(item, path), title);
         },
         /***
@@ -40674,8 +40667,8 @@ define('xide/manager/BeanManager',[
         },
         _onReloaded: function (newModule) {
             this.mergeNewModule(newModule.prototype);
-            var _class = this.declaredClass;
-            var _module = lang.getObject(utils.replaceAll('/', '.', _class)) || lang.getObject(_class);
+            const _class = this.declaredClass;
+            const _module = lang.getObject(utils.replaceAll('/', '.', _class)) || lang.getObject(_class);
             if (_module) {
                 if (_module.prototype && _module.prototype.solve) {
                     this.mergeNewModule(_module.prototype);
@@ -40702,19 +40695,19 @@ define('xide/manager/BeanManager',[
              * @returns {*}
              */
             getViewTarget: function () {
-                var mainView = this.ctx.getApplication().mainView;
+                const mainView = this.ctx.getApplication().mainView;
                 return mainView.getNewAlternateTarget();
             },
             getRightTopTarget: function (clear, open, style, className) {
-                var mainView = this.ctx.getApplication().mainView;
+                const mainView = this.ctx.getApplication().mainView;
                 return mainView.getRightTopTarget(clear, open, style, className);
             },
             getLayoutRightMain: function (clear, open) {
-                var mainView = this.ctx.getApplication().mainView;
+                const mainView = this.ctx.getApplication().mainView;
                 return mainView.getLayoutRightMain(clear, open);
             },
             getRightBottomTarget: function (clear, open) {
-                var mainView = this.ctx.getApplication().mainView;
+                const mainView = this.ctx.getApplication().mainView;
                 return mainView.getRightBottomTarget(clear, open);
             },
             /***
@@ -40731,7 +40724,7 @@ define('xide/manager/BeanManager',[
              * @param item
              */
             getView: function (item, suffix) {
-                var id = this.getViewId(item, suffix);
+                const id = this.getViewId(item, suffix);
                 return registry.byId(id);
             },
             /////////////////////////////////////////////////////////////////////////////////////
@@ -40791,8 +40784,8 @@ define('xide/manager/BeanManager',[
                 return this.callMethodEx(null, 'updateItemMetaData', [scope, driverMetaPath, dataPath, query, value], readyCB, false);
             },
             mergeNewModule: function (source) {
-                for (var i in source) {
-                    var o = source[i];
+                for (const i in source) {
+                    const o = source[i];
                     if (o && _.isFunction(o)) {
                         this[i] = o;
                     }
@@ -40833,7 +40826,7 @@ define('xide/data/TreeMemory',[
         fetchRange: function () {
             // dstore/Memory#fetchRange always uses fetchSync, which we aren't extending,
             // so we need to extend this as well.
-            var results = this._fetchRange(arguments);
+            const results = this._fetchRange(arguments);
             return new QueryResults(results.then(function (data) {
                 return data;
             }), {
@@ -40843,20 +40836,20 @@ define('xide/data/TreeMemory',[
             });
         },
         filter: function (data) {
-            var _res = this.inherited(arguments);
+            const _res = this.inherited(arguments);
             this._state.filter = data;
             return _res;
         },
         _fetchRange: function (kwArgs) {
-            var deferred = new Deferred();
-            var _res = this.fetchRangeSync(kwArgs);
+            const deferred = new Deferred();
+            let _res = this.fetchRangeSync(kwArgs);
             if (this._state.filter) {
                 //the parent query
                 if (this._state.filter['parent']) {
                     var _item = this.getSync(this._state.filter[this.parentProperty]);
                     if (_item) {
                         this.reset();
-                        var _query = {};
+                        const _query = {};
                         if (this.getChildrenSync) {
                             _res = this.getChildrenSync(_item);
                         } else {
@@ -40869,7 +40862,7 @@ define('xide/data/TreeMemory',[
 
                 //the group query
                 if (this._state && this._state.filter && this._state.filter['group']) {
-                    var _items = this.getSync(this._state.filter.parent);
+                    const _items = this.getSync(this._state.filter.parent);
                     if (_item) {
                         this.reset();
                         _res = _item.items;
@@ -40880,18 +40873,20 @@ define('xide/data/TreeMemory',[
             return deferred;
         },
         getChildren: function (object) {
-            var filter = {};
+            const filter = {};
             filter[this.parentProperty] = this.getIdentity(object);
             return this.root.filter(filter);
         },
         children: function (parent) {
-            var all = this.root.data, out = [];
-            for (var i = 0; i < all.length; i++) {
-                var obj = all[i];
+            const all = this.root.data;
+            const out = [];
+
+            all.forEach(obj => {
                 if (obj[this.parentProperty] == parent[this.idProperty]) {
                     out.push(obj);
                 }
-            }
+            });
+
             return all;
         },
         mayHaveChildren: function (parent) {
@@ -40952,7 +40947,7 @@ define('xide/registry',[
 	"dojo/_base/window", // win.body
     "xdojo/has"
 ], function(array, win, has){
-	/**
+    /**
 	 * @TODOS:
 	 * - add namespaces
 	 * - remove window
@@ -40963,8 +40958,10 @@ define('xide/registry',[
 	 * - define widget.id better
 	 * - add search by class
      */
-	var _widgetTypeCtr = {}, hash = {};
-	var registry =  {
+    const _widgetTypeCtr = {};
+
+    const hash = {};
+    const registry =  {
 		// summary:
 		//		Registry of existing widget on page, plus some utility methods.
 
@@ -41031,7 +41028,7 @@ define('xide/registry',[
 		 * @returns {string}
          */
 		getUniqueId: function(widgetType){
-			var id;
+			let id;
 			do{
 				id = widgetType + "_" +
 					(widgetType in _widgetTypeCtr ?
@@ -41047,13 +41044,13 @@ define('xide/registry',[
          * @returns {Array}
          */
 		findWidgets: function(root, skipNode){
-			var outAry = [];
+			const outAry = [];
 			function getChildrenHelper(root){
-				for(var node = root.firstChild; node; node = node.nextSibling){
+				for(let node = root.firstChild; node; node = node.nextSibling){
 					if(node.nodeType == 1){
-						var widgetId = node.getAttribute("widgetId");
+						const widgetId = node.getAttribute("widgetId");
 						if(widgetId){
-							var widget = hash[widgetId];
+							const widget = hash[widgetId];
 							if(widget){	// may be null on page w/multiple dojo's loaded
 								outAry.push(widget);
 							}
@@ -41089,7 +41086,7 @@ define('xide/registry',[
 			//		Returns the widget whose DOM tree contains the specified DOMNode, or null if
 			//		the node is not contained within the DOM tree of any widget
 			while(node){
-				var id = node.nodeType == 1 && node.getAttribute("widgetId");
+				const id = node.nodeType == 1 && node.getAttribute("widgetId");
 				if(id){
 					return hash[id];
 				}
@@ -41102,7 +41099,7 @@ define('xide/registry',[
 		// Actually, this is accessed from WidgetSet back-compatibility code
 		_hash: hash
 	};
-	return registry;
+    return registry;
 });
 ;
 /** @module xide/manager/ServerActionBase */
@@ -41116,13 +41113,13 @@ define('xide/manager/ServerActionBase',[
     'xide/types',
     'xide/utils'
 ], function (dcl, declare, has, Deferred, RPCService, ManagerBase, types, utils) {
-    var Singleton = null;
+    let Singleton = null;
     /**
      * Class dealing with JSON-RPC-2, used by most xide managers
      * @class module:xide.manager.ServerActionBase
      * @augments {module:xide/manager/ManagerBase}
      */
-    var Implementation = {
+    const Implementation = {
         declaredClass: "xide.manager.ServerActionBase",
         serviceObject: null,
         serviceUrl: null,
@@ -41134,7 +41131,6 @@ define('xide/manager/ServerActionBase',[
             checkErrors: true
         },
         base64_encode: function (data) {
-
             // From: http://phpjs.org/functions
             // +   original by: Tyler Akins (http://rumkin.com)
             // +   improved by: Bayron Guevara
@@ -41150,11 +41146,19 @@ define('xide/manager/ServerActionBase',[
             //if (typeof this.window.btoa === 'function') {
             //    return btoa(data);
             //}
-            var b64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
-            var o1, o2, o3, h1, h2, h3, h4, bits, i = 0,
-                ac = 0,
-                enc = '',
-                tmp_arr = [];
+            const b64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
+            let o1;
+            let o2;
+            let o3;
+            let h1;
+            let h2;
+            let h3;
+            let h4;
+            let bits;
+            let i = 0;
+            let ac = 0;
+            let enc = '';
+            const tmp_arr = [];
 
             if (!data) {
                 return data;
@@ -41178,17 +41182,16 @@ define('xide/manager/ServerActionBase',[
 
             enc = tmp_arr.join('');
 
-            var r = data.length % 3;
+            const r = data.length % 3;
 
             return (r ? enc.slice(0, r - 3) : enc) + '==='.slice(r || 3);
-
         },
         runDeferred: function (serviceClassIn, method, args, options, onError) {
             if (this.serviceObject.__init) {
                 if (this.serviceObject.__init.isResolved()) {
                     return this._runDeferred(serviceClassIn, method, args, options, onError);
                 }
-                var dfd = new Deferred();
+                const dfd = new Deferred();
                 this.serviceObject.__init.then(() => {
                     this._runDeferred(serviceClassIn, method, args, options, onError).then(() => {
                         dfd.resolve(arguments);
@@ -41207,8 +41210,8 @@ define('xide/manager/ServerActionBase',[
          * @returns {Deferred}
          */
         _runDeferred: function (serviceClassIn, method, args, options, onError) {
-            var deferred = new Deferred(),
-                promise;
+            const deferred = new Deferred();
+            let promise;
             options = options || this.defaultOptions;
             //check we the RPC method is in the SMD
             this.check();
@@ -41222,12 +41225,13 @@ define('xide/manager/ServerActionBase',[
             this.prepareCall();
 
             //variable shortcuts
-            var service = this.getService(),
-                serviceClass = this.getServiceClass(serviceClassIn),
-                thiz = this;
+            const service = this.getService();
+
+            const serviceClass = this.getServiceClass(serviceClassIn);
+            const thiz = this;
 
             const resolve = function (data, error) {
-                var dfd = deferred;
+                let dfd = deferred;
                 if (options.returnProm) {
                     dfd = promise;
                 }
@@ -41242,7 +41246,7 @@ define('xide/manager/ServerActionBase',[
             promise = service[serviceClass][method](args);
             promise.then(function (res) {
                 res = res || {};
-                var error = res.error || {};
+                const error = res.error || {};
                 //the server has some messages for us
                 if (options.checkMessages) {
                     if (error && error.code == 3) {
@@ -41292,8 +41296,8 @@ define('xide/manager/ServerActionBase',[
             return serviceClassIn || this.serviceClass;
         },
         hasMethod: function (method, serviceClass) {
-            var _service = this.getService(),
-                _serviceClass = serviceClass || this.getServiceClass();
+            const _service = this.getService();
+            const _serviceClass = serviceClass || this.getServiceClass();
 
             return _service &&
                 _serviceClass &&
@@ -41301,10 +41305,10 @@ define('xide/manager/ServerActionBase',[
                 _service[_serviceClass][method] != null;
         },
         findServiceUrl: function (declaredClass) {
-            var config = window['xFileConfig'];
+            const config = window['xFileConfig'];
             if (config && config.mixins) {
-                for (var i = 0; i < config.mixins.length; i++) {
-                    var obj = config.mixins[i];
+                for (let i = 0; i < config.mixins.length; i++) {
+                    const obj = config.mixins[i];
                     if (obj.declaredClass === declaredClass && obj.mixin && obj.mixin.serviceUrl) {
                         return decodeURIComponent(obj.mixin.serviceUrl);
                     }
@@ -41316,12 +41320,12 @@ define('xide/manager/ServerActionBase',[
             this.check();
         },
         _initService: function () {
-            var thiz = this;
+            const thiz = this;
             if (!has('host-browser')) {
                 return false;
             }
             try {
-                var obj = Singleton;
+                const obj = Singleton;
                 if (this.singleton) {
                     if (obj && obj.serviceObject) {
                         this.serviceObject = obj.serviceObject;
@@ -41337,7 +41341,7 @@ define('xide/manager/ServerActionBase',[
                         console.error('have no service url : ' + this.declaredClass);
                         return;
                     }
-                    var url = decodeURIComponent(this.serviceUrl);
+                    const url = decodeURIComponent(this.serviceUrl);
                     this.serviceObject = new RPCService(decodeURIComponent(this.serviceUrl), this.options);
 
                     this.serviceObject.runDeferred = function () {
@@ -41399,7 +41403,7 @@ define('xide/manager/ServerActionBase',[
             return true;
         },
         prepareCall: function () {
-            var params = {};
+            let params = {};
             //Mixin mandatory fields
             if (this.config && this.config.RPC_PARAMS) {
                 params = utils.mixin(params, this.config.RPC_PARAMS.rpcFixedParams);
@@ -41425,7 +41429,7 @@ define('xide/manager/ServerActionBase',[
             }
             //setup signing in serviceObject
             this.prepareCall();
-            var thiz = this;
+            const thiz = this;
             return this.serviceObject[this.getServiceClass(serviceClassIn)][method](args).then(function (res) {
                 try {
                     if (readyCB) {
@@ -41469,7 +41473,7 @@ define('xide/manager/ServerActionBase',[
             args = args || [
                 []
             ];
-            var serviceClass = this.serviceClass;
+            const serviceClass = this.serviceClass;
             try {
                 var thiz = this;
                 //method not listed in SMD
@@ -41485,7 +41489,7 @@ define('xide/manager/ServerActionBase',[
                 /***
                  * Build signature
                  */
-                var params = {};
+                let params = {};
                 params = utils.mixin(params, this.config.RPC_PARAMS.rpcFixedParams);
                 /**
                  * Mixin mandatory fields
@@ -41511,7 +41515,7 @@ define('xide/manager/ServerActionBase',[
                         return;
                     }
                     if (omitError !== false) {
-                        var struct = {
+                        const struct = {
                             message: 'Ok!'
                         };
                         this.publish(types.EVENTS.STATUS, struct, this);
@@ -41526,7 +41530,7 @@ define('xide/manager/ServerActionBase',[
         }
     };
 
-    var Module = dcl(ManagerBase, Implementation);
+    const Module = dcl(ManagerBase, Implementation);
     Module.declare = declare(null, Implementation);
     Singleton = Module;
     return Module;
@@ -41546,7 +41550,7 @@ define('xide/manager/ManagerBase',[
      * @augments module:xide/mixins/EventedMixin
      * @interface
      */
-    var Module =dcl([Base.dcl,EventedMixin.dcl],{
+    const Module =dcl([Base.dcl,EventedMixin.dcl],{
         declaredClass:"xide.manager.ManagerBase",
         /**
          * @type module:xide/manager/ContextBase
@@ -41564,7 +41568,7 @@ define('xide/manager/ManagerBase',[
          * @returns {*|{name, isDir, parentId, path, beanType, scope}|{name: *, isDir: *, parentId: *, path: *, beanType: *, scope: *}}
          */
         _getText: function (url,options) {
-            var result;
+            let result;
             options = utils.mixin({
                 url: url,
                 sync: true,
@@ -41574,7 +41578,7 @@ define('xide/manager/ManagerBase',[
                 }
             },options);
 
-            var def = xhr.get(options);
+            const def = xhr.get(options);
             if(!options.sync){
                 return def;
             }
@@ -44202,13 +44206,13 @@ define('xide/manager/RPCService',[
                     this.publish(types.EVENTS.STATUS, 'Ok');
                 }
             }
-            var struct = {
+            const struct = {
                 error: err
             };
             this.publish(types.EVENTS.ERROR, struct, this);
         },
         prepareCall: function () {
-            var params = {};
+            let params = {};
             if (this.config && this.config.RPC_PARAMS) {
                 params = utils.mixin(params, this.config.RPC_PARAMS.rpcFixedParams);
                 this.extraArgs = params;
@@ -44221,7 +44225,7 @@ define('xide/manager/RPCService',[
             }
         },
         runDeferred: function (serviceClassIn, method, args, options) {
-            var deferred = new Deferred();
+            const deferred = new Deferred();
             options = options || this.defaultOptions;
 
             //check this method exists
@@ -44233,15 +44237,16 @@ define('xide/manager/RPCService',[
             this.prepareCall();
 
             //variable shortcuts
-            var service = this,
-                serviceClass = this.getServiceClass(serviceClassIn),
-                thiz = this;
+            const service = this;
 
-            var resolve = function (data) {
+            const serviceClass = this.getServiceClass(serviceClassIn);
+            const thiz = this;
+
+            const resolve = function (data) {
                 deferred.resolve(data);
             };
 
-            var promise = service[serviceClass][method](args);
+            const promise = service[serviceClass][method](args);
             promise.then(function (res) {
 
                 //the server has some messages for us
@@ -44281,17 +44286,17 @@ define('xide/manager/RPCService',[
         },
         getParameterMap: function (serviceClass, serviceClassMethod) {
 
-            var services = this._smd.services;
-            var smd = services[serviceClass + '.' + serviceClassMethod];
+            const services = this._smd.services;
+            const smd = services[serviceClass + '.' + serviceClassMethod];
             if (smd && smd.parameters) {
                 return smd.parameters;
             }
             return [];
         },
         _getRequest: function (method, args) {
-            var smd = this._smd;
-            var envDef = Service.envelopeRegistry.match(method.envelope || smd.envelope || "NONE");
-            var parameters = (method.parameters || method.params || []).concat(smd.parameters || []);
+            const smd = this._smd;
+            const envDef = Service.envelopeRegistry.match(method.envelope || smd.envelope || "NONE");
+            const parameters = (method.parameters || method.params || []).concat(smd.parameters || []);
 
             if (envDef.namedParams) {
                 // the serializer is expecting named params
@@ -44300,8 +44305,8 @@ define('xide/manager/RPCService',[
                     args = args[0];
                 } else {
                     // they provided ordered, must convert
-                    var data = {};
-                    var params = method.parameters || method.params;
+                    const data = {};
+                    const params = method.parameters || method.params;
                     for (var i = 0; i < params.length; i++) {
                         if (typeof args[i] != "undefined" || !params[i].optional) {
                             data[params[i].name] = args[i];
@@ -44312,8 +44317,8 @@ define('xide/manager/RPCService',[
                 if (method.strictParameters || smd.strictParameters) {
                     //remove any properties that were not defined
                     for (i in args) {
-                        var found = false;
-                        for (var j = 0; j < parameters.length; j++) {
+                        let found = false;
+                        for (let j = 0; j < parameters.length; j++) {
                             if (parameters[i].name == i) {
                                 found = true;
                             }
@@ -44326,7 +44331,7 @@ define('xide/manager/RPCService',[
                 }
                 // setting default values
                 for (i = 0; i < parameters.length; i++) {
-                    var param = parameters[i];
+                    const param = parameters[i];
                     if (!param.optional && param.name && args != null && !args[param.name]) {
                         if (param["default"]) {
                             args[param.name] = param["default"];
@@ -44350,10 +44355,10 @@ define('xide/manager/RPCService',[
                 args = dojo.mixin(args, this._options);
             }
 
-            var schema = method._schema || method.returns; // serialize with the right schema for the context;
-            var request = envDef.serialize.apply(this, [smd, method, args]);
+            const schema = method._schema || method.returns; // serialize with the right schema for the context;
+            const request = envDef.serialize.apply(this, [smd, method, args]);
             request._envDef = envDef;// save this for executeMethod
-            var contentType = (method.contentType || smd.contentType || request.contentType);
+            const contentType = (method.contentType || smd.contentType || request.contentType);
 
             // this allows to mandate synchronous behavior from elsewhere when necessary, this may need to be changed to be one-shot in FF3 new sync handling model
             return dojo.mixin(request, {
@@ -44373,8 +44378,8 @@ define('xide/manager/RPCService',[
             });
         },
         _executeMethod: function (method) {
-            var args = [];
-            var i;
+            let args = [];
+            let i;
             if (arguments.length == 2 && lang.isArray(arguments[1])) {
                 args = arguments[1];
             } else {
@@ -44382,11 +44387,11 @@ define('xide/manager/RPCService',[
                     args.push(arguments[i]);
                 }
             }
-            var request = this._getRequest(method, args);
+            const request = this._getRequest(method, args);
             if (this.correctTarget) {
                 request.target = this._smd.target;
             }
-            var deferred = Service.transportRegistry.match(request.transport).fire(request);
+            const deferred = Service.transportRegistry.match(request.transport).fire(request);
             deferred.addBoth(function (results) {
                 return request._envDef.deserialize.call(this, results);
             });
@@ -44396,9 +44401,8 @@ define('xide/manager/RPCService',[
             return serviceClassIn || this.serviceClass;
         },
         hasMethod: function (method,serviceClass) {
-
-            var _service = this,
-                _serviceClass = serviceClass || this.getServiceClass();
+            const _service = this;
+            const _serviceClass = serviceClass || this.getServiceClass();
 
             return _service &&
                 _serviceClass &&
@@ -44440,11 +44444,19 @@ define('xide/manager/RPCService',[
             //if (typeof this.window.btoa === 'function') {
             //    return btoa(data);
             //}
-            var b64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
-            var o1, o2, o3, h1, h2, h3, h4, bits, i = 0,
-                ac = 0,
-                enc = '',
-                tmp_arr = [];
+            const b64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
+            let o1;
+            let o2;
+            let o3;
+            let h1;
+            let h2;
+            let h3;
+            let h4;
+            let bits;
+            let i = 0;
+            let ac = 0;
+            let enc = '';
+            const tmp_arr = [];
 
             if (!data) {
                 return data;
@@ -44468,10 +44480,9 @@ define('xide/manager/RPCService',[
 
             enc = tmp_arr.join('');
 
-            var r = data.length % 3;
+            const r = data.length % 3;
 
             return (r ? enc.slice(0, r - 3) : enc) + '==='.slice(r || 3);
-
         },
         callMethodEx: function (serviceClass, method, args, readyCB, errorCB, omitError) {
 
@@ -44479,7 +44490,7 @@ define('xide/manager/RPCService',[
              * Check we the RPC method is in the SMD
              */
 
-            var thiz = this;
+            const thiz = this;
             if (!this[serviceClass] || this[serviceClass][method] == null) {
                 if (omitError === true && errorCB) {
                     errorCB({
@@ -44493,7 +44504,7 @@ define('xide/manager/RPCService',[
             /***
              * Build signature
              */
-            var params = {};
+            let params = {};
 
 
             /**
@@ -44534,7 +44545,7 @@ define('xide/manager/RPCService',[
              * Check we the RPC method is in the SMD
              */
             try {
-                var thiz = this;
+                const thiz = this;
                 if (this[serviceClass][method] == null) {
                     if (omitError === true && errorCB) {
                         debugger;
@@ -44548,7 +44559,7 @@ define('xide/manager/RPCService',[
                 /***
                  * Build signature
                  */
-                var params = {};
+                let params = {};
                 params = lang.mixin(params, this.config.RPC_PARAMS.rpcFixedParams);
                 /**
                  * Mixin mandatory fields
@@ -44569,7 +44580,7 @@ define('xide/manager/RPCService',[
                     }
 
                     if (omitError !== false) {
-                        var struct = {
+                        const struct = {
                             message: 'Ok!'
                         };
                         //thiz.publish(types.EVENTS.STATUS,struct ,this);
@@ -44586,88 +44597,104 @@ define('xide/manager/RPCService',[
     });
 });;
 define('xide/encoding/SHA1',["./_base"], function(base){
+    const //	change to 16 for unicode.
+    chrsz=8;
 
-	var chrsz=8,	//	change to 16 for unicode.
-		mask=(1<<chrsz)-1;
+    const mask=(1<<chrsz)-1;
 
-	function R(n,c){ return (n<<c)|(n>>>(32-c)); }
-	function FT(t,b,c,d){
+    function R(n,c){ return (n<<c)|(n>>>(32-c)); }
+    function FT(t,b,c,d){
 		if(t<20){ return (b&c)|((~b)&d); }
 		if(t<40){ return b^c^d; }
 		if(t<60){ return (b&c)|(b&d)|(c&d); }
 		return b^c^d;
 	}
-	function KT(t){ return (t<20)?1518500249:(t<40)?1859775393:(t<60)?-1894007588:-899497514; }
+    function KT(t){ return (t<20)?1518500249:(t<40)?1859775393:(t<60)?-1894007588:-899497514; }
 
-	function core(x,len){
-		x[len>>5]|=0x80<<(24-len%32);
-		x[((len+64>>9)<<4)+15]=len;
+    function core(x,len){
+        x[len>>5]|=0x80<<(24-len%32);
+        x[((len+64>>9)<<4)+15]=len;
 
-		var w=new Array(80), a=1732584193, b=-271733879, c=-1732584194, d=271733878, e=-1009589776;
-		for(var i=0; i<x.length; i+=16){
-			var olda=a, oldb=b, oldc=c, oldd=d, olde=e;
-			for(var j=0;j<80;j++){
+        const w=new Array(80);
+        let a=1732584193;
+        let b=-271733879;
+        let c=-1732584194;
+        let d=271733878;
+        let e=-1009589776;
+        for(let i=0; i<x.length; i+=16){
+            const olda=a;
+            const oldb=b;
+            const oldc=c;
+            const oldd=d;
+            const olde=e;
+            for(let j=0;j<80;j++){
 				if(j<16){ w[j]=x[i+j]; }
 				else { w[j]=R(w[j-3]^w[j-8]^w[j-14]^w[j-16],1); }
-				var t = base.addWords(base.addWords(R(a,5),FT(j,b,c,d)),base.addWords(base.addWords(e,w[j]),KT(j)));
+				const t = base.addWords(base.addWords(R(a,5),FT(j,b,c,d)),base.addWords(base.addWords(e,w[j]),KT(j)));
 				e=d; d=c; c=R(b,30); b=a; a=t;
 			}
-			a=base.addWords(a,olda);
-			b=base.addWords(b,oldb);
-			c=base.addWords(c,oldc);
-			d=base.addWords(d,oldd);
-			e=base.addWords(e,olde);
-		}
-		return [a, b, c, d, e];
-	}
+            a=base.addWords(a,olda);
+            b=base.addWords(b,oldb);
+            c=base.addWords(c,oldc);
+            d=base.addWords(d,oldd);
+            e=base.addWords(e,olde);
+        }
+        return [a, b, c, d, e];
+    }
 
-	function hmac(data, key){
-		var wa=toWord(key);
-		if(wa.length>16){ wa=core(wa, key.length*chrsz); }
+    function hmac(data, key){
+        let wa=toWord(key);
+        if(wa.length>16){ wa=core(wa, key.length*chrsz); }
 
-		var ipad=new Array(16), opad=new Array(16);
-		for(var i=0;i<16;i++){
+        const ipad=new Array(16);
+        const opad=new Array(16);
+        for(let i=0;i<16;i++){
 			ipad[i]=wa[i]^0x36363636;
 			opad[i]=wa[i]^0x5c5c5c5c;
 		}
 
-		var hash=core(ipad.concat(toWord(data)),512+data.length*chrsz);
-		return core(opad.concat(hash), 512+160);
-	}
+        const hash=core(ipad.concat(toWord(data)),512+data.length*chrsz);
+        return core(opad.concat(hash), 512+160);
+    }
 
-	function toWord(s){
-		var wa=[];
-		for(var i=0, l=s.length*chrsz; i<l; i+=chrsz){
+    function toWord(s){
+		const wa=[];
+		for(let i=0, l=s.length*chrsz; i<l; i+=chrsz){
 			wa[i>>5]|=(s.charCodeAt(i/chrsz)&mask)<<(32-chrsz-i%32);
 		}
 		return wa;	//	word[]
 	}
 
-	function toHex(wa){
-		//	slightly different than the common one.
-		var h="0123456789abcdef", s=[];
-		for(var i=0, l=wa.length*4; i<l; i++){
+    function toHex(wa){
+        //	slightly different than the common one.
+        const h="0123456789abcdef";
+
+        const s=[];
+        for(let i=0, l=wa.length*4; i<l; i++){
 			s.push(h.charAt((wa[i>>2]>>((3-i%4)*8+4))&0xF), h.charAt((wa[i>>2]>>((3-i%4)*8))&0xF));
 		}
-		return s.join("");	//	string
-	}
+        return s.join("");	//	string
+    }
 
-	function _toString(wa){
-		var s=[];
-		for(var i=0, l=wa.length*32; i<l; i+=chrsz){
+    function _toString(wa){
+		const s=[];
+		for(let i=0, l=wa.length*32; i<l; i+=chrsz){
 			s.push(String.fromCharCode((wa[i>>5]>>>(32-chrsz-i%32))&mask));
 		}
 		return s.join("");	//	string
 	}
 
-	function toBase64(/* word[] */wa){
-		// summary:
-		//		convert an array of words to base64 encoding, should be more efficient
-		//		than using dojox.encoding.base64
-		var p="=", tab="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/", s=[];
-		for(var i=0, l=wa.length*4; i<l; i+=3){
-			var t=(((wa[i>>2]>>8*(3-i%4))&0xFF)<<16)|(((wa[i+1>>2]>>8*(3-(i+1)%4))&0xFF)<<8)|((wa[i+2>>2]>>8*(3-(i+2)%4))&0xFF);
-			for(var j=0; j<4; j++){
+    function toBase64(/* word[] */wa){
+        // summary:
+        //		convert an array of words to base64 encoding, should be more efficient
+        //		than using dojox.encoding.base64
+        const p="=";
+
+        const tab="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+        const s=[];
+        for(let i=0, l=wa.length*4; i<l; i+=3){
+			const t=(((wa[i>>2]>>8*(3-i%4))&0xFF)<<16)|(((wa[i+1>>2]>>8*(3-(i+1)%4))&0xFF)<<8)|((wa[i+2>>2]>>8*(3-(i+2)%4))&0xFF);
+			for(let j=0; j<4; j++){
 				if(i*8+j*6>wa.length*32){
 					s.push(p);
 				} else {
@@ -44675,15 +44702,15 @@ define('xide/encoding/SHA1',["./_base"], function(base){
 				}
 			}
 		}
-		return s.join("");	//	string
-	};
+        return s.join("");	//	string
+    }
 
-	//	public function
-	base.SHA1=function(/* String */data, /* dojox.encoding.digests.outputTypes? */outputType){
+    //	public function
+    base.SHA1=function(/* String */data, /* dojox.encoding.digests.outputTypes? */outputType){
 		// summary:
 		//		Computes the SHA1 digest of the data, and returns the result according to output type.
-		var out=outputType||base.outputTypes.Base64;
-		var wa=core(toWord(data), data.length*chrsz);
+		const out=outputType||base.outputTypes.Base64;
+		const wa=core(toWord(data), data.length*chrsz);
 		switch(out){
 			case base.outputTypes.Raw:{
 				return wa;	//	word[]
@@ -44700,12 +44727,12 @@ define('xide/encoding/SHA1',["./_base"], function(base){
 		}
 	};
 
-	//	make this private, for later use with a generic HMAC calculator.
-	base.SHA1._hmac=function(/* string */data, /* string */key, /* dojox.encoding.digests.outputTypes? */outputType){
+    //	make this private, for later use with a generic HMAC calculator.
+    base.SHA1._hmac=function(/* string */data, /* string */key, /* dojox.encoding.digests.outputTypes? */outputType){
 		// summary:
 		//		computes the digest of data, and returns the result according to type outputType
-		var out=outputType || base.outputTypes.Base64;
-		var wa=hmac(data, key);
+		const out=outputType || base.outputTypes.Base64;
+		const wa=hmac(data, key);
 		switch(out){
 			case base.outputTypes.Raw:{
 				return wa;	//	word[]
@@ -44722,7 +44749,7 @@ define('xide/encoding/SHA1',["./_base"], function(base){
 		}
 	};
 
-	return base.SHA1;
+    return base.SHA1;
 });
 ;
 define('xide/rpc/JsonRPC',[
@@ -44736,7 +44763,7 @@ define('xide/rpc/JsonRPC',[
 				//not converted to json it self. This  will be done, if
 				//appropriate, at the transport level
 	
-				var d = {
+				const d = {
 					id: this._requestId++,
 					method: method.name,
 					params: data
@@ -44758,7 +44785,7 @@ define('xide/rpc/JsonRPC',[
 					obj = utils.fromJson(obj.responseText);
 				}
 				if(obj.error) {
-					var e = new Error(obj.error.message || obj.error);
+					const e = new Error(obj.error.message || obj.error);
 					e._rpcErrorObject = obj.error;
 					return e;
 				}
@@ -44793,13 +44820,13 @@ define('xide/rpc/Service',[
     "xide/utils",
     "xide/lodash"
 ], function(dojo,lang,xhr,declare,AdapterRegistry,url,utils,_){
-    var transportRegistry = new AdapterRegistry(true);
-    var envelopeRegistry = new AdapterRegistry(true);
-    var _nextId  = 1;
-    var _sync = false;
+    const transportRegistry = new AdapterRegistry(true);
+    const envelopeRegistry = new AdapterRegistry(true);
+    let _nextId  = 1;
+    const _sync = false;
 
     function getTarget(smd, method){
-        var dest=smd._baseUrl;
+        let dest=smd._baseUrl;
         if(smd.target){
             dest = new dojo._Url(dest,smd.target) + '';
         }
@@ -44811,14 +44838,14 @@ define('xide/rpc/Service',[
 
     function toOrdered(parameters, args){
         if(dojo.isArray(args)){ return args; }
-        var data=[];
-        for(var i=0;i<parameters.length;i++){
+        const data=[];
+        for(let i=0;i<parameters.length;i++){
             data.push(args[parameters[i].name]);
         }
         return data;
     }
 
-    var service = declare("xide.rpc.Service", null, {
+    const service = declare("xide.rpc.Service", null, {
         constructor: function(smd, options){
 
             // summary:
@@ -44839,9 +44866,9 @@ define('xide/rpc/Service',[
             //		a jsonString directly, which will be converted into an object or alternatively
             //		smdObject is accepts an smdObject directly.
 
-            var url;
+            let url;
             var self = this;
-            var singleton = options ? options.singleton : false;
+            const singleton = options ? options.singleton : false;
             function processSmd(smd){
                 smd._baseUrl = new dojo._Url((dojo.isBrowser ? location.href : dojo.config.baseUrl) ,url || '.') + '';
                 self._smd = smd;
@@ -44856,10 +44883,10 @@ define('xide/rpc/Service',[
                 }
 
                 //generate the methods
-                for(var serviceName in self._smd.services){
-                    var pieces = serviceName.split("."); // handle "namespaced" services by breaking apart by .
-                    var current = self;
-                    for(var i=0; i< pieces.length-1; i++){
+                for(const serviceName in self._smd.services){
+                    const pieces = serviceName.split("."); // handle "namespaced" services by breaking apart by .
+                    let current = self;
+                    for(let i=0; i< pieces.length-1; i++){
                         // create or reuse each object as we go down the chain
                         current = current[pieces[i]] || (current[pieces[i]] = {});
                     }
@@ -44903,14 +44930,14 @@ define('xide/rpc/Service',[
             }
             method.name = serviceName;
 
-            var func = dojo.hitch(this, "_executeMethod",method);
+            let func = dojo.hitch(this, "_executeMethod",method);
 
-            var transport = transportRegistry.match(method.transport || this._smd.transport);
+            const transport = transportRegistry.match(method.transport || this._smd.transport);
             if(transport.getExecutor){
                 func = transport.getExecutor(func,method,this);
             }
-            var schema = method.returns || (method._schema = {}); // define the schema
-            var servicePath = '/' + serviceName +'/';
+            const schema = method.returns || (method._schema = {}); // define the schema
+            const servicePath = '/' + serviceName +'/';
             // schemas are minimally used to track the id prefixes for the different services
             schema._service = func;
             func.servicePath = servicePath;
@@ -44919,9 +44946,9 @@ define('xide/rpc/Service',[
             return func;
         },
         _getRequest: function(method,args){
-            var smd = this._smd;
-            var envDef = envelopeRegistry.match(method.envelope || smd.envelope || "NONE");
-            var parameters = (method.parameters || []).concat(smd.parameters || []);
+            const smd = this._smd;
+            const envDef = envelopeRegistry.match(method.envelope || smd.envelope || "NONE");
+            const parameters = (method.parameters || []).concat(smd.parameters || []);
             if(envDef.namedParams){
                 // the serializer is expecting named params
                 if((args.length==1) && dojo.isObject(args[0])){
@@ -44929,7 +44956,7 @@ define('xide/rpc/Service',[
                     args = args[0];
                 }else{
                     // they provided ordered, must convert
-                    var data={};
+                    const data={};
                     for(var i=0;i<method.parameters.length;i++){
                         if(typeof args[i] != "undefined" || !method.parameters[i].optional){
                             data[method.parameters[i].name]=args[i];
@@ -44940,8 +44967,8 @@ define('xide/rpc/Service',[
                 if(method.strictParameters||smd.strictParameters){
                     //remove any properties that were not defined
                     for(i in args){
-                        var found=false;
-                        for(var j=0; j<parameters.length;j++){
+                        let found=false;
+                        for(let j=0; j<parameters.length;j++){
                             if(parameters[j].name==i){ found=true; }
                         }
                         if(!found){
@@ -44952,7 +44979,7 @@ define('xide/rpc/Service',[
                 }
                 // setting default values
                 for(i=0; i< parameters.length; i++){
-                    var param = parameters[i];
+                    const param = parameters[i];
                     if(!param.optional && param.name && !args[param.name]){
                         if(param["default"]){
                             args[param.name] = param["default"];
@@ -44977,10 +45004,10 @@ define('xide/rpc/Service',[
             }
             delete args['mixin'];
 
-            var schema = method._schema || method.returns; // serialize with the right schema for the context;
-            var request = envDef.serialize.apply(this, [smd, method, args]);
+            const schema = method._schema || method.returns; // serialize with the right schema for the context;
+            const request = envDef.serialize.apply(this, [smd, method, args]);
             request._envDef = envDef;// save this for executeMethod
-            var contentType = (method.contentType || smd.contentType || request.contentType);
+            const contentType = (method.contentType || smd.contentType || request.contentType);
 
             // this allows to mandate synchronous behavior from elsewhere when necessary, this may need to be changed to be one-shot in FF3 new sync handling model
             return dojo.mixin(request, {
@@ -45000,13 +45027,13 @@ define('xide/rpc/Service',[
             });
         },
         _executeMethod: function(method){
-            var args = [];
-            var i;
+            const args = [];
+            let i;
             for(i=1; i< arguments.length; i++){
                 args.push(arguments[i]);
             }
-            var request = this._getRequest(method,args);
-            var deferred = transportRegistry.match(request.transport).fire(request);
+            const request = this._getRequest(method,args);
+            const deferred = transportRegistry.match(request.transport).fire(request);
 
             deferred.addBoth(function(results){
                 return request._envDef.deserialize.call(this,results);
@@ -45023,7 +45050,7 @@ define('xide/rpc/Service',[
     service._sync = _sync;
     envelopeRegistry.register("URL", function(str){ return str == "URL"; },{
 		serialize:function(smd, method, data ){
-			var d = dojo.objectToQuery(data);
+			const d = dojo.objectToQuery(data);
 			return {
 				data: d,
 				transport:"POST"
@@ -45036,7 +45063,7 @@ define('xide/rpc/Service',[
 	});
     envelopeRegistry.register("JSON",function(str){ return str == "JSON"; },{
         serialize: function(smd, method, data){
-            var d = dojo.toJson(data);
+            const d = dojo.toJson(data);
 
             return {
                 data: d,
@@ -45050,8 +45077,8 @@ define('xide/rpc/Service',[
     });
     envelopeRegistry.register("PATH",function(str){ return str == "PATH"; },{
         serialize:function(smd, method, data){
-			var i;
-			var target = getTarget(smd, method);
+			let i;
+			let target = getTarget(smd, method);
 			if(dojo.isArray(data)){
 				for(i = 0; i < data.length;i++){
 					target += '/' + data[i];
@@ -45096,9 +45123,9 @@ define('xide/rpc/Service',[
     if(dojo._contentHandlers) {
         dojo._contentHandlers.auto = function (xhr) {
             // automatically choose the right handler based on the returned content type
-            var handlers = dojo._contentHandlers;
-            var retContentType = xhr.getResponseHeader("Content-Type");
-            var results = !retContentType ? handlers.text(xhr) :
+            const handlers = dojo._contentHandlers;
+            const retContentType = xhr.getResponseHeader("Content-Type");
+            const results = !retContentType ? handlers.text(xhr) :
                 retContentType.match(/\/.*json/) ? handlers.json(xhr) :
                     retContentType.match(/\/javascript/) ? handlers.javascript(xhr) :
                         retContentType.match(/\/xml/) ? handlers.xml(xhr) : handlers.text(xhr);
@@ -45219,7 +45246,7 @@ define('dojo/_base/url',["./kernel"], function(dojo){
 });
 ;
 define('xide/rpc/AdapterRegistry',["dojo/_base/kernel", "dojo/_base/lang"], function (dojo, lang) {
-    var AdapterRegistry = dojo.AdapterRegistry = function (/*Boolean?*/ returnWrappers) {
+    const AdapterRegistry = dojo.AdapterRegistry = function (/*Boolean?*/ returnWrappers) {
         // summary:
         //		A registry to make contextual calling/searching easier.
         // description:
@@ -45288,8 +45315,8 @@ define('xide/rpc/AdapterRegistry',["dojo/_base/kernel", "dojo/_base/lang"], func
             //		is found, throws an exception. match() accepts any number of
             //		arguments, all of which are passed to all matching functions
             //		from the registered pairs.
-            for (var i = 0; i < this.pairs.length; i++) {
-                var pair = this.pairs[i];
+            for (let i = 0; i < this.pairs.length; i++) {
+                const pair = this.pairs[i];
                 if (pair[1].apply(this, arguments)) {
                     if ((pair[3]) || (this.returnWrappers)) {
                         return pair[2];
@@ -45313,8 +45340,8 @@ define('xide/rpc/AdapterRegistry',["dojo/_base/kernel", "dojo/_base/lang"], func
             // FIXME: this is kind of a dumb way to handle this. On a large
             // registry this will be slow-ish and we can use the name as a lookup
             // should we choose to trade memory for speed.
-            for (var i = 0; i < this.pairs.length; i++) {
-                var pair = this.pairs[i];
+            for (let i = 0; i < this.pairs.length; i++) {
+                const pair = this.pairs[i];
                 if (pair[0] == name) {
                     this.pairs.splice(i, 1);
                     return true;
@@ -45350,9 +45377,9 @@ define('xcf/manager/DriverManager_Server',[
 ], function(dcl,declare,types,utils){
 
     function isItemPath(startNeedle,path){
-        var _start = startNeedle;
+        const _start = startNeedle;
         if (path.indexOf(_start) != -1) {
-            var libPath = path.substr(path.indexOf(_start) + (_start.length + 1 ), path.length);
+            const libPath = path.substr(path.indexOf(_start) + (_start.length + 1 ), path.length);
             return libPath;
         }
         return null;
@@ -45371,10 +45398,10 @@ define('xcf/manager/DriverManager_Server',[
                 return;
             }
             evt._didb=true;
-            var path = utils.replaceAll('\\', '/', evt.path);
+            let path = utils.replaceAll('\\', '/', evt.path);
             path = utils.replaceAll('//', '/', path);
             path = path.replace(/\\/g,"/");
-            var isDriver = isItemPath('system/driver',path);
+            const isDriver = isItemPath('system/driver',path);
             if(isDriver && isDriver.indexOf('.xblox')!==-1){
                 console.log('driver blocks changed ' + isDriver + ' @ '+ path, evt);
                 this.onDriverBlocksChanged(path,isDriver);
@@ -45387,26 +45414,26 @@ define('xcf/manager/DriverManager_Server',[
          */
         createDriverInstance:function(storeItem,readyCB){
 
-            var thiz=this;
-            var baseDriverPrefix = this.driverScopes['system_drivers'];
-            var baseDriverRequire = baseDriverPrefix + 'DriverBase';
+            const thiz=this;
+            const baseDriverPrefix = this.driverScopes['system_drivers'];
+            const baseDriverRequire = baseDriverPrefix + 'DriverBase';
             require([baseDriverRequire],function(baseDriver){
 
                 baseDriver.prototype.declaredClass=baseDriverRequire;
-                var meta = storeItem['user'];
-                var driverPrefix = thiz.driverScopes[storeItem['scope']];
-                var driver  = utils.getCIInputValueByName(meta,types.DRIVER_PROPERTY.CF_DRIVER_CLASS);
+                const meta = storeItem['user'];
+                const driverPrefix = thiz.driverScopes[storeItem['scope']];
+                const driver  = utils.getCIInputValueByName(meta,types.DRIVER_PROPERTY.CF_DRIVER_CLASS);
                 if(!driver){
                     console.error('cant find driver class in meta');
                     return;
                 }
-                var requirePath  = driverPrefix + driver;
+                let requirePath  = driverPrefix + driver;
                 requirePath=requirePath.replace('.js','');
                 requirePath=requirePath.replace('./','');
                 require([requirePath],function(driverProtoInstance){
-                    var baseClass = baseDriver;
-                    var driverProto = declare([baseClass],driverProtoInstance.prototype);
-                    var driverInstance = new driverProto();
+                    const baseClass = baseDriver;
+                    const driverProto = declare([baseClass],driverProtoInstance.prototype);
+                    const driverInstance = new driverProto();
                     driverInstance.baseClass = baseClass.prototype.declaredClass;
                     driverInstance.modulePath = utils.replaceAll('//','/',requirePath);
                     driverInstance.delegate=thiz;
@@ -45454,16 +45481,16 @@ define('xcf/manager/DriverManager',[
     BeanManager, Variable, DriverManager_Server,
     TreeMemory, ObservableStore, Trackable, has, Driver, ServerActionBase, Reference, Deferred, ReloadMixin,
     EventedMixin, DriverManager_UI, _CIDialog) {
+    const bases = [
+                  ServerActionBase,
+                  BeanManager,
+                  DriverManager_Server
+              ];
 
-    var bases = [
-            ServerActionBase,
-            BeanManager,
-            DriverManager_Server
-        ],
-        debug = false,
-        isServer = !has('host-browser'),
-        runDrivers = has('runDrivers'),
-        debugDeviceMessages = false;
+    const debug = false;
+    const isServer = !has('host-browser');
+    const runDrivers = has('runDrivers');
+    const debugDeviceMessages = false;
     has('xcf-ui') && bases.push(DriverManager_UI);
 
     /**
@@ -45476,17 +45503,18 @@ define('xcf/manager/DriverManager',[
         beanUrlPattern: "{id}",
         breanScheme: "driver://",
         onStoreCreated: function (evt) {
-            var type = evt.type,
-                store = evt.store,
-                items = store.query({
-                    isDir: false
-                });
+            const type = evt.type;
+            const store = evt.store;
+
+            const items = store.query({
+                isDir: false
+            });
 
             if (type !== types.ITEM_TYPE.DRIVER) {
                 return;
             }
-            for (var i = 0; i < items.length; i++) {
-                var item = items[i];
+            for (let i = 0; i < items.length; i++) {
+                const item = items[i];
                 if (item._completed != null || item.name === 'Default') {
                     continue;
                 }
@@ -45498,18 +45526,18 @@ define('xcf/manager/DriverManager',[
         },
         removeDriverInstance: function (instance, device) {
             try {
-                var info = this.getContext().getDeviceManager().toDeviceControlInfo(device),
-                    driver = this.getDriverById(instance.device.info.driverId),
-                    driverStore = driver._store,
-                    parentId = driver.path,
-                    deviceId = device.path,
-                    instanceId = parentId + '_instances_instance_' + deviceId,
-                    instanceReferenceItem = driverStore.getSync(instanceId);
+                const info = this.getContext().getDeviceManager().toDeviceControlInfo(device);
+                const driver = this.getDriverById(instance.device.info.driverId);
+                const driverStore = driver._store;
+                const parentId = driver.path;
+                const deviceId = device.path;
+                const instanceId = parentId + '_instances_instance_' + deviceId;
+                const instanceReferenceItem = driverStore.getSync(instanceId);
 
                 instanceReferenceItem && driverStore.removeSync(instanceId);
 
                 //"Audio-Player/VLC.meta.json_instances_instance_Audio-Player/VLC.meta.json"
-                var instanceReference = _.find(driver.instances, {
+                const instanceReference = _.find(driver.instances, {
                     path: instanceId
                 });
 
@@ -45532,8 +45560,8 @@ define('xcf/manager/DriverManager',[
          * @returns {module:xblox/model/Scope}
          */
         createDriverBlockScope: function (driver) {
-            var blocks = utils.clone(driver.blox && driver.blox.blocks ? driver.blox.blocks : []);
-            var scope = driver.blockScope = this.ctx.getBlockManager().createScope({
+            const blocks = utils.clone(driver.blox && driver.blox.blocks ? driver.blox.blocks : []);
+            const scope = driver.blockScope = this.ctx.getBlockManager().createScope({
                 id: driver.id,
                 device: null,
                 driver: driver,
@@ -45557,10 +45585,10 @@ define('xcf/manager/DriverManager',[
         addDeviceInstance: function (device, driver) {
             return;
             driver.directory = true;
-            var store = driver._store,
-                parentId = driver.path,
-                deviceManager = this.ctx.getDeviceManager(),
-                instances = store.getSync(parentId + '_instances');
+            const store = driver._store;
+            const parentId = driver.path;
+            const deviceManager = this.ctx.getDeviceManager();
+            let instances = store.getSync(parentId + '_instances');
 
             instances = instances || store.putSync({
                 path: parentId + '_instances',
@@ -45576,21 +45604,22 @@ define('xcf/manager/DriverManager',[
 
 
 
-            var deviceName = deviceManager.getMetaValue(device, types.DEVICE_PROPERTY.CF_DEVICE_TITLE),
-                deviceId = device.path,
-                instance = store.putSync(new Reference({
-                    name: deviceName,
-                    isCommand: false,
-                    path: instances.path + '_instance_' + deviceId,
-                    isDir: false,
-                    type: 'driver_instance',
-                    parentId: instances.path,
-                    device: device,
-                    driver: driver,
-                    _mayHaveChildren: false,
-                    icon: device.iconClass,
-                    state: device.state
-                }));
+            const deviceName = deviceManager.getMetaValue(device, types.DEVICE_PROPERTY.CF_DEVICE_TITLE);
+            const deviceId = device.path;
+
+            const instance = store.putSync(new Reference({
+                name: deviceName,
+                isCommand: false,
+                path: instances.path + '_instance_' + deviceId,
+                isDir: false,
+                type: 'driver_instance',
+                parentId: instances.path,
+                device: device,
+                driver: driver,
+                _mayHaveChildren: false,
+                icon: device.iconClass,
+                state: device.state
+            }));
 
             instances.children.push(instance);
 
@@ -45607,7 +45636,7 @@ define('xcf/manager/DriverManager',[
 
             !driver.instances && (driver.instances = []);
 
-            var instanceReference = _.find(driver.instances, {
+            const instanceReference = _.find(driver.instances, {
                 path: instance.path
             });
 
@@ -45675,25 +45704,25 @@ define('xcf/manager/DriverManager',[
          * @returns {dojo/Deferred}
          */
         getDriverModule: function (driver) {
-            var dfd = new Deferred();
-            var driverMeta = driver['user'],
-                script = utils.getCIInputValueByName(driverMeta, types.DRIVER_PROPERTY.CF_DRIVER_CLASS);
+            const dfd = new Deferred();
+            const driverMeta = driver['user'];
+            let script = utils.getCIInputValueByName(driverMeta, types.DRIVER_PROPERTY.CF_DRIVER_CLASS);
 
-            var driverScope = driver['scope'];
+            const driverScope = driver['scope'];
             script = script ? script.replace('./', '') : '';
-            var packageUrl = require.toUrl(driverScope);
+            let packageUrl = require.toUrl(driverScope);
             packageUrl = utils.removeURLParameter(packageUrl, 'bust');
             packageUrl = utils.removeURLParameter(packageUrl, 'time');
             if (has('debug') && isServer) {
                 packageUrl = packageUrl.replace('?', '');
             }
             packageUrl = packageUrl.replace('/main.js', '');
-            var isRequireJS = !require.cache;
+            const isRequireJS = !require.cache;
             if (isRequireJS) {
                 packageUrl = packageUrl.replace('/.js', '/');
             }
 
-            var requirePath = packageUrl + '/' + script;
+            let requirePath = packageUrl + '/' + script;
             if (has('debug') && !isServer) {
                 requirePath += requirePath.indexOf('?') == -1 ? '?' : '&';
                 requirePath += 'time' + new Date().getTime();
@@ -45715,19 +45744,18 @@ define('xcf/manager/DriverManager',[
             return dfd;
         },
         loadDriverModule: function (driver) {
-            var baseDriverPrefix = this.driverScopes['system_drivers'],
-                baseDriverRequire = baseDriverPrefix + 'DriverBase';
+            const baseDriverPrefix = this.driverScopes['system_drivers'];
+            const baseDriverRequire = baseDriverPrefix + 'DriverBase';
 
-            var urlBase = require.toUrl(this.driverScopes['system_drivers']);
-            var self = this;
-            var ctx = self.ctx,
-                dfd = new Deferred(),
-                _require = require;
+            const urlBase = require.toUrl(this.driverScopes['system_drivers']);
+            const self = this;
+            const ctx = self.ctx;
+            const dfd = new Deferred();
+            const _require = require;
 
             _require([baseDriverRequire], function (baseDriver) {
-
-                var driverPrefix = self.driverScopes[driver.scope],
-                    isRequireJS = !require.cache;
+                const driverPrefix = self.driverScopes[driver.scope];
+                const isRequireJS = !require.cache;
 
                 if (isRequireJS) {
                     require({
@@ -45741,12 +45769,12 @@ define('xcf/manager/DriverManager',[
                     });
                 }
 
-                var packageUrl = require.toUrl(driverPrefix);
+                let packageUrl = require.toUrl(driverPrefix);
                 if (isRequireJS) {
                     packageUrl = packageUrl.replace('/.js', '/');
                 }
-                var driverMeta = driver['user'];
-                var script = utils.getCIInputValueByName(driverMeta, types.DRIVER_PROPERTY.CF_DRIVER_CLASS);
+                const driverMeta = driver['user'];
+                let script = utils.getCIInputValueByName(driverMeta, types.DRIVER_PROPERTY.CF_DRIVER_CLASS);
                 script = script.replace('./', '');
                 script = script.replace('.js', '');
                 script = driver.scope + '/' + script;
@@ -45755,7 +45783,7 @@ define('xcf/manager/DriverManager',[
                     _require.undef(script);
                     _require([script], function (driverProtoInstance) {
                         driverProtoInstance.declaredClass = script;
-                        var driverProto = dcl([baseDriver, EventedMixin.dcl, ReloadMixin.dcl, driverProtoInstance], {});
+                        const driverProto = dcl([baseDriver, EventedMixin.dcl, ReloadMixin.dcl, driverProtoInstance], {});
                         driverProto.getFields = driverProtoInstance.getFields;
 
                         function onReloaded(newModule, oldModule) {
@@ -45767,17 +45795,16 @@ define('xcf/manager/DriverManager',[
                         dfd.resolve(driverProtoInstance);
                     });
                 } catch (e) {}
-
             });
             return dfd;
         },
         getBlock: function (url) {
-            var parts = utils.parse_url(url);
+            let parts = utils.parse_url(url);
             parts = utils.urlArgs(parts.host); //go on with query string
-            var _driver = this.getItemById(parts.driver.value),
-                block = null;
+            const _driver = this.getItemById(parts.driver.value);
+            let block = null;
 
-            var wasUnloaded = false;
+            let wasUnloaded = false;
             if (_driver && !_driver.blockScope) {
                 wasUnloaded = true;
                 this.createDriverBlockScope(_driver);
@@ -45793,7 +45820,7 @@ define('xcf/manager/DriverManager',[
             return block;
         },
         getDriverByUrl: function (url) {
-            var parts = utils.parse_url(url);
+            let parts = utils.parse_url(url);
             parts = utils.urlArgs(parts.host); //go on with query string
             return this.getItemById(parts.driver.value);
         },
@@ -45826,17 +45853,17 @@ define('xcf/manager/DriverManager',[
             if (!store || !store.getSync) {
                 return;
             }
-            var items = store.query();
+            let items = store.query();
             if (!_.isArray(items)) {
                 items = [items];
             }
-            for (var i = 0; i < items.length; i++) {
-                var item = items[i];
+            for (let i = 0; i < items.length; i++) {
+                const item = items[i];
                 if (item.isDir) {
                     continue;
                 }
-                var meta = item['user'];
-                var _id = utils.getInputCIByName(meta, types.DRIVER_PROPERTY.CF_DRIVER_ID);
+                const meta = item['user'];
+                const _id = utils.getInputCIByName(meta, types.DRIVER_PROPERTY.CF_DRIVER_ID);
                 if (!_id) {
                     continue;
                 }
@@ -45850,10 +45877,10 @@ define('xcf/manager/DriverManager',[
             if (store) {
                 return this._getDriverById(id, store);
             }
-            var options = [];
-            var result = null;
-            var self = this;
-            var driver = null;
+            const options = [];
+            let result = null;
+            const self = this;
+            let driver = null;
             if (!has('xcf-ui') && !has('host-node')) {
                 !this._driverQueryCache && (this._driverQueryCache = {});
                 if (this._driverQueryCache[id]) {
@@ -45865,7 +45892,7 @@ define('xcf/manager/DriverManager',[
                 return self._getDriverById(id, _store);
             }
 
-            for (var scope in this.stores) {
+            for (const scope in this.stores) {
                 var store = this.stores[scope];
                 result = search(store);
                 if (result) {
@@ -45881,18 +45908,18 @@ define('xcf/manager/DriverManager',[
         },
         getDriverByPath: function (path) {
 
-            var options = [];
-            var result = null;
+            const options = [];
+            let result = null;
 
             function search(store) {
-                var items = utils.queryStore(store, {
+                let items = utils.queryStore(store, {
                     isDir: false
                 });
                 if (!_.isArray(items)) {
                     items = [items];
                 }
-                for (var i = 0; i < items.length; i++) {
-                    var driver = items[i];
+                for (let i = 0; i < items.length; i++) {
+                    const driver = items[i];
                     if (driver.path == path) {
                         return driver;
                     }
@@ -45900,8 +45927,8 @@ define('xcf/manager/DriverManager',[
                 return null;
             }
 
-            for (var scope in this.stores) {
-                var store = this.stores[scope];
+            for (const scope in this.stores) {
+                const store = this.stores[scope];
                 result = search(store);
                 if (result) {
                     return result;
@@ -45950,8 +45977,8 @@ define('xcf/manager/DriverManager',[
                 };
             }
 
-            var storeClass = declare('driverStore', [TreeMemory, Trackable, ObservableStore], {});
-            var store = new storeClass({
+            const storeClass = declare('driverStore', [TreeMemory, Trackable, ObservableStore], {});
+            const store = new storeClass({
                 data: [],
                 Model: Driver,
                 idProperty: 'path',
@@ -45985,12 +46012,12 @@ define('xcf/manager/DriverManager',[
          * @returns {module:xide/data/TreeMemory}
          */
         initStore: function (data, scope, track) {
-            var store = this.createStore(data, scope, track);
+            const store = this.createStore(data, scope, track);
             return store;
         },
         getStore: function (scope) {
             scope = scope || 'system_drivers';
-            var store = this.stores[scope];
+            const store = this.stores[scope];
             if (store) {
                 return store;
             }
@@ -46002,11 +46029,11 @@ define('xcf/manager/DriverManager',[
          * @returns {Deferred}
          */
         ls: function (scope, track) {
-            var dfd = new Deferred();
+            const dfd = new Deferred();
 
             function data(data) {
                 try {
-                    var store = this.createStore(data, scope, track);
+                    const store = this.createStore(data, scope, track);
                     //track!==false && this.setStore(scope,store);
                     this.onStoreReady(store);
                     track !== false && this.publish(types.EVENTS.ON_STORE_CREATED, {
@@ -46029,7 +46056,7 @@ define('xcf/manager/DriverManager',[
                 this.runDeferred(null, 'ls', [scope]).then(data.bind(this));
             } else {
                 if (!isServer) {
-                    var def = this._getText(require.toUrl(scope).replace('main.js', '') + scope + '.json', {
+                    const def = this._getText(require.toUrl(scope).replace('main.js', '') + scope + '.json', {
                         sync: false,
                         handleAs: 'json'
                     }).then(data.bind(this));
@@ -46045,8 +46072,8 @@ define('xcf/manager/DriverManager',[
          * Common manager function, called by the context of the application
          */
         init: function () {
-            var thiz = this;
-            var EVENTS = types.EVENTS;
+            const thiz = this;
+            const EVENTS = types.EVENTS;
 
             this.subscribe([
                 EVENTS.ON_SCOPE_CREATED,
@@ -46097,7 +46124,7 @@ define('xide/mixins/ReloadMixin',[
      * @mixin module:xide/mixins/ReloadMixin
      * @requires module:xide/mixins/EventedMixin
      */
-    var Impl = {
+    const Impl = {
         /**
          *
          * Not used yet, but at @TODO: some flags to describe the hot-replace for reloaded modules
@@ -46126,10 +46153,11 @@ define('xide/mixins/ReloadMixin',[
                     return true;
 
                 }else{
-
                     //manual lookup, browse all base classes and their superclass
-                    var bases = utils.getAt(this, 'constructor._meta.bases', []),//save get, return base::at[path] or empty array
-                        _clsClass = cls.prototype.declaredClass;    //cache
+                    const //save get, return base::at[path] or empty array
+                    bases = utils.getAt(this, 'constructor._meta.bases', []);    //cache
+
+                    const _clsClass = cls.prototype.declaredClass;
 
                     //save space
                     return _.findWhere(bases, function (_base) {
@@ -46139,7 +46167,6 @@ define('xide/mixins/ReloadMixin',[
                         || utils.getAt(_base, 'prototype.declaredClass') === _clsClass;    //sometimes
 
                     });
-
                 }
 
             } catch (e) {
@@ -46157,8 +46184,8 @@ define('xide/mixins/ReloadMixin',[
          * @param source
          */
         mergeFunctions: function (target, source) {
-            for (var i in source) {
-                var o = source[i];
+            for (const i in source) {
+                const o = source[i];
                 if (i === 'constructor' || i === 'inherited') {
                     continue;
                 }
@@ -46181,15 +46208,15 @@ define('xide/mixins/ReloadMixin',[
          */
         onModuleReloaded: function (evt) {
             //console.log('on module reloaded');
-            var newModule = evt.newModule;
+            const newModule = evt.newModule;
             if (!newModule || !newModule.prototype || evt._processed) {
                 return;
             }
-            var moduleProto = newModule.prototype,
-                moduleClass = moduleProto.declaredClass,
-                matchedByClass = false,
-                thisClass = this.declaredClass,
-                thiz=this;
+            const moduleProto = newModule.prototype;
+            const moduleClass = moduleProto.declaredClass;
+            let matchedByClass = false;
+            const thisClass = this.declaredClass;
+            const thiz=this;
 
             if(!moduleClass){
                 return;
@@ -46218,7 +46245,7 @@ define('xide/mixins/ReloadMixin',[
     };
 
     //package via declare
-    var _class = declare(null,Impl);
+    const _class = declare(null,Impl);
 
     //static access to Impl.
     _class.Impl = Impl;
@@ -46235,11 +46262,11 @@ define('xide/data/Reference',[
     "xide/lodash",
     "xide/mixins/EventedMixin"
 ], function (dcl, utils, lodash, EventedMixin) {
-    var debug = false;
+    const debug = false;
     /**
      * @class module:xide/data/Reference
      */
-    var Implementation = {
+    const Implementation = {
         /**
          * @type {Array<module:xide/data/Source>}
          */
@@ -46281,12 +46308,12 @@ define('xide/data/Reference',[
             }
             this.inherited && this.inherited(arguments);
             if (this._sources) {
-                for (var i = 0; i < this._sources.length; i++) {
-                    var link = this._sources[i];
+                this._sources.forEach(link => {
                     if (link.item) {
                         link.item.removeReference && link.item.removeReference(this);
                     }
-                }
+                });
+
                 this._sources = null;
             }
         },
@@ -46311,24 +46338,23 @@ define('xide/data/Reference',[
             }
         },
         updateSources: function (args) {
-            for (var i = 0; i < this._sources.length; i++) {
-                var link = this._sources[i];
-                var item = link.item;
-                var settings = link.settings;
+            this._sources.forEach(link => {
+                const item = link.item;
+                const settings = link.settings;
                 if (args.property && settings.properties && settings.properties[args.property]) {
                     item._store.silent(true);
                     item.set(args.property, args.value);
                     item._store.silent(false);
                     item._store.emit('update', {target: item});
                 }
-            }
+            });
         },
         constructor: function (properties) {
             this._sources = [];
             utils.mixin(this, properties);
         }
     };
-    var Module = dcl([EventedMixin.dcl], Implementation);
+    const Module = dcl([EventedMixin.dcl], Implementation);
     Module.Implementation = Implementation;
     return Module;
 });;
@@ -46869,8 +46895,8 @@ define('xide/data/ObservableStore',[
          */
         putSync: function (item, publish) {
             this.silent(!publish);
-            var res = this.inherited(arguments);
-            var self = this;
+            const res = this.inherited(arguments);
+            const self = this;
             publish !== false && this.emit('added', res);
             res && !res._store && Object.defineProperty(res, '_store', {
                 get: function () {
@@ -46889,9 +46915,9 @@ define('xide/data/ObservableStore',[
          */
         removeSync: function (id, silent) {
             this.silent(silent);
-            var _item = this.getSync(id);
+            const _item = this.getSync(id);
             _item && _item.onRemove && _item.onRemove();
-            var res = this.inherited(arguments);
+            const res = this.inherited(arguments);
             this.silent(false);
             return res;
         },
@@ -46907,7 +46933,7 @@ define('xide/data/ObservableStore',[
             if (this._ignoreChangeEvents) {
                 return;
             }
-            var args = {
+            const args = {
                 target: item,
                 property: property,
                 value: value,
@@ -46922,13 +46948,13 @@ define('xide/data/ObservableStore',[
          * @private
          */
         _observe: function (item) {
-            var props = this.observedProperties;
+            let props = this.observedProperties;
             item.observed && (props = props.concat(item.observed));
-            _.each(props, function (property) {
+            props.forEach((property) => {
                 item.property && item.property(property).observe(function (value) {
                     this._onItemChanged(item, property, value, this);
                 }.bind(this));
-            }.bind(this));
+            });
         },
         /**
          * Override setData to bring in dmodel's observe for new items.
@@ -46936,9 +46962,9 @@ define('xide/data/ObservableStore',[
          * @returns {*}
          */
         setData: function (data) {
-            var res = this.inherited(arguments);
+            const res = this.inherited(arguments);
             this.silent(true);
-            data && _.each(data, this._observe, this);
+            data && data.forEach((e) => this._observe);
             this.silent(false);
             return res;
         }
@@ -46956,7 +46982,7 @@ define('xcf/manager/BlockManager',[
         //nulled for server mode
         onReady: function () {},
         addDriverFunctions: function (target, source) {
-            for (var i in source) {
+            for (const i in source) {
                 if (i === 'constructor' || i === 'inherited') {
                     continue;
                 }
@@ -46974,7 +47000,7 @@ define('xcf/manager/BlockManager',[
          * @param owner
          */
         setScriptFunctions: function (obj, scope, owner) {
-            var thiz = owner;
+            const thiz = owner;
             if (!scope.context) {
                 scope.context = obj;//set the context of the blox scope
             }
@@ -47025,7 +47051,7 @@ define('xcf/manager/BlockManager',[
              */
             if (!obj.callCommand) {
                 obj.callCommand = function (title) {
-                    var _block = this.blockScope.getBlockByName(title);
+                    const _block = this.blockScope.getBlockByName(title);
                     if (_block) {
                         _block.solve(this.blockScope);
                     }
@@ -47043,7 +47069,7 @@ define('xcf/manager/BlockManager',[
              */
             if (!obj.setVariable) {
                 obj.setVariable = function (title, value, save, publish, source) {
-                    var _variable = this.blockScope.getVariable(title);
+                    const _variable = this.blockScope.getVariable(title);
                     if (_variable) {
                         _variable.value = value;
                         _variable.set('value', value);
@@ -47068,7 +47094,7 @@ define('xcf/manager/BlockManager',[
              */
             if (!obj.getVariable) {
                 obj.getVariable = function (title) {
-                    var _variable = this.blockScope.getVariable(title);
+                    const _variable = this.blockScope.getVariable(title);
                     if (_variable) {
                         return _variable.value;
                     }
@@ -47535,12 +47561,12 @@ define('xide/data/Source',[
     'xide/lodash'
 ], function (dcl, declare, utils, lodash) {
 
-    var _debug = true;
+    const _debug = true;
     /**
      * @class module:xide/data/Source
      * @augments module:xide/data/Model
      */
-    var Implementation = {
+    const Implementation = {
         /**
          * @type {Array<module:xide/data/Reference>|null}
          */
@@ -47605,17 +47631,17 @@ define('xide/data/Source',[
             }, this);
         },
         updateReferences: function (args) {
-            var property = args.property,
-                value = args.value;
+            const property = args.property;
+            const value = args.value;
 
             if (!this._references) {
                 this._references = [];
             }
-            for (var i = 0; i < this._references.length; i++) {
-                var link = this._references[i],
-                    item = link.item,
-                    settings = link.settings,
-                    store = item._store;
+            for (let i = 0; i < this._references.length; i++) {
+                const link = this._references[i];
+                const item = link.item;
+                const settings = link.settings;
+                const store = item._store;
 
                 if (this._originReference == item) {
                     continue;
@@ -47650,7 +47676,7 @@ define('xide/data/Source',[
         }
     };
     //exports for declare & dcl
-    var Module = declare('xgrid.data.Source', null, Implementation);
+    const Module = declare('xgrid.data.Source', null, Implementation);
     Module.dcl = dcl(null, Implementation);
     Module.Implementation = Implementation;
     return Module;
@@ -47668,7 +47694,7 @@ define('xide/data/Model',[
     function getSchemaProperty(object, key) {
         // this function will retrieve the individual property definition
         // from the schema, for the provided object and key
-        var definition = object.schema[key];
+        let definition = object.schema[key];
         if (definition !== undefined && !(definition instanceof Property)) {
             definition = new Property(definition);
             definition._parent = object;
@@ -47724,8 +47750,8 @@ define('xide/data/Model',[
         // a new promise represents the eventual completion of all the promises
         // this will consistently preserve a sync (non-promise) return value if all
         // sync values are provided
-        var deferred;
-        var remaining = 1;
+        let deferred;
+        let remaining = 1;
         // start the iterator
         iterator(function (value, callback, key) {
             if (value && value.then) {
@@ -47758,8 +47784,8 @@ define('xide/data/Model',[
             }
         }
     }
-    var slice = [].slice;
-    var Model = dcl(null,{
+    const slice = [].slice;
+    const Model = dcl(null,{
         declaredClass:'xide/data/Model',
         //	summary:
         //		A base class for modelled data objects.
@@ -47789,7 +47815,7 @@ define('xide/data/Model',[
         },
 
         refresh:function(silent,property){
-            var _store = this._store;
+            const _store = this._store;
             _store && _store.refreshItem(this,silent,property);
         },
         getStore:function(){
@@ -47804,11 +47830,11 @@ define('xide/data/Model',[
             // copy in the default values
             values = this._setValues(values);
             // set any defaults
-            for (var key in this.schema) {
-                var definition = this.schema[key];
+            for (const key in this.schema) {
+                const definition = this.schema[key];
                 if (definition && typeof definition === 'object' && 'default' in definition &&
                     !values.hasOwnProperty(key)) {
-                    var defaultValue = definition['default'];
+                    const defaultValue = definition['default'];
                     values[key] = typeof defaultValue === 'function' ? defaultValue.call(this) : defaultValue;
                 }
             }
@@ -47831,12 +47857,12 @@ define('xide/data/Model',[
             //		true to skip it.
             //	returns: any
 
-            var object = this;
+            const object = this;
             return when((options && options.skipValidation) ? true : this.validate(), function (isValid) {
                 if (!isValid) {
                     throw object.createValidationError(object.errors);
                 }
-                var scenario = object._scenario;
+                const scenario = object._scenario;
                 // suppress any non-date from serialization output
                 object.prepareForSerialization();
                 return object._store && when(object._store[scenario === 'insert' ? 'add' : 'put'](object),
@@ -47850,7 +47876,7 @@ define('xide/data/Model',[
         },
 
         remove: function () {
-            var store = this._store;
+            const store = this._store;
             return store.remove(store.getIdentity(this));
         },
 
@@ -47883,9 +47909,9 @@ define('xide/data/Model',[
             //		nested property access.
 
             // create the properties object, if it doesn't exist yet
-            var properties = this.hasOwnProperty('_properties') ? this._properties :
+            const properties = this.hasOwnProperty('_properties') ? this._properties :
                 (this._properties = new Hidden());
-            var property = properties[key];
+            let property = properties[key];
             // if it doesn't exist, create one, delegated from the schema's property definition
             // (this gives an property instance, owning the current property value and listeners,
             // while inheriting metadata from the schema's property definitions)
@@ -47911,7 +47937,9 @@ define('xide/data/Model',[
             //		of a property, augmented with the ability to listen
             //		for future changes
 
-            var property, definition = this.schema[key];
+            let property;
+
+            let definition = this.schema[key];
             // now we need to see if there is a custom get involved, or if we can just
             // shortcut to retrieving the property value
             definition = property || this.schema[key];
@@ -47942,7 +47970,7 @@ define('xide/data/Model',[
             if (typeof key === 'object') {
                 startOperation();
                 try {
-                    for (var i in key) {
+                    for (const i in key) {
                         value = key[i];
                         if (key.hasOwnProperty(i) && !(value && value.toJSON === toJSONHidden)) {
                             this.set(i, value);
@@ -47953,12 +47981,12 @@ define('xide/data/Model',[
                 }
                 return;
             }
-            var definition = this.schema[key];
+            const definition = this.schema[key];
             if (!definition && !this.additionalProperties) {
                 // TODO: Shouldn't this throw an error instead of just giving a warning?
                 return console.warn('Schema does not contain a definition for', key);
             }
-            var property = this.hasOwnProperty('_properties') && this._properties[key];
+            let property = this.hasOwnProperty('_properties') && this._properties[key];
             if (!property &&
                 // we need a real property instance if it is an object or if we have a custom put method
                 ((value && typeof value === 'object') ||
@@ -48058,11 +48086,12 @@ define('xide/data/Model',[
             //		prior validation.
             //	returns: boolean
 
-            var isValid = true,
-                key;
+            let isValid = true;
+
+            let key;
 
             for (key in this.schema) {
-                var property = this.hasOwnProperty('_properties') && this._properties[key];
+                const property = this.hasOwnProperty('_properties') && this._properties[key];
                 if (property && property.errors && property.errors.length) {
                     isValid = false;
                 }
@@ -48073,7 +48102,7 @@ define('xide/data/Model',[
 
     //xhack: make dstore happy
     Model.createSubclass=function(mixins, props){
-        var sub = dcl([this].concat(mixins), props || {});
+        const sub = dcl([this].concat(mixins), props || {});
         sub.extend = function(props){
             utils.mixin(this.prototype,props);
             return this;
@@ -48094,7 +48123,7 @@ define('xide/data/Model',[
         setCallDepth--;
     }
     var setCallDepth = 0;
-    var callbackQueue;
+    let callbackQueue;
     var onEnd;
     // the default nextTurn executes at the end of the current operation
     // The intent with this function is that it could easily be replaced
@@ -48105,7 +48134,7 @@ define('xide/data/Model',[
         onEnd = callback;
     }).atEnd = true;
 
-    var Reactive = dcl(Model, {
+    const Reactive = dcl(Model, {
         //	summary:
         //		A reactive object is a data model that can contain a value,
         //		and notify listeners of changes to that value, in the future.
@@ -48119,7 +48148,7 @@ define('xide/data/Model',[
             //		just future updates. If this is true, it also won't return
             //		a new reactive object
 
-            var reactive;
+            let reactive;
             if (typeof listener === 'string') {
                 // a property key was provided, use the Model's method
                 console.error('fff');
@@ -48135,8 +48164,8 @@ define('xide/data/Model',[
                 }
             }
             // add to the listeners
-            var handle = this._addListener(function (value) {
-                var result = listener(value);
+            const handle = this._addListener(function (value) {
+                const result = listener(value);
                 if (reactive) {
                     // TODO: once we have a real notification API again, call that, instead
                     // of requesting a change
@@ -48197,13 +48226,13 @@ define('xide/data/Model',[
             //		Indicates a new value for this reactive object
 
             // notify all the listeners of this object, that the value has changed
-            var oldValue = this._get();
+            let oldValue = this._get();
             value = this.coerce(value);
             if (this.errors) {
                 // clear any errors
                 this.set('errors', undefined);
             }
-            var property = this;
+            const property = this;
             // call the setter and wait for it
             startOperation();
             return when(this.setValue(value, this._parent), function (result) {
@@ -48216,15 +48245,17 @@ define('xide/data/Model',[
                     // queue the callback
                     property._queueChange(property.onchange, oldValue);
                 }
+
                 // if this was set to an object (or was an object), we need to notify.
                 // update all the sub-property objects, so they can possibly notify their
                 // listeners
-                var key,
-                    hasOldObject = oldValue && typeof oldValue === 'object' && !(oldValue instanceof Array),
-                    hasNewObject = value && typeof value === 'object' && !(value instanceof Array);
+                let key;
+
+                const hasOldObject = oldValue && typeof oldValue === 'object' && !(oldValue instanceof Array);
+                const hasNewObject = value && typeof value === 'object' && !(value instanceof Array);
                 if (hasOldObject || hasNewObject) {
                     // we will iterate through the properties recording the changes
-                    var changes = {};
+                    const changes = {};
                     if (hasOldObject) {
                         oldValue = oldValue._getValues ? oldValue._getValues() : oldValue;
                         for (key in oldValue) {
@@ -48240,8 +48271,8 @@ define('xide/data/Model',[
                     property._values = hasNewObject && value;
                     for (key in changes) {
                         // now for each change, we can notify the property object
-                        var change = changes[key];
-                        var subProperty = property._properties && property._properties[key];
+                        const change = changes[key];
+                        const subProperty = property._properties && property._properties[key];
                         if (subProperty && subProperty.onchange) {
                             // queue the callback
                             subProperty._queueChange(subProperty.onchange, change.old);
@@ -48260,7 +48291,7 @@ define('xide/data/Model',[
             //		Given an input value, this method is responsible
             //		for converting it to the appropriate type for storing on the object.
 
-            var type = this.type;
+            const type = this.type;
             if (type) {
                 if (type === 'string') {
                     value = '' + value;
@@ -48300,7 +48331,7 @@ define('xide/data/Model',[
             //		other validators to perform validation
             //	value:
             //		This is the value to validate.
-            var errors = [];
+            const errors = [];
             if (this.type && !(typeof this.type === 'function' ? (value instanceof this.type) :
                     (this.type === typeof value))) {
                 errors.push(value + ' is not a ' + this.type);
@@ -48316,16 +48347,16 @@ define('xide/data/Model',[
             //	summary:
             //		This method is responsible for validating this particular
             //		property instance.
-            var property = this;
-            var model = this._parent;
-            var validators = this.validators;
-            var value = this.valueOf();
-            var totalErrors = [];
+            const property = this;
+            const model = this._parent;
+            const validators = this.validators;
+            const value = this.valueOf();
+            const totalErrors = [];
 
             return when(whenEach(function (whenItem) {
                 // iterator through any validators (if we have any)
                 if (validators) {
-                    for (var i = 0; i < validators.length; i++) {
+                    for (let i = 0; i < validators.length; i++) {
                         whenItem(validators[i].checkForErrors(value, property, model), addErrors);
                     }
                 }
@@ -48355,10 +48386,10 @@ define('xide/data/Model',[
             if (!callback._queued) {
                 // make sure we only queue up once before it is called by flagging it
                 callback._queued = true;
-                var reactive = this;
+                const reactive = this;
                 // define a function for when it is called that will clear the flag
                 // and provide the correct args
-                var dispatch = function () {
+                const dispatch = function () {
                     callback._queued = false;
                     callback.call(reactive, reactive._get(), oldValue);
                 };
@@ -48376,7 +48407,7 @@ define('xide/data/Model',[
                         // define the callback executor for the next turn
                         Model.nextTurn(function () {
                             // pull out all the callbacks
-                            for (var i = 0; i < callbackQueue.length; i++) {
+                            for (let i = 0; i < callbackQueue.length; i++) {
                                 // call each one
                                 callbackQueue[i]();
                             }
@@ -50523,1859 +50554,1837 @@ define('xcf/manager/DeviceManager',[
     ObservableStore, Trackable, Device, Deferred, ServerActionBase, Reference, StringUtils,
     LogMixin,
     DeviceManager_UI, Expression, all, console, _, _console, xUtils) {
-        /*
-         var console = typeof window !== 'undefined' ? window.console : console;
-         if(_console && _console.error && _console.warn){
-         console = _console;
-         }
-         */
-        var bases = [
-            ServerActionBase,
-            BeanManager,
-            DeviceManager_Server,
-            DeviceManager_DeviceServer,
-            ReloadMixin.dcl,
-            LogMixin
-        ],
-            _debugMQTT = false,
-            _debug = false,
-            _debugLogging = false,
-            _debugConnect = false,
-            isServer = !has('host-browser'),
-            isIDE = has('xcf-ui'),
-            DEVICE_PROPERTY = types.DEVICE_PROPERTY,
-            runDrivers = has('runDrivers'),
-            EVENTS = types.EVENTS;
-        has('xcf-ui') && bases.push(DeviceManager_UI);
-        /**
-         * Common base class, for server and client.
-         * @class module:xcf/manager/DeviceManager
-         * @augments module:xide/mixins/EventedMixin
-         * @extends module:xcf/manager/BeanManager
-         * @extends module:xide/mixins/ReloadMixin
-         * @extends module:xcf/manager/DeviceManager_DeviceServer
-         */
-        return dcl(bases, {
-            declaredClass: "xcf.manager.DeviceManager",
-            /***
-             * The Bean-Manager needs a unique name of the bean:
-             * @private
-             */
-            beanNamespace: 'device',
-            /***
-             * The Bean-Manager has some generic function like creating Dialogs for adding new items, please
-             * provide a title for the interface.
-             * @private
-             */
-            beanName: 'Device',
-            beanUrlPattern: "{id}",
-            breanScheme: "device://",
-            beanPriority: 1,
-            /**
-             * the icon class for bean edit views
-             * @private
-             */
-            beanIconClass: 'fa-sliders',
-            /**
-             * Bean group type
-             * @private
-             */
-            groupType: types.ITEM_TYPE.DEVICE_GROUP,
-            /**
-             * Bean item type
-             * @private
-             */
-            itemType: types.ITEM_TYPE.DEVICE,
-            /**
-             * The name of the CI in the meta database for the title or name.
-             * @private
-             */
-            itemMetaTitleField: DEVICE_PROPERTY.CF_DEVICE_TITLE,
-            /**
-             * Name of the system scope
-             * @private
-             */
-            systemScope: 'system_devices',
-            /**
-             * Name of the user scope
-             * @private
-             */
-            userScope: 'user_devices',
-            /**
-             * Name of the app scope
-             * @private
-             */
-            appScope: 'app_devices',
-            /**
-             * Name of the default scope for new created items
-             * @private
-             */
-            defaultScope: 'system_devices',
-            /***
-             * The RPC server class:
-             * @private
-             */
-            serviceClass: 'XCF_Device_Service',
-            /***
-             * A copy of all devices raw data from the server
-             * @private
-             */
-            rawData: null,
-            /***
-             * @type {module:xide/data/_Base}
-             * @private
-             */
-            store: null,
-            /***
-             * {xcf.views.DevicesTreeView}
-             * @private
-             */
-            treeView: null,
-            /***
-             * {xide.client.WebSocket}
-             */
-            deviceServerClient: null,
-            /***
-             *  An array of started device instances.
-             *  @private
-             */
-            deviceInstances: null,
-            /***
-             *  A map of scope names for module hot reloading
-             *  @private
-             */
-            driverScopes: null,
-            /***
-             * autoConnectDevices does as it says, on app start, it connects to all known devices of the
-             * project
-             * @param autoConnectDevices
-             * @private
-             */
-            autoConnectDevices: true,
-            /**
-             * Consoles is an array of {xide.views.ConsoleViews}. There is one console per device possible
-             * @private
-             */
-            consoles: null,
-            /**
-             * lastUpTime is being used to recognize a computer suspend hibernate
-             * @private
-             */
-            lastUpTime: null,
-            /**
-             * @private
-             */
-            reconnectDevice: 15000,
-            /**
-             * @private
-             */
-            reconnectDeviceServer: 5000,
+    /*
+     var console = typeof window !== 'undefined' ? window.console : console;
+     if(_console && _console.error && _console.warn){
+     console = _console;
+     }
+     */
+    const bases = [
+              ServerActionBase,
+              BeanManager,
+              DeviceManager_Server,
+              DeviceManager_DeviceServer,
+              ReloadMixin.dcl,
+              LogMixin
+          ];
 
-            /////////////////////////////////////////////////////////////////////////////////////
-            //
-            //  Device-Related
-            //
-            /////////////////////////////////////////////////////////////////////////////////////
-            onRunClassEvent: function (data) {
-                var id = data.args.id || data.id;
-                if (this.running && this.running[id]) {
-                    var runData = this.running[id];
-                    var delegate = runData.delegate;
-                    if (!delegate) {
-                        return;
-                    }
-                    if (data.error) {
-                        if (delegate.onError) {
-                            delegate.onError(data.error);
-                            delete this.running[id];
-                        }
-                    }
-                    if (data.finish) {
-                        if (delegate.onFinish) {
-                            delegate.onFinish(data.finish);
-                            delete this.running[id];
-                        }
-                    }
-                    if (data.progress) {
-                        if (delegate.onProgress) {
-                            delegate.onProgress(data.progress);
-                        }
-                    }
-                    
-                    if (data.interrupt) {
-                        if (delegate.onInterrupt) {
-                            delegate.onInterrupt(data.interrupt);
-                        }
+    const _debugMQTT = false;
+    const _debug = false;
+    const _debugLogging = false;
+    const _debugConnect = false;
+    const isServer = !has('host-browser');
+    const isIDE = has('xcf-ui');
+    const DEVICE_PROPERTY = types.DEVICE_PROPERTY;
+    const runDrivers = has('runDrivers');
+    const EVENTS = types.EVENTS;
+    has('xcf-ui') && bases.push(DeviceManager_UI);
+    /**
+     * Common base class, for server and client.
+     * @class module:xcf/manager/DeviceManager
+     * @augments module:xide/mixins/EventedMixin
+     * @extends module:xcf/manager/BeanManager
+     * @extends module:xide/mixins/ReloadMixin
+     * @extends module:xcf/manager/DeviceManager_DeviceServer
+     */
+    return dcl(bases, {
+        declaredClass: "xcf.manager.DeviceManager",
+        /***
+         * The Bean-Manager needs a unique name of the bean:
+         * @private
+         */
+        beanNamespace: 'device',
+        /***
+         * The Bean-Manager has some generic function like creating Dialogs for adding new items, please
+         * provide a title for the interface.
+         * @private
+         */
+        beanName: 'Device',
+        beanUrlPattern: "{id}",
+        breanScheme: "device://",
+        beanPriority: 1,
+        /**
+         * the icon class for bean edit views
+         * @private
+         */
+        beanIconClass: 'fa-sliders',
+        /**
+         * Bean group type
+         * @private
+         */
+        groupType: types.ITEM_TYPE.DEVICE_GROUP,
+        /**
+         * Bean item type
+         * @private
+         */
+        itemType: types.ITEM_TYPE.DEVICE,
+        /**
+         * The name of the CI in the meta database for the title or name.
+         * @private
+         */
+        itemMetaTitleField: DEVICE_PROPERTY.CF_DEVICE_TITLE,
+        /**
+         * Name of the system scope
+         * @private
+         */
+        systemScope: 'system_devices',
+        /**
+         * Name of the user scope
+         * @private
+         */
+        userScope: 'user_devices',
+        /**
+         * Name of the app scope
+         * @private
+         */
+        appScope: 'app_devices',
+        /**
+         * Name of the default scope for new created items
+         * @private
+         */
+        defaultScope: 'system_devices',
+        /***
+         * The RPC server class:
+         * @private
+         */
+        serviceClass: 'XCF_Device_Service',
+        /***
+         * A copy of all devices raw data from the server
+         * @private
+         */
+        rawData: null,
+        /***
+         * @type {module:xide/data/_Base}
+         * @private
+         */
+        store: null,
+        /***
+         * {xcf.views.DevicesTreeView}
+         * @private
+         */
+        treeView: null,
+        /***
+         * {xide.client.WebSocket}
+         */
+        deviceServerClient: null,
+        /***
+         *  An array of started device instances.
+         *  @private
+         */
+        deviceInstances: null,
+        /***
+         *  A map of scope names for module hot reloading
+         *  @private
+         */
+        driverScopes: null,
+        /***
+         * autoConnectDevices does as it says, on app start, it connects to all known devices of the
+         * project
+         * @param autoConnectDevices
+         * @private
+         */
+        autoConnectDevices: true,
+        /**
+         * Consoles is an array of {xide.views.ConsoleViews}. There is one console per device possible
+         * @private
+         */
+        consoles: null,
+        /**
+         * lastUpTime is being used to recognize a computer suspend hibernate
+         * @private
+         */
+        lastUpTime: null,
+        /**
+         * @private
+         */
+        reconnectDevice: 15000,
+        /**
+         * @private
+         */
+        reconnectDeviceServer: 5000,
+
+        /////////////////////////////////////////////////////////////////////////////////////
+        //
+        //  Device-Related
+        //
+        /////////////////////////////////////////////////////////////////////////////////////
+        onRunClassEvent: function (data) {
+            const id = data.args.id || data.id;
+            if (this.running && this.running[id]) {
+                const runData = this.running[id];
+                const delegate = runData.delegate;
+                if (!delegate) {
+                    return;
+                }
+                if (data.error) {
+                    if (delegate.onError) {
+                        delegate.onError(data.error);
+                        delete this.running[id];
                     }
                 }
-            },
-            getInstanceByName: function (name) {
-                var instances = this.deviceInstances;
-                var self = this;
-                for (var instance in instances) {
-                    var device = instances[instance].device;
-                    if (!device) {
-                        continue;
-                    }
-                    var title = self.getMetaValue(device, DEVICE_PROPERTY.CF_DEVICE_TITLE);
-                    if (title === name) {
-                        return instances[instance];
+                if (data.finish) {
+                    if (delegate.onFinish) {
+                        delegate.onFinish(data.finish);
+                        delete this.running[id];
                     }
                 }
-            },
-            /**
-             * Returns the file object for a device
-             * @param device
-             * @returns {module:xfile/model/File}
-             */
-            getFile: function (device) {
-                var dfd = new Deferred();
-                var ctx = this.ctx;
-                if (_.isString(device)) {
-                    device = this.getItemByPath(device + '.meta.json') || this.getItemByPath(device) || device;
+                if (data.progress) {
+                    if (delegate.onProgress) {
+                        delegate.onProgress(data.progress);
+                    }
                 }
-                var fileManager = ctx.getFileManager();
-                var fileStore = fileManager.getStore(device.scope);
-                var item = fileStore._getItem(device.path);
-                if (item) {
-                    dfd.resolve(item);
-                    return dfd;
+                
+                if (data.interrupt) {
+                    if (delegate.onInterrupt) {
+                        delegate.onInterrupt(data.interrupt);
+                    }
                 }
-                fileStore.initRoot().then(function () {
-                    fileStore._loadPath('.', true).then(function () {
-                        fileStore.getItem(device.path, true).then(function (item) {
-                            dfd.resolve(item);
-                        });
+            }
+        },
+        getInstanceByName: function (name) {
+            const instances = this.deviceInstances;
+            const self = this;
+            for (const instance in instances) {
+                const device = instances[instance].device;
+                if (!device) {
+                    continue;
+                }
+                const title = self.getMetaValue(device, DEVICE_PROPERTY.CF_DEVICE_TITLE);
+                if (title === name) {
+                    return instances[instance];
+                }
+            }
+        },
+        /**
+         * Returns the file object for a device
+         * @param device
+         * @returns {module:xfile/model/File}
+         */
+        getFile: function (device) {
+            const dfd = new Deferred();
+            const ctx = this.ctx;
+            if (_.isString(device)) {
+                device = this.getItemByPath(device + '.meta.json') || this.getItemByPath(device) || device;
+            }
+            const fileManager = ctx.getFileManager();
+            const fileStore = fileManager.getStore(device.scope);
+            const item = fileStore._getItem(device.path);
+            if (item) {
+                dfd.resolve(item);
+                return dfd;
+            }
+            fileStore.initRoot().then(function () {
+                fileStore._loadPath('.', true).then(function () {
+                    fileStore.getItem(device.path, true).then(function (item) {
+                        dfd.resolve(item);
                     });
                 });
-                return dfd;
-            },
-            getSourceHash: function () {
-                var userDirectory = this.ctx.getUserDirectory();
-                return userDirectory || "no_user_directory";
-            },
-            /**
-             * Make sure we've a connection to our device-server
-             * @public
-             */
-            checkDeviceServerConnection: function () {
-                if (!this.ctx.getNodeServiceManager) {
-                    return true;
-                }
-                var ctx = this.getContext();
-                var nodeServiceManager = has('xnode') && ctx.getNodeServiceManager ? this.ctx.getNodeServiceManager() : null;
-                if (!this.deviceServerClient && nodeServiceManager) {
-                    var store = nodeServiceManager.getStore();
-                    if (!store) {
-                        return false;
-                    }
-                    this.createDeviceServerClient(store);
-                } else {
+            });
+            return dfd;
+        },
+        getSourceHash: function () {
+            const userDirectory = this.ctx.getUserDirectory();
+            return userDirectory || "no_user_directory";
+        },
+        /**
+         * Make sure we've a connection to our device-server
+         * @public
+         */
+        checkDeviceServerConnection: function () {
+            if (!this.ctx.getNodeServiceManager) {
+                return true;
+            }
+            const ctx = this.getContext();
+            const nodeServiceManager = has('xnode') && ctx.getNodeServiceManager ? this.ctx.getNodeServiceManager() : null;
+            if (!this.deviceServerClient && nodeServiceManager) {
+                const store = nodeServiceManager.getStore();
+                if (!store) {
                     return false;
                 }
-                return true;
-            },
-            /**
-             *
-             * @param target
-             * @param source
-             * @private
-             */
-            addDriverFunctions: function (target, source) {
-                for (var i in source) {
-                    if (i === 'constructor' ||
-                        i === 'inherited' ||
-                        i === 'getInherited' ||
-                        i === 'isInstanceOf' ||
-                        i === '__inherited' ||
-                        i === 'onModuleReloaded' ||
-                        i === 'start' ||
-                        i === 'publish' ||
-                        i === 'subscribe' ||
-                        i === 'getInherited' ||
-                        i === 'getInherited'
-                    ) {
-                        continue;
-                    }
-                    if (_.isFunction(source[i]) && !target[i]) {
-                        target[i] = source[i];//swap
-                    }
+                this.createDeviceServerClient(store);
+            } else {
+                return false;
+            }
+            return true;
+        },
+        /**
+         *
+         * @param target
+         * @param source
+         * @private
+         */
+        addDriverFunctions: function (target, source) {
+            for (const i in source) {
+                if (i === 'constructor' ||
+                    i === 'inherited' ||
+                    i === 'getInherited' ||
+                    i === 'isInstanceOf' ||
+                    i === '__inherited' ||
+                    i === 'onModuleReloaded' ||
+                    i === 'start' ||
+                    i === 'publish' ||
+                    i === 'subscribe' ||
+                    i === 'getInherited' ||
+                    i === 'getInherited'
+                ) {
+                    continue;
                 }
-            },
-            /**
-             *
-             * @param driver
-             * @param instance
-             * @private
-             */
-            addLoggingFunctions: function (driver, instance) {
-                var thiz = this;
-                instance.log = function (level, type, message, data) {
-                    data = data || {};
-                    var oriData = lang.clone(data);
-                    data.type = data.type || type || 'Driver';
-                    if (instance.options) {
-                        data.device = instance.options;
-                    }
-                    thiz.publish(types.EVENTS.ON_SERVER_LOG_MESSAGE, {
-                        data: data,
-                        level: level || 'info',
-                        message: message,
-                        details: oriData
-                    });
-                };
-            },
-            /**
-             * An instance of a driver class has been created.
-             * We mixin new functions: callCommand, set/get-Variable, log
-             * @param driver
-             * @param instance
-             * @param device
-             * @private
-             */
-            completeDriverInstance: function (driver, instance, device) {
-                _debug && console.info('complete driver instance');
-                var thiz = this,
-                    scope = instance.blockScope,
-                    store = scope.blockStore,
-                    parentId = device.path,
-                    commandsRoot = parentId + '_commands',
-                    variablesRoot = parentId + '_variables';
-
-                store.on('delete', function (evt) {
-                    var _isVariable = evt.target.declaredClass.indexOf('Variable') !== -1,
-                        _parent = _isVariable ? variablesRoot : commandsRoot,
-                        referenceParent = device._store.getSync(_parent);
-
-                    if (referenceParent) {
-                        referenceParent.refresh();
-                    }
-
-                    var referenceId = _parent + '_reference_' + evt.target.id,
-                        reference = device._store.getSync(referenceId);
-
-                    if (reference) {
-                        reference.refresh();
-                    }
+                if (_.isFunction(source[i]) && !target[i]) {
+                    target[i] = source[i];//swap
+                }
+            }
+        },
+        /**
+         *
+         * @param driver
+         * @param instance
+         * @private
+         */
+        addLoggingFunctions: function (driver, instance) {
+            const thiz = this;
+            instance.log = function (level, type, message, data) {
+                data = data || {};
+                const oriData = lang.clone(data);
+                data.type = data.type || type || 'Driver';
+                if (instance.options) {
+                    data.device = instance.options;
+                }
+                thiz.publish(types.EVENTS.ON_SERVER_LOG_MESSAGE, {
+                    data: data,
+                    level: level || 'info',
+                    message: message,
+                    details: oriData
                 });
-                function createReference(block, driver, title, icon) {
-                    var _isVariable = block.declaredClass.indexOf('Variable') !== -1;
-                    var _parent = _isVariable ? variablesRoot : commandsRoot;
-                    if (block.declaredClass.indexOf(_isVariable ? 'Variable' : 'Command') == -1) {
-                        return;
-                    }
+            };
+        },
+        /**
+         * An instance of a driver class has been created.
+         * We mixin new functions: callCommand, set/get-Variable, log
+         * @param driver
+         * @param instance
+         * @param device
+         * @private
+         */
+        completeDriverInstance: function (driver, instance, device) {
+            _debug && console.info('complete driver instance');
+            const thiz = this;
+            const scope = instance.blockScope;
+            const store = scope.blockStore;
+            const parentId = device.path;
+            const commandsRoot = parentId + '_commands';
+            const variablesRoot = parentId + '_variables';
 
-                    var reference = new Reference({
-                        enabled: true,
-                        path: _parent + '_reference_' + block.id,
-                        name: title,
-                        id: block.id,
-                        parentId: _parent,
-                        _mayHaveChildren: false,
-                        virtual: true,
-                        tooltip: true,
-                        icon: icon,
-                        ref: {
-                            driver: driver,
-                            item: block,
-                            device: device
-                        },
-                        type: types.ITEM_TYPE.BLOCK
-                    });
+            store.on('delete', function (evt) {
+                const _isVariable = evt.target.declaredClass.indexOf('Variable') !== -1;
+                const _parent = _isVariable ? variablesRoot : commandsRoot;
+                const referenceParent = device._store.getSync(_parent);
 
-                    reference = device._store.putSync(reference);
+                if (referenceParent) {
+                    referenceParent.refresh();
+                }
 
-                    block.addReference(reference, {
-                        properties: {
-                            "name": true,
-                            "enabled": true,
-                            "value": true
-                        },
-                        onDelete: true
-                    }, true);
+                const referenceId = _parent + '_reference_' + evt.target.id;
+                const reference = device._store.getSync(referenceId);
 
+                if (reference) {
                     reference.refresh();
                 }
+            });
+            function createReference(block, driver, title, icon) {
+                const _isVariable = block.declaredClass.indexOf('Variable') !== -1;
+                const _parent = _isVariable ? variablesRoot : commandsRoot;
+                if (block.declaredClass.indexOf(_isVariable ? 'Variable' : 'Command') == -1) {
+                    return;
+                }
 
-                store.on('added', function (block) {
-                    createReference(block, driver, block.name, block.icon || 'fa-exclamation');
+                let reference = new Reference({
+                    enabled: true,
+                    path: _parent + '_reference_' + block.id,
+                    name: title,
+                    id: block.id,
+                    parentId: _parent,
+                    _mayHaveChildren: false,
+                    virtual: true,
+                    tooltip: true,
+                    icon: icon,
+                    ref: {
+                        driver: driver,
+                        item: block,
+                        device: device
+                    },
+                    type: types.ITEM_TYPE.BLOCK
                 });
 
-                instance.setVariable = function (title, value, save, publish, highlight) {
-                    var _variable = this.blockScope.getVariable(title);
-                    if (_variable) {
-                        _variable.value = value;
-                        if (highlight === false) {
-                            _variable.__ignoreChangeMark = true;
-                        }
-                        _variable.set('value', value, save, publish, highlight);
-                        if (highlight === false) {
-                            _variable.__ignoreChangeMark = false;
-                        }
-                    } else {
-                        _debug && console.log('no such variable : ' + title);
-                        return;
-                    }
-                    thiz.publish(types.EVENTS.ON_DRIVER_VARIABLE_CHANGED, {
-                        item: _variable,
-                        scope: this.blockScope,
-                        driver: driver,
-                        owner: thiz,
-                        save: save === true,
-                        publish: publish
-                    });
-                };
-                /**
-                 * Add getVariable
-                 * @param title
-                 */
-                instance.getVariable = function (title) {
-                    var _variable = this.blockScope.getVariable(title);
-                    if (_variable) {
-                        return _variable._getArg(_variable.value, false);
-                    }
-                    return '';
-                };
+                reference = device._store.putSync(reference);
 
-                /**
-                 * add log function
-                 * @param level
-                 * @param type
-                 * @param message
-                 * @param data
-                 */
-                instance.log = function (level, type, message, data) {
-                    data = data || {};
-                    var oriData = lang.clone(data);
-                    data.type = data.type || type || 'Driver';
-                    if (instance.options) {
-                        data.device = instance.options;
+                block.addReference(reference, {
+                    properties: {
+                        "name": true,
+                        "enabled": true,
+                        "value": true
+                    },
+                    onDelete: true
+                }, true);
+
+                reference.refresh();
+            }
+
+            store.on('added', function (block) {
+                createReference(block, driver, block.name, block.icon || 'fa-exclamation');
+            });
+
+            instance.setVariable = function (title, value, save, publish, highlight) {
+                const _variable = this.blockScope.getVariable(title);
+                if (_variable) {
+                    _variable.value = value;
+                    if (highlight === false) {
+                        _variable.__ignoreChangeMark = true;
                     }
-                    thiz.publish(types.EVENTS.ON_SERVER_LOG_MESSAGE, {
-                        data: data,
-                        level: level || 'info',
-                        message: message,
-                        details: oriData
-                    });
-                };
-                for (var i in driver) {
-                    if (i === 'constructor' ||
-                        i === 'inherited' ||
-                        i === 'getInherited' ||
-                        i === 'isInstanceOf' ||
-                        i === '__inherited' ||
-                        i === 'onModuleReloaded' ||
-                        i === 'start' ||
-                        i === 'publish' ||
-                        i === 'subscribe' ||
-                        i === 'getInherited' ||
-                        i === 'getInherited'
-                    ) {
-                        continue;
+                    _variable.set('value', value, save, publish, highlight);
+                    if (highlight === false) {
+                        _variable.__ignoreChangeMark = false;
                     }
-                    if (lang.isFunction(driver[i]) && !instance[i] /*&& lang.isFunction(target[i])*/) {
-                        instance[i] = driver[i];//swap
+                } else {
+                    _debug && console.log('no such variable : ' + title);
+                    return;
+                }
+                thiz.publish(types.EVENTS.ON_DRIVER_VARIABLE_CHANGED, {
+                    item: _variable,
+                    scope: this.blockScope,
+                    driver: driver,
+                    owner: thiz,
+                    save: save === true,
+                    publish: publish
+                });
+            };
+            /**
+             * Add getVariable
+             * @param title
+             */
+            instance.getVariable = function (title) {
+                const _variable = this.blockScope.getVariable(title);
+                if (_variable) {
+                    return _variable._getArg(_variable.value, false);
+                }
+                return '';
+            };
+
+            /**
+             * add log function
+             * @param level
+             * @param type
+             * @param message
+             * @param data
+             */
+            instance.log = function (level, type, message, data) {
+                data = data || {};
+                const oriData = lang.clone(data);
+                data.type = data.type || type || 'Driver';
+                if (instance.options) {
+                    data.device = instance.options;
+                }
+                thiz.publish(types.EVENTS.ON_SERVER_LOG_MESSAGE, {
+                    data: data,
+                    level: level || 'info',
+                    message: message,
+                    details: oriData
+                });
+            };
+            for (const i in driver) {
+                if (i === 'constructor' ||
+                    i === 'inherited' ||
+                    i === 'getInherited' ||
+                    i === 'isInstanceOf' ||
+                    i === '__inherited' ||
+                    i === 'onModuleReloaded' ||
+                    i === 'start' ||
+                    i === 'publish' ||
+                    i === 'subscribe' ||
+                    i === 'getInherited' ||
+                    i === 'getInherited'
+                ) {
+                    continue;
+                }
+                if (lang.isFunction(driver[i]) && !instance[i] /*&& lang.isFunction(target[i])*/) {
+                    instance[i] = driver[i];//swap
+                }
+            }
+        },
+        getDevice: function (mixed) {
+            let result = mixed;
+            if (_.isString(mixed)) {
+                const byId = this.getItemById(mixed);
+                if (byId) {
+                    result = byId;
+                } else {
+                    const byPath = this.getItemByPath(mixed);
+                    if (byPath) {
+                        result = byPath;
                     }
                 }
-            },
-            getDevice: function (mixed) {
-                var result = mixed;
-                if (_.isString(mixed)) {
-                    var byId = this.getItemById(mixed);
-                    if (byId) {
-                        result = byId;
-                    } else {
-                        var byPath = this.getItemByPath(mixed);
-                        if (byPath) {
-                            result = byPath;
+            }
+            return result;
+        },
+        /**
+         * Stops a device with a device model item
+         * @param _item {module:xcf/model/Device|string}
+         */
+        stopDevice: function (_item) {
+            const device = this.getDevice(_item) || _item;
+            if (!device) {
+                console.error('cant find device ' + _item);
+                return;
+            }
+            this.checkDeviceServerConnection();
+            device._userStopped = true;
+            const cInfo = this.toDeviceControlInfo(device);
+            if (!cInfo) {
+                _debugConnect && console.error('cant find device::no device info', device.toString && device.toString());
+                return;
+            }
+            if (isServer && (!cInfo.serverSide && !device.isServer())) {
+                return;
+            }
+            const hash = cInfo.hash;
+            if (this.deviceInstances[hash]) {
+                this._removeInstance(this.deviceInstances[hash], hash, device);
+                delete this.deviceInstances[hash];
+                _debugConnect && console.log('-- stop device ' + hash, this.deviceInstances);
+            } else {
+                _debugConnect && console.log('cant find instance ' + hash);
+                return;
+            }
+            this.sendManagerCommand(types.SOCKET_SERVER_COMMANDS.MANAGER_STOP_DRIVER, cInfo);
+            //this.sendManagerCommand(types.SOCKET_SERVER_COMMANDS.STOP_DEVICE, cInfo);
+        },
+        /**
+         * @TODO: remove back compat
+         * @param scope
+         * @returns {*}
+         */
+        getStore: function (scope) {
+            scope = scope || 'system_devices';
+            const store = this.stores[scope];
+            if (store) {
+                return store;
+            }
+            if (scope) {
+                return this.ls(scope);
+            }
+        },
+        /**
+         * Get all enabled devices
+         * @param enabledOnly
+         * @param addDriver
+         * @returns {module:xcf/model/Device[]}
+         */
+        getDevices: function (enabledOnly, addDriver) {
+            const store = this.getStore();
+            if (!store) {
+                return [];
+            }
+            let items = utils.queryStore(store, {
+                isDir: false
+            });
+            if (items._S) {
+                items = [items];
+            }
+
+            const result = [];
+            for (let i = 0; i < items.length; i++) {
+
+                const device = items[i];
+                const enabled = this.getMetaValue(device, DEVICE_PROPERTY.CF_DEVICE_ENABLED);
+
+                if ((enabledOnly === true && enabled === true || enabled === null) || enabledOnly === false) {
+                    result.push(device);
+                    if (addDriver === true) {
+                        const driverId = this.getMetaValue(device, DEVICE_PROPERTY.CF_DEVICE_DRIVER);
+                        if (!driverId) {
+                            _debug && console.error('device has no driver id!');
+                            continue;
+                        }
+                        const driver = this.ctx.getDriverManager().getItemById(driverId);
+                        if (driver) {
+                            device.driver = driver;
                         }
                     }
                 }
-                return result;
-            },
-            /**
-             * Stops a device with a device model item
-             * @param _item {module:xcf/model/Device|string}
-             */
-            stopDevice: function (_item) {
-                var device = this.getDevice(_item) || _item;
-                if (!device) {
-                    console.error('cant find device ' + _item);
-                    return;
-                }
-                this.checkDeviceServerConnection();
-                device._userStopped = true;
-                var cInfo = this.toDeviceControlInfo(device);
-                if (!cInfo) {
-                    _debugConnect && console.error('cant find device::no device info', device.toString && device.toString());
-                    return;
-                }
-                if (isServer && (!cInfo.serverSide && !device.isServer())) {
-                    return;
-                }
-                var hash = cInfo.hash;
-                if (this.deviceInstances[hash]) {
-                    this._removeInstance(this.deviceInstances[hash], hash, device);
-                    delete this.deviceInstances[hash];
-                    _debugConnect && console.log('-- stop device ' + hash, this.deviceInstances);
-                } else {
-                    _debugConnect && console.log('cant find instance ' + hash);
-                    return;
-                }
-                this.sendManagerCommand(types.SOCKET_SERVER_COMMANDS.MANAGER_STOP_DRIVER, cInfo);
-                //this.sendManagerCommand(types.SOCKET_SERVER_COMMANDS.STOP_DEVICE, cInfo);
-            },
-            /**
-             * @TODO: remove back compat
-             * @param scope
-             * @returns {*}
-             */
-            getStore: function (scope) {
-                scope = scope || 'system_devices';
-                var store = this.stores[scope];
+            }
+            return result;
+        },
+        getStores: function () {
+            const stores = [];
+            for (const scope in this.stores) {
+                const store = this.stores[scope];
                 if (store) {
-                    return store;
+                    stores.push(store);
                 }
-                if (scope) {
-                    return this.ls(scope);
-                }
-            },
-            /**
-             * Get all enabled devices
-             * @param enabledOnly
-             * @param addDriver
-             * @returns {module:xcf/model/Device[]}
-             */
-            getDevices: function (enabledOnly, addDriver) {
-                var store = this.getStore();
+            }
+            return stores;
+        },
+        getStorePath: function (scope) {
+            const ctx = this.getContext();
+            const resourceManager = ctx.getResourceManager();
+            if (scope === 'user_devices') {
+                return resourceManager.getVariable('USER_DIRECTORY');
+            }
+        },
+        /**
+         * Connect to all known devices
+         * @private
+         */
+        connectToAllDevices: function () {
+            if (!this.deviceServerClient) {
+                this.checkDeviceServerConnection();
+                return;
+            }
+
+            const stores = this.getStores();
+            const thiz = this;
+
+            if (!this.getStores().length) {
+                return;
+            }
+            const all = [];
+
+            function start(device) {
+                const deviceDfd = thiz.startDevice(device);
+                all.push(deviceDfd);
+                _debugConnect && console.log('start device ' + thiz.toDeviceControlInfo(device).title);
+            }
+
+            function connect(store) {
                 if (!store) {
-                    return [];
+                    console.error('have no device store');
+                    return;
                 }
-                var items = utils.queryStore(store, {
+                if (store.connected) {
+                    return;
+                }
+                store.connected = true;
+                let items = utils.queryStore(store, {
                     isDir: false
                 });
                 if (items._S) {
                     items = [items];
                 }
 
-                var result = [];
-                for (var i = 0; i < items.length; i++) {
-
-                    var device = items[i];
-                    var enabled = this.getMetaValue(device, DEVICE_PROPERTY.CF_DEVICE_ENABLED);
-
-                    if ((enabledOnly === true && enabled === true || enabled === null) || enabledOnly === false) {
-                        result.push(device);
-                        if (addDriver === true) {
-                            var driverId = this.getMetaValue(device, DEVICE_PROPERTY.CF_DEVICE_DRIVER);
-                            if (!driverId) {
-                                _debug && console.error('device has no driver id!');
-                                continue;
-                            }
-                            var driver = this.ctx.getDriverManager().getItemById(driverId);
-                            if (driver) {
-                                device.driver = driver;
-                            }
-                        }
+                if (!_.isArray(items)) {
+                    items = [items];
+                }
+                for (let i = 0; i < items.length; i++) {
+                    const device = items[i];
+                    const enabled = thiz.getMetaValue(device, DEVICE_PROPERTY.CF_DEVICE_ENABLED);
+                    if (enabled == true || enabled == null) {
+                        start(device);
                     }
                 }
-                return result;
-            },
-            getStores: function () {
-                var stores = [];
-                for (var scope in this.stores) {
-                    var store = this.stores[scope];
-                    if (store) {
-                        stores.push(store);
-                    }
-                }
-                return stores;
-            },
-            getStorePath: function (scope) {
-                var ctx = this.getContext();
-                var resourceManager = ctx.getResourceManager();
-                if (scope === 'user_devices') {
-                    return resourceManager.getVariable('USER_DIRECTORY');
-                }
-            },
-            /**
-             * Connect to all known devices
-             * @private
-             */
-            connectToAllDevices: function () {
-                if (!this.deviceServerClient) {
-                    this.checkDeviceServerConnection();
-                    return;
-                }
+            }
 
-                var stores = this.getStores(),
-                    thiz = this;
-
-                if (!this.getStores().length) {
-                    return;
-                }
-                var all = [];
-
-                function start(device) {
-                    var deviceDfd = thiz.startDevice(device);
-                    all.push(deviceDfd);
-                    _debugConnect && console.log('start device ' + thiz.toDeviceControlInfo(device).title);
-                }
-
-                function connect(store) {
-                    if (!store) {
-                        console.error('have no device store');
-                        return;
-                    }
-                    if (store.connected) {
-                        return;
-                    }
-                    store.connected = true;
-                    var items = utils.queryStore(store, {
-                        isDir: false
-                    });
-                    if (items._S) {
-                        items = [items];
-                    }
-
-                    if (!_.isArray(items)) {
-                        items = [items];
-                    }
-                    for (var i = 0; i < items.length; i++) {
-                        var device = items[i];
-                        var enabled = thiz.getMetaValue(device, DEVICE_PROPERTY.CF_DEVICE_ENABLED);
-                        if (enabled == true || enabled == null) {
-                            start(device);
-                        }
-                    }
-                }
-
-                if (this.deviceServerClient.dfd) {
-                    this.deviceServerClient.dfd.then(function () {
-                        _.each(stores, connect, this);
-                    }.bind(this));
-                } else {
+            if (this.deviceServerClient.dfd) {
+                this.deviceServerClient.dfd.then(function () {
                     _.each(stores, connect, this);
-                }
-                return all;
-            },
-            /**
-             *
-             * @param clientOptions
-             * @param localDevice {module:xcf/model/Device}
-             */
-            updateDevice: function (clientOptions, localDevice) {
-                if (localDevice) {
-                    localDevice.setMetaValue(types.DEVICE_PROPERTY.CF_DEVICE_DRIVER_OPTIONS, clientOptions.driverOptions);
-                    localDevice.setMetaValue(types.DEVICE_PROPERTY.CF_DEVICE_OPTIONS, clientOptions.options);
-                    localDevice.setMetaValue(types.DEVICE_PROPERTY.CF_DEVICE_ENABLED, clientOptions.enabled);
-                }
-            },
-            debug: function () {
-                console.info('Debug info stores : ');
-                _.each(this.stores, function (store) {
-                    console.log('have store ' + store.scope);
-                });
-            },
-            /**
-             *
-             * @private
-             */
-            _getLogText: function (str) {
-                return moment().format("HH:mm:ss:SSS") + ' ::   ' + str + '';
-            },
-            _parse: function (scope, expression) {
-                var str = '' + expression;
-                if (str.indexOf('{{') > 0 || str.indexOf('}}') > 0) {
-                    console.time('parse expression');
-                    var _parser = new Expression();
-                    str = _parser.parse(types.EXPRESSION_PARSER.FILTREX,
-                        str, this, {
-                            variables: scope.getVariablesAsObject(),
-                            delimiters: {
-                                begin: '{{',
-                                end: '}}'
-                            }
+                }.bind(this));
+            } else {
+                _.each(stores, connect, this);
+            }
+            return all;
+        },
+        /**
+         *
+         * @param clientOptions
+         * @param localDevice {module:xcf/model/Device}
+         */
+        updateDevice: function (clientOptions, localDevice) {
+            if (localDevice) {
+                localDevice.setMetaValue(types.DEVICE_PROPERTY.CF_DEVICE_DRIVER_OPTIONS, clientOptions.driverOptions);
+                localDevice.setMetaValue(types.DEVICE_PROPERTY.CF_DEVICE_OPTIONS, clientOptions.options);
+                localDevice.setMetaValue(types.DEVICE_PROPERTY.CF_DEVICE_ENABLED, clientOptions.enabled);
+            }
+        },
+        debug: function () {
+            console.info('Debug info stores : ');
+            _.each(this.stores, function (store) {
+                console.log('have store ' + store.scope);
+            });
+        },
+        /**
+         *
+         * @private
+         */
+        _getLogText: function (str) {
+            return moment().format("HH:mm:ss:SSS") + ' ::   ' + str + '';
+        },
+        _parse: function (scope, expression) {
+            let str = '' + expression;
+            if (str.indexOf('{{') > 0 || str.indexOf('}}') > 0) {
+                console.time('parse expression');
+                const _parser = new Expression();
+                str = _parser.parse(types.EXPRESSION_PARSER.FILTREX,
+                    str, this, {
+                        variables: scope.getVariablesAsObject(),
+                        delimiters: {
+                            begin: '{{',
+                            end: '}}'
                         }
-                    );
-                    console.timeEnd('parse expression');
-                } else {
-                    var _text = scope.parseExpression(expression);
-                    if (_text) {
-                        str = _text;
                     }
+                );
+                console.timeEnd('parse expression');
+            } else {
+                const _text = scope.parseExpression(expression);
+                if (_text) {
+                    str = _text;
                 }
-                return str;
-            },
-            /**
-             *
-             * @param driver
-             * @param device
-             * @private
-             */
-            runCommand: function (driver, device) {
-            },
-            /**
-             * @private
-             */
-            _lastActions: null,
-            /////////////////////////////////////////////////////////////////////////////////////
-            //
-            //  Data related
-            //
-            /////////////////////////////////////////////////////////////////////////////////////
-            /**
-             *
-             * @param rawData
-             * @private
-             */
-            onStoreReloaded: function (rawData) {
-                this.completeDeviceStore();
-            },
-            getInstance: function (mixed) {
-                var deviceInfo = mixed ? mixed._store ? this.toDeviceControlInfo(mixed) : mixed : null;
-                if (!deviceInfo) {
-                    return;
-                }
-                return this.getDriverInstance(deviceInfo, false);
-            },
-            /***
-             * returns driver instance!
-             * @param deviceInfo {module:xide/types~DeviceInfo}
-             * @param fillSettings will convert and put CI settings into the driver's instance (member variable)
-             * @returns {module:xcf/driver/DriverBase}
-             * @private
-             */
-            getDriverInstance: function (deviceInfo, fillSettings) {
-                if (!deviceInfo) {
-                    console.error('getDriverInstance::have no device info');
-                    return null;
-                }
-                for (var i in this.deviceInstances) {
-
-                    var instance = this.deviceInstances[i];
-                    var instanceOptions = instance.options;
-                    if (!instanceOptions) {
-                        continue;
-                    }
-
-                    if (instanceOptions.port === deviceInfo.port &&
-                        instanceOptions.host === deviceInfo.host &&
-                        instanceOptions.protocol === deviceInfo.protocol &&
-                        instanceOptions.isServer === deviceInfo.isServer) {
-
-                        if (fillSettings && instance.sendSettings && has('xcf-ui')) {
-                            fillSettings = false;
-                        }
-
-                        if (fillSettings !== false) {
-                            //get settings, if not cached already
-                            if (instance && !instance.sendSettings) {
-                                //pick driver
-                                var driver = this.ctx.getDriverManager().getItemById(deviceInfo.driverId);//driverStore item
-                                if (driver) {
-                                    var meta = driver['user'];
-                                    var commandsCI = utils.getCIByChainAndName(meta, 0, types.DRIVER_PROPERTY.CF_DRIVER_COMMANDS);
-                                    if (commandsCI && commandsCI['params']) {
-                                        instance.sendSettings = utils.getJson(commandsCI['params']);
-                                    }
-
-                                    var responseCI = utils.getCIByChainAndName(meta, 0, types.DRIVER_PROPERTY.CF_DRIVER_RESPONSES);
-                                    if (responseCI && responseCI['params']) {
-                                        instance.responseSettings = utils.getJson(responseCI['params']);
-                                    }
-                                } else {
-                                    _debug && console.warn('getDriverInstance:: cant find driver');
-                                }
-                            }
-                        }
-                        return instance;
-                    }
-                }
+            }
+            return str;
+        },
+        /**
+         *
+         * @param driver
+         * @param device
+         * @private
+         */
+        runCommand: function (driver, device) {
+        },
+        /**
+         * @private
+         */
+        _lastActions: null,
+        /////////////////////////////////////////////////////////////////////////////////////
+        //
+        //  Data related
+        //
+        /////////////////////////////////////////////////////////////////////////////////////
+        /**
+         *
+         * @param rawData
+         * @private
+         */
+        onStoreReloaded: function (rawData) {
+            this.completeDeviceStore();
+        },
+        getInstance: function (mixed) {
+            const deviceInfo = mixed ? mixed._store ? this.toDeviceControlInfo(mixed) : mixed : null;
+            if (!deviceInfo) {
+                return;
+            }
+            return this.getDriverInstance(deviceInfo, false);
+        },
+        /***
+         * returns driver instance!
+         * @param deviceInfo {module:xide/types~DeviceInfo}
+         * @param fillSettings will convert and put CI settings into the driver's instance (member variable)
+         * @returns {module:xcf/driver/DriverBase}
+         * @private
+         */
+        getDriverInstance: function (deviceInfo, fillSettings) {
+            if (!deviceInfo) {
+                console.error('getDriverInstance::have no device info');
                 return null;
-            },
-            _reconnectServerTimer: null,
-            /**
-             * @private
-             */
-            onDeviceServerConnectionLost: function () {
+            }
+            for (const i in this.deviceInstances) {
 
-                if (this.deviceServerClient && this.deviceServerClient.pageUnloaded) {
-                    return;
-                }
-                if (this.deviceServerClient) {
-                    this.deviceServerClient.destroy();
-                    this.deviceServerClient = null;
+                const instance = this.deviceInstances[i];
+                const instanceOptions = instance.options;
+                if (!instanceOptions) {
+                    continue;
                 }
 
-                if (this._reconnectServerTimer) {
-                    return;
-                }
-                var thiz = this;
-                if (isIDE) {
-                    thiz.ctx.getNotificationManager().postMessage({
-                        message: 'Lost connection to device server, try reconnecting in 5 seconds',
-                        type: 'error',
-                        showCloseButton: true,
-                        duration: 1000
-                    });
-                }
-                this._reconnectServerTimer = setTimeout(function () {
-                    thiz.checkDeviceServerConnection();
-                    thiz._reconnectServerTimer = null;
-                }, this.reconnectDeviceServer);
+                if (instanceOptions.port === deviceInfo.port &&
+                    instanceOptions.host === deviceInfo.host &&
+                    instanceOptions.protocol === deviceInfo.protocol &&
+                    instanceOptions.isServer === deviceInfo.isServer) {
 
-                console.log('lost device server connection');
-                _.each(this.deviceInstances, function (instance) {
-
-                    if (instance && instance.device && !instance.domNode) {
-                        var device = instance.device;
-                        var driverInstance = device.driverInstance;
-                        driverInstance && driverInstance.onLostServer && driverInstance.onLostServer();
-                        device.setState(types.DEVICE_STATE.LOST_DEVICE_SERVER);
+                    if (fillSettings && instance.sendSettings && has('xcf-ui')) {
+                        fillSettings = false;
                     }
-                });
 
-            },
-            /**
-             *
-             * @param msg
-             * @private
-             */
-            onMQTTMessage: function (msg) {
-                var message = utils.getJson(msg.message);
-                var isUs = false;
-                var thiz = this;
-                if (message) {
-                    var sourceHost = message.sourceHost;
-                    var sourcePort = message.sourcePort;
-                    var mqttHost = msg.host;
-                    var mqttPort = msg.port;
-                    if (sourceHost && sourcePort) {
-                        if (sourceHost === mqttHost && sourcePort == mqttPort) {
-                            isUs = true;
-                        }
-                    }
-                }
+                    if (fillSettings !== false) {
+                        //get settings, if not cached already
+                        if (instance && !instance.sendSettings) {
+                            //pick driver
+                            const driver = this.ctx.getDriverManager().getItemById(deviceInfo.driverId);//driverStore item
+                            if (driver) {
+                                const meta = driver['user'];
+                                const commandsCI = utils.getCIByChainAndName(meta, 0, types.DRIVER_PROPERTY.CF_DRIVER_COMMANDS);
+                                if (commandsCI && commandsCI['params']) {
+                                    instance.sendSettings = utils.getJson(commandsCI['params']);
+                                }
 
-                if (!isUs) {
-
-                    _debugMQTT && console.info('onMQTTMessage:');
-                    //
-                    var parts = msg.topic.split('/');
-                    if (parts.length == 4 && parts[2] === 'Variable' && message.device) {
-                        var _device = this.getDeviceStoreItem(message.device);
-                        if (_device) {
-                            _debugMQTT && console.info('\tonMQTTMessage: on mqtt variable topic ' + msg.topic);
-                            var _deviceInfo = this.toDeviceControlInfo(message.device);
-                            if (_deviceInfo) {
-                                var driverInstance = this.getDriverInstance(_deviceInfo);
-                                if (driverInstance) {
-                                    var scope = driverInstance.blockScope;
-                                    var _variable = scope.getVariable(parts[3]);
-                                    if (_variable) {
-                                        _debugMQTT && console.info('     received MQTT variable ' + _variable.name + ' = ' + message.value);
-                                        if (has('xcf-ui')) {
-                                            _variable.set('value', message.value);
-                                            _variable.refresh();
-                                        } else {
-                                            delete _variable.value;
-                                            _variable.value = message.value;
-                                        }
-                                        thiz.publish(types.EVENTS.ON_DRIVER_VARIABLE_CHANGED, {
-                                            item: _variable,
-                                            scope: _variable.scope,
-                                            owner: thiz,
-                                            save: false,
-                                            publish: true,
-                                            source: 'mqtt',
-                                            publishMQTT: false
-                                        });
-
-                                    }
-                                } else {
-                                    _debugMQTT && console.error('cant find driver instance ' + msg.topic);
+                                const responseCI = utils.getCIByChainAndName(meta, 0, types.DRIVER_PROPERTY.CF_DRIVER_RESPONSES);
+                                if (responseCI && responseCI['params']) {
+                                    instance.responseSettings = utils.getJson(responseCI['params']);
                                 }
                             } else {
-                                _debugMQTT && console.error('cant find device info');
+                                _debug && console.warn('getDriverInstance:: cant find driver');
+                            }
+                        }
+                    }
+                    return instance;
+                }
+            }
+            return null;
+        },
+        _reconnectServerTimer: null,
+        /**
+         * @private
+         */
+        onDeviceServerConnectionLost: function () {
+
+            if (this.deviceServerClient && this.deviceServerClient.pageUnloaded) {
+                return;
+            }
+            if (this.deviceServerClient) {
+                this.deviceServerClient.destroy();
+                this.deviceServerClient = null;
+            }
+
+            if (this._reconnectServerTimer) {
+                return;
+            }
+            const thiz = this;
+            if (isIDE) {
+                thiz.ctx.getNotificationManager().postMessage({
+                    message: 'Lost connection to device server, try reconnecting in 5 seconds',
+                    type: 'error',
+                    showCloseButton: true,
+                    duration: 1000
+                });
+            }
+            this._reconnectServerTimer = setTimeout(function () {
+                thiz.checkDeviceServerConnection();
+                thiz._reconnectServerTimer = null;
+            }, this.reconnectDeviceServer);
+
+            console.log('lost device server connection');
+            _.each(this.deviceInstances, function (instance) {
+
+                if (instance && instance.device && !instance.domNode) {
+                    const device = instance.device;
+                    const driverInstance = device.driverInstance;
+                    driverInstance && driverInstance.onLostServer && driverInstance.onLostServer();
+                    device.setState(types.DEVICE_STATE.LOST_DEVICE_SERVER);
+                }
+            });
+
+        },
+        /**
+         *
+         * @param msg
+         * @private
+         */
+        onMQTTMessage: function (msg) {
+            const message = utils.getJson(msg.message);
+            let isUs = false;
+            const thiz = this;
+            if (message) {
+                const sourceHost = message.sourceHost;
+                const sourcePort = message.sourcePort;
+                const mqttHost = msg.host;
+                const mqttPort = msg.port;
+                if (sourceHost && sourcePort) {
+                    if (sourceHost === mqttHost && sourcePort == mqttPort) {
+                        isUs = true;
+                    }
+                }
+            }
+
+            if (!isUs) {
+
+                _debugMQTT && console.info('onMQTTMessage:');
+                //
+                const parts = msg.topic.split('/');
+                if (parts.length == 4 && parts[2] === 'Variable' && message.device) {
+                    const _device = this.getDeviceStoreItem(message.device);
+                    if (_device) {
+                        _debugMQTT && console.info('\tonMQTTMessage: on mqtt variable topic ' + msg.topic);
+                        const _deviceInfo = this.toDeviceControlInfo(message.device);
+                        if (_deviceInfo) {
+                            const driverInstance = this.getDriverInstance(_deviceInfo);
+                            if (driverInstance) {
+                                const scope = driverInstance.blockScope;
+                                const _variable = scope.getVariable(parts[3]);
+                                if (_variable) {
+                                    _debugMQTT && console.info('     received MQTT variable ' + _variable.name + ' = ' + message.value);
+                                    if (has('xcf-ui')) {
+                                        _variable.set('value', message.value);
+                                        _variable.refresh();
+                                    } else {
+                                        delete _variable.value;
+                                        _variable.value = message.value;
+                                    }
+                                    thiz.publish(types.EVENTS.ON_DRIVER_VARIABLE_CHANGED, {
+                                        item: _variable,
+                                        scope: _variable.scope,
+                                        owner: thiz,
+                                        save: false,
+                                        publish: true,
+                                        source: 'mqtt',
+                                        publishMQTT: false
+                                    });
+
+                                }
+                            } else {
+                                _debugMQTT && console.error('cant find driver instance ' + msg.topic);
                             }
                         } else {
-                            console.error('cant find device for : ' + msg.topic);
+                            _debugMQTT && console.error('cant find device info');
                         }
+                    } else {
+                        console.error('cant find device for : ' + msg.topic);
                     }
-                } else {
-                    _debugMQTT && console.error('same source');
                 }
-            },
-            /**
-             * Find a block by url in all instances
-             * @param url
-             * @returns {*}
-             */
-            getBlock: function (url) {
-                for (var id in this.deviceInstances) {
-                    var instance = this.deviceInstances[id];
-                    if (!instance || !instance.device) {
-                        continue;
+            } else {
+                _debugMQTT && console.error('same source');
+            }
+        },
+        /**
+         * Find a block by url in all instances
+         * @param url
+         * @returns {*}
+         */
+        getBlock: function (url) {
+            for (const id in this.deviceInstances) {
+                const instance = this.deviceInstances[id];
+                if (!instance || !instance.device) {
+                    continue;
+                }
+                const scope = instance.blockScope;
+                if (scope) {
+                    const block = scope.resolveBlock(url);
+                    if (block) {
+                        return block;
                     }
-                    var scope = instance.blockScope;
-                    if (scope) {
-                        var block = scope.resolveBlock(url);
-                        if (block) {
-                            return block;
-                        }
-                    }
-                    
                 }
-                return this.ctx.getDriverManager().getBlock(url);
-            },
-            /***
-             * Callback when the NodeJS service manager initialized its service store. That may
-             * happen multiple times as user can reload the store.
-             *
-             * @param evt
-             * @private
-             */
-            onNodeServiceStoreReady: function (evt) {
-                if (this.deviceServerClient) {
-                    //this.deviceServerClient.destroy();
-                    return this.deviceServerClient;
-                }
-                var store = evt.store, thiz = this;
-                var client = this.createDeviceServerClient(store);
-                var connect = has('drivers') && has('devices');
-            },
-            /**
-             *
-             * @param instance
-             * @param modulePath
-             * @private
-             */
-            onDriverUpdated: function (instance, modulePath) {
+                
+            }
+            return this.ctx.getDriverManager().getBlock(url);
+        },
+        /***
+         * Callback when the NodeJS service manager initialized its service store. That may
+         * happen multiple times as user can reload the store.
+         *
+         * @param evt
+         * @private
+         */
+        onNodeServiceStoreReady: function (evt) {
+            if (this.deviceServerClient) {
+                //this.deviceServerClient.destroy();
+                return this.deviceServerClient;
+            }
+            const store = evt.store;
+            const thiz = this;
+            const client = this.createDeviceServerClient(store);
+            const connect = has('drivers') && has('devices');
+        },
+        /**
+         *
+         * @param instance
+         * @param modulePath
+         * @private
+         */
+        onDriverUpdated: function (instance, modulePath) {
+            return;
+        },
+        /**
+         * Some file has changed, update driver instance
+         * @param evt
+         * @private
+         */
+        onModuleReloaded: function (evt) {
+            if (this.deviceInstances.length == 0) {//nothing to do
                 return;
-            },
-            /**
-             * Some file has changed, update driver instance
-             * @param evt
-             * @private
-             */
-            onModuleReloaded: function (evt) {
-                if (this.deviceInstances.length == 0) {//nothing to do
-                    return;
-                }
-                var modulePath = utils.replaceAll('//', '/', evt.module);
-                var newModule = evt.newModule;
-                var found = false;
-                for (var i in this.deviceInstances) {
+            }
+            const modulePath = utils.replaceAll('//', '/', evt.module);
+            const newModule = evt.newModule;
+            let found = false;
+            for (const i in this.deviceInstances) {
 
-                    var instance = this.deviceInstances[i];
+                const instance = this.deviceInstances[i];
 
-                    if (instance.modulePath === modulePath ||
-                        instance.baseClass === modulePath) {
-                        this.mergeFunctions(instance, newModule.prototype);
-                        found = true;
-                        _debug && console.log('Did update driver code : ' + modulePath, newModule.prototype);
-                        if (instance.blockScope) {
-                            instance.blockScope.expressionModel.expressionCache = {};
-                        }
-                        this.onDriverUpdated(instance, modulePath);
-                    }
-                }
-            },
-            /**
-             *
-             * @param instance
-             * @param hash
-             * @param device
-             * @private
-             */
-            _removeInstance: function (instance, hash, device) {
-                if (instance.destroy) {
-                    instance.destroy();
-                }
-                instance.blockScope && instance.blockScope._destroy();
-                delete this.deviceInstances[hash];
-                this.ctx.getBlockManager().removeScope(instance.options.id);
-                this.ctx.getDriverManager().removeDriverInstance(instance, device);
-                device.reset();
-            },
-            /**
-             *
-             * @param deviceInfo
-             * @private
-             */
-            removeDriverInstance: function (deviceInfo) {
-                var instance = this.getDriverInstance(deviceInfo);
-                if (instance) {
-                    this.ctx.getBlockManager().removeScope(instance.options.id);
+                if (instance.modulePath === modulePath ||
+                    instance.baseClass === modulePath) {
+                    this.mergeFunctions(instance, newModule.prototype);
+                    found = true;
+                    _debug && console.log('Did update driver code : ' + modulePath, newModule.prototype);
                     if (instance.blockScope) {
-                        instance.blockScope.destroy();
+                        instance.blockScope.expressionModel.expressionCache = {};
                     }
-                    instance.destroy();
-                } else {
-                    _debugConnect && console.error('remove instance : cant find!');
+                    this.onDriverUpdated(instance, modulePath);
                 }
-                for (var i in this.deviceInstances) {
-                    if (instance == this.deviceInstances[i]) {
-                        delete this.deviceInstances[i];
-                    }
+            }
+        },
+        /**
+         *
+         * @param instance
+         * @param hash
+         * @param device
+         * @private
+         */
+        _removeInstance: function (instance, hash, device) {
+            if (instance.destroy) {
+                instance.destroy();
+            }
+            instance.blockScope && instance.blockScope._destroy();
+            delete this.deviceInstances[hash];
+            this.ctx.getBlockManager().removeScope(instance.options.id);
+            this.ctx.getDriverManager().removeDriverInstance(instance, device);
+            device.reset();
+        },
+        /**
+         *
+         * @param deviceInfo
+         * @private
+         */
+        removeDriverInstance: function (deviceInfo) {
+            const instance = this.getDriverInstance(deviceInfo);
+            if (instance) {
+                this.ctx.getBlockManager().removeScope(instance.options.id);
+                if (instance.blockScope) {
+                    instance.blockScope.destroy();
                 }
-            },
-            /**
-             *
-             * @param item {module:xcf/model/Device} the device
-             * @param name {string} the name of the CI
-             * @returns {string|int|object|null}
-             */
-            getMetaValue: function (item, name) {
-                var meta = item['user'];
-                if (meta) {
-                    return utils.getCIInputValueByName(meta, name);
+                instance.destroy();
+            } else {
+                _debugConnect && console.error('remove instance : cant find!');
+            }
+            for (const i in this.deviceInstances) {
+                if (instance == this.deviceInstances[i]) {
+                    delete this.deviceInstances[i];
                 }
-                return null;
-            },
-            /**
-             * Return device by host and port
-             * @param host {string}
-             * @param port {string}
-             * @returns {module:xcf/model/Device|null}
-             */
-            getDeviceByHost: function (host, port) {
-                var items = utils.queryStore(this.getStore(), {
+            }
+        },
+        /**
+         *
+         * @param item {module:xcf/model/Device} the device
+         * @param name {string} the name of the CI
+         * @returns {string|int|object|null}
+         */
+        getMetaValue: function (item, name) {
+            const meta = item['user'];
+            if (meta) {
+                return utils.getCIInputValueByName(meta, name);
+            }
+            return null;
+        },
+        /**
+         * Return device by host and port
+         * @param host {string}
+         * @param port {string}
+         * @returns {module:xcf/model/Device|null}
+         */
+        getDeviceByHost: function (host, port) {
+            const items = utils.queryStore(this.getStore(), {
+                isDir: false
+            });
+            for (let i = 0; i < items.length; i++) {
+                const device = items[i];
+                const _host = this.getMetaValue(device, DEVICE_PROPERTY.CF_DEVICE_HOST);
+                const _port = this.getMetaValue(device, DEVICE_PROPERTY.CF_DEVICE_PORT);
+                if (_host == host && _port == port) {
+                    return device;
+                }
+            }
+            return null;
+        },
+        getDeviceByUrl: function (url) {
+            let parts = utils.parse_url(url);
+            parts = utils.urlArgs(parts.host);
+            return this.getDeviceById(parts.device.value);
+        },
+        /**
+         * Returns a device by id
+         * @param id {string}
+         * @returns {module:xcf/model/Device|null}
+         */
+        getDeviceById: function (id, store) {
+            const self = this;
+
+            function search(_store) {
+                let items = utils.queryStore(_store, {
                     isDir: false
                 });
-                for (var i = 0; i < items.length; i++) {
-                    var device = items[i];
-                    var _host = this.getMetaValue(device, DEVICE_PROPERTY.CF_DEVICE_HOST);
-                    var _port = this.getMetaValue(device, DEVICE_PROPERTY.CF_DEVICE_PORT);
-                    if (_host == host && _port == port) {
-                        return device;
-                    }
-                }
-                return null;
-            },
-            getDeviceByUrl: function (url) {
-                var parts = utils.parse_url(url);
-                parts = utils.urlArgs(parts.host);
-                return this.getDeviceById(parts.device.value);
-            },
-            /**
-             * Returns a device by id
-             * @param id {string}
-             * @returns {module:xcf/model/Device|null}
-             */
-            getDeviceById: function (id, store) {
-                var self = this;
 
-                function search(_store) {
-                    var items = utils.queryStore(_store, {
-                        isDir: false
-                    });
-
-                    if (items._S) {
-                        items = [items];
-                    }
-                    for (var i = 0; i < items.length; i++) {
-                        var device = items[i];
-                        var _id = self.getMetaValue(device, DEVICE_PROPERTY.CF_DEVICE_ID);
-                        if (_id == id) {
-                            return device;
-                        }
-                    }
-                    return null;
-                }
-
-                var _store = _.isString(store) ? this.getStore(store) : null;
-                if (_store) {
-                    return search(_store);
-                } else {
-                    for (var scope in this.stores) {
-                        var item = search(this.stores[scope]);
-                        if (item) {
-                            return item;
-                        }
-                    }
-                }
-                return null;
-            },
-            /**
-             * Returns a device by id
-             * @param title {string}
-             * @returns {module:xcf/model/Device|null}
-             */
-            getDeviceByName: function (title, store) {
-                var self = this;
-
-                function search(_store) {
-                    var items = utils.queryStore(_store, {
-                        isDir: false
-                    });
-
-                    if (items._S) {
-                        items = [items];
-                    }
-                    for (var i = 0; i < items.length; i++) {
-                        var device = items[i];
-                        var _id = self.getMetaValue(device, DEVICE_PROPERTY.CF_DEVICE_TITLE);
-                        if (_id == title) {
-                            return device;
-                        }
-                    }
-                    return null;
-                }
-
-                var _store = _.isString(store) ? this.getStore(store) : null;
-                if (_store) {
-                    return search(_store);
-                } else {
-                    for (var scope in this.stores) {
-                        var item = search(this.stores[scope]);
-                        if (item) {
-                            return item;
-                        }
-                    }
-                }
-                return null;
-            },
-            /**
-             * Returns all devices by driver id
-             * @param id {string} the driver id
-             * @returns {module:xcf/model/Device[]}
-             */
-            getDevicesByDriverId: function (id) {
-                var items = utils.queryStore(this.getStore(), {
-                    isDir: false
-                });
                 if (items._S) {
                     items = [items];
                 }
-                for (var i = 0; i < items.length; i++) {
-                    var device = items[i];
-                    var _id = this.getMetaValue(device, DEVICE_PROPERTY.CF_DEVICE_ID);
+                for (let i = 0; i < items.length; i++) {
+                    const device = items[i];
+                    const _id = self.getMetaValue(device, DEVICE_PROPERTY.CF_DEVICE_ID);
                     if (_id == id) {
                         return device;
                     }
                 }
                 return null;
-            },
-            _cachedItems: null,
-            getDeviceStoreItem: function (deviceInfo) {
-                if (!deviceInfo) {
-                    return;
-                }
+            }
 
-                if (deviceInfo.hash && this._cachedItems) {
-                    var _cached = this._cachedItems[deviceInfo.hash];
-                    if (_cached) {
-                        return _cached;
+            const _store = _.isString(store) ? this.getStore(store) : null;
+            if (_store) {
+                return search(_store);
+            } else {
+                for (const scope in this.stores) {
+                    const item = search(this.stores[scope]);
+                    if (item) {
+                        return item;
                     }
                 }
+            }
+            return null;
+        },
+        /**
+         * Returns a device by id
+         * @param title {string}
+         * @returns {module:xcf/model/Device|null}
+         */
+        getDeviceByName: function (title, store) {
+            const self = this;
 
-                //already device
-                //if (deviceInfo && deviceInfo._store) {
-                //return deviceInfo;
-                //}
-                var scope = deviceInfo.deviceScope;
-                var store = this.getStore(scope);
-                if (!store) {
-                    return;
-                }
-
-                var byPath = deviceInfo.devicePath ? this.getItemByPath(deviceInfo.devicePath) : null;
-                if (byPath) {
-                    return byPath;
-                }
-                var items = _.filter(store.data, function (item) {
-                    return item.isDir !== true;
+            function search(_store) {
+                let items = utils.queryStore(_store, {
+                    isDir: false
                 });
-                if (!items) {
-                    _debug && !isServer && console.error('store returned nothing ' + deviceInfo.deviceScope);
-                    return null;
-                }
-                if (items && !_.isArray(items)) {
+
+                if (items._S) {
                     items = [items];
                 }
-                for (var i = 0; i < items.length; i++) {
-                    var device = items[i],
-                        meta = device['user'],
-                        host = utils.getCIInputValueByName(meta, DEVICE_PROPERTY.CF_DEVICE_HOST),
-                        port = utils.getCIInputValueByName(meta, DEVICE_PROPERTY.CF_DEVICE_PORT),
-                        id = utils.getCIInputValueByName(meta, DEVICE_PROPERTY.CF_DEVICE_ID),
-                        protocol = utils.getCIInputValueByName(meta, DEVICE_PROPERTY.CF_DEVICE_PROTOCOL);
-
-                    if (port === deviceInfo.port &&
-                        host === deviceInfo.host &&
-                        protocol === deviceInfo.protocol &&
-                        device.isServer() === deviceInfo.isServer &&
-                        id === deviceInfo.id) {
-
-                        var deviceStoreItem = store.getSync(device.path);
-                        if (deviceStoreItem) {
-                            device = deviceStoreItem;
-                        }
-
-                        if (deviceInfo.hash) {
-                            if (!this._cachedItems) {
-                                this._cachedItems = {};
-                            }
-                            this._cachedItems[deviceInfo.hash] = device;
-                        }
+                for (let i = 0; i < items.length; i++) {
+                    const device = items[i];
+                    const _id = self.getMetaValue(device, DEVICE_PROPERTY.CF_DEVICE_TITLE);
+                    if (_id == title) {
                         return device;
                     }
                 }
-            },
-            /**
-             *
-             * @param ci
-             * @param storeRef
-             * @private
-             */
-            onDriverSettingsChanged: function (ci, storeRef) {
-                for (var i in this.deviceInstances) {
+                return null;
+            }
 
-                    var instance = this.deviceInstances[i];
-                    //get settings, if not cached already
-                    if (instance && instance.driver == storeRef) {
-                        //pick driver
-                        var driver = storeRef;// this.ctx.getDriverManager().getItemById(instance.options.id);//driverStore item
-                        var meta = driver['user'];
-                        var commandsCI = utils.getCIByChainAndName(meta, 0, types.DRIVER_PROPERTY.CF_DRIVER_COMMANDS);
-                        if (commandsCI && commandsCI['params'] && commandsCI == ci) {
-                            instance.sendSettings = utils.getJson(commandsCI['params']);
-                        }
-                        var responseCI = utils.getCIByChainAndName(meta, 0, types.DRIVER_PROPERTY.CF_DRIVER_RESPONSES);
-                        if (responseCI && responseCI['params']) {
-                            instance.responseSettings = utils.getJson(responseCI['params']);
-                        }
-                        break;
+            const _store = _.isString(store) ? this.getStore(store) : null;
+            if (_store) {
+                return search(_store);
+            } else {
+                for (const scope in this.stores) {
+                    const item = search(this.stores[scope]);
+                    if (item) {
+                        return item;
                     }
                 }
-            },
-            /**
-             * @private
-             */
-            onDeviceStateChanged: function (item, silent) {
-                if (item._userStopped !== true && silent !== true && item.info && item.state && item.state == types.DEVICE_STATE.DISCONNECTED) {
-                    this.ctx.getNotificationManager().postMessage({
-                        message: 'Lost connection to ' + item.info.host + ', ...reconnecting',
-                        type: 'error',
-                        showCloseButton: false,
-                        duration: 1500
-                    });
+            }
+            return null;
+        },
+        /**
+         * Returns all devices by driver id
+         * @param id {string} the driver id
+         * @returns {module:xcf/model/Device[]}
+         */
+        getDevicesByDriverId: function (id) {
+            let items = utils.queryStore(this.getStore(), {
+                isDir: false
+            });
+            if (items._S) {
+                items = [items];
+            }
+            for (let i = 0; i < items.length; i++) {
+                const device = items[i];
+                const _id = this.getMetaValue(device, DEVICE_PROPERTY.CF_DEVICE_ID);
+                if (_id == id) {
+                    return device;
                 }
-                if (silent !== true && item.info && item.state && item.state == types.DEVICE_STATE.CONNECTED) {
-                    this.ctx.getNotificationManager().postMessage({
-                        message: 'Connected to ' + item.info.host + '',
-                        type: 'success',
-                        showCloseButton: false,
-                        duration: 2000
-                    });
-                }
-            },
-            /**
-             *
-             * @param item
-             * @returns {*}
-             * @private
-             */
-            connectDevice: function (item) {
-                this.checkDeviceServerConnection();
-                var cInfo = this.toDeviceControlInfo(item);
-                if (!cInfo) {
-                    console.error('couldnt start device, invalid control info');
-                    return;
-                }
-                var hash = cInfo.hash;
-                if (this.deviceInstances[hash]) {
-                    _debugConnect && console.log('device already connected', cInfo);
-                    item.setState(types.DEVICE_STATE.CONNECTED);
-                    return this.deviceInstances[hash];
-                }
-                item.setState(types.DEVICE_STATE.CONNECTING);
-                this.publish(types.EVENTS.ON_STATUS_MESSAGE, {
-                    text: 'Trying to connect to ' + cInfo.toString(),
-                    type: 'info'
-                });
-                this.sendManagerCommand(types.SOCKET_SERVER_COMMANDS.MANAGER_START_DRIVER, cInfo);
-            },
-            /**
-             * client application ready, mixin instances and block scopes
-             * @param evt
-             * @private
-             */
-            onAppReady: function (evt) {
-                var appContext = evt.context;
-                appContext.deviceManager = this;
-                appContext.driverManager = this;
-                if (appContext.blockManager) {
-                    utils.mixin(appContext.blockManager.scopes, this.ctx.getBlockManager().scopes);
-                }
-            },
-            /////////////////////////////////////////////////////////////////////////////////////
-            //
-            //  Server methods (NodeJs)
-            //
-            /////////////////////////////////////////////////////////////////////////////////////
+            }
+            return null;
+        },
+        _cachedItems: null,
+        getDeviceStoreItem: function (deviceInfo) {
+            if (!deviceInfo) {
+                return;
+            }
 
-            /**
-             * @private
-             */
-            onHaveNoDeviceServer: function () {
-                if (!this.ctx.getNotificationManager()) {
-                    return;
+            if (deviceInfo.hash && this._cachedItems) {
+                const _cached = this._cachedItems[deviceInfo.hash];
+                if (_cached) {
+                    return _cached;
                 }
-                var thiz = this;
-                var msg = this.ctx.getNotificationManager().postMessage({
-                    message: 'Have no device server connection',
+            }
+
+            //already device
+            //if (deviceInfo && deviceInfo._store) {
+            //return deviceInfo;
+            //}
+            const scope = deviceInfo.deviceScope;
+            const store = this.getStore(scope);
+            if (!store) {
+                return;
+            }
+
+            const byPath = deviceInfo.devicePath ? this.getItemByPath(deviceInfo.devicePath) : null;
+            if (byPath) {
+                return byPath;
+            }
+            let items = _.filter(store.data, function (item) {
+                return item.isDir !== true;
+            });
+            if (!items) {
+                _debug && !isServer && console.error('store returned nothing ' + deviceInfo.deviceScope);
+                return null;
+            }
+            if (items && !_.isArray(items)) {
+                items = [items];
+            }
+            for (let i = 0; i < items.length; i++) {
+                let device = items[i];
+                const meta = device['user'];
+                const host = utils.getCIInputValueByName(meta, DEVICE_PROPERTY.CF_DEVICE_HOST);
+                const port = utils.getCIInputValueByName(meta, DEVICE_PROPERTY.CF_DEVICE_PORT);
+                const id = utils.getCIInputValueByName(meta, DEVICE_PROPERTY.CF_DEVICE_ID);
+                const protocol = utils.getCIInputValueByName(meta, DEVICE_PROPERTY.CF_DEVICE_PROTOCOL);
+
+                if (port === deviceInfo.port &&
+                    host === deviceInfo.host &&
+                    protocol === deviceInfo.protocol &&
+                    device.isServer() === deviceInfo.isServer &&
+                    id === deviceInfo.id) {
+
+                    const deviceStoreItem = store.getSync(device.path);
+                    if (deviceStoreItem) {
+                        device = deviceStoreItem;
+                    }
+
+                    if (deviceInfo.hash) {
+                        if (!this._cachedItems) {
+                            this._cachedItems = {};
+                        }
+                        this._cachedItems[deviceInfo.hash] = device;
+                    }
+                    return device;
+                }
+            }
+        },
+        /**
+         *
+         * @param ci
+         * @param storeRef
+         * @private
+         */
+        onDriverSettingsChanged: function (ci, storeRef) {
+            for (const i in this.deviceInstances) {
+
+                const instance = this.deviceInstances[i];
+                //get settings, if not cached already
+                if (instance && instance.driver == storeRef) {
+                    //pick driver
+                    const driver = storeRef;// this.ctx.getDriverManager().getItemById(instance.options.id);//driverStore item
+                    const meta = driver['user'];
+                    const commandsCI = utils.getCIByChainAndName(meta, 0, types.DRIVER_PROPERTY.CF_DRIVER_COMMANDS);
+                    if (commandsCI && commandsCI['params'] && commandsCI == ci) {
+                        instance.sendSettings = utils.getJson(commandsCI['params']);
+                    }
+                    const responseCI = utils.getCIByChainAndName(meta, 0, types.DRIVER_PROPERTY.CF_DRIVER_RESPONSES);
+                    if (responseCI && responseCI['params']) {
+                        instance.responseSettings = utils.getJson(responseCI['params']);
+                    }
+                    break;
+                }
+            }
+        },
+        /**
+         * @private
+         */
+        onDeviceStateChanged: function (item, silent) {
+            if (item._userStopped !== true && silent !== true && item.info && item.state && item.state == types.DEVICE_STATE.DISCONNECTED) {
+                this.ctx.getNotificationManager().postMessage({
+                    message: 'Lost connection to ' + item.info.host + ', ...reconnecting',
                     type: 'error',
-                    showCloseButton: true,
-                    duration: 1500,
-                    actions: {
-                        reconnect: {
-                            label: 'Reconnect',
-                            action: function () {
-                                thiz.checkDeviceServerConnection();
-                                return msg.update({
-                                    message: 'Reconnecting...',
-                                    type: 'success',
-                                    actions: false,
-                                    duration: 1500
-                                });
-                            }
+                    showCloseButton: false,
+                    duration: 1500
+                });
+            }
+            if (silent !== true && item.info && item.state && item.state == types.DEVICE_STATE.CONNECTED) {
+                this.ctx.getNotificationManager().postMessage({
+                    message: 'Connected to ' + item.info.host + '',
+                    type: 'success',
+                    showCloseButton: false,
+                    duration: 2000
+                });
+            }
+        },
+        /**
+         *
+         * @param item
+         * @returns {*}
+         * @private
+         */
+        connectDevice: function (item) {
+            this.checkDeviceServerConnection();
+            const cInfo = this.toDeviceControlInfo(item);
+            if (!cInfo) {
+                console.error('couldnt start device, invalid control info');
+                return;
+            }
+            const hash = cInfo.hash;
+            if (this.deviceInstances[hash]) {
+                _debugConnect && console.log('device already connected', cInfo);
+                item.setState(types.DEVICE_STATE.CONNECTED);
+                return this.deviceInstances[hash];
+            }
+            item.setState(types.DEVICE_STATE.CONNECTING);
+            this.publish(types.EVENTS.ON_STATUS_MESSAGE, {
+                text: 'Trying to connect to ' + cInfo.toString(),
+                type: 'info'
+            });
+            this.sendManagerCommand(types.SOCKET_SERVER_COMMANDS.MANAGER_START_DRIVER, cInfo);
+        },
+        /**
+         * client application ready, mixin instances and block scopes
+         * @param evt
+         * @private
+         */
+        onAppReady: function (evt) {
+            const appContext = evt.context;
+            appContext.deviceManager = this;
+            appContext.driverManager = this;
+            if (appContext.blockManager) {
+                utils.mixin(appContext.blockManager.scopes, this.ctx.getBlockManager().scopes);
+            }
+        },
+        /////////////////////////////////////////////////////////////////////////////////////
+        //
+        //  Server methods (NodeJs)
+        //
+        /////////////////////////////////////////////////////////////////////////////////////
+
+        /**
+         * @private
+         */
+        onHaveNoDeviceServer: function () {
+            if (!this.ctx.getNotificationManager()) {
+                return;
+            }
+            const thiz = this;
+            const msg = this.ctx.getNotificationManager().postMessage({
+                message: 'Have no device server connection',
+                type: 'error',
+                showCloseButton: true,
+                duration: 1500,
+                actions: {
+                    reconnect: {
+                        label: 'Reconnect',
+                        action: function () {
+                            thiz.checkDeviceServerConnection();
+                            return msg.update({
+                                message: 'Reconnecting...',
+                                type: 'success',
+                                actions: false,
+                                duration: 1500
+                            });
                         }
                     }
-                });
-            },
-            /////////////////////////////////////////////////////////////////////////////////////
-            //
-            //  Server methods (PHP)
-            //
-            /////////////////////////////////////////////////////////////////////////////////////
-            /***
-             * setDriverScriptContent is storing a driver's actual code in a given scope on the server
-             * @param scope {string}
-             * @param path  {string}
-             * @param content  {string}
-             * @param readyCB   {function}
-             * @param errorCB   {function}
-             * @returns {*}
-             * @private
-             */
-            setDriverScriptContent: function (scope, path, content, readyCB, errorCB) {
-                return this.callMethodEx(null, 'setDriverContent', [scope, path, content], readyCB, true);
-            },
-            /***
-             * getDriverScriptContent is receiving a driver's actual code in a given scope
-             * @param scope {string}
-             * @param path  {string}
-             * @param readyCB   {function}
-             * @returns {*}
-             */
-            getDriverScriptContent: function (scope, path, readyCB) {
-                return this.callMethodEx(null, 'getDriverContent', [scope, path], readyCB, true);
-            },
-            /**
-             *
-             * @param data
-             * @param scope
-             * @param track
-             */
-            createStore: function (data, scope, track) {
-                var storeClass = has('xcf-ui') ? declare('deviceStore', [TreeMemory, Trackable, ObservableStore], {}) : declare('deviceStore', [Memory], {}),
-                    self = this;
-                var store = new storeClass({
-                    data: data.items,
-                    idProperty: 'path',
-                    parentProperty: 'parentId',
-                    Model: Device,
-                    id: utils.createUUID(),
-                    scope: scope,
-                    ctx: this.getContext(),
-                    mayHaveChildren: function (parent) {
-                        if (parent._mayHaveChildren === false) {
-                            return false;
+                }
+            });
+        },
+        /////////////////////////////////////////////////////////////////////////////////////
+        //
+        //  Server methods (PHP)
+        //
+        /////////////////////////////////////////////////////////////////////////////////////
+        /***
+         * setDriverScriptContent is storing a driver's actual code in a given scope on the server
+         * @param scope {string}
+         * @param path  {string}
+         * @param content  {string}
+         * @param readyCB   {function}
+         * @param errorCB   {function}
+         * @returns {*}
+         * @private
+         */
+        setDriverScriptContent: function (scope, path, content, readyCB, errorCB) {
+            return this.callMethodEx(null, 'setDriverContent', [scope, path, content], readyCB, true);
+        },
+        /***
+         * getDriverScriptContent is receiving a driver's actual code in a given scope
+         * @param scope {string}
+         * @param path  {string}
+         * @param readyCB   {function}
+         * @returns {*}
+         */
+        getDriverScriptContent: function (scope, path, readyCB) {
+            return this.callMethodEx(null, 'getDriverContent', [scope, path], readyCB, true);
+        },
+        /**
+         *
+         * @param data
+         * @param scope
+         * @param track
+         */
+        createStore: function (data, scope, track) {
+            const storeClass = has('xcf-ui') ? declare('deviceStore', [TreeMemory, Trackable, ObservableStore], {}) : declare('deviceStore', [Memory], {});
+            const self = this;
+            const store = new storeClass({
+                data: data.items,
+                idProperty: 'path',
+                parentProperty: 'parentId',
+                Model: Device,
+                id: utils.createUUID(),
+                scope: scope,
+                ctx: this.getContext(),
+                mayHaveChildren: function (parent) {
+                    if (parent._mayHaveChildren === false) {
+                        return false;
+                    }
+                    if (parent.isDevice) {
+                        const device = parent;
+                        if (device.driverInstance) {
+                            return true;
                         }
-                        if (parent.isDevice) {
-                            var device = parent;
-                            if (device.driverInstance) {
+                        //no instance yet
+                        const info = self.toDeviceControlInfo(device);
+                        if (info) {
+                            const driver = self.getContext().getDriverManager().getDriverById(info.driverId);
+                            if (driver) {
+                                if (!driver.blockScope && has('xblox')) {
+                                    this.ctx.getDriverManager().createDriverBlockScope(driver);
+                                    self.completeDevice(device, driver);
+                                }
                                 return true;
                             }
-                            //no instance yet
-                            var info = self.toDeviceControlInfo(device);
-                            if (info) {
-                                var driver = self.getContext().getDriverManager().getDriverById(info.driverId);
-                                if (driver) {
-                                    if (!driver.blockScope && has('xblox')) {
-                                        this.ctx.getDriverManager().createDriverBlockScope(driver);
-                                        self.completeDevice(device, driver);
-                                    }
-                                    return true;
-                                }
-                            } else {
-                                console.error('cant get device info for ', device);
-                            }
-
+                        } else {
+                            console.error('cant get device info for ', device);
                         }
-                        return true;
-                    },
-                    observedProperties: [
-                        "name",
-                        "state",
-                        "iconClass",
-                        "enabled"
-                    ]
-                });
 
-                if (scope && track !== false) {
-                    this.setStore(scope, store);
+                    }
+                    return true;
+                },
+                observedProperties: [
+                    "name",
+                    "state",
+                    "iconClass",
+                    "enabled"
+                ]
+            });
+
+            if (scope && track !== false) {
+                this.setStore(scope, store);
+            }
+            return store;
+        },
+        /**
+         *
+         * @param data
+         * @param scope
+         * @param track
+         * @returns {exports|module.exports|module:xide/data/_Base}
+         * @private
+         */
+        initStore: function (data, scope, track) {
+            return this.createStore(data, scope, track);
+        },
+        /////////////////////////////////////////////////////////////////////////////////////
+        //
+        //  Utils
+        //
+        /////////////////////////////////////////////////////////////////////////////////////
+        _deviceInfoCache: null,
+        /**
+         * Return handy info for a device
+         * @param {module:xcf/model/Device|null} item
+         * @returns {module:xide/types~DeviceInfo|null}
+         */
+        toDeviceControlInfo: function (item) {
+            if (!item) {
+                return null;
+            }
+            const hash = item.hash;
+            if (!has('xcf-ui') && hash && !has('host-node')) {
+                if (this._deviceInfoCache[hash]) {
+                    return this._deviceInfoCache[hash];
                 }
-                return store;
-            },
-            /**
-             *
-             * @param data
-             * @param scope
-             * @param track
-             * @returns {exports|module.exports|module:xide/data/_Base}
-             * @private
-             */
-            initStore: function (data, scope, track) {
-                return this.createStore(data, scope, track);
-            },
-            /////////////////////////////////////////////////////////////////////////////////////
-            //
-            //  Utils
-            //
-            /////////////////////////////////////////////////////////////////////////////////////
-            _deviceInfoCache: null,
-            /**
-             * Return handy info for a device
-             * @param {module:xcf/model/Device|null} item
-             * @returns {module:xide/types~DeviceInfo|null}
-             */
-            toDeviceControlInfo: function (item) {
-                if (!item) {
+            }
+            if (!item._store && item.id) {
+                var _item = this.getItemById(item.id);
+                if (_item) {
+                    item = _item;
+                }
+            }
+            if (!item || !item.path) {
+                _debug && console.error('not a device');
+                var _item = this.getDeviceStoreItem(item);
+                if (!_item) {
                     return null;
                 }
-                var hash = item.hash;
-                if (!has('xcf-ui') && hash && !has('host-node')) {
-                    if (this._deviceInfoCache[hash]) {
-                        return this._deviceInfoCache[hash];
+            }
+            _debug && !item && console.error('toDeviceControlInfo: invalid device item');
+            _debug && !item.user && console.error('toDeviceControlInfo: invalid device item, has no meta');
+            const meta = item['user'];
+            const host = utils.getCIInputValueByName(meta, DEVICE_PROPERTY.CF_DEVICE_HOST);
+            const port = utils.getCIInputValueByName(meta, DEVICE_PROPERTY.CF_DEVICE_PORT);
+            const enabled = utils.getCIInputValueByName(meta, DEVICE_PROPERTY.CF_DEVICE_ENABLED);
+            const title = utils.getCIInputValueByName(meta, DEVICE_PROPERTY.CF_DEVICE_TITLE);
+            const protocol = utils.getCIInputValueByName(meta, DEVICE_PROPERTY.CF_DEVICE_PROTOCOL);
+            const driverId = utils.getCIInputValueByName(meta, DEVICE_PROPERTY.CF_DEVICE_DRIVER);
+            const options = utils.getCIInputValueByName(meta, DEVICE_PROPERTY.CF_DEVICE_OPTIONS);
+            const loggingFlags = utils.getCIInputValueByName(meta, DEVICE_PROPERTY.CF_DEVICE_LOGGING_FLAGS);
+            const driverOptions = utils.getCIInputValueByName(meta, DEVICE_PROPERTY.CF_DEVICE_DRIVER_OPTIONS);
+            const serverSide = item.isServerSide();
+            const isServer = item.isServer();
+            let result = null;
+
+            this.fixDeviceCI(item);
+            const driver = this.ctx.getDriverManager().getDriverById(driverId);
+            if (driver) {
+                const driverMeta = driver['user'];
+                const script = utils.getCIInputValueByName(driverMeta, types.DRIVER_PROPERTY.CF_DRIVER_CLASS);
+                const responseCI = utils.getCIByChainAndName(driverMeta, 0, types.DRIVER_PROPERTY.CF_DRIVER_RESPONSES);
+                let responseSettings = {};
+                const driverScope = driver['scope'];
+
+                if (responseCI && responseCI['params']) {
+                    responseSettings = utils.getJson(responseCI['params']);
+                }
+                result = {
+                    host: host,
+                    port: port,
+                    protocol: protocol,
+                    driver: script ? script.replace('./', '') : '',
+                    driverId: driverId,
+                    driverScope: driverScope,
+                    id: item.id,
+                    devicePath: item.path,
+                    deviceScope: item.getScope(),
+                    title: title,
+                    options: options,
+                    enabled: enabled,
+                    driverOptions: driverOptions,
+                    serverSide: serverSide,
+                    isServer: isServer,
+                    responseSettings: responseSettings,
+                    source: isIDE ? 'ide' : 'server',
+                    user_devices: this.ctx.getMount(item.getScope()),
+                    system_devices: this.ctx.getMount('system_devices'),
+                    system_drivers: this.ctx.getMount('system_drivers'),
+                    user_drivers: this.ctx.getMount('user_drivers'),
+                    loggingFlags: loggingFlags,
+                    toString: function () {
+                        return item.getScope() + '://' + this.host + ':' + this.port + '@' + this.protocol;
                     }
-                }
-                if (!item._store && item.id) {
-                    var _item = this.getItemById(item.id);
-                    if (_item) {
-                        item = _item;
-                    }
-                }
-                if (!item || !item.path) {
-                    _debug && console.error('not a device');
-                    var _item = this.getDeviceStoreItem(item);
-                    if (!_item) {
-                        return null;
-                    }
-                }
-                _debug && !item && console.error('toDeviceControlInfo: invalid device item');
-                _debug && !item.user && console.error('toDeviceControlInfo: invalid device item, has no meta');
-                var meta = item['user'],
-                    host = utils.getCIInputValueByName(meta, DEVICE_PROPERTY.CF_DEVICE_HOST),
-                    port = utils.getCIInputValueByName(meta, DEVICE_PROPERTY.CF_DEVICE_PORT),
-                    enabled = utils.getCIInputValueByName(meta, DEVICE_PROPERTY.CF_DEVICE_ENABLED),
-                    title = utils.getCIInputValueByName(meta, DEVICE_PROPERTY.CF_DEVICE_TITLE),
-                    protocol = utils.getCIInputValueByName(meta, DEVICE_PROPERTY.CF_DEVICE_PROTOCOL),
-                    driverId = utils.getCIInputValueByName(meta, DEVICE_PROPERTY.CF_DEVICE_DRIVER),
-                    options = utils.getCIInputValueByName(meta, DEVICE_PROPERTY.CF_DEVICE_OPTIONS),
-                    loggingFlags = utils.getCIInputValueByName(meta, DEVICE_PROPERTY.CF_DEVICE_LOGGING_FLAGS),
-                    driverOptions = utils.getCIInputValueByName(meta, DEVICE_PROPERTY.CF_DEVICE_DRIVER_OPTIONS),
-                    serverSide = item.isServerSide(),
-                    isServer = item.isServer(),
-                    result = null;
-
-                this.fixDeviceCI(item);
-                var driver = this.ctx.getDriverManager().getDriverById(driverId);
-                if (driver) {
-                    var driverMeta = driver['user'],
-                        script = utils.getCIInputValueByName(driverMeta, types.DRIVER_PROPERTY.CF_DRIVER_CLASS),
-                        responseCI = utils.getCIByChainAndName(driverMeta, 0, types.DRIVER_PROPERTY.CF_DRIVER_RESPONSES),
-                        responseSettings = {},
-                        driverScope = driver['scope'];
-
-                    if (responseCI && responseCI['params']) {
-                        responseSettings = utils.getJson(responseCI['params']);
-                    }
-                    result = {
-                        host: host,
-                        port: port,
-                        protocol: protocol,
-                        driver: script ? script.replace('./', '') : '',
-                        driverId: driverId,
-                        driverScope: driverScope,
-                        id: item.id,
-                        devicePath: item.path,
-                        deviceScope: item.getScope(),
-                        title: title,
-                        options: options,
-                        enabled: enabled,
-                        driverOptions: driverOptions,
-                        serverSide: serverSide,
-                        isServer: isServer,
-                        responseSettings: responseSettings,
-                        source: isIDE ? 'ide' : 'server',
-                        user_devices: this.ctx.getMount(item.getScope()),
-                        system_devices: this.ctx.getMount('system_devices'),
-                        system_drivers: this.ctx.getMount('system_drivers'),
-                        user_drivers: this.ctx.getMount('user_drivers'),
-                        loggingFlags: loggingFlags,
-                        toString: function () {
-                            return item.getScope() + '://' + this.host + ':' + this.port + '@' + this.protocol;
-                        }
-                    };
-
-                    result.hash = MD5(JSON.stringify({
-                        host: host,
-                        port: port,
-                        protocol: protocol,
-                        driverId: driverId,
-                        driverScope: driverScope,
-                        id: item.id,
-                        devicePath: item.path,
-                        deviceScope: item.getScope(),
-                        source: isIDE ? 'ide' : 'server',
-                        user_devices: this.ctx.getMount(item.getScope()),
-                        system_devices: this.ctx.getMount('system_devices'),
-                        system_drivers: this.ctx.getMount('system_drivers'),
-                        user_drivers: this.ctx.getMount('user_drivers')
-                    }), 1);
-                    var userDirectory = this.ctx.getUserDirectory();
-                    if (userDirectory) {
-                        result.userDirectory = userDirectory;
-                    }
-                } else {
-                    _debug && console.error('cant find driver ' + driverId + ' for ' + item.toString());
-                }
-                item.info = result;
-                if (!has('xcf-ui') && hash && !has('host-node')) {
-                    this._deviceInfoCache[hash] = result;
-                }
-
-                return result;
-            },
-            /**
-             * Return device model item by device id
-             * @param itemId
-             * @returns {module:xcf/model/Device} The device
-             */
-            getItemById: function (itemId) {
-                function search(store) {
-                    var data = store.data;
-                    var device = _.find(data, {
-                        id: itemId
-                    });
-                    if (!device) {
-                        return null;
-                    }
-                    return store.getSync(device.path);
-                }
-
-                for (var scope in this.stores) {
-                    var store = this.stores[scope];
-                    var result = search(store);
-                    if (result) {
-                        return result;
-                    }
-                }
-                _debug && console.error('Device Manager::getItemById : cant find device with id: ' + itemId);
-            },
-            /**
-             *
-             * @param evt
-             * @private
-             */
-            onStoreCreated: function (evt) {
-                var thiz = this,
-                    ctx = thiz.ctx,
-                    type = evt.type,
-                    store = evt.store,
-                    items = store ? utils.queryStore(store, { isDir: false }) : [],
-                    driverManager = this.ctx.getDriverManager();
-
-                if (items && !_.isArray(items)) {
-                    items = [items];
-                }
-
-                if (type !== types.ITEM_TYPE.DEVICE) {
-                    return;
-                }
-                for (var i = 0; i < items.length; i++) {
-                    var item = store.getSync(items[i].path);
-                    if (!item) {
-                        console.error('cant find ' + items[i].path);
-                        continue;
-                    }
-                    if (item._completed) {
-                        continue;
-                    }
-
-                    item._completed = true;
-                    item.isDevice = true;
-                    var driverId = this.getMetaValue(item, types.DEVICE_PROPERTY.CF_DEVICE_DRIVER);
-                    if (!driverId) {
-                        console.error('device has no driver id!');
-                        continue;
-                    }
-                    var driver = driverManager.getItemById(driverId),
-                        CIS = item.user;
-
-                    //complete CIS
-                    _.each(CIS.inputs, function (ci) {
-                        ci.device = item;
-                        ci.actionTarget = isIDE ? ctx.mainView.getToolbar() : null;
-                        ci.ctx = ctx;
-                    });
-                    if (!_.isEmpty(driver)) {
-                        if (isIDE) {
-                            this.completeDevice(item, driver);
-                            item.iconClass = item.getStateIcon();
-                        }
-                    }
-                }
-                all(this.connectToAllDevices()).then(function () {
-                    thiz.publish('DevicesConnected', evt);
-                });
-
-            },
-            /**
-             *
-             * indirect callback for ON_SERVER_LOG_MESSAGE which tells the device server to
-             * log something for us. This might be triggered by xblox/model/logging/Log
-             *
-             * @param evt {object}
-             * @param evt.data {object}
-             * @param evt.data.device {module:xide/types~DeviceInfo|null}
-             * @param evt.data.details {array}
-             * @param evt.data.time {integer}
-             * @param evt.data.type {string}
-             * @param evt.data.level {string}
-             */
-            onClientMessage: function (evt) {
-                this.checkDeviceServerConnection();
-                if (this.deviceServerClient) {
-                    _debugLogging && console.log('WRITE_LOG_MESSAGE ', evt);
-                    this.sendManagerCommand(types.SOCKET_SERVER_COMMANDS.WRITE_LOG_MESSAGE, evt);
-                }
-            },
-            /**
-             *
-             * @param evt
-             */
-            onClientLogMessage: function (evt) {
-                if (!isServer) {
-                    this.onClientMessage(evt);
-                }
-            },
-            /**
-             *
-             * @param evt
-             * @private
-             */
-            onVariableChanged: function (evt) {
-                var variable = evt.item,
-                    scope = evt.scope,
-                    name = variable.name,
-                    publish = evt.publish !== false;
-                //_debugMQTT && console.log('DeviceManager/onVariableChanged/variable changed: '+name + ' - publish : ' + publish);
-
-                if (name === 'value' || publish === false || !variable) {
-                    return;
-                }
-
-                var value = variable.value,
-                    driver = scope.driver,
-                    device = scope.device;
-
-                if (device && device.info) {
-                    var deviceInfo = device.info,
-                        mqttTopic = deviceInfo.host + '/' + deviceInfo.port + '/Variable/' + name;
-                    _debugMQTT && evt.publishMQTT !== false && console.log('send mqtt message ' + mqttTopic);
-                    evt.publishMQTT !== false && this.sendManagerCommand(types.SOCKET_SERVER_COMMANDS.MQTT_PUBLISH, {
-                        topic: mqttTopic,
-                        data: {
-                            value: value,
-                            device: deviceInfo
-                        }
-                    });
-                } else {
-                    _debugMQTT && console.warn('onVariableChanged->MQTT : have no device');
-                }
-                //_debugMQTT && console.info('on variable changed ' + device.toString());
-            },
-            /***
-             * Common manager function, called by the context of the application
-             * @private
-             */
-            init: function () {
-                var thiz = this;
-                if (this.initUI) {
-                    this.initUI();
-                }
-                this.stores = {};
-                this._deviceInfoCache = {};
-                this.subscribe(types.EVENTS.ON_DRIVER_VARIABLE_CHANGED, this.onVariableChanged);
-                this.subscribe(types.EVENTS.ON_DEVICE_SERVER_CONNECTED, function () {
-                    var connect = has('drivers') && has('devices');
-                    if (thiz.autoConnectDevices && connect) {
-                        all(thiz.connectToAllDevices()).then(function () {
-                            thiz.publish('DevicesConnected');
-                        });
-                    }
-                });
-                this.subscribe([
-                    EVENTS.ON_NODE_SERVICE_STORE_READY,
-                    EVENTS.ON_MODULE_RELOADED,
-                    EVENTS.ON_DEVICE_DISCONNECTED,
-                    EVENTS.ON_DEVICE_CONNECTED,
-                    EVENTS.ON_CLIENT_LOG_MESSAGE,
-                    EVENTS.ON_STORE_CREATED
-                ]);
-                this.deviceInstances = this.consoles = {};
-                this.driverScopes = {
-                    "system_drivers": "system_drivers/",
-                    "user_drivers": "user_drivers/"
                 };
-                this.lastUpTime = (new Date()).getTime();
-                setInterval(function () {
-                    var current = (new Date()).getTime();
-                    if (current - thiz.lastUpTime > 30000) {
-                        thiz.lastUpTime = (new Date()).getTime();
+
+                result.hash = MD5(JSON.stringify({
+                    host: host,
+                    port: port,
+                    protocol: protocol,
+                    driverId: driverId,
+                    driverScope: driverScope,
+                    id: item.id,
+                    devicePath: item.path,
+                    deviceScope: item.getScope(),
+                    source: isIDE ? 'ide' : 'server',
+                    user_devices: this.ctx.getMount(item.getScope()),
+                    system_devices: this.ctx.getMount('system_devices'),
+                    system_drivers: this.ctx.getMount('system_drivers'),
+                    user_drivers: this.ctx.getMount('user_drivers')
+                }), 1);
+                const userDirectory = this.ctx.getUserDirectory();
+                if (userDirectory) {
+                    result.userDirectory = userDirectory;
+                }
+            } else {
+                _debug && console.error('cant find driver ' + driverId + ' for ' + item.toString());
+            }
+            item.info = result;
+            if (!has('xcf-ui') && hash && !has('host-node')) {
+                this._deviceInfoCache[hash] = result;
+            }
+
+            return result;
+        },
+        /**
+         * Return device model item by device id
+         * @param itemId
+         * @returns {module:xcf/model/Device} The device
+         */
+        getItemById: function (itemId) {
+            function search(store) {
+                const data = store.data;
+                const device = _.find(data, {
+                    id: itemId
+                });
+                if (!device) {
+                    return null;
+                }
+                return store.getSync(device.path);
+            }
+
+            for (const scope in this.stores) {
+                const store = this.stores[scope];
+                const result = search(store);
+                if (result) {
+                    return result;
+                }
+            }
+            _debug && console.error('Device Manager::getItemById : cant find device with id: ' + itemId);
+        },
+        /**
+         *
+         * @param evt
+         * @private
+         */
+        onStoreCreated: function (evt) {
+            const thiz = this;
+            const ctx = thiz.ctx;
+            const type = evt.type;
+            const store = evt.store;
+            let items = store ? utils.queryStore(store, { isDir: false }) : [];
+            const driverManager = this.ctx.getDriverManager();
+
+            if (items && !_.isArray(items)) {
+                items = [items];
+            }
+
+            if (type !== types.ITEM_TYPE.DEVICE) {
+                return;
+            }
+            for (let i = 0; i < items.length; i++) {
+                const item = store.getSync(items[i].path);
+                if (!item) {
+                    console.error('cant find ' + items[i].path);
+                    continue;
+                }
+                if (item._completed) {
+                    continue;
+                }
+
+                item._completed = true;
+                item.isDevice = true;
+                const driverId = this.getMetaValue(item, types.DEVICE_PROPERTY.CF_DEVICE_DRIVER);
+                if (!driverId) {
+                    console.error('device has no driver id!');
+                    continue;
+                }
+                const driver = driverManager.getItemById(driverId);
+                const CIS = item.user;
+
+                //complete CIS
+                _.each(CIS.inputs, function (ci) {
+                    ci.device = item;
+                    ci.actionTarget = isIDE ? ctx.mainView.getToolbar() : null;
+                    ci.ctx = ctx;
+                });
+                if (!_.isEmpty(driver)) {
+                    if (isIDE) {
+                        this.completeDevice(item, driver);
+                        item.iconClass = item.getStateIcon();
                     }
-                    thiz.lastUpTime = current;
-                }, 1000);
+                }
+            }
+            all(this.connectToAllDevices()).then(function () {
+                thiz.publish('DevicesConnected', evt);
+            });
+        },
+        /**
+         *
+         * indirect callback for ON_SERVER_LOG_MESSAGE which tells the device server to
+         * log something for us. This might be triggered by xblox/model/logging/Log
+         *
+         * @param evt {object}
+         * @param evt.data {object}
+         * @param evt.data.device {module:xide/types~DeviceInfo|null}
+         * @param evt.data.details {array}
+         * @param evt.data.time {integer}
+         * @param evt.data.type {string}
+         * @param evt.data.level {string}
+         */
+        onClientMessage: function (evt) {
+            this.checkDeviceServerConnection();
+            if (this.deviceServerClient) {
+                _debugLogging && console.log('WRITE_LOG_MESSAGE ', evt);
+                this.sendManagerCommand(types.SOCKET_SERVER_COMMANDS.WRITE_LOG_MESSAGE, evt);
+            }
+        },
+        /**
+         *
+         * @param evt
+         */
+        onClientLogMessage: function (evt) {
+            if (!isServer) {
+                this.onClientMessage(evt);
+            }
+        },
+        /**
+         *
+         * @param evt
+         * @private
+         */
+        onVariableChanged: function (evt) {
+            const variable = evt.item;
+            const scope = evt.scope;
+            const name = variable.name;
+            const publish = evt.publish !== false;
+            //_debugMQTT && console.log('DeviceManager/onVariableChanged/variable changed: '+name + ' - publish : ' + publish);
 
-                this.initReload();
+            if (name === 'value' || publish === false || !variable) {
+                return;
+            }
 
-            },
-            onDeviceServerConnected: function () {
-                var self = this;
-                if (this.deviceInstances) {
-                    _.each(this.deviceInstances, function (instance) {
-                        if (instance && instance.device && !instance.domNode) {
-                            var device = instance.device;
-                            self.startDevice(device);
-                        }
+            const value = variable.value;
+            const driver = scope.driver;
+            const device = scope.device;
+
+            if (device && device.info) {
+                const deviceInfo = device.info;
+                const mqttTopic = deviceInfo.host + '/' + deviceInfo.port + '/Variable/' + name;
+                _debugMQTT && evt.publishMQTT !== false && console.log('send mqtt message ' + mqttTopic);
+                evt.publishMQTT !== false && this.sendManagerCommand(types.SOCKET_SERVER_COMMANDS.MQTT_PUBLISH, {
+                    topic: mqttTopic,
+                    data: {
+                        value: value,
+                        device: deviceInfo
+                    }
+                });
+            } else {
+                _debugMQTT && console.warn('onVariableChanged->MQTT : have no device');
+            }
+            //_debugMQTT && console.info('on variable changed ' + device.toString());
+        },
+        /***
+         * Common manager function, called by the context of the application
+         * @private
+         */
+        init: function () {
+            const thiz = this;
+            if (this.initUI) {
+                this.initUI();
+            }
+            this.stores = {};
+            this._deviceInfoCache = {};
+            this.subscribe(types.EVENTS.ON_DRIVER_VARIABLE_CHANGED, this.onVariableChanged);
+            this.subscribe(types.EVENTS.ON_DEVICE_SERVER_CONNECTED, function () {
+                const connect = has('drivers') && has('devices');
+                if (thiz.autoConnectDevices && connect) {
+                    all(thiz.connectToAllDevices()).then(function () {
+                        thiz.publish('DevicesConnected');
                     });
                 }
-            },
-            //nulled in server mode
-            addDeviceInstance: function (device, driver) {
-            },
-            /***
-             * ls is enumerating all drivers in a given scope
-             * @param scope {string}
-             * @param track {boolean=true}
-             * @returns {Deferred}
-             */
-            ls: function (scope, track) {
-                var dfd = new Deferred();
+            });
+            this.subscribe([
+                EVENTS.ON_NODE_SERVICE_STORE_READY,
+                EVENTS.ON_MODULE_RELOADED,
+                EVENTS.ON_DEVICE_DISCONNECTED,
+                EVENTS.ON_DEVICE_CONNECTED,
+                EVENTS.ON_CLIENT_LOG_MESSAGE,
+                EVENTS.ON_STORE_CREATED
+            ]);
+            this.deviceInstances = this.consoles = {};
+            this.driverScopes = {
+                "system_drivers": "system_drivers/",
+                "user_drivers": "user_drivers/"
+            };
+            this.lastUpTime = (new Date()).getTime();
+            setInterval(function () {
+                const current = (new Date()).getTime();
+                if (current - thiz.lastUpTime > 30000) {
+                    thiz.lastUpTime = (new Date()).getTime();
+                }
+                thiz.lastUpTime = current;
+            }, 1000);
 
-                function data(data) {
-                    try {
-                        var store = this.createStore(data, scope, track);
-                        //track !== false && this.setStore(scope, store);
-                        this.onStoreReady(store);
-                        track !== false && this.publish(types.EVENTS.ON_STORE_CREATED, {
-                            data: data,
-                            owner: this,
-                            store: store,
-                            type: this.itemType
-                        });
-                        dfd.resolve(store);
+            this.initReload();
 
-                    } catch (e) {
-                        logError(e, 'error ls drivers');
+        },
+        onDeviceServerConnected: function () {
+            const self = this;
+            if (this.deviceInstances) {
+                _.each(this.deviceInstances, function (instance) {
+                    if (instance && instance.device && !instance.domNode) {
+                        const device = instance.device;
+                        self.startDevice(device);
                     }
-                }
+                });
+            }
+        },
+        //nulled in server mode
+        addDeviceInstance: function (device, driver) {
+        },
+        /***
+         * ls is enumerating all drivers in a given scope
+         * @param scope {string}
+         * @param track {boolean=true}
+         * @returns {Deferred}
+         */
+        ls: function (scope, track) {
+            const dfd = new Deferred();
 
-                if (this.prefetch && this.prefetch[scope]) {
-                    data.apply(this, [this.prefetch[scope]]);
-                    delete this.prefetch[scope];
-                    return dfd;
-                }
+            function data(data) {
+                try {
+                    const store = this.createStore(data, scope, track);
+                    //track !== false && this.setStore(scope, store);
+                    this.onStoreReady(store);
+                    track !== false && this.publish(types.EVENTS.ON_STORE_CREATED, {
+                        data: data,
+                        owner: this,
+                        store: store,
+                        type: this.itemType
+                    });
+                    dfd.resolve(store);
 
-                if (has('php')) {
-                    this.runDeferred(null, 'ls', [scope]).then(data.bind(this));
-                } else {
-                    if (!isServer) {
-                        this._getText(require.toUrl(scope).replace('main.js', '') + scope + '.json', {
-                            sync: false,
-                            handleAs: 'json'
-                        }).then(data.bind(this));
-                    } else {
-                        dfd.resolve({ items: [] });
-                    }
+                } catch (e) {
+                    logError(e, 'error ls drivers');
                 }
+            }
+
+            if (this.prefetch && this.prefetch[scope]) {
+                data.apply(this, [this.prefetch[scope]]);
+                delete this.prefetch[scope];
                 return dfd;
-            },
-            /**
-             *
-             * @param scope
-             * @returns {*}
-             */
-            hasStore: function (scope) {
-                return this.stores[scope];
-            },
-            /**
-             * @param item {module:xcf/model/Device}
-             * @private
-             */
-            fixDeviceCI: function (item) {
-                var DEVICE_PROPERTY = types.DEVICE_PROPERTY;
-                var meta = item['user'];
-                var driverOptions = utils.getCIByChainAndName(meta, 0, DEVICE_PROPERTY.CF_DEVICE_DRIVER_OPTIONS);
-                if (!driverOptions) {
-                    meta.inputs.push({
-                        "chainType": 0,
-                        "class": "cmx.types.ConfigurableInformation",
-                        "dataRef": "",
-                        "dataSource": "",
-                        "description": null,
-                        "enabled": true,
-                        "enumType": "-1",
-                        "flags": -1,
-                        "group": 'Common',
-                        "id": DEVICE_PROPERTY.CF_DEVICE_DRIVER_OPTIONS,
-                        "name": DEVICE_PROPERTY.CF_DEVICE_DRIVER_OPTIONS,
-                        "order": 1,
-                        "params": null,
-                        "platform": null,
-                        "title": "Driver Options",
-                        "type": 5,
-                        "uid": "-1",
-                        "value": 0,
-                        "data": [
-                            {
-                                value: 2,
-                                label: 'Runs Server Side'
-                            },
-                            {
-                                value: 4,
-                                label: 'Show Debug Messages'
-                            },/*,
-                            {
-                                value: 8,
-                                label: 'Allow Multiple Device Connections'
-                            },*/
-                            {
-                                value: 16,
-                                label: 'Make Server'
-                            }
+            }
 
-                        ],
-                        "visible": true,
-                        "device": item
-                    });
+            if (has('php')) {
+                this.runDeferred(null, 'ls', [scope]).then(data.bind(this));
+            } else {
+                if (!isServer) {
+                    this._getText(require.toUrl(scope).replace('main.js', '') + scope + '.json', {
+                        sync: false,
+                        handleAs: 'json'
+                    }).then(data.bind(this));
                 } else {
-                    driverOptions.data = [
+                    dfd.resolve({ items: [] });
+                }
+            }
+            return dfd;
+        },
+        /**
+         *
+         * @param scope
+         * @returns {*}
+         */
+        hasStore: function (scope) {
+            return this.stores[scope];
+        },
+        /**
+         * @param item {module:xcf/model/Device}
+         * @private
+         */
+        fixDeviceCI: function (item) {
+            const DEVICE_PROPERTY = types.DEVICE_PROPERTY;
+            const meta = item['user'];
+            const driverOptions = utils.getCIByChainAndName(meta, 0, DEVICE_PROPERTY.CF_DEVICE_DRIVER_OPTIONS);
+            if (!driverOptions) {
+                meta.inputs.push({
+                    "chainType": 0,
+                    "class": "cmx.types.ConfigurableInformation",
+                    "dataRef": "",
+                    "dataSource": "",
+                    "description": null,
+                    "enabled": true,
+                    "enumType": "-1",
+                    "flags": -1,
+                    "group": 'Common',
+                    "id": DEVICE_PROPERTY.CF_DEVICE_DRIVER_OPTIONS,
+                    "name": DEVICE_PROPERTY.CF_DEVICE_DRIVER_OPTIONS,
+                    "order": 1,
+                    "params": null,
+                    "platform": null,
+                    "title": "Driver Options",
+                    "type": 5,
+                    "uid": "-1",
+                    "value": 0,
+                    "data": [
                         {
                             value: 2,
                             label: 'Runs Server Side'
@@ -52383,7 +52392,7 @@ define('xcf/manager/DeviceManager',[
                         {
                             value: 4,
                             label: 'Show Debug Messages'
-                        },/*
+                        },/*,
                         {
                             value: 8,
                             label: 'Allow Multiple Device Connections'
@@ -52393,129 +52402,152 @@ define('xcf/manager/DeviceManager',[
                             label: 'Make Server'
                         }
 
-                    ];
+                    ],
+                    "visible": true,
+                    "device": item
+                });
+            } else {
+                driverOptions.data = [
+                    {
+                        value: 2,
+                        label: 'Runs Server Side'
+                    },
+                    {
+                        value: 4,
+                        label: 'Show Debug Messages'
+                    },/*
+                    {
+                        value: 8,
+                        label: 'Allow Multiple Device Connections'
+                    },*/
+                    {
+                        value: 16,
+                        label: 'Make Server'
+                    }
 
-                    driverOptions.group = 'Common';
-                }
+                ];
 
-
-                var loggingFlags = utils.getCIByChainAndName(meta, 0, DEVICE_PROPERTY.CF_DEVICE_LOGGING_FLAGS);
-                if (!loggingFlags) {
-                    meta.inputs.push({
-                        "chainType": 0,
-                        "class": "cmx.types.ConfigurableInformation",
-                        "dataRef": "",
-                        "dataSource": "",
-                        "description": null,
-                        "enabled": true,
-                        "enumType": "-1",
-                        "flags": -1,
-                        "group": 'Logging',
-                        "id": DEVICE_PROPERTY.CF_DEVICE_LOGGING_FLAGS,
-                        "name": DEVICE_PROPERTY.CF_DEVICE_LOGGING_FLAGS,
-                        "order": 1,
-                        "params": null,
-                        "platform": null,
-                        "title": "Logging Flags",
-                        "type": DEVICE_PROPERTY.CF_DEVICE_LOGGING_FLAGS,
-                        "uid": "-1",
-                        "value": 0,
-                        "data": [
-                            {
-                                value: 2,
-                                label: 'On Connected'
-                            },
-                            {
-                                value: 4,
-                                label: 'On Disconnected'
-                            },
-                            {
-                                value: 8,
-                                label: 'On Error'
-                            },
-                            {
-                                value: 16,
-                                label: 'Commands'
-                            },
-                            {
-                                value: 32,
-                                label: 'Responses'
-                            }
-                        ],
-                        "visible": true,
-                        "device": item
-                    });
-                } else {
-                    loggingFlags.group = "Logging";
-                }
-
-
-                var protocolCI = utils.getCIByChainAndName(meta, 0, DEVICE_PROPERTY.CF_DEVICE_PROTOCOL);
-                if (protocolCI) {
-                    protocolCI.type = 3;
-                    protocolCI.options = [
-                        {
-                            label: "TCP",
-                            value: "tcp"
-                        },
-                        {
-                            label: "UDP",
-                            value: "udp"
-                        },
-                        {
-                            label: "Driver",
-                            value: "driver"
-                        },
-                        {
-                            label: "SSH",
-                            value: "ssh"
-                        },
-                        {
-                            label: "Serial",
-                            value: "serial"
-                        },
-                        {
-                            label: "MQTT",
-                            value: "mqtt"
-                        }
-                    ];
-                }
-
-                if (!item.id) {
-                    item.id = utils.getCIInputValueByName(meta, types.DEVICE_PROPERTY.CF_DEVICE_ID);
-                }
-
-                var optionsCI = utils.getCIByChainAndName(meta, 0, types.DEVICE_PROPERTY.CF_DEVICE_OPTIONS);
-                if (!optionsCI) {
-                    meta.inputs.push({
-                        "chainType": 0,
-                        "class": "cmx.types.ConfigurableInformation",
-                        "dataRef": "",
-                        "dataSource": "",
-                        "description": null,
-                        "enabled": true,
-                        "enumType": "-1",
-                        "flags": -1,
-                        "group": 'Network',
-                        "id": "options",
-                        "name": "options",
-                        "order": 1,
-                        "params": null,
-                        "platform": null,
-                        "title": "Options",
-                        "type": 28,
-                        "uid": "-1",
-                        "value": {},
-                        "visible": true,
-                        "device": item
-
-                    });
-                } else {
-                    optionsCI.device = item;
-                }
+                driverOptions.group = 'Common';
             }
-        });
-    });;
+
+
+            const loggingFlags = utils.getCIByChainAndName(meta, 0, DEVICE_PROPERTY.CF_DEVICE_LOGGING_FLAGS);
+            if (!loggingFlags) {
+                meta.inputs.push({
+                    "chainType": 0,
+                    "class": "cmx.types.ConfigurableInformation",
+                    "dataRef": "",
+                    "dataSource": "",
+                    "description": null,
+                    "enabled": true,
+                    "enumType": "-1",
+                    "flags": -1,
+                    "group": 'Logging',
+                    "id": DEVICE_PROPERTY.CF_DEVICE_LOGGING_FLAGS,
+                    "name": DEVICE_PROPERTY.CF_DEVICE_LOGGING_FLAGS,
+                    "order": 1,
+                    "params": null,
+                    "platform": null,
+                    "title": "Logging Flags",
+                    "type": DEVICE_PROPERTY.CF_DEVICE_LOGGING_FLAGS,
+                    "uid": "-1",
+                    "value": 0,
+                    "data": [
+                        {
+                            value: 2,
+                            label: 'On Connected'
+                        },
+                        {
+                            value: 4,
+                            label: 'On Disconnected'
+                        },
+                        {
+                            value: 8,
+                            label: 'On Error'
+                        },
+                        {
+                            value: 16,
+                            label: 'Commands'
+                        },
+                        {
+                            value: 32,
+                            label: 'Responses'
+                        }
+                    ],
+                    "visible": true,
+                    "device": item
+                });
+            } else {
+                loggingFlags.group = "Logging";
+            }
+
+
+            const protocolCI = utils.getCIByChainAndName(meta, 0, DEVICE_PROPERTY.CF_DEVICE_PROTOCOL);
+            if (protocolCI) {
+                protocolCI.type = 3;
+                protocolCI.options = [
+                    {
+                        label: "TCP",
+                        value: "tcp"
+                    },
+                    {
+                        label: "UDP",
+                        value: "udp"
+                    },
+                    {
+                        label: "Driver",
+                        value: "driver"
+                    },
+                    {
+                        label: "SSH",
+                        value: "ssh"
+                    },
+                    {
+                        label: "Serial",
+                        value: "serial"
+                    },
+                    {
+                        label: "MQTT",
+                        value: "mqtt"
+                    }
+                ];
+            }
+
+            if (!item.id) {
+                item.id = utils.getCIInputValueByName(meta, types.DEVICE_PROPERTY.CF_DEVICE_ID);
+            }
+
+            const optionsCI = utils.getCIByChainAndName(meta, 0, types.DEVICE_PROPERTY.CF_DEVICE_OPTIONS);
+            if (!optionsCI) {
+                meta.inputs.push({
+                    "chainType": 0,
+                    "class": "cmx.types.ConfigurableInformation",
+                    "dataRef": "",
+                    "dataSource": "",
+                    "description": null,
+                    "enabled": true,
+                    "enumType": "-1",
+                    "flags": -1,
+                    "group": 'Network',
+                    "id": "options",
+                    "name": "options",
+                    "order": 1,
+                    "params": null,
+                    "platform": null,
+                    "title": "Options",
+                    "type": 28,
+                    "uid": "-1",
+                    "value": {},
+                    "visible": true,
+                    "device": item
+
+                });
+            } else {
+                optionsCI.device = item;
+            }
+        }
+    });
+});;
 define('xide/console',[], function () {
     return typeof window !=='undefined' ? window.console : typeof global !=='undefined' ? global.console : {
 
@@ -52527,8 +52559,8 @@ define('xcf/mixins/LogMixin',[
     'xcf/types/Types',
     'xide/utils'
 ], function (dcl, types, utils) {
-    var DEFAULT_LOGGING_FLAGS = types.DEFAULT_DEVICE_LOGGING_FLAGS;
-    var Module = dcl(null, {
+    const DEFAULT_LOGGING_FLAGS = types.DEFAULT_DEVICE_LOGGING_FLAGS;
+    const Module = dcl(null, {
         /**
          *
          * @param deviceInfo {module:xide/types~DeviceInfo}
@@ -52537,12 +52569,12 @@ define('xcf/mixins/LogMixin',[
          * @returns {boolean}
          */
         hasFlagEx: function (deviceInfo, flag, source) {
-            var LOGGING_FLAGS = types.LOGGING_FLAGS,
-                OUTPUT = types.LOG_OUTPUT,
-                flags = deviceInfo.loggingFlags;
+            const LOGGING_FLAGS = types.LOGGING_FLAGS;
+            const OUTPUT = types.LOG_OUTPUT;
+            let flags = deviceInfo.loggingFlags;
             flags = _.isString(flags) ? utils.fromJson(flags) : flags || {};
 
-            var _flag = flags[source] ? flags[source] : DEFAULT_LOGGING_FLAGS[source];
+            const _flag = flags[source] ? flags[source] : DEFAULT_LOGGING_FLAGS[source];
             if (_flag == null) {
                 return false;
             }
@@ -52574,14 +52606,13 @@ define('xcf/manager/DeviceManager_DeviceServer',[
     'xide/utils/HexUtils',
     'xdojo/has!host-node?nxapp/utils/_console'
 ], function (dcl, MD5, types, utils, factory, has, Deferred, ReloadMixin, EventedMixin, require, _, Variable, HexUtils, _console) {
-
-    var console = typeof window !== 'undefined' ? window.console : typeof global !== 'undefined' ? global.console : _console;
+    let console = typeof window !== 'undefined' ? window.console : typeof global !== 'undefined' ? global.console : _console;
     if (_console) {
         console = _console;
     }
-    var isServer = has('host-node'),
-        isIDE = has('xcf-ui'),
-        runDrivers = true;
+    const isServer = has('host-node');
+    const isIDE = has('xcf-ui');
+    const runDrivers = true;
 
 
     /*
@@ -52592,27 +52623,27 @@ define('xcf/manager/DeviceManager_DeviceServer',[
      */
 
     //debug mqtt activity
-    var _debugMQTT = false;
+    const _debugMQTT = false;
     //debug device - server messages
-    var debug = false;
+    const debug = false;
     // debug device server connectivity
-    var debugDevice = false;
-    var debugStrangers = false;
-    var debugConnect = false;
-    var debugServerCommands = false;
-    var debugCreateInstance = false;
-    var debugServerMessages = false;
-    var debugByteMessages = false;
+    let debugDevice = false;
+    const debugStrangers = false;
+    const debugConnect = false;
+    const debugServerCommands = false;
+    const debugCreateInstance = false;
+    const debugServerMessages = false;
+    const debugByteMessages = false;
 
 
 
     if (typeof sctx !== 'undefined' && sctx && !isServer) {
 
-        var id = utils.createUUID();
-        var rm = sctx.getResourceManager();
-        var ctx = sctx;
-        var application = sctx.getApplication();
-        var doExport = false;
+        const id = utils.createUUID();
+        const rm = sctx.getResourceManager();
+        const ctx = sctx;
+        const application = sctx.getApplication();
+        const doExport = false;
         if (!doExport) {
             return;
         }
@@ -52622,20 +52653,20 @@ define('xcf/manager/DeviceManager_DeviceServer',[
         console.log('user : ' + rm.getVariable('USER_DIRECTORY'));
         console.log('system : ' + rm.getVariable('SYSTEM'));
 
-        var ROOT = ctx.getMount('root');
-        var USER = rm.getVariable('USER_DIRECTORY');
-        var SYSTEM = ROOT + '/data/';
-        var DIST = ROOT + '/server/nodejs/dist/';
-        var TARGET = ROOT + '/mc007/';
-        var linux32 = false;
-        var linux64 = true;
-        var osx = false;
-        var arm = false;
-        var windows = false;
+        const ROOT = ctx.getMount('root');
+        const USER = rm.getVariable('USER_DIRECTORY');
+        const SYSTEM = ROOT + '/data/';
+        const DIST = ROOT + '/server/nodejs/dist/';
+        const TARGET = ROOT + '/mc007/';
+        const linux32 = false;
+        const linux64 = true;
+        const osx = false;
+        const arm = false;
+        const windows = false;
 
 
 
-        var options = {
+        const options = {
             linux32: linux32,
             linux64: linux64,
             osx: osx,
@@ -52651,7 +52682,7 @@ define('xcf/manager/DeviceManager_DeviceServer',[
             platform: rm.getVariable('PLATFORM')
         };
         console.log('options', options);
-        var delegate = {
+        const delegate = {
             onError: function (e) {
                 console.error('have error : ', e);
             },
@@ -52686,7 +52717,7 @@ define('xcf/manager/DeviceManager_DeviceServer',[
      * @augments module:xcf/manager/DeviceManager
      * @augments module:xide/mixins/EventedMixin
      */
-    var Module = dcl(null, {
+    const Module = dcl(null, {
         declaredClass: "xcf.manager.DeviceManager_DeviceServer",
         running: null,
         /**
@@ -52702,14 +52733,14 @@ define('xcf/manager/DeviceManager_DeviceServer',[
                 return;
             }
 
-            var info = this.toDeviceControlInfo(deviceStoreItem),
-                serverSide = info.serverSide,
-                _isServer = info.isServer;
+            const info = this.toDeviceControlInfo(deviceStoreItem);
+            const serverSide = info.serverSide;
+            const _isServer = info.isServer;
 
             debugConnect && console.log('onDeviceStarted ' + info.toString(), driverInstance.id);
 
             //1. fire startup blocks
-            var blockScope = driverInstance.blockScope;
+            const blockScope = driverInstance.blockScope;
 
             if (((isServer && (serverSide || _isServer)) || (!serverSide && !_isServer))) {
                 blockScope.start();
@@ -52733,9 +52764,9 @@ define('xcf/manager/DeviceManager_DeviceServer',[
         runClass: function (_class, args, delegate) {
             this.checkDeviceServerConnection();
             if (this.deviceServerClient) {
-                var id = utils.createUUID();
+                const id = utils.createUUID();
                 args.id = id;
-                var dataOut = {
+                const dataOut = {
                     "class": _class,
                     args: args,
                     manager_command: types.SOCKET_SERVER_COMMANDS.RUN_CLASS
@@ -52754,9 +52785,9 @@ define('xcf/manager/DeviceManager_DeviceServer',[
         runAppServerClass: function (_class, args, delegate) {
             this.checkDeviceServerConnection();
             if (this.deviceServerClient) {
-                var id = utils.createUUID();
+                const id = utils.createUUID();
                 args.id = id;
-                var dataOut = {
+                const dataOut = {
                     "class": _class,
                     args: args,
                     manager_command: types.SOCKET_SERVER_COMMANDS.RUN_APP_SERVER_CLASS
@@ -52775,9 +52806,9 @@ define('xcf/manager/DeviceManager_DeviceServer',[
         runAppServerClassMethod: function (_class, method, args, delegate) {
             this.checkDeviceServerConnection();
             if (this.deviceServerClient) {
-                var id = utils.createUUID();
+                const id = utils.createUUID();
                 args.id = id;
-                var dataOut = {
+                const dataOut = {
                     "class": _class,
                     "method": _method,
                     args: args,
@@ -52799,10 +52830,10 @@ define('xcf/manager/DeviceManager_DeviceServer',[
             this.checkDeviceServerConnection();
 
             if (this.deviceServerClient) {
-                var id = utils.createUUID();
+                const id = utils.createUUID();
                 args.id = id;
 
-                var dataOut = {
+                const dataOut = {
                     "component": component,
                     "method": method,
                     options: options,
@@ -52825,7 +52856,7 @@ define('xcf/manager/DeviceManager_DeviceServer',[
         cancelAppServerComponentMethod: function (component, id) {
             this.checkDeviceServerConnection();
             if (this.deviceServerClient) {
-                var dataOut = {
+                const dataOut = {
                     "component": component,
                     id: id,
                     manager_command: types.SOCKET_SERVER_COMMANDS.CANCEL_APP_SERVER_COMPONENT_METHOD
@@ -52839,7 +52870,7 @@ define('xcf/manager/DeviceManager_DeviceServer',[
         answerAppServerComponentMethodInterrupt: function (component, id, answer) {
             this.checkDeviceServerConnection();
             if (this.deviceServerClient) {
-                var dataOut = {
+                const dataOut = {
                     "component": component,
                     id: id,
                     manager_command: types.SOCKET_SERVER_COMMANDS.ANSWER_APP_SERVER_COMPONENT_METHOD_INTERRUPT,
@@ -52857,7 +52888,7 @@ define('xcf/manager/DeviceManager_DeviceServer',[
          * @param force
          */
         startDevice: function (device, force) {
-            var thiz = this;
+            const thiz = this;
             if (!device) {
                 console.error('start device invalid item');
                 return null;
@@ -52865,7 +52896,7 @@ define('xcf/manager/DeviceManager_DeviceServer',[
             this.checkDeviceServerConnection();
             device.check();
             debugDevice = true;
-            var dfd = new Deferred();
+            const dfd = new Deferred();
             if (device._startDfd && !device._startDfd.isResolved()) {
                 if (!isServer) {
                     debugDevice && console.error('already starting ' + device.toString());
@@ -52876,7 +52907,7 @@ define('xcf/manager/DeviceManager_DeviceServer',[
             }
 
             force === true && device.setMetaValue(types.DEVICE_PROPERTY.CF_DEVICE_ENABLED, true, false);
-            var enabled = device.getMetaValue(types.DEVICE_PROPERTY.CF_DEVICE_ENABLED);
+            const enabled = device.getMetaValue(types.DEVICE_PROPERTY.CF_DEVICE_ENABLED);
             if (!enabled && force !== true && !isServer) {
                 debugDevice && console.error('---abort start device : device is not enabled!' + device.toString());
                 this.publish(types.EVENTS.ON_STATUS_MESSAGE, {
@@ -52889,7 +52920,7 @@ define('xcf/manager/DeviceManager_DeviceServer',[
                 return dfd;
             }
 
-            var cInfo = this.toDeviceControlInfo(device);
+            const cInfo = this.toDeviceControlInfo(device);
             if (!cInfo) {
                 console.error('invalid client info, assuming no driver found');
                 dfd.reject('invalid client info, assuming no driver found');
@@ -52902,9 +52933,9 @@ define('xcf/manager/DeviceManager_DeviceServer',[
                 return dfd;
             }
 
-            var hash = cInfo.hash;
-            var state = device.state;
-            var wasLost = state === types.DEVICE_STATE.LOST_DEVICE_SERVER;
+            const hash = cInfo.hash;
+            const state = device.state;
+            const wasLost = state === types.DEVICE_STATE.LOST_DEVICE_SERVER;
             if (this.deviceInstances[hash] && wasLost !== true) {
                 debugDevice && console.warn('device already started : ' + cInfo.toString());
                 dfd.resolve(this.deviceInstances[hash]);
@@ -52937,13 +52968,13 @@ define('xcf/manager/DeviceManager_DeviceServer',[
             device.setState(types.DEVICE_STATE.CONNECTING);
             device._userStopped = null;
             device._startDfd = dfd;
-            var baseDriverPrefix = this.driverScopes['system_drivers'],
-                baseDriverRequire = baseDriverPrefix + 'DriverBase';
+            const baseDriverPrefix = this.driverScopes['system_drivers'];
+            const baseDriverRequire = baseDriverPrefix + 'DriverBase';
 
             try {
                 require([baseDriverRequire], function (baseDriver) {
                     baseDriver.prototype.declaredClass = baseDriverRequire;
-                    var sub = thiz.createDriverInstance(cInfo, baseDriver, device).then(function (driverInstance) {
+                    const sub = thiz.createDriverInstance(cInfo, baseDriver, device).then(function (driverInstance) {
                         if (!driverInstance.id) {
                             driverInstance.id = utils.createUUID();
                         }
@@ -52993,10 +53024,10 @@ define('xcf/manager/DeviceManager_DeviceServer',[
          * @param device {module:xcf/model/Device} The device model item
          */
         createDriverInstance: function (deviceInfo, driverBase, device) {
-            var hash = deviceInfo.hash,
-                driverPrefix = this.driverScopes[deviceInfo.driverScope],
-                isRequireJS = !require.cache,
-                packageUrl = require.toUrl(driverPrefix);
+            const hash = deviceInfo.hash;
+            const driverPrefix = this.driverScopes[deviceInfo.driverScope];
+            const isRequireJS = !require.cache;
+            let packageUrl = require.toUrl(driverPrefix);
 
             packageUrl = utils.removeURLParameter(packageUrl, 'bust');
 
@@ -53004,7 +53035,7 @@ define('xcf/manager/DeviceManager_DeviceServer',[
                 packageUrl = packageUrl.replace('/.js', '/');
             }
 
-            var requirePath = decodeURIComponent(packageUrl) + deviceInfo.driver;
+            let requirePath = decodeURIComponent(packageUrl) + deviceInfo.driver;
             requirePath = requirePath.replace('', '').trim();
 
             function updateDevice(device, deviceInfo) {
@@ -53016,15 +53047,15 @@ define('xcf/manager/DeviceManager_DeviceServer',[
 
             }
 
-            var thiz = this,
-                ctx = thiz.ctx,
-                meta = device['user'],
-                driverId = utils.getCIInputValueByName(meta, types.DEVICE_PROPERTY.CF_DEVICE_DRIVER),
-                driverManager = ctx.getDriverManager(),
-                driver = driverManager.getDriverById(driverId),
-                dfd = new Deferred(),
-                enabled = device.getMetaValue(types.DEVICE_PROPERTY.CF_DEVICE_ENABLED),
-                serverSide = deviceInfo.serverSide;
+            const thiz = this;
+            const ctx = thiz.ctx;
+            const meta = device['user'];
+            const driverId = utils.getCIInputValueByName(meta, types.DEVICE_PROPERTY.CF_DEVICE_DRIVER);
+            const driverManager = ctx.getDriverManager();
+            const driver = driverManager.getDriverById(driverId);
+            const dfd = new Deferred();
+            const enabled = device.getMetaValue(types.DEVICE_PROPERTY.CF_DEVICE_ENABLED);
+            const serverSide = deviceInfo.serverSide;
 
             debugCreateInstance && console.log('create driver instance : ' + device.path + ":" + device.scope + ' from ' + requirePath, {
                 driver: driver,
@@ -53051,9 +53082,9 @@ define('xcf/manager/DeviceManager_DeviceServer',[
 
             try {
                 driverManager.getDriverModule(driver).then(function (driverModule) {
-                    var baseClass = driverBase;
-                    var driverProto = dcl([baseClass, EventedMixin.dcl, ReloadMixin.dcl, driverModule], {});
-                    var driverInstance = new driverProto();
+                    const baseClass = driverBase;
+                    const driverProto = dcl([baseClass, EventedMixin.dcl, ReloadMixin.dcl, driverModule], {});
+                    const driverInstance = new driverProto();
                     driverInstance.declaredClass = requirePath;
                     driverInstance.options = deviceInfo;
                     driverInstance.baseClass = baseClass.prototype.declaredClass;
@@ -53072,13 +53103,13 @@ define('xcf/manager/DeviceManager_DeviceServer',[
                     driverInstance.getDeviceInfo = function () {
                         return this.getDevice().info;
                     };
-                    var meta = driver['user'];
-                    var commandsCI = utils.getCIByChainAndName(meta, 0, types.DRIVER_PROPERTY.CF_DRIVER_COMMANDS);
+                    const meta = driver['user'];
+                    const commandsCI = utils.getCIByChainAndName(meta, 0, types.DRIVER_PROPERTY.CF_DRIVER_COMMANDS);
                     if (commandsCI && commandsCI['params']) {
                         driverInstance.sendSettings = utils.getJson(commandsCI['params']);
                     }
 
-                    var responseCI = utils.getCIByChainAndName(meta, 0, types.DRIVER_PROPERTY.CF_DRIVER_RESPONSES);
+                    const responseCI = utils.getCIByChainAndName(meta, 0, types.DRIVER_PROPERTY.CF_DRIVER_RESPONSES);
                     if (responseCI && responseCI['params']) {
                         driverInstance.responseSettings = utils.getJson(responseCI['params']);
                     }
@@ -53115,21 +53146,21 @@ define('xcf/manager/DeviceManager_DeviceServer',[
          * @param data
          */
         onSetDeviceServerVariables: function (data) {
-            var instance = this.getDriverInstance(data.device, true);
-            var device = this.getDeviceStoreItem(data.device);
+            const instance = this.getDriverInstance(data.device, true);
+            const device = this.getDeviceStoreItem(data.device);
             if (!device) {
                 debugDevice && console.log('did set device server variables failed, have no device', data);
                 return;
             }
 
             if (!instance.blockScope) {
-                var deviceInfo = device.info;
-                var hash = deviceInfo.hash;
-                var driver = instance.driver;
-                var driverId = deviceInfo.driverId;
-                var ctx = this.getContext();
-                var serverSide = deviceInfo.serverSide;
-                var scopeId = driverId + '_' + hash + '_' + device.path;
+                const deviceInfo = device.info;
+                const hash = deviceInfo.hash;
+                const driver = instance.driver;
+                const driverId = deviceInfo.driverId;
+                const ctx = this.getContext();
+                const serverSide = deviceInfo.serverSide;
+                const scopeId = driverId + '_' + hash + '_' + device.path;
                 if (!driver.blox || !driver.blox.blocks) {
                     debugConnect && console.warn('Attention : INVALID driver, have no blocks', deviceInfo.toString());
                     driver.blox = {
@@ -53141,7 +53172,7 @@ define('xcf/manager/DeviceManager_DeviceServer',[
                     driver.blox = utils.getJson(utils.readFile(driver.blockPath));
                 }
 
-                var scope = ctx.getBlockManager().createScope({
+                const scope = ctx.getBlockManager().createScope({
                     id: scopeId,
                     device: device,
                     driver: driver,
@@ -53164,11 +53195,11 @@ define('xcf/manager/DeviceManager_DeviceServer',[
             }
 
             if (instance) {
-                var variables = data.variables,
-                    _scope = instance.blockScope;
+                const variables = data.variables;
+                const _scope = instance.blockScope;
                 device.serverVariables = data.variables;
                 _.each(variables, function (variable) {
-                    var _var = _scope.getVariable(variable.name);
+                    const _var = _scope.getVariable(variable.name);
                     if (_var) {
                         _var.value = variable.value;
                     }
@@ -53190,20 +53221,20 @@ define('xcf/manager/DeviceManager_DeviceServer',[
          * @param driverInstance
          */
         getDeviceServerVariables: function (device, driverInstance) {
-            var driver = driverInstance.driver;
+            const driver = driverInstance.driver;
             if (!driver.blox || !driver.blox.blocks) {
                 debugConnect && console.warn('Attention : INVALID driver, have no blocks', device.toString());
                 driver.blox = {
                     blocks: []
                 };
             }
-            var blocks = driver.blox.blocks;
-            var basicVariables = [];
+            const blocks = driver.blox.blocks;
+            const basicVariables = [];
             _.each(blocks, function (block) {
                 block.group === types.BLOCK_GROUPS.CF_DRIVER_BASIC_VARIABLES && basicVariables.push(block);
             });
-            var out = [];
-            for (var i = 0; i < basicVariables.length; i++) {
+            const out = [];
+            for (let i = 0; i < basicVariables.length; i++) {
                 out.push({
                     name: basicVariables[i].name,
                     value: basicVariables[i].value,
@@ -53223,13 +53254,13 @@ define('xcf/manager/DeviceManager_DeviceServer',[
          * @returns {*}
          */
         onDeviceConnected: function (data, setReadyState) {
-            var deviceStoreItem = this.getDeviceStoreItem(data.device);
+            const deviceStoreItem = this.getDeviceStoreItem(data.device);
             if (data.isReplay && deviceStoreItem && deviceStoreItem.state === types.DEVICE_STATE.READY) {
                 deviceStoreItem.setState(types.DEVICE_STATE.READY);
                 return;
             }
 
-            var instance = this.getDriverInstance(data.device, true) || data.instance;
+            const instance = this.getDriverInstance(data.device, true) || data.instance;
             if (!instance) {
                 debugStrangers && !isServer && console.error('--cant find device instance', this.deviceInstances);
                 deviceStoreItem && deviceStoreItem.setState(types.DEVICE_STATE.DISCONNECTED);
@@ -53242,7 +53273,7 @@ define('xcf/manager/DeviceManager_DeviceServer',[
 
             //console.error('weird '+data.device.id + ' ' + data.device.state + ' ' + deviceStoreItem.isServerSide());
 
-            var cInfo = this.toDeviceControlInfo(deviceStoreItem);
+            const cInfo = this.toDeviceControlInfo(deviceStoreItem);
             if (!cInfo) {
                 debugDevice && console.error('onDeviceConnected:: device info  is null');
                 return;
@@ -53262,7 +53293,7 @@ define('xcf/manager/DeviceManager_DeviceServer',[
                 return;
             }
 
-            var hash = cInfo.hash;
+            const hash = cInfo.hash;
 
             if (this.deviceInstances[hash]) {
                 if (!instance.__didStartBlocks) {
@@ -53277,9 +53308,9 @@ define('xcf/manager/DeviceManager_DeviceServer',[
                 return this.deviceInstances[hash];
             }
 
-            var thiz = this;
-            var baseDriverPrefix = this.driverScopes['system_drivers'];
-            var baseDriverRequire = baseDriverPrefix + 'DriverBase';
+            const thiz = this;
+            const baseDriverPrefix = this.driverScopes['system_drivers'];
+            const baseDriverRequire = baseDriverPrefix + 'DriverBase';
             //console.log('device conntected, load base driver with prefix : ' +baseDriverPrefix + ' and final require ' + baseDriverRequire);
             try {
                 require([baseDriverRequire], function (baseDriver) {
@@ -53296,10 +53327,10 @@ define('xcf/manager/DeviceManager_DeviceServer',[
                 return;
             }
 
-            var error = data.error;
+            const error = data.error;
 
-            var code = error && error.code ? error.code : error || '';
-            var deviceStoreItem = this.getDeviceStoreItem(data.device);
+            const code = error && error.code ? error.code : error || '';
+            const deviceStoreItem = this.getDeviceStoreItem(data.device);
             if (!deviceStoreItem) {
                 debugDevice && isIDE && console.error('deviceStoreItem is null');
                 return;
@@ -53314,13 +53345,13 @@ define('xcf/manager/DeviceManager_DeviceServer',[
                 type: 'info'
             });
 
-            var info = this.toDeviceControlInfo(deviceStoreItem);
+            const info = this.toDeviceControlInfo(deviceStoreItem);
             if (info && isServer && !info.serverSide) {
                 return;
             }
 
             //kill old instance
-            var instance = this.getDriverInstance(data.device, true);
+            const instance = this.getDriverInstance(data.device, true);
             if (instance) {
                 this.removeDriverInstance(data.device);
             }
@@ -53339,14 +53370,14 @@ define('xcf/manager/DeviceManager_DeviceServer',[
                 if (item._userStopped || item.state === types.DEVICE_STATE.DISABLED) {
                     return false;
                 }
-                var enabled = thiz.getMetaValue(item, types.DEVICE_PROPERTY.CF_DEVICE_ENABLED);
+                const enabled = thiz.getMetaValue(item, types.DEVICE_PROPERTY.CF_DEVICE_ENABLED);
                 if (!enabled) {
                     return false;
                 }
                 return true;
             }
 
-            var serverSide = info.serverSide;
+            const serverSide = info.serverSide;
 
             if ((isServer && serverSide) || (!serverSide && !isServer)) {
                 if (deviceStoreItem) {
@@ -53381,18 +53412,18 @@ define('xcf/manager/DeviceManager_DeviceServer',[
 
         },
         onCommandFinish: function (deviceInfo, message) {
-            var driverInstance = this.getDriverInstance(deviceInfo, true);
+            const driverInstance = this.getDriverInstance(deviceInfo, true);
             if (!driverInstance) {
                 return;
             }
 
-            var params = message.params || {};
+            const params = message.params || {};
             if (params.src && params.id) {
-                var scope = driverInstance.blockScope;
-                var block = scope.getBlockById(params.src);
+                const scope = driverInstance.blockScope;
+                const block = scope.getBlockById(params.src);
                 if (block && block.onCommandFinish) {
-                    var result = null;
-                    var data = block.onCommandFinish(message);
+                    let result = null;
+                    const data = block.onCommandFinish(message);
                     try {
                         result = JSON.stringify(data, function (k, v) {
                             if (typeof v == 'object') {
@@ -53405,32 +53436,33 @@ define('xcf/manager/DeviceManager_DeviceServer',[
                     }
                     if (has('xcf-ui') && result) {
                         //console replay
-                        var device = driverInstance.device,
-                            hash = deviceInfo.hash,
-                            viewId = hash + '-Console',
-                            messages = [result],
-                            consoleViews = this.consoles[viewId];
+                        const device = driverInstance.device;
+
+                        const hash = deviceInfo.hash;
+                        const viewId = hash + '-Console';
+                        const messages = [result];
+                        const consoleViews = this.consoles[viewId];
 
                         if (consoleViews) {
-                            for (var h = 0; h < consoleViews.length; h++) {
-                                var consoleView = consoleViews[h];
+                            for (let h = 0; h < consoleViews.length; h++) {
+                                const consoleView = consoleViews[h];
                                 if (consoleView) {
-                                    var split = true;
-                                    var hex = false;
+                                    let split = true;
+                                    let hex = false;
 
                                     if (consoleView.console) {
-                                        var _consoleEditor = consoleView.console.getTextEditor();
+                                        const _consoleEditor = consoleView.console.getTextEditor();
                                         split = _consoleEditor.getAction("Console/Settings/Split").value;
                                         hex = _consoleEditor.getAction("Console/Settings/HEX").value;
                                     }
 
                                     if (!split && hex) {
-                                        var hexStr = utils.bufferToHexString(deviceMessageData.data.bytes);
+                                        const hexStr = utils.bufferToHexString(deviceMessageData.data.bytes);
                                         consoleView.log(hexStr, split, false, types.LOG_OUTPUT.RESPONSE);
                                         continue;
                                     }
-                                    for (var j = 0; j < messages.length; j++) {
-                                        var _message = messages[j];
+                                    for (let j = 0; j < messages.length; j++) {
+                                        let _message = messages[j];
                                         if (_.isString(_message.string) && _message.string.length === 0) {
                                             continue;
                                         }
@@ -53456,15 +53488,15 @@ define('xcf/manager/DeviceManager_DeviceServer',[
             }
         },
         onCommandProgress: function (deviceData, message) {
-            var driverInstance = this.getDriverInstance(deviceData, true);
+            const driverInstance = this.getDriverInstance(deviceData, true);
             if (!driverInstance) {
                 return;
             }
-            var params = message.params || {};
+            const params = message.params || {};
             if (params.src && params.id) {
-                var scope = driverInstance.blockScope;
+                const scope = driverInstance.blockScope;
                 if (scope) {
-                    var block = scope.getBlockById(params.src);
+                    const block = scope.getBlockById(params.src);
                     if (block && block.onCommandProgress) {
                         block.onCommandProgress(message);
                     }
@@ -53475,42 +53507,42 @@ define('xcf/manager/DeviceManager_DeviceServer',[
             }
         },
         onCommandPaused: function (deviceData, message) {
-            var driverInstance = this.getDriverInstance(deviceData, true);
+            const driverInstance = this.getDriverInstance(deviceData, true);
             if (!driverInstance) {
                 return;
             }
-            var params = message.params || {};
+            const params = message.params || {};
             if (params.src && params.id) {
-                var scope = driverInstance.blockScope;
-                var block = scope.getBlockById(params.src);
+                const scope = driverInstance.blockScope;
+                const block = scope.getBlockById(params.src);
                 if (block && block.onCommandPaused) {
                     block.onCommandPaused(message);
                 }
             }
         },
         onCommandStopped: function (deviceData, message) {
-            var driverInstance = this.getDriverInstance(deviceData, true);
+            const driverInstance = this.getDriverInstance(deviceData, true);
             if (!driverInstance) {
                 return;
             }
-            var params = message.params || {};
+            const params = message.params || {};
             if (params.src && params.id) {
-                var scope = driverInstance.blockScope;
-                var block = scope.getBlockById(params.src);
+                const scope = driverInstance.blockScope;
+                const block = scope.getBlockById(params.src);
                 if (block && block.onCommandStopped) {
                     block.onCommandStopped(message);
                 }
             }
         },
         onCommandError: function (deviceData, message) {
-            var driverInstance = this.getDriverInstance(deviceData, true);
+            const driverInstance = this.getDriverInstance(deviceData, true);
             if (!driverInstance) {
                 return;
             }
-            var params = message.params || {};
+            const params = message.params || {};
             if (params.src && params.id) {
-                var scope = driverInstance.blockScope;
-                var block = scope.getBlockById(params.src);
+                const scope = driverInstance.blockScope;
+                const block = scope.getBlockById(params.src);
                 if (block && block.onCommandError) {
                     block.onCommandError(message);
                 }
@@ -53524,8 +53556,8 @@ define('xcf/manager/DeviceManager_DeviceServer',[
          * @param evt.data.data {object}
          */
         onDeviceServerMessage: function (evt) {
-            var dataIn = evt['data'];
-            var deviceMessageData = null;
+            const dataIn = evt['data'];
+            let deviceMessageData = null;
             if (_.isString(dataIn) && dataIn.indexOf('{') != -1) {
                 try {
                     deviceMessageData = utils.fromJson(dataIn);
@@ -53542,7 +53574,7 @@ define('xcf/manager/DeviceManager_DeviceServer',[
                 debug && console.error('bad device message : ', deviceMessageData);
                 return;
             }
-            var deviceInfo = deviceMessageData.data.device;
+            let deviceInfo = deviceMessageData.data.device;
             if (!deviceInfo) {
                 debug && console.error('onDeviceServerMessage: cant get device info');
                 return;
@@ -53553,14 +53585,14 @@ define('xcf/manager/DeviceManager_DeviceServer',[
 
 
             //pick driver instance
-            var driverInstance = this.getDriverInstance(deviceMessageData.data.device, true);
+            const driverInstance = this.getDriverInstance(deviceMessageData.data.device, true);
             if (!driverInstance) {
                 debugDevice && console.error(' onDeviceMessage : failed! Have no device instance for ' + deviceMessageData.data.device.host, deviceMessageData);
                 return;
             }
 
 
-            var device = this.getDeviceStoreItem(deviceInfo);
+            const device = this.getDeviceStoreItem(deviceInfo);
 
             if (!device) {
                 debugStrangers && console.error('cant find device : ', deviceInfo.toString());
@@ -53573,8 +53605,8 @@ define('xcf/manager/DeviceManager_DeviceServer',[
                 console.error('invalid device : ' + device.toString());
             }
 
-            var state = device.get('state');
-            var serverSide = deviceInfo.serverSide;
+            const state = device.get('state');
+            const serverSide = deviceInfo.serverSide;
 
             function clear(message) {
                 delete message['resposeSettings'];
@@ -53589,12 +53621,12 @@ define('xcf/manager/DeviceManager_DeviceServer',[
                 delete message['sourcePort'];
             }
 
-            var message = deviceMessageData.data.deviceMessage;
+            const message = deviceMessageData.data.deviceMessage;
             if (message == null) {
                 debugStrangers && console.warn('onDeviceServerMessage: abort, no message data');
                 return;
             }
-            var messages = [];
+            let messages = [];
             if (_.isString(message)) {
                 messages = driverInstance.split(message);
             } else if (_.isObject(message)) {
@@ -53602,9 +53634,9 @@ define('xcf/manager/DeviceManager_DeviceServer',[
                 messages = [message];
             }
 
-            var deviceMessages = messages;
+            const deviceMessages = messages;
 
-            var _messages = driverInstance.onMessageRaw({
+            let _messages = driverInstance.onMessageRaw({
                 device: deviceMessageData.data.device,
                 message: message,
                 bytes: deviceMessageData.data.bytes
@@ -53614,9 +53646,9 @@ define('xcf/manager/DeviceManager_DeviceServer',[
                 _messages = null;
             }
 
-            var bytes = [];
+            let bytes = [];
 
-            for (var i = 0; i < messages.length; i++) {
+            for (let i = 0; i < messages.length; i++) {
                 bytes.push(utils.stringToBuffer(messages[i]));
             }
 
@@ -53624,14 +53656,14 @@ define('xcf/manager/DeviceManager_DeviceServer',[
                 messages = [];
                 bytes = [];
                 for (var j = 0; j < _messages.length; j++) {
-                    var msg = _messages[j];
+                    const msg = _messages[j];
                     messages.push(msg.string);
                     bytes.push(msg.bytes);
                 }
             }
             //replay on driver code instance
             if (messages && messages.length) {
-                for (var k = 0; k < messages.length; k++) {
+                for (let k = 0; k < messages.length; k++) {
                     var _message = messages[k];
                     //driver replay as individual message
                     driverInstance.onMessage({
@@ -53686,22 +53718,23 @@ define('xcf/manager/DeviceManager_DeviceServer',[
 
             if (has('xcf-ui')) {
                 //console replay
-                var hash = deviceInfo.hash,
-                    viewId = hash + '-Console',
-                    messagesNew = [],
-                    consoleViews = this.consoles[viewId];
+                const hash = deviceInfo.hash;
+
+                const viewId = hash + '-Console';
+                let messagesNew = [];
+                const consoleViews = this.consoles[viewId];
 
                 debug && console.log('on_device message ' + hash, driverInstance.options);
                 if (debugDevice) {
-                    var LOGGING_FLAGS = types.LOGGING_FLAGS,
-                        OUTPUT = types.LOG_OUTPUT;
+                    const LOGGING_FLAGS = types.LOGGING_FLAGS;
+                    const OUTPUT = types.LOG_OUTPUT;
 
-                    var flags = deviceInfo.loggingFlags;
+                    let flags = deviceInfo.loggingFlags;
 
                     flags = _.isString(flags) ? utils.fromJson(flags) : flags || {};
-                    var flag = flags[types.LOG_OUTPUT.RESPONSE];
+                    const flag = flags[types.LOG_OUTPUT.RESPONSE];
                     if (flag != null && (flag & LOGGING_FLAGS.STATUS_BAR)) {
-                        var text = deviceMessageData.data.deviceMessage;
+                        let text = deviceMessageData.data.deviceMessage;
                         if (_.isObject(text)) {
                             clear(text);
                             try {
@@ -53716,21 +53749,21 @@ define('xcf/manager/DeviceManager_DeviceServer',[
                     }
                 }
                 if (consoleViews) {
-                    for (var h = 0; h < consoleViews.length; h++) {
-                        var consoleView = consoleViews[h];
+                    for (let h = 0; h < consoleViews.length; h++) {
+                        const consoleView = consoleViews[h];
                         if (consoleView) {
-                            var split = true;
-                            var hex = false;
+                            let split = true;
+                            let hex = false;
 
                             if (consoleView.console) {
-                                var _consoleEditor = consoleView.console.getTextEditor();
+                                const _consoleEditor = consoleView.console.getTextEditor();
                                 split = _consoleEditor.getAction("Console/Settings/Split").value;
                                 hex = _consoleEditor.getAction("Console/Settings/HEX").value;
                             }
 
                             if (!split && hex) {
 
-                                var hexStr = utils.bufferToHexString(deviceMessageData.data.bytes);
+                                const hexStr = utils.bufferToHexString(deviceMessageData.data.bytes);
                                 consoleView.log(hexStr, split, false, types.LOG_OUTPUT.RESPONSE);
                                 continue;
                             }
@@ -53768,16 +53801,16 @@ define('xcf/manager/DeviceManager_DeviceServer',[
             }
             /****************   Forward to xblox    ******************/
             if (messages.length > 0 && driverInstance.blockScope) {
-                var scope = driverInstance.blockScope;
+                const scope = driverInstance.blockScope;
 
-                var responseBlocks = scope.blockStore._find({
+                const responseBlocks = scope.blockStore._find({
                     group: types.BLOCK_GROUPS.CF_DRIVER_RESPONSE_BLOCKS
                 });
-                var responseVariables = scope.blockStore._find({
+                const responseVariables = scope.blockStore._find({
                     group: types.BLOCK_GROUPS.CF_DRIVER_RESPONSE_VARIABLES
                 });
 
-                var responseVariable = scope.getVariable('value');
+                let responseVariable = scope.getVariable('value');
                 if (!responseVariable) {
                     responseVariable = new Variable({
                         id: utils.createUUID(),
@@ -53791,7 +53824,7 @@ define('xcf/manager/DeviceManager_DeviceServer',[
                     });
                     scope.blockStore.putSync(responseVariable);
                 }
-                for (var l = 0; l < messages.length; l++) {
+                for (let l = 0; l < messages.length; l++) {
 
                     if (messages[l].length === 0) {
                         continue;
@@ -53808,13 +53841,13 @@ define('xcf/manager/DeviceManager_DeviceServer',[
                         publishMQTT: false //just for local processing
                     });
                     //now run each top-variable block in 'conditional process'
-                    for (var o = 0; o < responseVariables.length; o++) {
+                    for (let o = 0; o < responseVariables.length; o++) {
                         var _var = responseVariables[o];
                         if (responseVariables[o].title == 'value') {
                             continue;
                         }
-                        var _varResult = null;
-                        var _cValue = responseVariable.value;
+                        let _varResult = null;
+                        let _cValue = responseVariable.value;
                         if (typeof _cValue !== "number") {
                             _cValue = '' + _cValue;
                             _cValue = "'" + _cValue + "'";
@@ -53822,7 +53855,7 @@ define('xcf/manager/DeviceManager_DeviceServer',[
 
                         _varResult = _cValue;
                         if (_var.target && _var.target != 'None' && _varResult !== null && _varResult != 'null' && _varResult != "'null'") {
-                            var targetVariable = scope.getVariable(_var.target);
+                            const targetVariable = scope.getVariable(_var.target);
                             if (targetVariable) {
                                 targetVariable.value = _varResult;
 
@@ -53839,8 +53872,8 @@ define('xcf/manager/DeviceManager_DeviceServer',[
 
                     if ((isServer && serverSide) || (!serverSide && !isServer)) {
 
-                        for (var m = 0; m < messages.length; m++) {
-                            var __message = messages[m];
+                        for (let m = 0; m < messages.length; m++) {
+                            const __message = messages[m];
                             if (_.isObject(__message)) {
                                 if (__message.src) {
 
@@ -53857,7 +53890,7 @@ define('xcf/manager/DeviceManager_DeviceServer',[
                             return;
                         }
                         //now run each top-level block in 'conditional process'
-                        for (var n = 0; n < responseBlocks.length; n++) {
+                        for (let n = 0; n < responseBlocks.length; n++) {
                             var block = responseBlocks[n];
                             if (block.enabled === false) {
                                 continue;
@@ -53886,12 +53919,12 @@ define('xcf/manager/DeviceManager_DeviceServer',[
          */
         sendManagerCommand: function (cmd, data) {
             this.checkDeviceServerConnection();
-            var dataOut = {
+            const dataOut = {
                 manager_command: cmd
             };
             utils.mixin(dataOut, data);
             if (this.deviceServerClient) {
-                var res = this.deviceServerClient.emit(null, dataOut, cmd);
+                const res = this.deviceServerClient.emit(null, dataOut, cmd);
                 debugServerCommands && console.log('send manager command ' + cmd, [dataOut, res]);
                 return res;
             } else {
@@ -53914,12 +53947,12 @@ define('xcf/manager/DeviceManager_DeviceServer',[
          */
         sendDeviceCommand: function (driverInstance, data, src, id, print, wait, stop, pause, command, args) {
             this.checkDeviceServerConnection();
-            var options = driverInstance.getDeviceInfo();
+            const options = driverInstance.getDeviceInfo();
             utils.mixin({
                 src: src
             }, options);
 
-            var dataOut = {
+            const dataOut = {
                 command: data,
                 device_command: command || types.SOCKET_SERVER_COMMANDS.DEVICE_SEND,
                 options: options
@@ -53937,7 +53970,7 @@ define('xcf/manager/DeviceManager_DeviceServer',[
             });
 
             debug && console.log("Device.Manager.Send.Message : " + dataOut.command.substr(0, 30) + ' = hex = ' + utils.stringToHex(dataOut.command) + ' l = ' + dataOut.command.length, dataOut); //sending device message
-            var device = this.getDevice(options.id);
+            const device = this.getDevice(options.id);
             if (!device || !_.isObject(device)) {
                 console.error('invalid device');
                 return;
@@ -53954,7 +53987,7 @@ define('xcf/manager/DeviceManager_DeviceServer',[
                 return;
             }
 
-            var message = utils.stringFromDecString(dataOut.command);
+            const message = utils.stringFromDecString(dataOut.command);
             if (device.isDebug()) {
                 this.publish(types.EVENTS.ON_STATUS_MESSAGE, {
                     text: "Did send message : " + '<span class="text-warnin">' + message.substr(0, 30) + '</span>' + " to " + '<span class="text-info">' + options.host + ":" + options.port + "@" + options.protocol + '</span>'
@@ -53962,14 +53995,14 @@ define('xcf/manager/DeviceManager_DeviceServer',[
             }
 
             //console replay
-            var hash = MD5(JSON.stringify(driverInstance.options), 1);
-            var viewId = hash + '-Console';
+            const hash = MD5(JSON.stringify(driverInstance.options), 1);
+            const viewId = hash + '-Console';
             if (this.deviceServerClient) {
                 this.deviceServerClient.emit(null, dataOut, 'Device_Send');
                 if (has('xcf-ui') && print !== false) {
-                    var consoleViews = this.consoles[viewId];
+                    const consoleViews = this.consoles[viewId];
                     _.each(consoleViews, function (view) {
-                        var text = '<span class="text-info"><b>' + dataOut.command + '</span>';
+                        const text = '<span class="text-info"><b>' + dataOut.command + '</span>';
                         view.printCommand(text, '');
                     });
                 }
@@ -54007,11 +54040,11 @@ define('xcf/manager/DeviceManager_DeviceServer',[
          * @returns module:dojo/Deferred
          */
         protocolMethod: function (protocol, method, args, device) {
-            var dfd = new Deferred();
-            var event = types.SOCKET_SERVER_COMMANDS.PROTOCOL_METHOD;
-            var id = utils.createUUID();
-            var task = event + '_' + id;
-            var data = {
+            const dfd = new Deferred();
+            const event = types.SOCKET_SERVER_COMMANDS.PROTOCOL_METHOD;
+            const id = utils.createUUID();
+            const task = event + '_' + id;
+            const data = {
                 protocol: protocol,
                 method: method,
                 options: {
@@ -54020,8 +54053,8 @@ define('xcf/manager/DeviceManager_DeviceServer',[
                     device: device
                 }
             };
-            var self = this;
-            var handler = function (e) {
+            const self = this;
+            const handler = function (e) {
                 self.unsubscribe(task);
                 clearTimeout(timer);
                 dfd.resolve(e);
@@ -54050,11 +54083,11 @@ define('xcf/manager/DeviceManager_DeviceServer',[
          */
         callMethod: function (driverInstance, method, args, src, id) {
             this.checkDeviceServerConnection();
-            var sendOptions = {
+            const sendOptions = {
                 id: id,
                 src: src
             };
-            var dataOut = {
+            const dataOut = {
                 method: method,
                 args: args,
                 device_command: types.SOCKET_SERVER_COMMANDS.CALL_METHOD,
@@ -54076,7 +54109,7 @@ define('xcf/manager/DeviceManager_DeviceServer',[
          * @param id
          */
         runShell: function (driverInstance, cmd, args, src, id) {
-            var options = driverInstance.getDeviceInfo();
+            const options = driverInstance.getDeviceInfo();
             this.sendManagerCommand(types.SOCKET_SERVER_COMMANDS.RUN_SHELL, {
                 cmd: cmd,
                 args: args,
@@ -54116,7 +54149,7 @@ define('xcf/manager/DeviceManager_DeviceServer',[
          */
         watchDirectory: function (path, watch) {
             this.checkDeviceServerConnection();
-            var dataOut = {
+            const dataOut = {
                 path: path,
                 watch: watch,
                 manager_command: types.SOCKET_SERVER_COMMANDS.WATCH
@@ -54128,13 +54161,13 @@ define('xcf/manager/DeviceManager_DeviceServer',[
             }
         },
         handle: function (msg) {
-            var userDirectory = decodeURIComponent(this.ctx.getUserDirectory());
-            var data = msg.data;
+            const userDirectory = decodeURIComponent(this.ctx.getUserDirectory());
+            const data = msg.data;
             return !(userDirectory && data && data.device && data.device.userDirectory && decodeURIComponent(data.device.userDirectory) !== userDirectory);
         },
         createDeviceServerClient: function (store) {
-            var thiz = this;
-            var dfd = new Deferred();
+            const thiz = this;
+            const dfd = new Deferred();
             this.deviceServerClient = null;
             this.deviceServerClient = factory.createClientWithStore(store, 'Device Control Server', {
                 delegate: {
@@ -54154,8 +54187,8 @@ define('xcf/manager/DeviceManager_DeviceServer',[
                         thiz.onDeviceServerConnectionLost();
                     },
                     onServerResponse: function (data) {
-                        var dataIn = data['data'];
-                        var msg = null;
+                        const dataIn = data['data'];
+                        let msg = null;
                         if (_.isString(dataIn)) {
 
                             try {
@@ -54202,7 +54235,7 @@ define('xcf/manager/DeviceManager_DeviceServer',[
                                 return;
                             }
                             if (msg.event === types.SOCKET_SERVER_COMMANDS.PROTOCOL_METHOD) {
-                                var event = types.SOCKET_SERVER_COMMANDS.PROTOCOL_METHOD + '_' + msg.data.options.id;
+                                const event = types.SOCKET_SERVER_COMMANDS.PROTOCOL_METHOD + '_' + msg.data.options.id;
                                 thiz.publish(event, msg.data);
                                 return;
                             }
@@ -54241,7 +54274,6 @@ define('xcf/manager/DeviceManager_DeviceServer',[
     dcl.chainAfter(Module, 'onDeviceStarted');
     dcl.chainAfter(Module, 'onDeviceDisconnected');
     return Module;
-
 });;
 define('xcf/manager/DeviceManager_Server',["dcl/dcl"], function (dcl) {
     return dcl(null, {});
@@ -54266,7 +54298,7 @@ define('xcf/manager/BeanManager',[
      * @extends {module:xide/manager/BeanManager}
      * @augments {module:xide/manager/ManagerBase}
      */
-    var Base = dcl(BeanManager, {
+    const Base = dcl(BeanManager, {
         /**
          * Return device model item by device id
          * @param path
@@ -54276,16 +54308,16 @@ define('xcf/manager/BeanManager',[
             function search(store) {
                 return store.getSync(path);
             }
-            for (var scope in this.stores) {
-                var store = this.stores[scope];
-                var result = search(store);
+            for (const scope in this.stores) {
+                const store = this.stores[scope];
+                const result = search(store);
                 if (result) {
                     return result;
                 }
             }
         },
         setStore: function (scope, store) {
-            var current = this.stores[scope];
+            const current = this.stores[scope];
             if (current) {
                 console.error('setting existing store ' + scope);
                 current.destroy();
@@ -54346,11 +54378,11 @@ define('xcf/manager/BeanManager',[
              * @returns {module:xfile/model/File|string}
              */
             getFile: function (bean) {
-                var dfd = new Deferred();
+                const dfd = new Deferred();
 
-                var ctx = this.getContext();
-                var fileManager = ctx.getFileManager();
-                var fileStore = fileManager.getStore(bean.scope);
+                const ctx = this.getContext();
+                const fileManager = ctx.getFileManager();
+                const fileStore = fileManager.getStore(bean.scope);
                 fileStore.initRoot().then(function () {
                     fileStore._loadPath('.', true).then(function () {
                         fileStore.getItem(bean.path, true).then(function (item) {
@@ -54370,7 +54402,7 @@ define('xcf/manager/BeanManager',[
              * @returns {*}
              */
             toUrl: function (device, driver, block, prefix) {
-                var pattern = (prefix || '') + "deviceScope={deviceScope}&device={deviceId}&driver={driverId}&driverScope={driverScope}&block={block}";
+                const pattern = (prefix || '') + "deviceScope={deviceScope}&device={deviceId}&driver={driverId}&driverScope={driverScope}&block={block}";
                 return lang.replace(pattern,
                     {
                         deviceId: device.id,
@@ -54389,19 +54421,19 @@ define('xcf/manager/BeanManager',[
              * Creates new group item dialog
              */
             newGroup: function () {
-                var thiz = this,
-                    currentItem = this.getItem(),
-                    parent = currentItem ? currentItem.isDir === true ? currentItem.path : '' : '';
+                const thiz = this;
+                const currentItem = this.getItem();
+                const parent = currentItem ? currentItem.isDir === true ? currentItem.path : '' : '';
 
-                var actionDialog = new CIActionDialog({
+                const actionDialog = new CIActionDialog({
                     title: 'New ' + this.groupType,
                     delegate: {
                         onOk: function (dlg, data) {
-                            var title = utils.getCIInputValueByName(data, 'Title');
-                            var scope = utils.getCIInputValueByName(data, 'Scope');
-                            var _final = parent + '/' + title;
+                            const title = utils.getCIInputValueByName(data, 'Title');
+                            const scope = utils.getCIInputValueByName(data, 'Scope');
+                            const _final = parent + '/' + title;
                             thiz.createGroup(scope, _final, function () {
-                                var newItem = thiz.createNewGroupItem(title, scope, parent);
+                                const newItem = thiz.createNewGroupItem(title, scope, parent);
                                 thiz.store.putSync(newItem);
                                 thiz.publish(types.EVENTS.ON_STORE_CHANGED, {
                                     owner: thiz,
@@ -54432,10 +54464,10 @@ define('xcf/manager/BeanManager',[
                 actionDialog.show();
             },
             onDeleteItem: function (item) {
-                var isDir = utils.toBoolean(item.isDir) === true;
-                var removeFn = isDir ? 'removeGroup' : 'removeItem';
-                var thiz = this;
-                var actionDialog = new ActionDialog({
+                const isDir = utils.toBoolean(item.isDir) === true;
+                const removeFn = isDir ? 'removeGroup' : 'removeItem';
+                const thiz = this;
+                const actionDialog = new ActionDialog({
                     title: 'Remove ' + this.beanName + (isDir ? ' Group' : '') + ' ' + "\"" + item.name + "\"  ",
                     style: 'max-width:400px',
                     titleBarClass: 'text-danger',
@@ -54509,20 +54541,20 @@ define('xide/interface/Track',['dcl/dcl','xdojo/declare'], function (dcl,declare
      * in a history.
      * @interface module:xide/interface/Track
      */
-    var Interface = {
+    const Interface = {
         declaredClass:'xide.interface.Track',
         getTrackingGroup:function(){},
         getTrackingPath:function(){},
         track:function(){return false;},
         registerUrls:function(){}
-    }
-    var Module = declare('xide.interface.Track',null,Interface);
+    };
+    const Module = declare('xide.interface.Track',null,Interface);
     Module.dcl = dcl(null,Interface);
     return Module;
 });;
 define('xide/noob',['xdojo/declare','dcl/dcl'], function (declare,dcl) {
 
-    var Module = declare("noob",null,{});
+    const Module = declare("noob",null,{});
     Module.dcl = dcl(null,{});
     return Module;
 });;
@@ -54536,7 +54568,7 @@ define('xcf/factory/Blocks',[
 ], function (Blocks,Command,CallBlock,StopBlock,PauseBlock,factory){
     if(Blocks) {
         Blocks._getCommandBlocks = function (scope, owner, target, group) {
-            var items = [];
+            const items = [];
             items.push({
                 name: 'Commands',
                 iconClass: 'el-icon-random',
@@ -57592,7 +57624,7 @@ define('xide/mixins/ReferenceMixin',[
      * @returns {*}
      */
     utils.find = function (queryString, startNode, single) {
-        var nodes = $(startNode).find(queryString);
+        const nodes = $(startNode).find(queryString);
         if (nodes && nodes.length > 0) {
             return single === false ? nodes : nodes[0];
         }
@@ -57606,14 +57638,14 @@ define('xide/mixins/ReferenceMixin',[
      * @returns {*}
      */
     function getElement(scope, id) {
-        var dst = scope.document.getElementById(id);
+        const dst = scope.document.getElementById(id);
         if (dst) {
             return dst;
         }
         return null;
     }
 
-    var Implementation = {
+    const Implementation = {
         _targetReference: null,
         getTarget: function () {
             return this._targetReference || this.inherited(arguments);
@@ -57629,13 +57661,13 @@ define('xide/mixins/ReferenceMixin',[
             'dijitLeft'
         ],
         _cssClassesToQuery: function (string) {
-            var result = '';
+            let result = '';
             if (string) {
-                var els = string.split(' ');
-                for (var i = 0; i < els.length; i++) {
+                const els = string.split(' ');
+                for (let i = 0; i < els.length; i++) {
 
                     if (utils.contains(this.skipWidgetCSSClasses, els[i]) > -1 ||
-                        els[i].toLowerCase().indexOf('hover') > -1) {
+                        els[i].toLowerCase().includes('hover')) {
                         continue;
                     }
                     result += '' + els[i];
@@ -57644,16 +57676,16 @@ define('xide/mixins/ReferenceMixin',[
             return result.trim();
         },
         resolveReference: function (params,settings) {
-            var override = null;
+            let override = null;
             try{
                 override = this.getTarget();
             }catch(e){
                 logError(e);
                 return null;
             }
-            var scope = this.scope;
+            const scope = this.scope;
 
-            var query = params.reference;
+            const query = params.reference;
 
 
             if (!params || !query || !query.length) {
@@ -57668,12 +57700,12 @@ define('xide/mixins/ReferenceMixin',[
                 case types.WIDGET_REFERENCE_MODE.BY_ID:
                 {
                     if (this.scope && this.scope.document) {
-                        var out = [];
-                        if (query.indexOf(' ') !== -1) {
+                        const out = [];
+                        if (query.includes(' ')) {
 
-                            var ids = query.split(' ');
-                            for (var i = 0; i < ids.length; i++) {
-                                var el = getElement(scope, ids[i]);
+                            const ids = query.split(' ');
+                            for (let i = 0; i < ids.length; i++) {
+                                const el = getElement(scope, ids[i]);
                                 if (el) {
                                     out.push(el);
                                 }
@@ -57684,8 +57716,8 @@ define('xide/mixins/ReferenceMixin',[
                         return out;
                     }
 
-                    var _byRegistry = registry.byId(query);
-                    var _byDoc = typeof document !=='undefined' ? document.getElementById(query) : null;
+                    const _byRegistry = registry.byId(query);
+                    const _byDoc = typeof document !=='undefined' ? document.getElementById(query) : null;
                     if(_byRegistry || _byDoc){
                         return _byRegistry ? [_byRegistry] : [_byDoc];
                     }
@@ -57695,7 +57727,7 @@ define('xide/mixins/ReferenceMixin',[
                 //
                 case types.WIDGET_REFERENCE_MODE.BY_CLASS:
                 {
-                    var obj = dojo.getObject(query) || dcl.getObject(query);
+                    const obj = dojo.getObject(query) || dcl.getObject(query);
                     if (obj) {
                         return [obj];
                     }
@@ -57705,21 +57737,21 @@ define('xide/mixins/ReferenceMixin',[
                 //
                 case types.WIDGET_REFERENCE_MODE.BY_CSS:
                 {
-                    var _query = this._cssClassesToQuery(query);
+                    let _query = this._cssClassesToQuery(query);
                     this._parseString && (_query = this._parseString(_query,settings,null,settings && settings.flags ? settings.flags : types.CIFLAG.EXPRESSION) || _query);
-                    var _$ = null;
+                    let _$ = null;
                     if (this.scope && this.scope.global && this.scope.global['$']) {
                         _$ = this.scope.global['$'];
                     }else if(typeof $!=='undefined'){
                         _$ = $;
                     }
                     if (_$) {
-                        var _elements = _$(_query);
+                        const _elements = _$(_query);
                         if (_elements) {
                             return _elements;
                         }
                     }
-                    var objects = utils.find(_query, null, false);
+                    const objects = utils.find(_query, null, false);
                     if (objects) {
                         return objects;
                     }
@@ -57729,7 +57761,7 @@ define('xide/mixins/ReferenceMixin',[
             return null;
         }
     };
-    var Module = declare('xblox.model.ReferenceMixin', null, Implementation);
+    const Module = declare('xblox.model.ReferenceMixin', null, Implementation);
     Module.dcl = dcl(null, Implementation);
     return Module;
 });;
@@ -61948,9 +61980,9 @@ define('xcf/model/Variable',[
         ],
 
         solve:function(){
-            var extra = "";
+            let extra = "";
             if(this.group==='processVariables'){
-                var _val = this.scope.getVariable("value");
+                let _val = this.scope.getVariable("value");
                 if(_val) {
                     _val = _val.value;
                     if(!this.isNumber(_val)){
@@ -61960,7 +61992,7 @@ define('xcf/model/Variable',[
                     extra = "var value = " + _val +";\n";
                 }
             }
-            var _result = this.scope.parseExpression(extra + this.getValue(),true);
+            const _result = this.scope.parseExpression(extra + this.getValue(),true);
             return _result;
         },
         /**
@@ -61982,7 +62014,7 @@ define('xcf/model/Variable',[
          * @returns {*}
          */
         getFields:function(){
-            var fields = this.getDefaultFields();
+            const fields = this.getDefaultFields();
             fields.push(this.utils.createCI('title',13,this.name,{
                 group:'General',
                 title:'Name',
@@ -61990,23 +62022,24 @@ define('xcf/model/Variable',[
             }));
 
 
-            var thiz=this,
-                defaultArgs = {
-                    allowACECache:true,
-                    showBrowser:false,
-                    showSaveButton:true,
-                    editorOptions:{
-                        showGutter:false,
-                        autoFocus:false,
-                        hasConsole:false
-                    },
-                    aceOptions:{
-                        hasEmmet:false,
-                        hasLinking:false,
-                        hasMultiDocs:false
-                    },
-                    item:this
-                };
+            const thiz=this;
+
+            const defaultArgs = {
+                allowACECache:true,
+                showBrowser:false,
+                showSaveButton:true,
+                editorOptions:{
+                    showGutter:false,
+                    autoFocus:false,
+                    hasConsole:false
+                },
+                aceOptions:{
+                    hasEmmet:false,
+                    hasLinking:false,
+                    hasMultiDocs:false
+                },
+                item:this
+            };
 
 
             //this.types.ECIType.EXPRESSION_EDITOR
@@ -62018,7 +62051,7 @@ define('xcf/model/Variable',[
                 delegate:{
                     runExpression:function(val,run,error){
                         if(thiz.group=='processVariables'){
-                            var _val = thiz.scope.getVariable("value");
+                            let _val = thiz.scope.getVariable("value");
                             var extra = "";
                             if(_val) {
                                 _val = _val.value;
@@ -62055,32 +62088,32 @@ define('xcf/model/Variable',[
                 }
             }));
 
-/*
-            //this.types.ECIType.EXPRESSION_EDITOR
-            fields.push(this.utils.createCI('initial',this.types.ECIType.EXPRESSION,this.initial,{
-                group:'General',
-                title:'Initial',
-                dst:'initial',
-                widget:defaultArgs,
-                delegate:{
-                    runExpression:function(val,run,error){
-                        if(thiz.group=='processVariables'){
-                            var _val = thiz.scope.getVariable("value");
-                            var extra = "";
-                            if(_val) {
-                                _val = _val.value;
-                                if(!thiz.isNumber(_val)){
-                                    _val = ''+_val;
-                                    _val = "'" + _val + "'";
+            /*
+                        //this.types.ECIType.EXPRESSION_EDITOR
+                        fields.push(this.utils.createCI('initial',this.types.ECIType.EXPRESSION,this.initial,{
+                            group:'General',
+                            title:'Initial',
+                            dst:'initial',
+                            widget:defaultArgs,
+                            delegate:{
+                                runExpression:function(val,run,error){
+                                    if(thiz.group=='processVariables'){
+                                        var _val = thiz.scope.getVariable("value");
+                                        var extra = "";
+                                        if(_val) {
+                                            _val = _val.value;
+                                            if(!thiz.isNumber(_val)){
+                                                _val = ''+_val;
+                                                _val = "'" + _val + "'";
+                                            }
+                                            extra = "var value = " + _val +";\n";
+                                        }
+                                    }
+                                    return thiz.scope.expressionModel.parse(thiz.scope,extra + val,false,run,error);
                                 }
-                                extra = "var value = " + _val +";\n";
                             }
-                        }
-                        return thiz.scope.expressionModel.parse(thiz.scope,extra + val,false,run,error);
-                    }
-                }
-            }));
-            */
+                        }));
+                        */
 
             return fields;
         },
@@ -62123,13 +62156,13 @@ define('xcf/model/Driver',[
      * @augments module:xide/data/Model
      * @augments module:xide/data/Source
      */
-    var Module = dcl([Model, Source.dcl, EventedMixin.dcl], {
+    const Module = dcl([Model, Source.dcl, EventedMixin.dcl], {
         itemMetaPath: 'user.meta',
         getStore: function () {
             return this._store;
         },
         getScope: function () {
-            var store = this.getStore();
+            const store = this.getStore();
             return store ? store.scope : this.scope;
         },
         /**
@@ -62146,13 +62179,13 @@ define('xcf/model/Driver',[
          * @returns {void|null}
          */
         setMetaValue: function (what, value, publish) {
-            var item = this;
-            var meta = this.user;
-            var ci = utils.getCIByChainAndName(meta, 0, what);
+            const item = this;
+            const meta = this.user;
+            const ci = utils.getCIByChainAndName(meta, 0, what);
             if (!ci) {
                 return;
             }
-            var oldValue = this.getMetaValue(what);
+            const oldValue = this.getMetaValue(what);
             utils.setCIValueByField(ci, 'value', value);
             this[what] = value;
             if (publish !== false) {
@@ -62197,7 +62230,7 @@ define('xcf/model/Device',[
      * @augments module:xide/data/Model
      * @augments module:xide/data/Source
      */
-    var Module = dcl([Model, Source.dcl, EventedMixin.dcl], {
+    const Module = dcl([Model, Source.dcl, EventedMixin.dcl], {
         declaredClass: 'xcf.model.Device',
         _userStopped: false,
         /**
@@ -62220,25 +62253,25 @@ define('xcf/model/Device',[
             return this.getStore().getSync(this.parentId);
         },
         isServerSide: function () {
-            var driverOptions = this.getMetaValue(types.DEVICE_PROPERTY.CF_DEVICE_DRIVER_OPTIONS);
+            const driverOptions = this.getMetaValue(types.DEVICE_PROPERTY.CF_DEVICE_DRIVER_OPTIONS);
             return (1 << types.DRIVER_FLAGS.RUNS_ON_SERVER & driverOptions) ? true : false;
         },
         isServer: function () {
-            var driverOptions = this.getMetaValue(types.DEVICE_PROPERTY.CF_DEVICE_DRIVER_OPTIONS);
+            const driverOptions = this.getMetaValue(types.DEVICE_PROPERTY.CF_DEVICE_DRIVER_OPTIONS);
             return (1 << types.DRIVER_FLAGS.SERVER & driverOptions) ? true : false;
         },
         setServer: function (isServer) {
-            var driverOptions = this.getMetaValue(types.DEVICE_PROPERTY.CF_DEVICE_DRIVER_OPTIONS);
+            const driverOptions = this.getMetaValue(types.DEVICE_PROPERTY.CF_DEVICE_DRIVER_OPTIONS);
             driverOptions.value = driverOptions.value | (1 << types.DRIVER_FLAGS.SERVER);
             this.setMetaValue(types.DEVICE_PROPERTY.CF_DEVICE_DRIVER_OPTIONS, driverOptions.value);
         },
         setServerSide: function (isServer) {
-            var driverOptions = this.getMetaValue(types.DEVICE_PROPERTY.CF_DEVICE_DRIVER_OPTIONS);
+            let driverOptions = this.getMetaValue(types.DEVICE_PROPERTY.CF_DEVICE_DRIVER_OPTIONS);
             driverOptions = driverOptions | (1 << types.DRIVER_FLAGS.RUNS_ON_SERVER);
             this.setMetaValue(types.DEVICE_PROPERTY.CF_DEVICE_DRIVER_OPTIONS, driverOptions);
         },
         isDebug: function () {
-            var driverOptions = this.getMetaValue(types.DEVICE_PROPERTY.CF_DEVICE_DRIVER_OPTIONS);
+            const driverOptions = this.getMetaValue(types.DEVICE_PROPERTY.CF_DEVICE_DRIVER_OPTIONS);
             return (1 << types.DRIVER_FLAGS.DEBUG & driverOptions) ? true : false;
         },
         check: function () {
@@ -62250,7 +62283,7 @@ define('xcf/model/Device',[
             return this._store;
         },
         getScope: function () {
-            var store = this.getStore();
+            const store = this.getStore();
             return store ? store.scope : this.scope;
         },
         isEnabled: function () {
@@ -62305,7 +62338,7 @@ define('xcf/model/Device',[
          * @returns {module:xcf/model/Driver|null}
          */
         getDriver: function () {
-            var scope = this.getBlockScope();
+            const scope = this.getBlockScope();
             if (scope) {
                 return scope.driver;
             }
@@ -62325,17 +62358,17 @@ define('xcf/model/Device',[
          * @returns {void|null}
          */
         setMetaValue: function (what, value, publish) {
-            var item = this;
-            var meta = this.user;
-            var ci = utils.getCIByChainAndName(meta, 0, what);
+            const item = this;
+            const meta = this.user;
+            const ci = utils.getCIByChainAndName(meta, 0, what);
             if (!ci) {
                 return null;
             }
-            var oldValue = this.getMetaValue(what);
+            const oldValue = this.getMetaValue(what);
             utils.setCIValueByField(ci, 'value', value);
             this[what] = value;
             if (publish !== false && oldValue != value) {
-                var eventArgs = {
+                const eventArgs = {
                     owner: this.owner,
                     ci: ci,
                     newValue: value,
@@ -62382,8 +62415,8 @@ define('xcf/model/Device',[
             if (state === this.state) {
                 return;
             }
-            var oldState = this.state,
-                icon = this.getStateIcon(state);
+            const oldState = this.state;
+            const icon = this.getStateIcon(state);
             this.state = state;
             this.set('iconClass', icon);
             this.set('state', state);
@@ -62411,7 +62444,7 @@ define('xcf/model/Command',[
     'xblox/types/Types'/*NMD:Ignore*/,
     'xide/lodash'
 ], function (dcl, Block, Contains, utils, types, Deferred, BTypes,_) {
-    var debug = false;
+    const debug = false;
     /**
      * The command model. A 'command' consists out of a few parameters and a series of
      *  XCF - Command - Block expressions. Those expressions need to be evaluated before send them to the device
@@ -62465,10 +62498,10 @@ define('xcf/model/Command',[
          * @param msg.cmd {string} the command string being sent
          */
         onCommandFinish: function (msg) {
-            var result = {};
-            var dfd = null;
+            const result = {};
+            let dfd = null;
             if (msg.params && msg.params.id) {
-                var id = msg.params.id;
+                const id = msg.params.id;
                 dfd = this.getDeferred(id);
                 delete this._solving[id];
                 msg.lastResponse && this.storeResult(msg.lastResponse);
@@ -62477,7 +62510,7 @@ define('xcf/model/Command',[
                     result: this._lastResult
                 });
             }
-            var items = this.getItems(types.BLOCK_OUTLET.FINISH);
+            const items = this.getItems(types.BLOCK_OUTLET.FINISH);
             if (items.length) {
                 this.runFrom(items, 0, this._lastSettings);
             }
@@ -62496,7 +62529,7 @@ define('xcf/model/Command',[
          * @param msg.cmd {string} the command string being sent
          */
         onCommandPaused: function (msg) {
-            var params = msg.params;
+            const params = msg.params;
             if (params && params.id) {
                 msg.lastResponse && this.storeResult(msg.lastResponse);
                 this._emit('paused', {
@@ -62505,7 +62538,7 @@ define('xcf/model/Command',[
                     id: params.id
                 });
             }
-            var items = this.getItems(types.BLOCK_OUTLET.PAUSED);
+            const items = this.getItems(types.BLOCK_OUTLET.PAUSED);
             if (items.length) {
                 this.runFrom(items, 0, this._lastSettings);
             }
@@ -62519,7 +62552,7 @@ define('xcf/model/Command',[
          */
         onCommandStopped: function (msg) {
             this.reset();
-            var params = msg.params;
+            const params = msg.params;
             if (params && params.id) {
                 this._emit('stopped', {
                     msg: msg,
@@ -62527,7 +62560,7 @@ define('xcf/model/Command',[
                     id: params.id
                 });
             }
-            var items = this.getItems(types.BLOCK_OUTLET.STOPPED);
+            const items = this.getItems(types.BLOCK_OUTLET.STOPPED);
             if (items.length) {
                 this.runFrom(items, 0, this._lastSettings);
             }
@@ -62540,7 +62573,7 @@ define('xcf/model/Command',[
          * @param msg.cmd {string} the command string being sent
          */
         onCommandProgress: function (msg) {
-            var params = msg.params;
+            const params = msg.params;
             if (params && params.id) {
                 msg.lastResponse && this.storeResult(msg.lastResponse);
                 this._emit('progress', {
@@ -62549,20 +62582,20 @@ define('xcf/model/Command',[
                     id: params.id
                 });
             }
-            var items = this.getItems(types.BLOCK_OUTLET.PROGRESS);
+            const items = this.getItems(types.BLOCK_OUTLET.PROGRESS);
             if (items.length) {
                 this.runFrom(items, 0, this._lastSettings);
             }
         },
         storeResult: function (lastResponse) {
-            var data = utils.getJson(lastResponse);
-            var result = null;
+            const data = utils.getJson(lastResponse);
+            let result = null;
             if (data && data.result && _.isString(data.result)) {
-                var str = data.result;
-                var isJSON = str.indexOf('{') !== -1 || str.indexOf('[') !== -1;
-                var lastResult = str;
+                const str = data.result;
+                const isJSON = str.indexOf('{') !== -1 || str.indexOf('[') !== -1;
+                let lastResult = str;
                 if (isJSON) {
-                    var tmp = utils.getJson(str, true, false);
+                    const tmp = utils.getJson(str, true, false);
                     if (tmp) {
                         lastResult = tmp;
                     }
@@ -62582,7 +62615,7 @@ define('xcf/model/Command',[
             }
         },
         onCommandError: function (msg) {
-            var params = msg.params;
+            const params = msg.params;
             if (params.id) {
                 msg.lastResponse && this.storeResult(msg.lastResponse);
                 this._emit('cmd:' + msg.cmd + '_' + params.id, msg);
@@ -62593,7 +62626,7 @@ define('xcf/model/Command',[
                 });
             }
             this.onFailed(this, this._settings);
-            var items = this.getItems(types.BLOCK_OUTLET.ERROR);
+            const items = this.getItems(types.BLOCK_OUTLET.ERROR);
             if (items.length) {
                 this.runFrom(items, 0, this._lastSettings);
             }
@@ -62604,8 +62637,8 @@ define('xcf/model/Command',[
             }
             msg = this.replaceAll("'", '', msg);
             id = id || utils.createUUID();
-            var self = this;
-            var wait = (this.flags & types.CIFLAG.WAIT) ? true : false;
+            const self = this;
+            const wait = (this.flags & types.CIFLAG.WAIT) ? true : false;
             this.lastCommand = '' + msg;
             if (!this.scope.instance) {
                 debug && console.warn('have no device!');
@@ -62655,8 +62688,8 @@ define('xcf/model/Command',[
             return this._solving[id];
         },
         getSendOptions:function(){
-            var result = {};
-            var DriverModule = this.getDriverModule();
+            let result = {};
+            const DriverModule = this.getDriverModule();
             if (DriverModule && DriverModule.getCommandArgs) {
                 result = DriverModule.getCommandArgs(this) || result;
             }
@@ -62666,12 +62699,12 @@ define('xcf/model/Command',[
             if(_.isNumber(string) || _.isBoolean(string)){
                 return string;
             }
-            var scope = this.scope;
-            var value = string || this._get('send');
+            const scope = this.scope;
+            let value = string || this._get('send');
             settings = settings || {};
-            var flags = settings.flags || this.flags;
-            var parse = !(flags & types.CIFLAG.DONT_PARSE);
-            var isExpression = (flags & types.CIFLAG.EXPRESSION);
+            const flags = settings.flags || this.flags;
+            const parse = !(flags & types.CIFLAG.DONT_PARSE);
+            const isExpression = (flags & types.CIFLAG.EXPRESSION);
             if (flags & types.CIFLAG.TO_HEX) {
                 value = utils.to_hex(value);
             }
@@ -62681,17 +62714,17 @@ define('xcf/model/Command',[
             }
 
             settings = settings || this._lastSettings || {};
-            var override = settings.override || this.override || {};
-            var _overrides = (override && override.variables) ? override.variables : null;
+            const override = settings.override || this.override || {};
+            const _overrides = (override && override.variables) ? override.variables : null;
             if (_overrides) {
-                for (var prop in _overrides) {
+                for (const prop in _overrides) {
                     if (_.isNumber(_overrides[prop])) {
                         _overrides[prop] = Math.round(_overrides[prop]);
                     }
                 }
             }
-            var res = "";
-            var DriverModule = this.getDriverModule();
+            let res = "";
+            const DriverModule = this.getDriverModule();
             if (DriverModule && DriverModule.resolveBefore && useDriverModule!==false) {
                 value = DriverModule.resolveBefore(this, value) || value;
             }
@@ -62714,16 +62747,16 @@ define('xcf/model/Command',[
          * @returns {*}
          */
         solve: function (scope, settings, isInterface, send) {
-            var dfd = null;
+            let dfd = null;
             scope = scope || this.scope;
             settings = this._lastSettings = settings || this._lastSettings || {};
             if (settings && settings.override && settings.override.mixin) {
                 utils.mixin(this.override, settings.override.mixin);
             }
-            var value = send || this._get('send') || this.send;
-            var parse = !(this.flags & types.CIFLAG.DONT_PARSE);
-            var wait = (this.flags & types.CIFLAG.WAIT) ? true : false;
-            var id = utils.createUUID();
+            let value = send || this._get('send') || this.send;
+            const parse = !(this.flags & types.CIFLAG.DONT_PARSE);
+            const wait = (this.flags & types.CIFLAG.WAIT) ? true : false;
+            const id = utils.createUUID();
 
             if (this.flags & types.CIFLAG.TO_HEX) {
                 value = utils.to_hex(value);
@@ -62764,9 +62797,9 @@ define('xcf/model/Command',[
                 if (wait) {
                     return dfd;
                 }
-                var ret = [];
-                for (var n = 0; n < this.items.length; n++) {
-                    var block = this.items[n];
+                const ret = [];
+                for (let n = 0; n < this.items.length; n++) {
+                    const block = this.items[n];
                     if (block.enabled) {
                         ret.push(block.solve(scope, settings));
                     }
@@ -62814,7 +62847,7 @@ define('xcf/model/Command',[
         },
         hasInlineEdits: true,
         toText: function (icon, label, detail, breakDetail) {
-            var out = "";
+            let out = "";
             if (icon !== false) {
                 out += "<span class='text-primary inline-icon'>" + this.getBlockIcon() + "</span>";
             }
@@ -62843,12 +62876,12 @@ define('xcf/model/Command',[
          * @returns {module:xcf/driver/DriverBase|null}
          */
         getDriverModule: function () {
-            var DriverModule = null;
-            var instance = this.getInstance();
+            let DriverModule = null;
+            const instance = this.getInstance();
             if (instance) {
                 DriverModule = instance.Module;
             } else {
-                var driver = this.getScope().driver;
+                const driver = this.getScope().driver;
                 if (driver && driver.Module) {
                     DriverModule = driver.Module;
                 }
@@ -62856,22 +62889,22 @@ define('xcf/model/Command',[
             return DriverModule;
         },
         getDriverToText:function(text){
-            var DriverModule = this.getDriverModule();
+            const DriverModule = this.getDriverModule();
             if(DriverModule && DriverModule.toText){
                 return DriverModule.toText(this,text);
             }
         },
         getDriverFields: function (fields) {
-            var DriverModule = this.getDriverModule();
-            var result = [];
+            const DriverModule = this.getDriverModule();
+            let result = [];
             if (DriverModule && DriverModule.getFields) {
                 result = DriverModule.getFields(this, fields) || [];
             }
             return result;
         },
         getFields: function () {
-            var fields = this.inherited(arguments) || this.getDefaultFields();
-            var thiz = this;
+            let fields = this.inherited(arguments) || this.getDefaultFields();
+            const thiz = this;
             fields.push(this.utils.createCI('name', 13, this.name, {
                 group: 'General',
                 title: 'Name',
@@ -62962,7 +62995,7 @@ define('xcf/model/Command',[
             return true;
         },
         onChangeField: function (field, newValue, cis) {
-            var interval = this.getInterval();
+            const interval = this.getInterval();
             if (field === 'auto') {
                 if (newValue === true) {
                     interval > 0 && this.scope.loopBlock(this);
@@ -62994,7 +63027,7 @@ define('xcf/model/Command',[
             this.reset();
         },
         pause: function () {
-            var last = this.lastCommand || this._resolve(this.send, this._lastSettings);
+            const last = this.lastCommand || this._resolve(this.send, this._lastSettings);
             if (last!==null) {
                 this.sendToDevice(last, this._lastSettings, false, true);
             }
@@ -63007,7 +63040,7 @@ define('xcf/model/Command',[
                 highlight: true
             });
             this.resolve('');
-            var last = this.lastCommand || this._resolve(this.send, this._lastSettings);
+            const last = this.lastCommand || this._resolve(this.send, this._lastSettings);
             if (!_.isEmpty(last)) {
                 this.sendToDevice(last, this._lastSettings, true, false);
             }
@@ -63282,7 +63315,7 @@ define('xcf/types/Types',[
 
     if (!String.prototype.hexString) {
         String.prototype.hexString = function () {
-            var bytes = this.getBytes();
+            const bytes = this.getBytes();
             return HexUtils.bufferToHexString(bytes);
         };
     }
@@ -63415,7 +63448,7 @@ define('xcf/types/Types',[
      * @enum {string} module:xcf/types/EVENTS
      * @extends module:xide/types/EVENTS
      */
-    var Events = {
+    const Events = {
         ON_DEBUGGER_READY: 'onDebuggerReady',
         ON_DEVICE_SELECTED: 'onDeviceSelected',
         ON_DEVICE_GROUP_SELECTED: 'onDeviceGroupSelected',
@@ -63557,7 +63590,7 @@ define('xcf/types/Types',[
      */
     types.DEFAULT_DEVICE_LOGGING_FLAGS = {};
 
-    var LOGGING_FLAGS = types.LOGGING_FLAGS;
+    const LOGGING_FLAGS = types.LOGGING_FLAGS;
 
     types.DEFAULT_DEVICE_LOGGING_FLAGS[types.LOG_OUTPUT.DEVICE_CONNECTED] = LOGGING_FLAGS.GLOBAL_CONSOLE | LOGGING_FLAGS.POPUP | LOGGING_FLAGS.STATUS_BAR | LOGGING_FLAGS.DEVICE_CONSOLE;
     types.DEFAULT_DEVICE_LOGGING_FLAGS[types.LOG_OUTPUT.DEVICE_DISCONNECTED] = LOGGING_FLAGS.GLOBAL_CONSOLE | LOGGING_FLAGS.POPUP | LOGGING_FLAGS.STATUS_BAR | LOGGING_FLAGS.DEVICE_CONSOLE;
@@ -63586,7 +63619,7 @@ define('xcf/types/Types',[
     };
 
 
-    var ITEM_TYPES = {
+    const ITEM_TYPES = {
         /**
          *
          * @extends module:xide/types~ITEM_TYPE
@@ -64055,9 +64088,9 @@ define('xfile/manager/FileManager',[
     'xfile/factory/Store',
     "xide/lodash",
     'xdojo/has!electron?xfile/manager/Electron'
-], function (dcl,dojo,ServerActionBase, types, fTypes, utils, SHA1, RPCService, Deferred,has,FileManagerActions,require,StoreFactory,_,Electron) {
+], function (dcl, dojo, ServerActionBase, types, fTypes, utils, SHA1, RPCService, Deferred, has, FileManagerActions, require, StoreFactory, _, Electron) {
     var bases = [ServerActionBase, FileManagerActions];
-    if(has('electronx') && Electron){
+    if (has('electronx') && Electron) {
         bases.push(Electron);
     }
     var debug = false;
@@ -64068,27 +64101,27 @@ define('xfile/manager/FileManager',[
      * @augments {module:xide/mixins/EventedMixin}
      */
     return dcl(bases, {
-        declaredClass:"xfile.manager.FileManager",
+        declaredClass: "xfile.manager.FileManager",
         /**
          * Returns a new name 
          * @param item
          * @param others
          * @returns {*}
          */
-        getNewName:function(item,others){
-            var name = item.name.replace('.meta.json','');
+        getNewName: function (item, others) {
+            var name = item.name.replace('.meta.json', '');
             var found = false;
             var i = 1;
             var newName = null;
-            while (!found){
+            while (!found) {
                 newName = name + '-' + i + '.meta.json';
-                var colliding = _.find(others,{
-                    name:newName
+                var colliding = _.find(others, {
+                    name: newName
                 });
 
-                if(!colliding){
+                if (!colliding) {
                     found = true;
-                }else{
+                } else {
                     i++;
                 }
             }
@@ -64106,23 +64139,23 @@ define('xfile/manager/FileManager',[
         serviceUrl: "index.php",
         serviceClass: 'XCOM_Directory_Service',
         settingsStore: null,
-        stores:[],
-        getStore:function(mount,cache){
-            var store =  _.find(this.stores,{
-                mount:mount
+        stores: [],
+        getStore: function (mount, cache) {
+            var store = _.find(this.stores, {
+                mount: mount
             });
-            if(store){
+            if (store && cache !== false) {
                 return store;
             }
-            return StoreFactory.createFileStore(mount,null,this.config,null,this.ctx);
+            return StoreFactory.createFileStore(mount, null, this.config, null, this.ctx);
         },
-        addStore:function(store){
+        addStore: function (store) {
             this.stores.push(store);
-            store._on('destroy',this.removeStore.bind(this));
+            store._on('destroy', this.removeStore.bind(this));
         },
-        removeStore:function(store){
+        removeStore: function (store) {
             var index = this.stores.indexOf(store);
-            if(index) {
+            if (index) {
                 this.stores.remove(store);
             }
         },
@@ -64135,8 +64168,8 @@ define('xfile/manager/FileManager',[
             var selection = [];
             selection.push(src.path);
 
-            if(has('nserver')){
-                window.open('/files/'+src.mount+'/'+src.path +'?userDirectory='+ encodeURIComponent( this.ctx.getUserDirectory()));
+            if (has('nserver')) {
+                window.open('/files/' + src.mount + '/' + src.path + '?userDirectory=' + encodeURIComponent(this.ctx.getUserDirectory()));
                 return;
             }
 
@@ -64167,11 +64200,11 @@ define('xfile/manager/FileManager',[
                 "attachment": "1",
                 "send": "1"
             });
-            delete  aParams['theme'];
-            delete  aParams['debug'];
-            delete  aParams['width'];
-            delete  aParams['attachment'];
-            delete  aParams['send'];
+            delete aParams['theme'];
+            delete aParams['debug'];
+            delete aParams['width'];
+            delete aParams['attachment'];
+            delete aParams['send'];
             var pStr = dojo.toJson(JSON.stringify(aParams));
             var signature = SHA1._hmac(pStr, this.config.RPC_PARAMS.rpcSignatureToken, 1);
             downloadUrl += '&' + this.config.RPC_PARAMS.rpcUserField + '=' + this.config.RPC_PARAMS.rpcUserValue;
@@ -64184,8 +64217,8 @@ define('xfile/manager/FileManager',[
         //
         //////////////////////////////////////////////////////////////////////////////////////////////////////
         getImageUrl: function (src, preventCache, extraParams) {
-            if(has('nserver')){
-                return ('/files/'+src.mount+'/'+src.path + '?userDirectory='+ encodeURIComponent( this.ctx.getUserDirectory()));
+            if (has('nserver')) {
+                return ('/files/' + src.mount + '/' + src.path + '?userDirectory=' + encodeURIComponent(this.ctx.getUserDirectory()));
             }
             preventCache = location.href.indexOf('noImageCache') != -1 || preventCache === true || src.dirty === true;
             var downloadUrl = decodeURIComponent(this.serviceUrl);
@@ -64215,9 +64248,9 @@ define('xfile/manager/FileManager',[
                 "raw": "html"
             });
             utils.mixin(aParams, extraParams);
-            delete  aParams['theme'];
-            delete  aParams['debug'];
-            delete  aParams['width'];
+            delete aParams['theme'];
+            delete aParams['debug'];
+            delete aParams['width'];
             var pStr = dojo.toJson(aParams);
             var signature = SHA1._hmac(pStr, this.config.RPC_PARAMS.rpcSignatureToken, 1);
             downloadUrl += '&' + this.config.RPC_PARAMS.rpcUserField + '=' + this.config.RPC_PARAMS.rpcUserValue;
@@ -64244,7 +64277,9 @@ define('xfile/manager/FileManager',[
                 item.dfd.reject(item);
             }
             thiz.filesToUpload.remove(item);
-            thiz.publish(eventKeys.ON_UPLOAD_FAILED, {item: item}, thiz);
+            thiz.publish(eventKeys.ON_UPLOAD_FAILED, {
+                item: item
+            }, thiz);
         },
         onFileUploaded: function (item) {
             var thiz = this,
@@ -64260,11 +64295,13 @@ define('xfile/manager/FileManager',[
                     item.dfd.resolve(item);
                 }
                 thiz.filesToUpload.remove(item);
-                thiz.publish(eventKeys.ON_UPLOAD_FINISH, {item: item});
+                thiz.publish(eventKeys.ON_UPLOAD_FINISH, {
+                    item: item
+                });
             }, 500);
         },
         getUploadUrl: function () {
-            if(has('nserver')){
+            if (has('nserver')) {
                 return this.serviceUrl.replace('/smd', '/upload/?');
             }
             var url = '' + decodeURIComponent(this.serviceUrl);
@@ -64380,7 +64417,7 @@ define('xfile/manager/FileManager',[
             var auto_rename = false;
             item.status = 'loading';
             var xhr = this.initXHRUpload(item, (auto_rename ? "auto_rename=true" : ""), item['dstDir'], item['mount']);
-            this.publish(types.EVENTS.ON_UPLOAD_BEGIN,{
+            this.publish(types.EVENTS.ON_UPLOAD_BEGIN, {
                 item: item,
                 name: item.name
             }, this);
@@ -64466,24 +64503,24 @@ define('xfile/manager/FileManager',[
             try {
                 return this.callMethod(types.OPERATION.FIND, [mount, conf], readyCB, true);
             } catch (e) {
-                logError(e,'find');
+                logError(e, 'find');
             }
         },
         getContent: function (mount, path, readyCB, emit) {
-            if(this.getContentE){
-                var res = this.getContentE.apply(this,arguments);
-                if(res){
+            if (this.getContentE) {
+                var res = this.getContentE.apply(this, arguments);
+                if (res) {
                     return res;
                 }
             }
-            if(has('php')) {
+            if (has('php')) {
                 var _path = utils.buildPath(mount, path, false);
                 return this.callMethod(types.OPERATION.GET_CONTENT, [_path, false, false], readyCB, false);
-            }else{
-                return this._getText(require.toUrl(mount).replace('main.js','') + '/' + path,{
+            } else {
+                return this._getText(require.toUrl(mount).replace('main.js', '') + '/' + path, {
                     sync: false,
                     handleAs: 'text'
-                }).then(function(res){
+                }).then(function (res) {
                     try {
                         if (readyCB) {
                             readyCB(res);
@@ -64503,9 +64540,9 @@ define('xfile/manager/FileManager',[
             this.publish(types.EVENTS.ON_STATUS_MESSAGE, {
                 text: "Did save file : " + mount + '://' + path
             });
-            if(this.setContentE){
-                var res = this.setContentE.apply(this,arguments);
-                if(res){
+            if (this.setContentE) {
+                var res = this.setContentE.apply(this, arguments);
+                if (res) {
                     return res;
                 }
             }
@@ -64524,7 +64561,7 @@ define('xfile/manager/FileManager',[
             }
         },
         onErrors: function (res) {},
-        init:function(){
+        init: function () {
             this.stores = [];
             this.filesToUpload = [];
         },
@@ -64650,15 +64687,15 @@ define('xfile/manager/FileManager',[
                 });
                 return dfd;
             } catch (e) {
-                console.error('crash calling method' + e,arguments);
+                console.error('crash calling method' + e, arguments);
                 thiz.onError(e);
-                logError(e,'error ');
+                logError(e, 'error ');
             }
         },
         __initService: function () {
             this.filesToUpload = [];
             if (!this.serviceObject) {
-                if(this.serviceUrl) {
+                if (this.serviceUrl) {
                     this.serviceObject = new RPCService(decodeURIComponent(this.serviceUrl));
                     this.serviceObject.config = this.config;
                 }
@@ -66117,7 +66154,7 @@ define('xide/mixins/VariableMixin',[
     'xide/utils'
 ], function (dcl,declare,utils) {
 
-    var Implementation = {
+    const Implementation = {
         /**
          *
          * @param what
@@ -66130,13 +66167,13 @@ define('xide/mixins/VariableMixin',[
             delimitters = delimitters || this.variableDelimiters || null;
             return utils.replace(what,null,variables,delimitters);
         }
-    }
+    };
 
     /**
      * Mixin to resolve resource variables in strings.
      * Currently stub
      */
-    var Module = declare("xide/mixins/VariableMixin", null, Implementation);
+    const Module = declare("xide/mixins/VariableMixin", null, Implementation);
     Module.dcl = dcl(null,Implementation);
     return Module;
 });;
@@ -66158,8 +66195,8 @@ define('xide/manager/Reloadable',[
         fileUpdateTimes:{},
         onXIDELoaded: function (min, WebSocket) {
             return;
-            var thiz = this;
-            var _ctorArgs = {
+            const thiz = this;
+            const _ctorArgs = {
                 delegate: {
                     onServerResponse: function (e) {
                         thiz.onXIDEMessage(utils.fromJson(e.data));
@@ -66167,7 +66204,7 @@ define('xide/manager/Reloadable',[
                 }
             };
             try {
-                var client = new WebSocket(_ctorArgs);
+                const client = new WebSocket(_ctorArgs);
                 utils.mixin(client, _ctorArgs);
                 client.init({
                     options: {
@@ -66193,7 +66230,7 @@ define('xide/manager/Reloadable',[
 
         },
         loadXIDE: function () {
-            var thiz = this;
+            const thiz = this;
             this.subscribe(types.EVENTS.ON_NODE_SERVICE_STORE_READY, this.onNodeServiceStoreReady);
             require(['xide/min', 'xide/client/WebSocket'], function (min, WebSocket) {
                 if (thiz._didXIDE) {
@@ -66204,14 +66241,14 @@ define('xide/manager/Reloadable',[
             });
         },
         onXIDEMessage: function (data) {
-            var thiz = this;
+            const thiz = this;
             thiz.publish(data.event, data);
             if (data.event === types.EVENTS.ON_FILE_CHANGED) {
-                var _path = data.data.path;
-                var timeNow = new Date().getTime();
+                const _path = data.data.path;
+                const timeNow = new Date().getTime();
                 if (thiz.fileUpdateTimes[_path]) {
-                    var last = thiz.fileUpdateTimes[_path];
-                    var diff = timeNow - last;
+                    const last = thiz.fileUpdateTimes[_path];
+                    const diff = timeNow - last;
 
                     if (diff < 30) {
                         thiz.fileUpdateTimes[_path] = timeNow;
@@ -66222,7 +66259,7 @@ define('xide/manager/Reloadable',[
 
                 //path is absolute and might look like: /PMaster/projects/xbox-app/client/src/lib/xfile/Views.js
                 //fix windows path
-                var path = utils.replaceAll('\\', '/', data.data.path);
+                let path = utils.replaceAll('\\', '/', data.data.path);
                 path = utils.replaceAll('//', '/', data.data.path);
                 /**
                  * Check its a css file
@@ -66232,7 +66269,7 @@ define('xide/manager/Reloadable',[
                     return;
                 }
                 if (path.match(/\.css$/)) {
-                    var newEvt = {
+                    const newEvt = {
                         path: path
                     };
                     thiz.onCSSChanged(newEvt);
@@ -66240,22 +66277,22 @@ define('xide/manager/Reloadable',[
 
                 //generic
                 if (path.match(/\.js$/)) {
-                    var modulePath = data.data.modulePath;
+                    let modulePath = data.data.modulePath;
                     if (modulePath) {
                         modulePath = modulePath.replace('.js', '');
-                        var _re = require;//hide from gcc
+                        const _re = require;//hide from gcc
                         //try pre-amd module
-                        var module = null;
+                        let module = null;
                         try {
                             module = _re(modulePath);
                         } catch (e) {
 
                         }
-                        var _start = 'node_modules';
-                        if (path.indexOf(_start) != -1) {
-                            var libPath = path.substr(path.indexOf(_start) + _start.length, path.length);
+                        const _start = 'node_modules';
+                        if (path.includes(_start)) {
+                            let libPath = path.substr(path.indexOf(_start) + _start.length, path.length);
                             libPath = libPath.replace('.js', '');
-                            if (path.indexOf('xcfnode') != -1) {
+                            if (path.includes('xcfnode')) {
                                 path = libPath;
                                 modulePath = path.replace('/xcfnode', 'xcfnode');
                             }
@@ -66272,7 +66309,7 @@ define('xide/manager/Reloadable',[
 
         },
         mergeFunctions: function (target, source) {
-            for (var i in source) {
+            for (const i in source) {
                 if (_.isFunction(source[i]) /*&& lang.isFunction(target[i])*/) {
                     target[i] = source[i];//swap
                 }
@@ -66291,9 +66328,9 @@ define('xide/manager/Reloadable',[
             evt._didHandle=true;
             this.inherited(arguments);
             if(this.managers) {
-                var newModule = evt.newModule;
-                for (var i = 0; i < this.managers.length; i++) {
-                    var manager = this.managers[i];
+                const newModule = evt.newModule;
+                for (let i = 0; i < this.managers.length; i++) {
+                    const manager = this.managers[i];
                     if (newModule.prototype
                         && newModule.prototype.declaredClass
                         && newModule.prototype.declaredClass === manager.declaredClass) {
@@ -66310,7 +66347,7 @@ define('xide/manager/Reloadable',[
 
 
             require.undef(module);
-            var thiz = this;
+            const thiz = this;
             if (reload) {
                 setTimeout(function () {
                     require([module], function (moduleLoaded) {
@@ -66324,7 +66361,7 @@ define('xide/manager/Reloadable',[
                         }
                         console.log('did - re-require module : ' + module);
                         moduleLoaded.modulePath = module;
-                        var obj = lang.getObject(utils.replaceAll('/', '.', module));
+                        const obj = lang.getObject(utils.replaceAll('/', '.', module));
                         if (obj) {
                             thiz.mergeFunctions(obj.prototype, moduleLoaded.prototype);
                         }
@@ -66345,10 +66382,10 @@ define('xide/manager/Reloadable',[
                 return;
             }
             evt['didProcess'] = true;
-            var path = evt.path;
+            let path = evt.path;
             path = utils.replaceAll('//', '/', path);
             path = path.replace('/PMaster/', '');
-            var reloadFn = window['xappOnStyleSheetChanged'];
+            const reloadFn = window['xappOnStyleSheetChanged'];
             if (reloadFn) {
                 reloadFn(path);
             }
@@ -66364,20 +66401,20 @@ define('xide/manager/Reloadable',[
             if (!evt.path) {
                 return;
             }
-            var path = evt.path;
-            if (path.indexOf('.css') != -1) {
+            const path = evt.path;
+            if (path.includes('.css')) {
                 this.onCSSChanged(evt);
                 return;
             }
 
-            if (path.indexOf('resources') != -1 ||
-                path.indexOf('meta') != -1 ||
-                path.indexOf('.js') == -1) {
+            if (path.includes('resources') ||
+                path.includes('meta') ||
+                !path.includes('.js')) {
                 return;
             }
 
-            var mount = evt.mount.replace('/', '');
-            var module = null;
+            const mount = evt.mount.replace('/', '');
+            let module = null;
             if (!this.vfsMounts[mount]) {
                 return;
             }
@@ -66386,7 +66423,7 @@ define('xide/manager/Reloadable',[
             module = module.replace('/', '.');
             module = module.replace('.js', '');
             module = utils.replaceAll('.', '/', module);
-            var thiz = this;
+            const thiz = this;
             setTimeout(function () {
                 thiz._reloadModule(module, true);
             }, 500);
@@ -66410,7 +66447,7 @@ define('xide/manager/PluginManager',[
     "dojo/Deferred",
     "dojo/promise/all"
 ], function (dcl, has, ManagerBase, utils, types, factory, Deferred, all){
-    var _debug = false;
+    const _debug = false;
 
     /**
      * Plugin manager which provides loading of additional modules at any time after the main layer(s)
@@ -66521,9 +66558,9 @@ define('xide/manager/PluginManager',[
 
                 //add constructor arguments
                 utils.mixin(componentArguments,this.defaultComponentMixin(flags));
-                var componentInstance = factory.createInstance(component, componentArguments, this.componentBaseClasses);
+                const componentInstance = factory.createInstance(component, componentArguments, this.componentBaseClasses);
 
-                var _afterLoaded = function(componentInstance,flags,deferred){
+                const _afterLoaded = function(componentInstance,flags,deferred){
                     this._componentReady(componentInstance,flags,deferred);
                 }.bind(this);
 
@@ -66555,18 +66592,17 @@ define('xide/manager/PluginManager',[
          * @param packagePath {string=}
          */
         loadComponent:function(path,flags,componentArguments,packageLocation,packagePath){
-
             //defaults, sanitizing
             componentArguments = componentArguments ==='true' ? {} : componentArguments;
 
-            path = path.indexOf('/') == -1 ? ( this._defaultPackageLocationPrefix + path + this._defaultPackageLocationSuffix ) : path;
+            path = !path.includes('/') ? ( this._defaultPackageLocationPrefix + path + this._defaultPackageLocationSuffix ) : path;
 
             flags = flags!=null ? flags : this._defaultComponentFlags;
 
-            var deferred = new Deferred(),
-                self = this;
+            const deferred = new Deferred();
+            const self = this;
 
-            var _component = utils.getObject(path);
+            const _component = utils.getObject(path);
             if(_component){
                 //not loaded yet?
                 if(_.isFunction(_component.then)){
@@ -66614,15 +66650,14 @@ define('xide/manager/PluginManager',[
             if(!has('plugins')) {
                 return;
             }
-            var dfd = new Deferred(),
-                pluginPromises = [],
-                thiz = this;
+            const dfd = new Deferred();
+            const pluginPromises = [];
+            const thiz = this;
 
             this.pluginResources = pluginResources;
             this.pluginInstances = [];
             if(this.pluginResources){
-                for(var i=0 ; i < this.pluginResources.length; i++){
-                    var plug = this.pluginResources[i];
+                this.pluginResources.forEach(plug => {
                     if(plug.type && plug.type=="JS-PLUGIN" && plug.path){
                         pluginPromises.push(this.loadComponent(plug.path,null,plug).then(function(component){
                             component.pluginResources = plug;
@@ -66631,7 +66666,7 @@ define('xide/manager/PluginManager',[
                     }else{
                         _debug &&  console.warn('something wrong with plugin data');
                     }
-                }
+                });
             }
             all(pluginPromises).then(function(){
                 dfd.resolve(pluginPromises);
@@ -66657,22 +66692,21 @@ define('xide/manager/Context',[
     "dojo/promise/all",
     'xdojo/has!host-browser?xide/manager/Context_UI'
 ], function (dcl, Deferred, has, ContextBase, types, utils, _require, all, Context_UI) {
-
     !has('host-browser') && has.add('xlog', function () {
         return true;
     }, true);
 
-    var isServer = has('host-node'),
-        isBrowser = has('host-browser'),
-        bases = isBrowser ? [ContextBase, Context_UI] : [ContextBase],
-        debugFileChanges = false,
-        debugModuleReload = false;
+    const isServer = has('host-node');
+    const isBrowser = has('host-browser');
+    const bases = isBrowser ? [ContextBase, Context_UI] : [ContextBase];
+    const debugFileChanges = false;
+    const debugModuleReload = false;
 
     /**
      * @class module:xide/manager/Context
      * @extends module:xide/manager/ContextBase
      */
-    var Module = dcl(bases, {
+    const Module = dcl(bases, {
         declaredClass: "xide.manager.Context",
         application: null,
         contextManager: null,
@@ -66699,11 +66733,11 @@ define('xide/manager/Context',[
             if (!data || !data.event) {
                 return;
             }
-            var thiz = this;
+            const thiz = this;
             if (data.event === types.EVENTS.ON_FILE_CHANGED) {
                 debugFileChanges && console.log("on file changed ", data);
                 //inotify plus
-                if (data.data && data.data.mask && data.data.mask.indexOf('delete') !== -1) {
+                if (data.data && data.data.mask && data.data.mask.includes('delete')) {
                     thiz.publish(types.EVENTS.ON_FILE_DELETED, data);
                     return;
                 }
@@ -66712,11 +66746,11 @@ define('xide/manager/Context',[
                     thiz.publish(types.EVENTS.ON_FILE_DELETED, data);
                     return;
                 }
-                var _path = data.data.path;
-                var timeNow = new Date().getTime();
+                const _path = data.data.path;
+                const timeNow = new Date().getTime();
                 if (thiz.fileUpdateTimes[_path]) {
-                    var last = thiz.fileUpdateTimes[_path];
-                    var diff = timeNow - last;
+                    const last = thiz.fileUpdateTimes[_path];
+                    const diff = timeNow - last;
                     if (diff < 1000) {
                         thiz.fileUpdateTimes[_path] = timeNow;
                         return;
@@ -66728,11 +66762,11 @@ define('xide/manager/Context',[
                 thiz.fileUpdateTimes[_path] = timeNow;
                 //path is absolute and might look like: /PMaster/projects/xbox-app/client/src/lib/xfile/Views.js
                 //fix windows path
-                var path = utils.replaceAll('\\', '/', data.data.path);
+                let path = utils.replaceAll('\\', '/', data.data.path);
                 path = utils.replaceAll('//', '/', data.data.path);
                 path = path.replace(/\\/g, "/");
 
-                if (path.indexOf('/build/') !== -1) {
+                if (path.includes('/build/')) {
                     return;
                 }
 
@@ -66748,12 +66782,12 @@ define('xide/manager/Context',[
                  * Try generic
                  */
                 if (path.match(/\.js$/)) {
-                    var modulePath = data.data.modulePath;
+                    let modulePath = data.data.modulePath;
                     if (modulePath) {
                         modulePath = modulePath.replace('.js', '');
-                        var _re = _require; //hide from gcc
+                        const _re = _require; //hide from gcc
                         //try pre-amd module
-                        var module = null;
+                        let module = null;
                         try {
                             module = _re(modulePath);
                         } catch (e) {}
@@ -66761,26 +66795,26 @@ define('xide/manager/Context',[
 
                         //special: driver
                         var _start = 'data/system/drivers';
-                        if (path.indexOf(_start) != -1) {
+                        if (path.includes(_start)) {
                             var libPath = path.substr(path.indexOf(_start) + (_start.length + 1), path.length);
                             libPath = libPath.replace('.js', '');
                             modulePath = 'system_drivers/' + libPath;
                         }
 
                         _start = 'user/drivers';
-                        if (path.indexOf(_start) != -1) {
+                        if (path.includes(_start)) {
                             var libPath = path.substr(path.indexOf(_start) + (_start.length + 1), path.length);
                             libPath = libPath.replace('.js', '');
                             modulePath = 'user_drivers/' + libPath;
                         }
 
 
-                        var resourceManager = this.getResourceManager(),
-                            vfsConfig = resourceManager ? resourceManager.getVariable('VFS_CONFIG') || {} : null;
+                        const resourceManager = this.getResourceManager();
+                        const vfsConfig = resourceManager ? resourceManager.getVariable('VFS_CONFIG') || {} : null;
 
                         if (vfsConfig && vfsConfig['user_drivers']) {
 
-                            if (path.indexOf(vfsConfig['user_drivers']) !== -1) {
+                            if (path.includes(vfsConfig['user_drivers'])) {
                                 var _start = vfsConfig['user_drivers'];
                                 _start = _start.replace(/\/+$/, "");
                                 var libPath = path.substr(path.indexOf(_start) + (_start.length + 1), path.length);
@@ -66789,7 +66823,7 @@ define('xide/manager/Context',[
                             }
                         }
                         modulePath = utils.replaceAll('.', '/', modulePath);
-                        if (modulePath.indexOf('/build/') === -1 && !isServer) {
+                        if (!modulePath.includes('/build/') && !isServer) {
                             setTimeout(function () {
                                 debugModuleReload && console.log('reloading module ' + modulePath);
                                 thiz._reloadModule(modulePath, true);
@@ -66801,8 +66835,8 @@ define('xide/manager/Context',[
         },
         onNodeServiceStoreReady: function (evt) {},
         mergeFunctions: function (target, source, oldModule, newModule) {
-            for (var i in source) {
-                var o = source[i];
+            for (const i in source) {
+                const o = source[i];
                 if (_.isFunction(source[i])) {
                     if (source[i] && target) {
                         target[i] = source[i];
@@ -66820,17 +66854,17 @@ define('xide/manager/Context',[
          * @param evt
          */
         reloadModules: function (modules, patch) {
-            var head = new Deferred(),
-                pluginPromises = [],
-                newModules = [],
-                thiz = this;
+            const head = new Deferred();
+            const pluginPromises = [];
+            const newModules = [];
+            const thiz = this;
 
             _require({
                 cacheBust: 'time=' + new Date().getTime()
             });
             _.each(modules, function (module) {
-                var oldModule = null,
-                    dfd = new Deferred();
+                let oldModule = null;
+                const dfd = new Deferred();
                 if (patch !== false) {
                     oldModule = _require(module);
                 }
@@ -66852,9 +66886,9 @@ define('xide/manager/Context',[
             return head;
         },
         _reloadModule: function (_module, reload) {
-            var _errorHandle = null;
-            var dfd = new Deferred();
-            if (!isServer && _module.indexOf('nodejs') !== -1) {
+            let _errorHandle = null;
+            const dfd = new Deferred();
+            if (!isServer && _module.includes('nodejs')) {
                 return;
             }
 
@@ -66870,14 +66904,14 @@ define('xide/manager/Context',[
 
 
             //has its own impl.
-            var obj = this.getModule(_module);
+            let obj = this.getModule(_module);
             if (obj && obj.prototype && obj.prototype.reloadModule) {
                 return obj.prototype.reloadModule();
             }
 
             _errorHandle = _require.on("error", handleError);
 
-            var oldModule = this.getModule(_module);
+            let oldModule = this.getModule(_module);
             if (!oldModule) {
                 oldModule = typeof _module !== 'undefined' ? oldModule : null;
                 if (!oldModule && typeof window !== 'undefined') {
@@ -66900,15 +66934,15 @@ define('xide/manager/Context',[
 
             //remove from dom
             if (isBrowser) {
-                var scripts = document.getElementsByTagName('script');
+                const scripts = document.getElementsByTagName('script');
                 _.each(scripts, function (script) {
-                    if (script && script.src && script.src.indexOf(_module) !== -1) {
+                    if (script && script.src && script.src.includes(_module)) {
                         script.parentElement.removeChild(script);
                     }
                 })
             }
             _require.undef(_module);
-            var thiz = this;
+            const thiz = this;
             if (reload) {
                 setTimeout(function () {
                     _require({
@@ -66963,11 +66997,11 @@ define('xide/manager/Context',[
         },
         onCSSChanged: function (evt) {
             if (isBrowser) {
-                var path = evt.path;
-                var _p = this.findVFSMount(path);
+                let path = evt.path;
+                const _p = this.findVFSMount(path);
                 path = utils.replaceAll('//', '/', path);
                 path = path.replace('/PMaster/', '');
-                var reloadFn = window['xappOnStyleSheetChanged'];
+                const reloadFn = window['xappOnStyleSheetChanged'];
                 if (reloadFn) {
                     reloadFn(path);
                 }
@@ -66984,22 +67018,22 @@ define('xide/manager/Context',[
             if (!evt.path) {
                 return;
             }
-            var path = evt.path;
-            if (path.indexOf('.css') != -1) {
+            const path = evt.path;
+            if (path.includes('.css')) {
                 if (isBrowser) {
                     this.onCSSChanged(evt);
                 }
                 return;
             }
 
-            if (path.indexOf('resources') != -1 ||
-                path.indexOf('meta') != -1 ||
-                path.indexOf('.js') == -1) {
+            if (path.includes('resources') ||
+                path.includes('meta') ||
+                !path.includes('.js')) {
                 return;
             }
 
-            var mount = evt.mount.replace('/', ''),
-                module = null;
+            const mount = evt.mount.replace('/', '');
+            let module = null;
 
             if (!this.vfsMounts[mount]) {
                 return;
@@ -67009,7 +67043,7 @@ define('xide/manager/Context',[
             module = module.replace('/', '.');
             module = module.replace('.js', '');
             module = utils.replaceAll('.', '/', module);
-            var thiz = this;
+            const thiz = this;
             setTimeout(function () {
                 try {
                     thiz._reloadModule(module, true);
@@ -67017,45 +67051,44 @@ define('xide/manager/Context',[
                     console.error('error reloading module', e);
                 }
             }, 100);
-
         },
         /***********************************************************************/
         /*
          * get/set
          */
         getMount: function (mount) {
-            var resourceManager = this.getResourceManager();
-            var vfsConfig = resourceManager ? resourceManager.getVariable('VFS_CONFIG') || {} : null;
+            const resourceManager = this.getResourceManager();
+            const vfsConfig = resourceManager ? resourceManager.getVariable('VFS_CONFIG') || {} : null;
             if (vfsConfig && vfsConfig[mount]) {
                 return vfsConfig[mount];
             }
             return null;
         },
         toVFSShort: function (path, mount) {
-            var resourceManager = this.getResourceManager();
-            var vfsConfig = resourceManager ? resourceManager.getVariable('VFS_CONFIG') || {} : null;
+            const resourceManager = this.getResourceManager();
+            const vfsConfig = resourceManager ? resourceManager.getVariable('VFS_CONFIG') || {} : null;
             if (vfsConfig && vfsConfig[mount]) {
-                var mountPath = vfsConfig[mount];
+                let mountPath = vfsConfig[mount];
                 mountPath = utils.replaceAll('//', '/', mountPath);
                 mountPath = mountPath.replace(/\/+$/, "");
-                if (path.indexOf(mountPath) !== -1) {
-                    var _start = mountPath;
+                if (path.includes(mountPath)) {
+                    let _start = mountPath;
                     _start = _start.replace(/\/+$/, "");
-                    var libPath = path.substr(path.indexOf(_start) + (_start.length + 1), path.length);
+                    const libPath = path.substr(path.indexOf(_start) + (_start.length + 1), path.length);
                     return libPath;
                 }
             }
             return null;
         },
         findVFSMount: function (path) {
-            var resourceManager = this.getResourceManager();
-            var vfsConfig = resourceManager ? resourceManager.getVariable('VFS_CONFIG') || {} : null;
+            const resourceManager = this.getResourceManager();
+            const vfsConfig = resourceManager ? resourceManager.getVariable('VFS_CONFIG') || {} : null;
             if (vfsConfig) {
-                for (var mount in vfsConfig) {
-                    var mountPath = vfsConfig[mount];
+                for (const mount in vfsConfig) {
+                    let mountPath = vfsConfig[mount];
                     mountPath = utils.replaceAll('//', '/', mountPath);
                     mountPath = mountPath.replace(/\/+$/, "");
-                    if (path.indexOf(mountPath) !== -1) {
+                    if (path.includes(mountPath)) {
                         return mount;
                     }
                 }
@@ -67140,16 +67173,41 @@ define('xide/manager/Context_UI',[
     'xide/editor/Registry',
     'xaction/ActionProvider',
     'xide/lodash',
-    'xide/manager/Router'
-], function (dcl, Deferred, has, types, utils, EventedMixin, _require, PluginManager, WindowManager, NotificationManager, SettingsManager, Registry, ActionProvider, _, Router) {
+    'xide/manager/Router',
+    'dojo/promise/all'
+], function (
+    dcl,
+    Deferred,
+    has,
+    types,
+    utils,
+    EventedMixin,
+    _require,
+    PluginManager,
+    WindowManager,
+    NotificationManager,
+    SettingsManager,
+    Registry,
+    ActionProvider,
+    _,
+    Router,
+    all
+) {
+    !has('host-browser') && has.add('xlog', () => true, true);
+    var test = false;
+    var debugEditors = false;
+    if (sctx && test) {
+        var m = sctx.getFileManager();
+        var store = m.getStore('workspace_user', false);
+        var file = './A-MediaPlayer.dhtml';
+        var parts = file.split('/');
+        store.getItem(file, true).then((root) => {
+            console.log('loaded root : ', root);
+        });
+    }
 
-
-    !has('host-browser') && has.add('xlog', function () {
-        return true;
-    }, true);
-
-    var isServer = has('host-node'),
-        isBrowser = has('host-browser');
+    const isServer = has('host-node');
+    const isBrowser = has('host-browser');
     /**
      * @class module:xide/manager/Context_UI
      * @extends module:xide/manager/ContextBase
@@ -67158,7 +67216,7 @@ define('xide/manager/Context_UI',[
      * @extends module:xide/editor/Registry
      *
      */
-    var Module = dcl([EventedMixin.dcl, ActionProvider.dcl, Registry], {
+    const Module = dcl([EventedMixin.dcl, ActionProvider.dcl, Registry], {
         declaredClass: "xide.manager.Context_UI",
         widgetManager: null,
         settingsManager: null,
@@ -67223,59 +67281,72 @@ define('xide/manager/Context_UI',[
          */
         runAction: function (action) {
             action = this.getAction(action);
-            var actionDfd = this.inherited(arguments),
-                who = this;
+            let actionDfd = this.inherited(arguments);
+            const who = this;
             if (actionDfd == null && action.handler) {
                 actionDfd = action.handler.apply(who, [action]);
             }
             return actionDfd;
         },
-        getOpenFiles: function () {
-            var settingsManager = this.getSettingsManager();
+        getOpenFilesP: function () {
 
-            var settingsStore = settingsManager.getStore() || {
+            const p = new Deferred();
+
+            const settingsManager = this.getSettingsManager();
+
+            const settingsStore = settingsManager.getStore() || {
                 getSync: function () {}
             };
 
-            var props = settingsStore.getSync('openFiles') || {
+            const props = settingsStore.getSync('openFiles') || {
                 value: {
                     files: []
                 }
             };
-            var fileManager = this.getFileManager();
+            const fileManager = this.getFileManager();
             const out = [];
-            _.each(props.value.files, (item) => {
-                var store = fileManager.getStore(item.mount);
-                store.getItem('.',true).then(()=>{
-                    console.log('g',store);
-                })
-                /*
-                store.getItem(item.path, true).then((item)=>{
-                    console.log('loaded',item);
-                })
-                console.log('get store:  ', store);*/
-                /*
-                item.getPath = function () {
-                    return item.path;
-                }
-                */
+            const defs = [];
+            props.value.files.forEach((item) => {
+                const store = fileManager.getStore(item.mount, false);
+                defs.push(store.getItem(item.path, true).then((item) => {
+                    out.push(item);
+                }));
             });
+
+            all(defs).then(() => {
+                p.resolve(out);
+            });
+
+            return p;
+        },
+
+        getOpenFiles: function () {
+            const settingsManager = this.getSettingsManager();
+            const settingsStore = settingsManager.getStore() || {
+                getSync: function () {}
+            };
+            const props = settingsStore.getSync('openFiles') || {
+                value: {
+                    files: []
+                }
+            };
+            const fileManager = this.getFileManager();
             return props.value.files;
         },
         trackEditor: function (item, editor) {
-            var settingsManager = this.getSettingsManager();
+            const settingsManager = this.getSettingsManager();
 
-            var settingsStore = settingsManager.getStore() || {
+            const settingsStore = settingsManager.getStore() || {
                 getSync: function () {}
             };
 
-            var props = settingsStore.getSync('openFiles') || {
+            const props = settingsStore.getSync('openFiles') || {
                 value: {
                     files: []
                 }
             };
 
-            var value = props.value;
+            const value = props.value;
             if (_.find(value.files, {
                     path: item.path,
                     mount: item.mount
@@ -67291,23 +67362,21 @@ define('xide/manager/Context_UI',[
                 id: 'openFiles'
             }, {
                 value: value
-            }, true, null).then(function () {
-
-            });
+            }, true, null);
         },
         untrackEditor: function (item, editor) {
-            var settingsManager = this.getSettingsManager();
-            var settingsStore = settingsManager.getStore() || {
+            const settingsManager = this.getSettingsManager();
+            const settingsStore = settingsManager.getStore() || {
                 getSync: function () {}
             };
 
-            var props = settingsStore.getSync('openFiles') || {
+            const props = settingsStore.getSync('openFiles') || {
                 value: {
                     files: []
                 }
             };
-            var value = props.value;
-            var data = _.find(value.files, {
+            const value = props.value;
+            const data = _.find(value.files, {
                 path: item.path,
                 mount: item.mount
             });
@@ -67316,19 +67385,15 @@ define('xide/manager/Context_UI',[
                 id: 'openFiles'
             }, {
                 value: value
-            }, true, null).then(function () {
-
-            });
+            }, true, null);
         },
         openItem: function (item, isBack, select) {
             if (!item) {
                 return;
             }
 
-            var editors = Registry.getEditors(item);
-            var defaultEditor = _.find(editors, function (editor) {
-                return editor.isDefault === true;
-            });
+            const editors = Registry.getEditors(item);
+            const defaultEditor = _.find(editors, editor => editor.isDefault === true);
             if (defaultEditor) {
                 return defaultEditor.onEdit(item, this);
             }
@@ -67337,11 +67402,12 @@ define('xide/manager/Context_UI',[
             });
         },
         onComponentsReady: function () {
-            return;
-            const filesToOpen = this.getOpenFiles();
-            _.each(filesToOpen, (item) => {
-                // this.openItem(item);
-            }, this);
+            // todo : store is leaked!
+            this.getOpenFilesP().then((items) => {
+                items.forEach((item) => {
+                    this.openItem(item);
+                })
+            });
         },
         /***********************************************************************/
         /*
@@ -67357,26 +67423,28 @@ define('xide/manager/Context_UI',[
          * @returns {module:dojo/Deferred}
          */
         createEditor: function (ctrArgs, item, editorOverrides, where, owner) {
-            var dfd = new Deferred(),
-                registerInWindowManager = owner && owner.registerEditors === true ? true : true;
+            const dfd = new Deferred();
+            const registerInWindowManager = owner && owner.registerEditors === true ? true : true;
 
             if (_.isArray(item)) {
                 item = item[0];
             }
 
-            var thiz = this,
-                title = item && item.name ? item.name : (utils.pathinfo(item.path, 'PATHINFO_FILENAME') + '.' + utils.pathinfo(item.path, 'PATHINFO_EXTENSION')),
-                ctx = this,
-                mainView = ctx.mainView,
-                docker = mainView.getDocker(),
-                ctrArgsFinal = {
-                    ctx: ctx,
-                    config: this.config,
-                    item: item,
-                    title: title,
-                    closeable: true,
-                    closable: true
-                };
+            const thiz = this;
+            const title = item && item.name ? item.name : (utils.pathinfo(item.path, 'PATHINFO_FILENAME') + '.' + utils.pathinfo(item.path, 'PATHINFO_EXTENSION'));
+            const ctx = this;
+            const mainView = ctx.mainView;
+            const docker = mainView.getDocker();
+
+            const ctrArgsFinal = {
+                ctx: ctx,
+                config: this.config,
+                item: item,
+                title: title,
+                closeable: true,
+                closable: true
+            };
+
             utils.mixin(ctrArgsFinal, ctrArgs);
             if (_.isString(ctrArgs.editorClass)) {
                 //test this really exists
@@ -67393,7 +67461,7 @@ define('xide/manager/Context_UI',[
 
             where = where || mainView.layoutCenter;
 
-            var root = docker.addTab(null, {
+            const root = docker.addTab(null, {
                 title: title,
                 target: where ? where._parent : null,
                 icon: 'fa-code'
@@ -67409,13 +67477,13 @@ define('xide/manager/Context_UI',[
 
 
             root.set('loading', true);
-            var editor = utils.addWidget(ctrArgs.editorClass, ctrArgsFinal, thiz, root, true, null, null, null, editorOverrides);
+            const editor = utils.addWidget(ctrArgs.editorClass, ctrArgsFinal, thiz, root, true, null, null, null, editorOverrides);
 
-            console.log('create editor!', editor);
+            debugEditors && console.log('create editor!', editor);
 
             this.trackEditor(item, editor);
 
-            editor._on('destroy', function () {
+            editor._on('destroy', () => {
                 thiz.untrackEditor(item);
             });
 
@@ -67429,7 +67497,7 @@ define('xide/manager/Context_UI',[
 
             //- use openItem if possible
             if (editor.openItem) {
-                var _dfd = editor.openItem(item);
+                const _dfd = editor.openItem(item);
                 dfd.resolve(editor);
                 if (registerInWindowManager) {
                     this.getWindowManager().registerView(editor, false);
@@ -67439,7 +67507,7 @@ define('xide/manager/Context_UI',[
             root.resize && root.resize();
 
             if (dfd.then) {
-                dfd.then(function () {
+                dfd.then(() => {
                     root.set('loading', false);
                 })
             }
@@ -67458,37 +67526,33 @@ define('xide/manager/Context_UI',[
          */
         registerEditorExtension: function (name, extensions, iconClass, owner, isDefault, onEdit, editorClass, editorArgs, actions) {
             iconClass = iconClass || 'el-icon-brush';
-            var thiz = this,
-                _editorArgs = {
-                    name: name,
-                    extensions: extensions,
-                    onEdit: onEdit,
-                    iconClass: iconClass,
-                    owner: this,
-                    isDefault: isDefault != null ? isDefault : false,
-                    editorClass: editorClass
-                };
-
-            if (editorArgs) {
-                _editorArgs = utils.mixin(_editorArgs, editorArgs);
-            }
+            let _editorArgs = {
+                name: name,
+                extensions: extensions,
+                onEdit: onEdit,
+                iconClass: iconClass,
+                owner: this,
+                isDefault: isDefault != null ? isDefault : false,
+                editorClass: editorClass
+            };
+            _editorArgs = utils.mixin(_editorArgs, editorArgs);
             if (!onEdit) {
-                _editorArgs.onEdit = function (item, _owner, overrides) {
+                _editorArgs.onEdit = (item, _owner, overrides) => {
                     //some components may have an additional bootstrap in top of 'run':
                     if (owner && owner.onCreateEditor) {
-                        var dfd = new Deferred();
-                        owner.onCreateEditor().then(function () {
-                            var editor = thiz.createEditor(_editorArgs, item, overrides, null, _owner);
+                        const dfd = new Deferred();
+                        owner.onCreateEditor().then(() => {
+                            const editor = this.createEditor(_editorArgs, item, overrides, null, _owner);
                             dfd.resolve(editor);
                         });
                         return dfd;
                     }
 
-                    return thiz.createEditor(_editorArgs, item, overrides, null, _owner);
+                    return this.createEditor(_editorArgs, item, overrides, null, _owner);
                 }
             }
 
-            if (_.isString(extensions) && extensions.indexOf(',') == -1) {
+            if (_.isString(extensions) && !extensions.includes(',')) {
                 types.registerCustomMimeIconExtension(extensions, iconClass);
             }
             Registry.onRegisterEditor(_editorArgs);
@@ -67523,11 +67587,6 @@ define('xide/manager/Context_UI',[
                 this.storeDelegate.serviceObject = this.serviceObject;
             }
 
-
-            if (has('plugins') && typeof xappPluginResources != 'undefined' && this.pluginManager) {
-                this.pluginsLoading = this.pluginManager.loadPlugins(xappPluginResources);
-            }
-
             if (this.notificationManager) {
                 this.notificationManager.init();
                 this.notificationManager.postMessage({
@@ -67538,8 +67597,8 @@ define('xide/manager/Context_UI',[
             }
             this.application && this.application.init();
             this.windowManager && this.windowManager.init();
-            var self = this;
-            this.registerEditorExtension('Browser', 'php|html|mp4|doc|xls|pdf|zip|tar|iso|avi|gz|mp3|mkv|ogg|png|jpg|cfhtml', 'fa-play-circle-o', this, false, null, function (item) {
+            const self = this;
+            this.registerEditorExtension('Browser', 'php|html|mp4|doc|xls|pdf|zip|tar|iso|avi|gz|mp3|mkv|ogg|png|jpg|cfhtml', 'fa-play-circle-o', this, false, null, item => {
                 window.open(self.getFileManager().getImageUrl(item));
             }, {
                 ctx: this.ctx,
@@ -67571,9 +67630,9 @@ define('xide/manager/Router',['xide/utils'], function (utils) {
      * @param {Object} [ctx]
      * @returns {Object}
      */
-    var map = function (object, callback, ctx) {
-        var copy = {};
-        for (var key in object) {
+    const map = function (object, callback, ctx) {
+        const copy = {};
+        for (const key in object) {
             if (object.hasOwnProperty(key)) {
                 copy[key] = callback.call(ctx, object[key], key, object);
             }
@@ -67585,10 +67644,10 @@ define('xide/manager/Router',['xide/utils'], function (utils) {
      * merges objects
      * @returns {{}}
      */
-    var merge = function () {
-        var result = {};
+    const merge = function () {
+        const result = {};
         Array.prototype.forEach.call(arguments, function (o) {
-            for (var key in o) {
+            for (const key in o) {
                 if (o.hasOwnProperty(key)) {
                     result[key] = o[key];
                 }
@@ -67601,7 +67660,7 @@ define('xide/manager/Router',['xide/utils'], function (utils) {
      * @param {*} o
      * @returns {*}
      */
-    var clone = function (o) {
+    const clone = function (o) {
         if (Array.isArray(o)) {
             return o.map(clone);
         }
@@ -67610,7 +67669,7 @@ define('xide/manager/Router',['xide/utils'], function (utils) {
                 'number',
                 'boolean',
                 'object'
-            ].indexOf(typeof o) > -1 || o == null) {
+            ].includes(typeof o) || o == null) {
             return o;
         }
         return map(o, clone);
@@ -67671,12 +67730,12 @@ define('xide/manager/Router',['xide/utils'], function (utils) {
      * @param {String} [options.symbols.parameterMatcher='.*?']
      * @param {String} [options.symbols.parameterEnd='\}']
      */
-    var RouterBase = function (options) {
-        var symbols = options.symbols || {},
-            paramsDelimiters = symbols.parametersDelimiters || '\\.|\\/',
-            paramStart = symbols.parameterStart || '\\{',
-            paramMatcher = symbols.parameterMatcher || '.*?',
-            paramEnd = symbols.parameterEnd || '\\}';
+    const RouterBase = function (options) {
+        const symbols = options.symbols || {};
+        const paramsDelimiters = symbols.parametersDelimiters || '\\.|\\/';
+        const paramStart = symbols.parameterStart || '\\{';
+        const paramMatcher = symbols.parameterMatcher || '.*?';
+        const paramEnd = symbols.parameterEnd || '\\}';
 
         /**
          * @const {{regexp: RegExp, parameters: Array}}
@@ -67738,7 +67797,7 @@ define('xide/manager/Router',['xide/utils'], function (utils) {
      * @private
      */
     RouterBase.prototype._unifyRoutes = function (routes, parentRoute) {
-        var unifiedRoutes = [];
+        let unifiedRoutes = [];
         routes.forEach(function (route) {
             unifiedRoutes = unifiedRoutes.concat(this._unifyRoute(route, parentRoute));
         }, this);
@@ -67764,7 +67823,7 @@ define('xide/manager/Router',['xide/utils'], function (utils) {
         route.host = route.host || parentRoute.host;
         route.methods = route.methods || parentRoute.methods || this._defaultMethods;
         route.schemes = route.schemes || parentRoute.schemes || this._defaultSchemes;
-        for (var key in parentRoute) {
+        for (const key in parentRoute) {
             if (parentRoute.hasOwnProperty(key) && key !== 'routes' && !route[key]) {
                 route[key] = parentRoute[key];
             }
@@ -67788,12 +67847,12 @@ define('xide/manager/Router',['xide/utils'], function (utils) {
      * @private
      */
     RouterBase.prototype._parseRoute = function (route, i) {
-        var defaults = route.defaults,
-            requirements = route.requirements,
-            path = route.path,
-            host = route.host,
-            parsedHost = host ? this._parsePath(host, requirements, defaults) : this._NO_HOST,
-            parsedPath = this._parsePath(path, requirements, defaults);
+        const defaults = route.defaults;
+        const requirements = route.requirements;
+        const path = route.path;
+        const host = route.host;
+        const parsedHost = host ? this._parsePath(host, requirements, defaults) : this._NO_HOST;
+        const parsedPath = this._parsePath(path, requirements, defaults);
         return {
             id: route.id,
             pattern: parsedPath.regexp,
@@ -67820,19 +67879,21 @@ define('xide/manager/Router',['xide/utils'], function (utils) {
      * @private
      */
     RouterBase.prototype._parsePath = function (path, requirements, defaults) {
-        var parameters = [],
-            defaultParameterRequirement = this._defaultParameterRequirement,
-            regexp = new RegExp('^' +
-                path
-                    .replace(/([\/\.\|])/g, '\\$1')
-                    .replace(this._paramsReplaceRegExp, function (match, delimiter, parameterName) {
-                        var optional = parameterName in defaults;
-                        parameters.push(parameterName);
-                        return (delimiter || '') + (optional && delimiter ? '?' : '') +
-                            '(' + (requirements[parameterName] ? requirements[parameterName] : defaultParameterRequirement) + ')' +
-                            (optional ? '?' : '');
-                    }) +
-                '$');
+        const parameters = [];
+        const defaultParameterRequirement = this._defaultParameterRequirement;
+
+        const regexp = new RegExp('^' +
+            path
+                .replace(/([\/\.\|])/g, '\\$1')
+                .replace(this._paramsReplaceRegExp, function (match, delimiter, parameterName) {
+                    const optional = parameterName in defaults;
+                    parameters.push(parameterName);
+                    return (delimiter || '') + (optional && delimiter ? '?' : '') +
+                        '(' + (requirements[parameterName] ? requirements[parameterName] : defaultParameterRequirement) + ')' +
+                        (optional ? '?' : '');
+                }) +
+            '$');
+
         return {
             regexp: regexp,
             parameters: parameters
@@ -67845,19 +67906,19 @@ define('xide/manager/Router',['xide/utils'], function (utils) {
      * @public
      */
     RouterBase.prototype.match = function (request) {
-        var routes = this._routes,
-            route,
-            pathParts = request.path.split('?'),
-            path = pathParts[0],
-            query = pathParts[1] ? this._parseQuery(pathParts[1]) : null,
-            execPathResult,
-            execHostResult,
-            isMethodValid,
-            isSchemeValid;
+        const routes = this._routes;
+        let route;
+        const pathParts = request.path.split('?');
+        const path = pathParts[0];
+        const query = pathParts[1] ? this._parseQuery(pathParts[1]) : null;
+        let execPathResult;
+        let execHostResult;
+        let isMethodValid;
+        let isSchemeValid;
 
         request.method = 'GET';
 
-        for (var i = 0, l = routes.length; i < l; i++) {
+        for (let i = 0, l = routes.length; i < l; i++) {
             route = routes[i];
             execPathResult = route.pattern.exec(path);
             if (!execPathResult) {
@@ -67867,11 +67928,11 @@ define('xide/manager/Router',['xide/utils'], function (utils) {
             if (!execHostResult) {
                 continue;
             }
-            isMethodValid = route.methods.indexOf(request.method) > -1;
+            isMethodValid = route.methods.includes(request.method);
             if (!isMethodValid) {
                 continue;
             }
-            isSchemeValid = !request.scheme || route.schemes.indexOf(request.scheme) > -1;
+            isSchemeValid = !request.scheme || route.schemes.includes(request.scheme);
             if (isSchemeValid) {
                 execPathResult.shift();
                 execHostResult.shift();
@@ -67891,21 +67952,24 @@ define('xide/manager/Router',['xide/utils'], function (utils) {
      * @protected
      */
     RouterBase.prototype._parseQuery = function (query) {
-        var obj = {};
+        const obj = {};
 
         if (typeof query !== 'string' || query.length === 0) {
             return obj;
         }
 
-        var regexp = /\+/g;
+        const regexp = /\+/g;
         query = query.split('&');
 
-        var len = query.length;
+        const len = query.length;
 
-        for (var i = 0; i < len; ++i) {
-            var x = query[i].replace(regexp, '%20'),
-                idx = x.indexOf('='),
-                kstr, vstr, k, v;
+        for (let i = 0; i < len; ++i) {
+            const x = query[i].replace(regexp, '%20');
+            const idx = x.indexOf('=');
+            let kstr;
+            let vstr;
+            let k;
+            let v;
 
             if (idx >= 0) {
                 kstr = x.substr(0, idx);
@@ -67939,8 +68003,8 @@ define('xide/manager/Router',['xide/utils'], function (utils) {
      * @private
      */
     RouterBase.prototype._retrieveParameters = function (route, parsedParameters, parsedHostParameters, query) {
-        var parameters = query || {};
-        for (var key in route.defaults) {
+        const parameters = query || {};
+        for (const key in route.defaults) {
             if (route.defaults.hasOwnProperty(key)) {
                 parameters[key] = route.defaults[key];
             }
@@ -67957,7 +68021,7 @@ define('xide/manager/Router',['xide/utils'], function (utils) {
      * @private
      */
     RouterBase.prototype._extendParameters = function (input, names, output) {
-        for (var i = 0, l = names.length; i < l; i++) {
+        for (let i = 0, l = names.length; i < l; i++) {
             if (input[i] === undefined) {
                 break;
             }
@@ -67976,9 +68040,9 @@ define('xide/manager/Router',['xide/utils'], function (utils) {
      * @public
      */
     RouterBase.prototype.generate = function (id, params) {
-        var routes = this._routes,
-            route;
-        for (var i = 0, l = routes.length; i < l; i++) {
+        const routes = this._routes;
+        let route;
+        for (let i = 0, l = routes.length; i < l; i++) {
             route = routes[i];
             if (route.id === id) {
                 return this._generate(route, merge({}, params));
@@ -67996,27 +68060,27 @@ define('xide/manager/Router',['xide/utils'], function (utils) {
      * @private
      */
     RouterBase.prototype._generate = function (route, params) {
-        var path = route.path,
-            generatedPath,
-            host = route.host,
-            generatedHost,
-            defaults = route.defaults,
-            requirements = route.requirements,
-            _this = this;
+        const path = route.path;
+        let generatedPath;
+        const host = route.host;
+        let generatedHost;
+        const defaults = route.defaults;
+        const requirements = route.requirements;
+        const _this = this;
         generatedPath = path.replace(this._paramsReplaceRegExp, function (match, delimiter, parameterName) {
             delimiter = delimiter || '';
-            var optional = parameterName in defaults,
-                exists = params && parameterName in params;
+            const optional = parameterName in defaults;
+            const exists = params && parameterName in params;
             if (exists) {
                 return _this._getParameterValue(parameterName, params, requirements, delimiter);
             } else if (!optional) {
                 _this._throwParameterNeededError(parameterName, route.id);
             }
 
-            var hasFilledParams = false;
-            for (var key in params) {
+            let hasFilledParams = false;
+            for (const key in params) {
                 if (params.hasOwnProperty(key)) {
-                    if (route.parameters.indexOf(key) > -1) {
+                    if (route.parameters.includes(key)) {
                         hasFilledParams = true;
                         break;
                     }
@@ -68028,8 +68092,8 @@ define('xide/manager/Router',['xide/utils'], function (utils) {
 
         if (host) {
             generatedHost = host.replace(this._paramsReplaceRegExp, function (match, delimiter, parameterName) {
-                var optional = parameterName in defaults,
-                    exists = params && parameterName in params;
+                const optional = parameterName in defaults;
+                const exists = params && parameterName in params;
                 delimiter = delimiter || '';
                 if (exists) {
                     return _this._getParameterValue(parameterName, params, requirements, delimiter);
@@ -68041,7 +68105,7 @@ define('xide/manager/Router',['xide/utils'], function (utils) {
             });
         }
 
-        var query = this._generateQuery(params);
+        const query = this._generateQuery(params);
 
         if (query) {
             generatedPath += '?' + query;
@@ -68056,8 +68120,8 @@ define('xide/manager/Router',['xide/utils'], function (utils) {
      * @protected
      */
     RouterBase.prototype._generateQuery = function (params) {
-        var query = '';
-        for (var key in params) {
+        let query = '';
+        for (const key in params) {
             if (params.hasOwnProperty(key)) {
                 query += (query.length ? '&' : '') + encodeURIComponent(key) + '=' + encodeURIComponent(params[key]);
             }
@@ -68075,7 +68139,7 @@ define('xide/manager/Router',['xide/utils'], function (utils) {
      * @private
      */
     RouterBase.prototype._getParameterValue = function (parameterName, params, requirements, delimiter) {
-        var value = params[parameterName];
+        const value = params[parameterName];
         delete params[parameterName];
         if (requirements[parameterName] && !requirements[parameterName].test(value)) {
             throw new Error('Parameter "' + parameterName + '" has bad value "' + value + '", not suitable for path generation');
@@ -68100,7 +68164,7 @@ define('xide/manager/Router',['xide/utils'], function (utils) {
      */
     RouterBase.prototype.getRouteInfo = function (routeId) {
         if (!this._routeIdToParsedDefinitionMap[routeId]) {
-            for (var i = 0, l = this._routes.length; i < l; i++) {
+            for (let i = 0, l = this._routes.length; i < l; i++) {
                 if (this._routes[i].id === routeId) {
                     this._routeIdToParsedDefinitionMap[routeId] = this._routes[i];
                     break;
@@ -68656,7 +68720,7 @@ define('xaction/DefaultActions',[
      * @returns {boolean}
      */
     function hasAction(permissions,what){
-        return _.contains(permissions,what);
+        return _.includes(permissions,what);
     }
 
     /**
@@ -69945,8 +70009,8 @@ define('xide/Keyboard',[
      * @type {Object[]}
      * @private
      */
-    var listeners = [];
-    var byNode = {};
+    const listeners = [];
+    const byNode = {};
 
     /**
      * Util to extend a keyboard mapping with control functions per listener. Keyboard mappings can
@@ -69954,7 +70018,7 @@ define('xide/Keyboard',[
      * @param mapping
      * @param listeners
      */
-    var addListenerControls = function (mapping, listeners) {
+    const addListenerControls = function (mapping, listeners) {
         mapping.stop = function () {
             return;
             //if(listeners && listeners.length) {
@@ -69980,12 +70044,12 @@ define('xide/Keyboard',[
      * @type {Listener|keypress.Listener}
      * @private
      */
-    var keypressProto = window ? window['keypress'] ? window.keypress.Listener : null : null;
+    const keypressProto = window ? window['keypress'] ? window.keypress.Listener : null : null;
     if (!keypressProto) {
         console.error('you need keypress.min.js installed to use xide/Keyboard');
     }
 
-    var Implementation = {
+    const Implementation = {
         /**
          * @member listener {Object[]} all keypress listener instances
          */
@@ -70038,7 +70102,7 @@ define('xide/Keyboard',[
          */
         addKeyboardListerner: function (keys, params, type, scope, handler, target, eventArgs) {
             // prepare keypress args
-            var _defaults = lang.clone(this.keyPressDefault());
+            const _defaults = lang.clone(this.keyPressDefault());
             //mixin override
             utils.mixin(_defaults, params);
 
@@ -70051,15 +70115,15 @@ define('xide/Keyboard',[
             //normalize to array
             keys = !_.isArray(keys) ? [keys] : keys;
 
-            var _listeners = [],
-                ignore = ['ctrl s', 'ctrl l', 'ctrl r', 'ctrl w', 'ctrl f4', 'shift f4', 'alt tab', 'ctrl tab'];
+            const _listeners = [];
+            const ignore = ['ctrl s', 'ctrl l', 'ctrl r', 'ctrl w', 'ctrl f4', 'shift f4', 'alt tab', 'ctrl tab'];
 
             _.each(keys, function (key_seq) {
-                var targetId = target && target.id ? target.id : 'global',
-                    wasCached = target ? !!byNode[targetId] : false,
-                    registered = false;
+                const targetId = target && target.id ? target.id : 'global';
+                const wasCached = target ? !!byNode[targetId] : false;
+                let registered = false;
 
-                var listener = byNode[targetId];
+                let listener = byNode[targetId];
                 if(listener && listener["_seq"+key_seq]){
                     registered = true;
                 }
@@ -70076,12 +70140,12 @@ define('xide/Keyboard',[
                             return;
                         }
                         e._did = true;
-                        var className = e.target.className.toLowerCase();
+                        const className = e.target.className.toLowerCase();
                         //skip input fields
-                        if (e.target.tagName!=='BUTTON' && className.indexOf('input') == -1 || className.indexOf('ace_text-input') != -1) {
+                        if (e.target.tagName!=='BUTTON' && !className.includes('input') || className.includes('ace_text-input')) {
                             if (handler && handler.apply) {
                                 handler.apply(_defaults['this'], eventArgs || [e]);
-                                if (ignore.indexOf(key_seq) !== -1) {
+                                if (ignore.includes(key_seq)) {
                                     e.preventDefault();
                                     e.stopPropagation();
                                 }
@@ -70102,7 +70166,6 @@ define('xide/Keyboard',[
                         _listeners.push(listener);
                     }
                 }
-
             }, this);
 
             return _listeners;
@@ -70113,14 +70176,14 @@ define('xide/Keyboard',[
          * @returns {xide/types/KEYBOARD_MAPPING}
          */
         registerKeyboardMapping: function (mapping) {
-            var listeners = this.addKeyboardListerner(mapping.keys, mapping.params, null, mapping.scope, mapping.handler, mapping.target, mapping.eventArgs);
+            const listeners = this.addKeyboardListerner(mapping.keys, mapping.params, null, mapping.scope, mapping.handler, mapping.target, mapping.eventArgs);
             mapping.listeners = listeners;
             return addListenerControls(mapping, listeners);
         },
         destroy:function(){
             this.inherited && this.inherited(arguments);
-            var targetId = this.id;
-            var listener = byNode[targetId];
+            const targetId = this.id;
+            const listener = byNode[targetId];
             if(listener){
                 listener.destroy();
                 delete byNode[targetId];
@@ -70141,7 +70204,7 @@ define('xide/Keyboard',[
      * @link http://dmauro.github.io/Keypress/
      * @link https://github.com/dmauro/Keypress/blob/master/keypress.coffee#L728-864
      */
-    var _Keyboard = declare("xide/Keyboard", null, Implementation);
+    const _Keyboard = declare("xide/Keyboard", null, Implementation);
     /**
      * Static mapping factory
      * @param keys
@@ -70155,7 +70218,7 @@ define('xide/Keyboard',[
      * @returns {xide/types/KEYBOARD_MAPPING}
      */
     _Keyboard.createMapping = function (keys, params, type, scope, handler, target, eventArgs) {
-        var mapping = utils.clone(types.KEYBOARD_MAPPING);//@TODO: bad copy, uses a ctr followed by a lang.mixin
+        const mapping = utils.clone(types.KEYBOARD_MAPPING);//@TODO: bad copy, uses a ctr followed by a lang.mixin
         function getHandler(__handler) {
             return _.isString(__handler) ? lang.hitch(scope, __handler) : __handler;
         }
@@ -70610,7 +70673,7 @@ define('xide/cache/Circular',[], function () {
             typeof capacity._capacity=="number"&&
             typeof capacity._first=="number"&&
             typeof capacity._size=="number"){
-            for(var prop in capacity){
+            for(const prop in capacity){
                 if(capacity.hasOwnProperty(prop))this[prop]=capacity[prop];
             }
         } else {
@@ -70645,7 +70708,7 @@ define('xide/cache/Circular',[], function () {
         },
         deq: function () {
             if (this._size == 0)throw new RangeError("dequeue on empty buffer");
-            var value = this._buffer[(this._first + this._size - 1) % this._capacity];
+            const value = this._buffer[(this._first + this._size - 1) % this._capacity];
             this._size--;
             return value;
         },
@@ -70654,7 +70717,7 @@ define('xide/cache/Circular',[], function () {
         },
         shift: function () {
             if (this._size == 0)throw new RangeError("shift on empty buffer");
-            var value = this._buffer[this._first];
+            const value = this._buffer[this._first];
             if (this._first == this._capacity - 1)this._first = 0; else this._first++;
             this._size--;
             return value;
@@ -70731,7 +70794,7 @@ define('xaction/ActionStore',[
             },
             addRenderer: function (renderer) {
                 !this.renderers && (this.renderers = []);
-                !_.contains(this.renderers, renderer) && this.renderers.push(renderer);
+                !_.includes(this.renderers, renderer) && this.renderers.push(renderer);
             }
         }, mixin));
     }
@@ -70800,9 +70863,9 @@ define('xaction/ActionModel',[
                 action: this,
                 selection: selection
             });
-            _.each(this.getReferences(), function (ref) {
+            this.getReferences().forEach((ref) => {
                 this.updateReference(selection, ref, ref.visibility);
-            }, this);
+            });
         },
         setProperty: function (key, value, updateReferences) {
             return this.set(key, value);
@@ -70884,7 +70947,7 @@ define('xide/model/Path',[
     "xide/utils",
     "dcl/dcl"
 ], function (utils, dcl) {
-    var Path = dcl(null, {
+    const Path = dcl(null, {
         declaredClass: "xide.model.Path",
         /**
          * @class xide.model.Path
@@ -70903,8 +70966,8 @@ define('xide/model/Path',[
         },
 
         endsWith: function (tail) {
-            var segments = utils.clone(this.segments);
-            var tailSegments = (new Path(tail)).getSegments();
+            const segments = utils.clone(this.segments);
+            const tailSegments = (new Path(tail)).getSegments();
             while (tailSegments.length > 0 && segments.length > 0) {
                 if (tailSegments.pop() != segments.pop()) {
                     return false;
@@ -70919,7 +70982,7 @@ define('xide/model/Path',[
             return this.extension;
         },
         segment: function (index) {
-            var segs = this.getSegments();
+            const segs = this.getSegments();
             if (segs.length < index) {
                 return null;
             }
@@ -70932,36 +70995,36 @@ define('xide/model/Path',[
          * @returns {String[]}
          */
         getChildren: function (items, recursive) {
-            var result = [];
-            var root = this,
-                path = this.toString();
+            const result = [];
+            const root = this;
+            const path = this.toString();
 
             function addChild(child) {
-                var _path = typeof child !== 'string' ? child.toString() : child;
-                if (_path !== path && result.indexOf(_path) == -1) {
+                const _path = typeof child !== 'string' ? child.toString() : child;
+                if (_path !== path && !result.includes(_path)) {
                     result.push(_path);
                 }
             }
 
             _.each(items, function (item) {
-                var child = new Path(item);
+                const child = new Path(item);
                 //root match
                 if (child.startsWith(root)) {
                     if (recursive) {
                         addChild(child.toString());
                     } else {
 
-                        var diff = child.relativeTo(path);
+                        const diff = child.relativeTo(path);
                         if (diff) {
-                            var diffSegments = diff.getSegments();
+                            const diffSegments = diff.getSegments();
                             //direct child
                             if (diffSegments.length == 1) {
                                 addChild(child);
                             } else if (diffSegments.length > 1) {
 
                                 //make sure that its parent has been added:
-                                var parent = child.getParentPath();
-                                var parentDiff = parent.relativeTo(path);
+                                const parent = child.getParentPath();
+                                const parentDiff = parent.relativeTo(path);
 
                                 //check diff again
                                 if (parentDiff.getSegments().length == 1) {
@@ -70977,7 +71040,7 @@ define('xide/model/Path',[
         },
         getSegments: function () {
             if (!this.segments) {
-                var path = this.path;
+                const path = this.path;
                 this.segments = path.split('/');
                 if (path.charAt(0) == '/') {
                     this.hasLeading = true;
@@ -70997,7 +71060,7 @@ define('xide/model/Path',[
         },
         getParentPath: function () {
             if (!this._parentPath) {
-                var parentSegments = utils.clone(this.segments);
+                const parentSegments = utils.clone(this.segments);
                 parentSegments.pop();
                 this._parentPath = new Path(parentSegments, this.hasLeading);
             }
@@ -71014,21 +71077,21 @@ define('xide/model/Path',[
             if (tail.isAbsolute()) {
                 return tail;
             }
-            var mySegments = this.segments;
-            var tailSegments = tail.getSegments();
-            var newSegments = mySegments.concat(tailSegments);
-            var result = new Path(newSegments, this.hasLeading, tail.hasTrailing);
+            const mySegments = this.segments;
+            const tailSegments = tail.getSegments();
+            const newSegments = mySegments.concat(tailSegments);
+            const result = new Path(newSegments, this.hasLeading, tail.hasTrailing);
             if (tailSegments[0] == ".." || tailSegments[0] == ".") {
                 result._canonicalize();
             }
             return result;
         },
         toString: function () {
-            var result = [];
+            const result = [];
             if (this.hasLeading) {
                 result.push('/');
             }
-            for (var i = 0; i < this.segments.length; i++) {
+            for (let i = 0; i < this.segments.length; i++) {
                 if (i > 0) {
                     result.push('/');
                 }
@@ -71040,7 +71103,7 @@ define('xide/model/Path',[
             return result.join("");
         },
         removeRelative: function () {
-            var segs = this.getSegments();
+            const segs = this.getSegments();
             if (segs.length > 0 && segs[1] == ".") {
                 return this.removeFirstSegments(1);
             }
@@ -71050,22 +71113,22 @@ define('xide/model/Path',[
             if (typeof base == 'string') {
                 base = new Path(base);
             }
-            var mySegments = this.segments;
+            const mySegments = this.segments;
             if (this.isAbsolute()) {
                 return this;
             }
-            var baseSegments = base.getSegments();
-            var commonLength = this.matchingFirstSegments(base);
-            var baseSegmentLength = baseSegments.length;
+            const baseSegments = base.getSegments();
+            const commonLength = this.matchingFirstSegments(base);
+            let baseSegmentLength = baseSegments.length;
             if (ignoreFilename) {
                 baseSegmentLength = baseSegmentLength - 1;
             }
-            var differenceLength = baseSegmentLength - commonLength;
-            var newSegmentLength = differenceLength + mySegments.length - commonLength;
+            const differenceLength = baseSegmentLength - commonLength;
+            const newSegmentLength = differenceLength + mySegments.length - commonLength;
             if (newSegmentLength == 0) {
                 return Path.EMPTY;
             }
-            var newSegments = [];
+            const newSegments = [];
             for (var i = 0; i < differenceLength; i++) {
                 newSegments.push('..');
             }
@@ -71075,18 +71138,18 @@ define('xide/model/Path',[
             return new Path(newSegments, false, this.hasTrailing);
         },
         startsWith: function (anotherPath) {
-            var count = this.matchingFirstSegments(anotherPath);
+            const count = this.matchingFirstSegments(anotherPath);
             return anotherPath._length() == count;
         },
         _length: function () {
             return this.segments.length;
         },
         matchingFirstSegments: function (anotherPath) {
-            var mySegments = this.segments;
-            var pathSegments = anotherPath.getSegments();
-            var max = Math.min(mySegments.length, pathSegments.length);
-            var count = 0;
-            for (var i = 0; i < max; i++) {
+            const mySegments = this.segments;
+            const pathSegments = anotherPath.getSegments();
+            const max = Math.min(mySegments.length, pathSegments.length);
+            let count = 0;
+            for (let i = 0; i < max; i++) {
                 if (mySegments[i] != pathSegments[i]) {
                     return count;
                 }
@@ -71098,11 +71161,11 @@ define('xide/model/Path',[
             return new Path(this.segments.slice(count, this.segments.length), this.hasLeading, this.hasTrailing);
         },
         removeMatchingLastSegments: function (anotherPath) {
-            var match = this.matchingFirstSegments(anotherPath);
+            const match = this.matchingFirstSegments(anotherPath);
             return this.removeLastSegments(match);
         },
         removeMatchingFirstSegments: function (anotherPath) {
-            var match = this.matchingFirstSegments(anotherPath);
+            const match = this.matchingFirstSegments(anotherPath);
             return this._clone().removeFirstSegments(match);
         },
         removeLastSegments: function (count) {
@@ -71121,7 +71184,7 @@ define('xide/model/Path',[
             if (this.segments.length != anotherPath.segments.length) {
                 return false;
             }
-            for (var i = 0; i < this.segments.length; i++) {
+            for (let i = 0; i < this.segments.length; i++) {
                 if (anotherPath.segments[i] != this.segments[i]) {
                     return false;
                 }
@@ -71129,8 +71192,8 @@ define('xide/model/Path',[
             return true;
         },
         _canonicalize: function () {
-            var doIt;
-            var segments = this.segments;
+            let doIt;
+            const segments = this.segments;
             for (var i = 0; i < segments.length; i++) {
                 if (segments[i] == "." || segments[i] == "..") {
                     doIt = true;
@@ -71138,7 +71201,7 @@ define('xide/model/Path',[
                 }
             }
             if (doIt) {
-                var stack = [];
+                const stack = [];
                 for (var i = 0; i < segments.length; i++) {
                     if (segments[i] == "..") {
                         if (stack.length == 0) {
@@ -71183,12 +71246,12 @@ define('xide/editor/Registry',[
 ], function (dcl,declare, factory, types,Memory) {
 
     //exported mixin
-    var editorMixin;
+    let editorMixin;
 
     //singleton store
-    var store;
+    let store;
 
-    var debug=false;
+    const debug=false;
 
     editorMixin = dcl(null, {
         declaredClass:"xide.editor.Registry",
@@ -71204,7 +71267,7 @@ define('xide/editor/Registry',[
 
     editorMixin.editors = [];
 
-    var editors = editorMixin.editors;
+    const editors = editorMixin.editors;
 
     editorMixin.getStore = function(){
         if(!store){
@@ -71230,8 +71293,8 @@ define('xide/editor/Registry',[
     };
 
     editorMixin.unregisterEditor = function (name) {
-        var _store = editorMixin.getStore();
-        var editors = _store._find({
+        const _store = editorMixin.getStore();
+        const editors = _store._find({
             name:name
         });
         function unregister(editor){
@@ -71246,8 +71309,8 @@ define('xide/editor/Registry',[
     };
 
     editorMixin.onRegisterEditor = function (eventData) {
-        var _store = editorMixin.getStore();
-        var allEditors = _store._find({
+        const _store = editorMixin.getStore();
+        const allEditors = _store._find({
             name:eventData.name
         });
        if(allEditors.length>0){
@@ -71264,13 +71327,13 @@ define('xide/editor/Registry',[
     };
 
     editorMixin.getDefaultEditor = function (item) {
-        var editors = editorMixin.getEditors(item);
+        const editors = editorMixin.getEditors(item);
         if (!editors) {
             return null;
         }
 
-        for (var i = 0; i < editors.length; i++) {
-            var obj = editors[i];
+        for (let i = 0; i < editors.length; i++) {
+            const obj = editors[i];
             if (obj.isDefault === true) {
                 return obj;
             }
@@ -71288,33 +71351,32 @@ define('xide/editor/Registry',[
         if(!item){
             return editors;
         }
-        var extension = editorMixin.getExtension(item.path);
+        let extension = editorMixin.getExtension(item.path);
         if (extension != null && extension.length == 0) {
             return null;
         }
         extension=extension.toLowerCase();
-        var result = [];
+        const result = [];
         if (!editorMixin.editors) {
             return null;
         }
 
-        var store = editorMixin.getStore();
-        var _defaultEditor = store._find({
+        const store = editorMixin.getStore();
+        const _defaultEditor = store._find({
             defaultEditor:true
         });
 
-        for (var i = 0; i < editors.length; i++) {
-            var editor = editors[i];
+        editors.forEach(editor => {
             if (editor) {
                 //check multiple extensions
-                if (editor.extensions.indexOf('|') != -1) {
-                    var supportedPluginExtensions = editor.extensions.split('|');
-                    for (var j = 0; j < supportedPluginExtensions.length; j++) {
-                        var supportedPluginExtension = supportedPluginExtensions[j];
+                if (editor.extensions.includes('|')) {
+                    const supportedPluginExtensions = editor.extensions.split('|');
+
+                    supportedPluginExtensions.forEach(supportedPluginExtension => {
                         if (supportedPluginExtension === extension) {
                             result.push(editor);
                         }
-                    }
+                    });
                 } else {
                     //otherwise single extension match
                     if (editor.extensions === extension) {
@@ -71322,7 +71384,7 @@ define('xide/editor/Registry',[
                     }
                 }
             }
-        }
+        });
 
         if(_defaultEditor.length==1){
             result.push(_defaultEditor[0]);
@@ -71345,7 +71407,7 @@ define('xide/manager/SettingsManager',[
     "xide/data/Memory",
     "dojo/Deferred"
 ], function (dcl,ServerActionBase, utils, ManagerBase,Memory,Deferred) {
-    var Module = dcl([ManagerBase, ServerActionBase], {
+    const Module = dcl([ManagerBase, ServerActionBase], {
         declaredClass:"xide.manager.SettingsManager",
         serviceClass: 'XApp_Store',
         settingsStore: null,
@@ -71354,7 +71416,7 @@ define('xide/manager/SettingsManager',[
         store:null,
         has: function (section, path, query, data, readyCB) {},
         getSetting:function(id){
-            var _val = this.getStore().query({
+            const _val = this.getStore().query({
                 id:id
             });
             return _val && _val[0] ? _val[0].value : null;
@@ -71374,12 +71436,12 @@ define('xide/manager/SettingsManager',[
                 this._createStore([]);
                 return;
             }
-            var _a = data['' + this.section];
+            const _a = data['' + this.section];
             this.settingsStore = this._createStore(_a);
         },
         replace: function (path, query, operation, newValue, readyCB) {
-            var thiz = this;
-            var defered = this.serviceObject[this.serviceClass].set(
+            const thiz = this;
+            const defered = this.serviceObject[this.serviceClass].set(
                 this.store,
                 path || '.', query, operation, newValue
             );
@@ -71400,7 +71462,7 @@ define('xide/manager/SettingsManager',[
         },
         write: function (section, path, query, data, decode, readyCB) {
             try {
-                var itemLocal = utils.queryStoreEx(this.settingsStore, {id: data.id}, true, true);
+                const itemLocal = utils.queryStoreEx(this.settingsStore, {id: data.id}, true, true);
                 if (itemLocal) {
                     return this.update(section, path, {id: data.id}, data.data, decode, readyCB);
                 } else {
@@ -71413,7 +71475,7 @@ define('xide/manager/SettingsManager',[
         write2: function (section, path, query, data, decode, readyCB) {
             try {
                 //var itemLocal = utils.queryStoreEx(this.settingsStore, {id: data.id}, true, true);
-                var itemLocal = utils.queryStoreEx(this.settingsStore, query, true, true);
+                const itemLocal = utils.queryStoreEx(this.settingsStore, query, true, true);
                 if (itemLocal) {
                     utils.mixin(itemLocal,data);
                     return this.update(section, path, query, data, decode, readyCB);
@@ -71425,8 +71487,8 @@ define('xide/manager/SettingsManager',[
             }
         },
         initStore: function () {
-            var dfd = new Deferred();
-            var self = this;
+            const dfd = new Deferred();
+            const self = this;
             this.serviceObject.__init.then(function() {
                 self.read(self.section, '.', null, self.onSettingsReceived.bind(self));
                 dfd.resolve();
@@ -71434,8 +71496,8 @@ define('xide/manager/SettingsManager',[
             return dfd;
         },
         init:function(){
-            var dfd = new Deferred();
-            var self = this;
+            const dfd = new Deferred();
+            const self = this;
             dfd.resolve();
             return dfd;
         }
@@ -71453,7 +71515,7 @@ define('xide/manager/NotificationManager',[
     return dcl([ManagerBase],{
         declaredClass:"xide.manager.NotificationManager",
         onError:function(err){
-            var mess = '';
+            let mess = '';
             if(err && err&& err.error && err.error.message){
                 mess = err.error.message;
             }else if(err && _.isString(err)){
@@ -71461,14 +71523,14 @@ define('xide/manager/NotificationManager',[
             }else if(err && _.isString(err.message)){
                 mess = err.message;
             }
-            var args = {
+            const args = {
                 message: mess,
                 type:'error',
                 duration: 500,
                 showCloseButton: true
             };
 
-            if(mess.indexOf('Stack trace')!==-1){
+            if(mess.includes('Stack trace')){
                 args.message = mess.substr(0,mess.indexOf('Stack trace'));
                 args.duration = 4000;
             }
@@ -71481,7 +71543,7 @@ define('xide/manager/NotificationManager',[
         _lastMessageTime:null,
         _lastMessageHash:null,
         onStatus:function(err){
-            var mess = '';
+            let mess = '';
 
             if(err.did!=null){
                 return;
@@ -71498,7 +71560,7 @@ define('xide/manager/NotificationManager',[
             if(mess=='Ok!'){
                 return ;
             }
-            var args = {
+            const args = {
                 message: mess,
                 type:'success',
                 duration: 500,
@@ -71528,8 +71590,8 @@ define('xide/manager/NotificationManager',[
             this.postMessage(args);
         },
         postMessage:function(msg){
-            var hash = MD5(JSON.stringify(msg),1);
-            var self = this;
+            const hash = MD5(JSON.stringify(msg),1);
+            const self = this;
 
             if(this._lastMessageHash===hash){
                 setTimeout(function () {
@@ -71556,7 +71618,7 @@ define('xide/manager/NotificationManager',[
             if($.globalMessenger && typeof Messenger!=='undefined') {
                 this.subscribe(types.EVENTS.STATUS,this.onStatus);
                 this.subscribe(types.EVENTS.ERROR,this.onError);
-                var theme = 'flat';
+                const theme = 'flat';
                 $.globalMessenger({
                     theme: theme,
                     extraClasses: 'messenger-fixed messenger-on-bottom messenger-on-right'
@@ -71596,12 +71658,12 @@ define('xide/manager/WindowManager',[
     }
 
     function findFrame(docker) {
-        var panels = docker.getPanels();
+        const panels = docker.getPanels();
         if (docker._lastSelected) {
-            for (var i = 0; i < panels.length; i++) {
-                var panel = panels[i];
+            for (let i = 0; i < panels.length; i++) {
+                const panel = panels[i];
                 if (panel == docker._lastSelected) {
-                    var frame = panel.getFrame();
+                    const frame = panel.getFrame();
                     if (frame) {
                         return frame;
                     }
@@ -71614,7 +71676,7 @@ define('xide/manager/WindowManager',[
      * @class module:xide/manager/WindowManager
      * @extends module:xide/manager/ManagerBase
      */
-    var Module = dcl(ManagerBase, {
+    const Module = dcl(ManagerBase, {
         declaredClass: 'xide.manager.WindowManager',
         actionReceivers: null,
         /**
@@ -71622,22 +71684,22 @@ define('xide/manager/WindowManager',[
          * @returns {Array}
          */
         getActions: function () {
-            var result = [];
-            var thiz = this;
+            const result = [];
+            const thiz = this;
             result.push(this.ctx.createAction('Next', 'View/Next', 'fa-cube', ['alt num_add'], 'Home', 'View', "global",
                 //onCreate
                 function (action) {
                 },
                 //handler
                 function () {
-                    var docker = thiz.ctx.mainView.getDocker();
-                    var frame = findFrame(docker);
+                    const docker = thiz.ctx.mainView.getDocker();
+                    const frame = findFrame(docker);
                     if (!frame) {
                         return;
                     }
-                    var pos = frame._curTab;
-                    var panel = frame.panel(pos);
-                    var next = frame.panel(pos + 1);
+                    const pos = frame._curTab;
+                    const panel = frame.panel(pos);
+                    const next = frame.panel(pos + 1);
                     if (panel || next) {
                         (next || panel ).select();
                         (next || panel ).resize();
@@ -71657,15 +71719,15 @@ define('xide/manager/WindowManager',[
                 },
                 //handler
                 function () {
-                    var docker = thiz.ctx.mainView.getDocker();
-                    var frame = findFrame(docker);
+                    const docker = thiz.ctx.mainView.getDocker();
+                    const frame = findFrame(docker);
                     if (!frame) {
                         return;
                     }
-                    var pos = frame._curTab;
+                    const pos = frame._curTab;
 
-                    var panel = frame.panel(pos);
-                    var next = frame.panel(pos - 1);
+                    const panel = frame.panel(pos);
+                    const next = frame.panel(pos - 1);
                     if (panel || next) {
 
                         (next || panel ).select();
@@ -71689,7 +71751,7 @@ define('xide/manager/WindowManager',[
             this.actionReceivers = [];
         },
         addActionReceiver: function (receiver) {
-            if (this.actionReceivers.indexOf(receiver) == -1) {
+            if (!this.actionReceivers.includes(receiver)) {
                 this.actionReceivers.push(receiver);
                 receiver._on('destroy', function () {
                     this.actionReceivers.remove(receiver);
@@ -71697,8 +71759,8 @@ define('xide/manager/WindowManager',[
             }
         },
         registerView: function (view, active) {
-            var toolbar = this.getToolbar(),
-                menu = this.getMainMenu();
+            const toolbar = this.getToolbar();
+            const menu = this.getMainMenu();
 
             this.publish(types.EVENTS.ON_OPEN_VIEW, {
                 view: view,
@@ -71708,33 +71770,33 @@ define('xide/manager/WindowManager',[
             });
             toolbar && register(view, toolbar, active);
             menu && register(view, menu, active);
-            var receivers = this.actionReceivers;
+            const receivers = this.actionReceivers;
             _.each(receivers, function (widget) {
                 widget && register(view, widget, active);
             });
             return true;
         },
         clearView: function (view, active) {
-            var toolbar = this.getToolbar(),
-                menu = this.getMainMenu(),
-                breadcrumb = this.getBreadcrumb();
+            const toolbar = this.getToolbar();
+            const menu = this.getMainMenu();
+            const breadcrumb = this.getBreadcrumb();
             toolbar && clear(view, toolbar, active);
             menu && clear(view, menu, active);
             return true;
         },
         getBreadcrumb: function () {
-            var ctx = this.ctx,
-                mainView = ctx.mainView;
+            const ctx = this.ctx;
+            const mainView = ctx.mainView;
             return mainView && mainView.getBreadcrumb ? mainView.getBreadcrumb() : null;
         },
         getToolbar: function () {
-            var ctx = this.ctx,
-                mainView = ctx.mainView;
+            const ctx = this.ctx;
+            const mainView = ctx.mainView;
             return mainView.getToolbar();
         },
         getMainMenu: function () {
-            var ctx = this.ctx,
-                mainView = ctx.mainView;
+            const ctx = this.ctx;
+            const mainView = ctx.mainView;
             return mainView.mainMenu;
         },
         /**
@@ -71745,7 +71807,7 @@ define('xide/manager/WindowManager',[
          * @returns {module:xdocker/Panel2}
          */
         createTab: function (title, icon, where) {
-            var docker = this.getContext().getMainView().getDocker();
+            const docker = this.getContext().getMainView().getDocker();
             return docker.addTab(null, {
                 title: title,
                 target: where ? where._parent : docker.getDefaultPanel(),
@@ -71787,13 +71849,13 @@ define('xide/manager/WindowManager',[
             if (item && !item.getPath().match(/^(.*\.(?!(zip|tar|gz|bzip2)$))?[^.]*$/i)) {
                 return;
             }
-            var thiz = this,
-                ctx = this.ctx;
+            const thiz = this;
+            const ctx = this.ctx;
 
-            var root = where || registry.byId(this.appendTo);
-            var docker = ctx.getMainView().getDocker();
+            let root = where || registry.byId(this.appendTo);
+            const docker = ctx.getMainView().getDocker();
             //create tab
-            var title = utils.toString(item.name);
+            const title = utils.toString(item.name);
             if (_.isFunction(where)) {
                 root = where({
                     title: title,
@@ -71816,7 +71878,7 @@ define('xide/manager/WindowManager',[
                 }
             }
 
-            var args = {
+            const args = {
                 dataItem: item,
                 item: item,
                 filePath: item.path,
@@ -71846,7 +71908,7 @@ define('xide/manager/WindowManager',[
             };
 
             utils.mixin(args, mixin);
-            var editor = utils.addWidget(Editor, args, this, root, true, null, null, select);
+            const editor = utils.addWidget(Editor, args, this, root, true, null, null, select);
             root.resize();
             editor.resize();
 
@@ -71877,7 +71939,10 @@ define('xide/min',[
 ], function () {
     if(!Array.prototype.remove) {
         Array.prototype.remove = function () {
-            var what, a = arguments, L = a.length, ax;
+            let what;
+            const a = arguments;
+            let L = a.length;
+            let ax;
             while (L && this.length) {
                 what = a[--L];
                 if (this.indexOf == null) {
@@ -71897,7 +71962,7 @@ define('xide/debug',[
     'dojo/has',
     'xdojo/has!debug?xide/serverDebug'
 ],function(declare,has,serverDebug){
-	var Module = declare("xide.debug", null,{});
+	const Module = declare("xide.debug", null,{});
 
     if(has('debug')) {
 
@@ -71907,14 +71972,14 @@ define('xide/debug',[
 
         window.xappServerDebug = displayServerDebugData;
 
-        var callback = function (stackframes) {
-            var stringifiedStack = stackframes.map(function (sf) {
+        const callback = function (stackframes) {
+            const stringifiedStack = stackframes.map(function (sf) {
                 return sf.toString();
             }).join('\n');
             console.log(stringifiedStack);
         };
 
-        var errback = function (err) {
+        const errback = function (err) {
             console.log(err.message);
         };
 
@@ -71926,7 +71991,7 @@ define('xide/debug',[
             window.logError = function (e, message) {
                 console.error((message || '') + ' :: ' + e.message + ' stack:\n', e);
                 if (typeof 'StackTracke' === 'undefined') {
-                    var stack = e.stack;
+                    let stack = e.stack;
                     stack = stack.split('\n').map(function (line) {
                         return line.trim();
                     });
@@ -71955,18 +72020,18 @@ define('xide/serverDebug',[
     'xdojo/has'
 ],function(declare,has){
 
-    var Module = declare("xide.serverDebug", null,{
+    const Module = declare("xide.serverDebug", null,{
 
     });
 
     /**
      * @var object
      */
-    var local_storage = null;
-    var color1 = '#888';
-    var color2 = '#0563ad';
+    const local_storage = null;
+    const color1 = '#888';
+    const color2 = '#0563ad';
 
-    var ALLOWED_TYPES = {
+    const ALLOWED_TYPES = {
         'group': 1,
         'groupEnd': 1,
         'groupCollapsed': 1,
@@ -71980,12 +72045,12 @@ define('xide/serverDebug',[
     /**
      * @var array
      */
-    var queue = [];
+    const queue = [];
 
     /**
      * @var bool
      */
-    var use_queue = true;
+    const use_queue = true;
 
     /**
      * should we show line numbers?
@@ -72005,41 +72070,40 @@ define('xide/serverDebug',[
      */
     function _logData(data, callback)
     {
-
         //console.log('server log : ',data);
 
-        var column_map = {};
-        var column_name;
+        const column_map = {};
+        let column_name;
 
-        for (var key in data.columns) {
+        for (const key in data.columns) {
             column_name = data.columns[key];
             column_map[column_name] = key;
         }
 
-        var rows = data.rows,
-            i = 0,
-            length = rows.length;
+        const rows = data.rows;
+        let i = 0;
+        const length = rows.length;
 
         for (i = 0; i < length; i++) {
-            var row = rows[i],
-                backtrace = row[column_map.backtrace],
-                label = row[column_map.label],
-                log = row[column_map.log],
-                type = row[column_map.type] || 'log';
+            const row = rows[i];
+            const backtrace = row[column_map.backtrace];
+            const label = row[column_map.label];
+            let log = row[column_map.log];
+            let type = row[column_map.type] || 'log';
 
             if (_showLineNumbers() && backtrace !== null) {
                 console.log('%c' + backtrace, 'color: ' + color1 + '; font-weight: bold;');
             }
 
             // new version without label
-            var new_version = false;
-            if (data.columns.indexOf('label') === -1) {
+            let new_version = false;
+            if (!data.columns.includes('label')) {
                 new_version = true;
             }
 
             // if this is the old version do some converting
             if (!new_version) {
-                var show_label = label && typeof label === "string";
+                const show_label = label && typeof label === "string";
 
                 log = [log];
 
@@ -72048,13 +72112,13 @@ define('xide/serverDebug',[
                 }
             }
 
-            var logs = [];
-            var current_log;
-            var last_log;
-            var new_string;
+            const logs = [];
+            let current_log;
+            let last_log;
+            let new_string;
 
             // loop through logs to add in any class name labels that should be here
-            for (var j = 0; j < log.length; j++) {
+            for (let j = 0; j < log.length; j++) {
                 current_log = log[j];
                 last_log = logs[logs.length - 1];
 
@@ -72197,9 +72261,9 @@ define('xide/model/Component',[
          * @returns {dojo.Deferred}
          */
         load: function (hasName) {
-            var _defered = new Deferred(),
-                thiz = this,
-                _re = require;
+            const _defered = new Deferred();
+            const thiz = this;
+            const _re = require;
 
             hasName = hasName || this.getLabel();
 
@@ -72234,26 +72298,33 @@ define('xide/factory/Events',[
     "dojo/on",
     'dojo/has',
     'xide/lodash'
-], function (factory, connect, lang, on,has) {
-    var _debug = false,         //print publish messages in console
-        _tryEvents = false,     //put publish in try/catch block
-        _foo=null,              //noop
-        _nativeEvents = {
-            "click": _foo,
-            "dblclick":_foo,
-            "mousedown":_foo,
-            "mouseup":_foo,
-            "mouseover":_foo,
-            "mousemove":_foo,
-            "mouseout":_foo,
-            "keypress":_foo,
-            "keydown":_foo,
-            "keyup":_foo,
-            "focus":_foo,
-            "blur":_foo,
-            "change":_foo
-        },
-        _debugGroup=false;
+], function (factory, connect, lang, on, has) {
+    const //print publish messages in console
+        _debug = false;
+
+    const //put publish in try/catch block
+        _tryEvents = false;
+
+    const //noop
+        _foo = null;
+
+    const _nativeEvents = {
+        "click": _foo,
+        "dblclick": _foo,
+        "mousedown": _foo,
+        "mouseup": _foo,
+        "mouseover": _foo,
+        "mousemove": _foo,
+        "mouseout": _foo,
+        "keypress": _foo,
+        "keydown": _foo,
+        "keyup": _foo,
+        "focus": _foo,
+        "blur": _foo,
+        "change": _foo
+    };
+
+    let _debugGroup = false;
 
 
     /**
@@ -72262,10 +72333,10 @@ define('xide/factory/Events',[
      * @returns {*}
      * @private
      */
-    function _isElement(o){
+    const _isElement = (o) => {
         return (
             typeof HTMLElement === "object" ? o instanceof HTMLElement : //DOM2
-            o && typeof o === "object" && o !== null && o.nodeType === 1 && typeof o.nodeName==="string"
+            o && typeof o === "object" && o !== null && o.nodeType === 1 && typeof o.nodeName === "string"
         );
     }
     /**
@@ -72275,15 +72346,17 @@ define('xide/factory/Events',[
      * @returns {Function}
      */
     function applyEventOnce(eventHandler, waitForMirror) {
-        var timer;
-        var mirror = this;
-        return function() {
-            var _arguments = arguments;
+        let timer;
+        const mirror = this;
+        return function () {
+            const _arguments = arguments;
             if (timer)
                 clearTimeout(timer);
-            timer = setTimeout(function() {
+            timer = setTimeout(function () {
                 if (waitForMirror && mirror.isPending())
-                    return setTimeout(function() { applyEventOnce(eventHandler, true) }, 0);
+                    return setTimeout(function () {
+                        applyEventOnce(eventHandler, true)
+                    }, 0);
                 eventHandler.apply(eventHandler, _arguments);
             }, 0);
         };
@@ -72304,7 +72377,8 @@ define('xide/factory/Events',[
 
         array = array.slice(); // copy before use
 
-        var nested = false, callNext = true;
+        let nested = false;
+        let callNext = true;
         loop();
 
         function loop() {
@@ -72313,7 +72387,7 @@ define('xide/factory/Events',[
                 while (array.length > 0 && test && !test(array[0]))
                     array.shift();
 
-                var item = array.shift();
+                const item = array.shift();
                 // TODO: implement proper err argument?
                 if (!item)
                     return callback && callback();
@@ -72333,21 +72407,23 @@ define('xide/factory/Events',[
      * @extends module:xide/factory
      * @memberOf xide/factory
      */
-    factory.publish = function (keys, data, callee,filter) {
-        var msgStruct   = data ? _.isString(data) ? {message: data} : data : {},
-            eventKeys   = keys,
-            _publish    = connect.publish,
-            result      = [];//lookup cache
+    factory.publish = function (keys, data, callee, filter) {
+        const msgStruct = data ? _.isString(data) ? {
+            message: data
+        } : data : {}; //lookup cache
+        let eventKeys = keys;
+        const _publish = connect.publish;
+        let result = [];
 
         //normalize to array
         if (!_.isArray(keys)) {
             eventKeys = [keys];
         }
-        for (var i = 0,l=eventKeys.length; i < l; i++) {
+        for (let i = 0, l = eventKeys.length; i < l; i++) {
 
-            var eventKey = eventKeys[i];
+            const eventKey = eventKeys[i];
 
-            if(filter && !filter(eventKey)){
+            if (filter && !filter(eventKey)) {
                 continue;
             }
 
@@ -72357,13 +72433,13 @@ define('xide/factory/Events',[
                 console.log('publish ' + eventKey + ' from : ' + (callee ? callee.id : ''), msgStruct);
             }
 
-            if(_tryEvents) {
+            if (_tryEvents) {
                 try {
                     result = _publish(eventKey, msgStruct);
                 } catch (e) {
-                    logError(e,'error whilst publishing event ' + eventKey);
+                    logError(e, 'error whilst publishing event ' + eventKey);
                 }
-            }else{
+            } else {
                 result = _publish(eventKey, msgStruct);
             }
         }
@@ -72381,58 +72457,65 @@ define('xide/factory/Events',[
      * @memberOf xide/factory
      * @returns {Object[]|null} Returns an array of regular Dojo-subscribe/on handles
      */
-    factory.subscribe = function (keys, cb, owner,filter) {
-        if(has('debug')){
-            if(!keys){
+    factory.subscribe = function (keys, cb, owner, filter) {
+        if (has('debug')) {
+            if (!keys) {
                 _debug && console.error('subscribe failed, event key is empty!');
                 return null;
             }
         }
 
         //some vars
-        var eventKeys  = keys,
-            _subscribe = connect.subscribe,     //cache
-            events = [];                        //resulting subscribe handles
-            //_isDom = _isElement(owner),       //dom element?
+        let eventKeys = keys; //resulting subscribe handles
+        //_isDom = _isElement(owner),       //dom element?
+
+        const //cache
+            _subscribe = connect.subscribe;
+
+        const events = [];
 
         //normalize to array
         if (!_.isArray(keys)) {
             eventKeys = [keys];
         }
 
-        for (var i = 0,l=eventKeys.length; i < l; i++) {
-
-            if(!eventKeys[i] || filter && !filter(eventKey)){
+        for (let i = 0, l = eventKeys.length; i < l; i++) {
+            if (!eventKeys[i] || filter && !filter(eventKey)) {
                 continue;
             }
 
-            var _item =
-                    //the raw item
-                    eventKeys[i],
-                    //is string?
-                    _isString = _.isString(_item),
-                    //if string: use it, otherwise assume struct
-                    eventKey =  _isString ? _item : _item.key,
-                    //pick handler from arguments or struct
-                    _handler = _isString ? cb : _item.handler,
-                    //is native event?
-                    _isNative = eventKey in _nativeEvents,
-                    //the final handle
-                    _handle;
+            const _item =
+                //the raw item
+                eventKeys[i];
+
+            const //is string?
+                _isString = _.isString(_item);
+
+            var //if string: use it, otherwise assume struct
+                eventKey = _isString ? _item : _item.key;
+
+            const //pick handler from arguments or struct
+                _handler = _isString ? cb : _item.handler;
+
+            const //is native event?
+                _isNative = eventKey in _nativeEvents;
+
+            let //the final handle
+                _handle;
 
 
             //owner specified, hitch the callback into owner's scope
             if (owner != null) {
                 //try cb first, then owner.onEVENT_KEY, that enables similar effect as in Dojo2/Evented
-                var _cb = _handler !=null ? _handler : owner[eventKey];
-                if(_isNative){
+                const _cb = _handler != null ? _handler : owner[eventKey];
+                if (_isNative) {
                     _handle = on(owner, eventKey, lang.hitch(owner, _cb));
-                }else{
+                } else {
                     _handle = _subscribe(eventKey, lang.hitch(owner, _cb));
                 }
                 _handle.handler = lang.hitch(owner, _cb);
             } else {
-                _handle =  connect.subscribe(eventKey, _handler);
+                _handle = connect.subscribe(eventKey, _handler);
                 _handle.handler = _handler;
             }
             //track the actual event type
@@ -72457,12 +72540,12 @@ define('xide/factory/Objects',[
      * @returns {*}
      */
     factory.createInstance = function (classNameOrPrototype, ctrArgs, baseClasses) {
-        var ctrArgsFinal = {};
+        const ctrArgsFinal = {};
         utils.mixin(ctrArgsFinal, ctrArgs);
         //prepare object prototype, try dojo and then abort
-        var objectProtoType = classNameOrPrototype;
+        let objectProtoType = classNameOrPrototype;
         if (_.isString(classNameOrPrototype)) {
-            var proto = dojo.getObject(objectProtoType) || dcl.getObject(objectProtoType);
+            const proto = dojo.getObject(objectProtoType) || dcl.getObject(objectProtoType);
             if (proto) {
                 objectProtoType = proto;
             } else {
@@ -72474,11 +72557,11 @@ define('xide/factory/Objects',[
         baseClasses && ( objectProtoType = declare(baseClasses, objectProtoType.prototype));
 
         if(!ctrArgsFinal.id){
-            var className = objectProtoType.declaredClass || 'no_class_';
+            const className = objectProtoType.declaredClass || 'no_class_';
             ctrArgsFinal.id = className.replace(/\//g, "_") + utils.createUUID();
         }
 
-        var instance = new objectProtoType(ctrArgsFinal);
+        const instance = new objectProtoType(ctrArgsFinal);
 
         //@TODO: trash
         instance && ( instance.ctrArgs = ctrArgsFinal);
@@ -76146,12 +76229,12 @@ define('xide/manager/ContextBase',[
     'dojo/_base/kernel',
     'dojo/_base/lang'
 ], function (dcl, factory, types, utils, EventedMixin, dojo, lang) {
-    var _debug = false;
+    const _debug = false;
     /**
      * @class module:xide/manager/ContextBase
      * @extends module:xide/mixins/EventedMixin
      */
-    var Module = dcl(EventedMixin.dcl, {
+    const Module = dcl(EventedMixin.dcl, {
         declaredClass: "xide.manager.ContextBase",
         language: "en",
         managers: [],
@@ -76176,11 +76259,11 @@ define('xide/manager/ContextBase',[
          * @returns {*|Object|null}
          */
         setModule: function (mid, module) {
-            var moduleDojo = this._getModuleDojo(mid);
+            const moduleDojo = this._getModuleDojo(mid);
             if (moduleDojo) {
                 return lang.setObject(utils.replaceAll('/', '.', mid), module);
             }
-            var moduleDCL = this._getModuleDcl(mid);
+            const moduleDCL = this._getModuleDcl(mid);
             if (moduleDCL) {
                 return dcl.setObject(utils.replaceAll('/', '.', mid), module);
             }
@@ -76198,14 +76281,14 @@ define('xide/manager/ContextBase',[
                     this.managers = [];
                 }
                 //1. prepare constructor arguments
-                var ctrArgsFinal = {
+                const ctrArgsFinal = {
                     ctx: this,
                     config: config || this.config
                 };
                 utils.mixin(ctrArgsFinal, ctrArgs);
                 if (_.isString(clz) && this.namespace) {
-                    var _clz = null;
-                    if (clz.indexOf('.') == -1) {
+                    let _clz = null;
+                    if (!clz.includes('.')) {
                         _clz = this.namespace + clz;
                     } else {
                         _clz = '' + clz;
@@ -76223,7 +76306,7 @@ define('xide/manager/ContextBase',[
                 }
 
                 //2. create instance
-                var mgr = factory.createInstance(clz, ctrArgsFinal);
+                const mgr = factory.createInstance(clz, ctrArgsFinal);
                 if (!mgr) {
                     _debug && console.error('creating manager instance failed : ' + clz);
                     return;
@@ -76255,9 +76338,9 @@ define('xide/manager/ContextBase',[
          */
         doMixins: function (mixins) {
             this.mixins = mixins || this.mixins;
-            for (var i = 0; i < mixins.length; i++) {
-                var mixin = mixins[i];
-                var obj = this.getModule(mixin.declaredClass);
+
+            mixins.forEach(mixin => {
+                let obj = this.getModule(mixin.declaredClass);
                 if (mixin.declaredClass === this.declaredClass) {
                     obj = this;
                 }
@@ -76266,7 +76349,7 @@ define('xide/manager/ContextBase',[
                 } else {
                     _debug && console.error('couldnt apply mixin to : ' + mixin.declaredClass);
                 }
-            }
+            });
         }
     });
     dcl.chainAfter(Module, 'constructManagers');
@@ -76608,13 +76691,13 @@ define('xide/utils/CSSUtils',[
      * @returns {*}
      */
     utils.findStyle=function(styleString,property){
-        var parser = new CSSParser();
-        var content = ".foo{";
+        const parser = new CSSParser();
+        let content = ".foo{";
         content+=styleString;
         content+="}";
-        var sheet=parser.parse(content, false, true);
-        var declarations = sheet.cssRules[0].declarations;
-        var declaration = _.find(declarations,{
+        const sheet=parser.parse(content, false, true);
+        const declarations = sheet.cssRules[0].declarations;
+        const declaration = _.find(declarations,{
             property:property
         });
 
@@ -76630,7 +76713,7 @@ define('xide/utils/CSSUtils',[
      * @returns {*}
      */
     utils.getBackgroundUrl=function(styleString){
-        var background = utils.findStyle(styleString,"background-image");
+        const background = utils.findStyle(styleString,"background-image");
         if(background) {
             try {
                 return background.match(/\((.*?)\)/)[1].replace(/('|")/g, '');
@@ -76648,7 +76731,7 @@ define('xide/utils/ObjectUtils',[
     "dojo/Deferred",
     'xide/lodash'
 ], function (utils, require, Deferred, lodash) {
-    var _debug = false;
+    const _debug = false;
     "use strict";
 
     utils.delegate = (function () {
@@ -76658,7 +76741,7 @@ define('xide/utils/ObjectUtils',[
 
         return function (obj, props) {
             TMP.prototype = obj;
-            var tmp = new TMP();
+            const tmp = new TMP();
             TMP.prototype = null;
             if (props) {
                 lang._mixin(tmp, props);
@@ -76673,7 +76756,7 @@ define('xide/utils/ObjectUtils',[
     //
     //////////////////////////////////////////////////////////////////////////////////////////////
     utils.debounce = function (who, methodName, _function, delay, options, now, args) {
-        var _place = who[methodName + '_debounced'];
+        let _place = who[methodName + '_debounced'];
         if (!_place) {
             _place = who[methodName + '_debounced'] = lodash.debounce(_function, delay, options);
         }
@@ -76697,7 +76780,7 @@ define('xide/utils/ObjectUtils',[
      * @param text
      */
     utils.download = function (filename, text) {
-        var element = document.createElement('a');
+        const element = document.createElement('a');
         text = lodash.isString(text) ? text : JSON.stringify(text, null, 2);
         element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
         element.setAttribute('download', filename);
@@ -76713,8 +76796,8 @@ define('xide/utils/ObjectUtils',[
      * @returns {*}
      */
     utils.hasObject = function (mixed) {
-        var result = null;
-        var _re = require;
+        let result = null;
+        const _re = require;
         try {
             result = _re(mixed);
         } catch (e) {
@@ -76727,7 +76810,7 @@ define('xide/utils/ObjectUtils',[
      * @param mid {string}
      */
     utils.toUrl = function (mid) {
-        var _require = require;
+        const _require = require;
         //make sure cache bust is off otherwise it appends ?time
         _require({
             cacheBust: null,
@@ -76742,9 +76825,9 @@ define('xide/utils/ObjectUtils',[
      * @returns {Object|Promise}
      */
     utils.getObject = function (mixed, _default) {
-        var result = null;
+        let result = null;
         if (utils.isString(mixed)) {
-            var _re = require;
+            const _re = require;
             try {
                 result = _re(mixed);
             } catch (e) {
@@ -76753,7 +76836,7 @@ define('xide/utils/ObjectUtils',[
             //not a loaded module yet
             try {
                 if (!result) {
-                    var deferred = new Deferred();
+                    const deferred = new Deferred();
                     //try loader
                     result = _re([
                         mixed
@@ -76780,8 +76863,8 @@ define('xide/utils/ObjectUtils',[
     //
     //////////////////////////////////////////////////////////////////////////////////////////////
     utils.toArray = function (obj) {
-        var result = [];
-        for (var c in obj) {
+        const result = [];
+        for (const c in obj) {
             result.push({
                 name: c,
                 value: obj[c]
@@ -76806,8 +76889,8 @@ define('xide/utils/ObjectUtils',[
                 return arr[0];
             }
 
-            var rv = {};
-            for (var i = 0; i < arr.length; ++i) {
+            const rv = {};
+            for (let i = 0; i < arr.length; ++i) {
                 rv[i] = arr[i];
             }
             return rv;
@@ -76825,9 +76908,9 @@ define('xide/utils/ObjectUtils',[
     utils.byString = function (o, s, defaultValue) {
         s = s.replace(/\[(\w+)\]/g, '.$1'); // convert indexes to properties
         s = s.replace(/^\./, '');           // strip a leading dot
-        var a = s.split('.');
+        const a = s.split('.');
         while (a.length) {
-            var n = a.shift();
+            const n = a.shift();
             if (n in o) {
                 o = o[n];
             } else {
@@ -76846,9 +76929,10 @@ define('xide/utils/ObjectUtils',[
      * Internals
      */
 
-        //cache
-    var toStr = Object.prototype.toString,
-        _hasOwnProperty = Object.prototype.hasOwnProperty;
+    //cache
+    const toStr = Object.prototype.toString;
+
+    const _hasOwnProperty = Object.prototype.hasOwnProperty;
 
     /**
      * @private
@@ -76865,7 +76949,7 @@ define('xide/utils/ObjectUtils',[
      * @returns {*}
      */
     function getKey(key) {
-        var intKey = parseInt(key, 10);
+        const intKey = parseInt(key, 10);
         if (intKey.toString() === key) {
             return intKey;
         }
@@ -76891,10 +76975,10 @@ define('xide/utils/ObjectUtils',[
         if (lodash.isString(path)) {
             return set(obj, path.split('.').map(getKey), value, doNotReplace);
         }
-        var currentPath = path[0];
+        const currentPath = path[0];
 
         if (path.length === 1) {
-            var oldVal = obj[currentPath];
+            const oldVal = obj[currentPath];
             if (oldVal === void 0 || !doNotReplace) {
                 obj[currentPath] = value;
             }
@@ -76933,8 +77017,8 @@ define('xide/utils/ObjectUtils',[
             return del(obj, path.split('.'));
         }
 
-        var currentPath = getKey(path[0]);
-        var oldVal = obj[currentPath];
+        const currentPath = getKey(path[0]);
+        const oldVal = obj[currentPath];
 
         if (path.length === 1) {
             if (oldVal !== void 0) {
@@ -76957,7 +77041,7 @@ define('xide/utils/ObjectUtils',[
      * @private
      * @type {{}}
      */
-    var objectPath = {};
+    const objectPath = {};
 
     objectPath.has = function (obj, path) {
         if (lodash.isEmpty(obj)) {
@@ -76973,8 +77057,8 @@ define('xide/utils/ObjectUtils',[
             return false;
         }
 
-        for (var i = 0; i < path.length; i++) {
-            var j = path[i];
+        for (let i = 0; i < path.length; i++) {
+            const j = path[i];
             if ((lodash.isObject(obj) || lodash.isArray(obj)) && _hasOwnProperty.call(obj, j)) {
                 obj = obj[j];
             } else {
@@ -77016,7 +77100,7 @@ define('xide/utils/ObjectUtils',[
      * @param at
      */
     objectPath.insert = function (obj, path, value, at) {
-        var arr = objectPath.get(obj, path);
+        let arr = objectPath.get(obj, path);
         at = ~~at;
         if (!lodash.isArray(arr)) {
             arr = [];
@@ -77039,7 +77123,8 @@ define('xide/utils/ObjectUtils',[
             return void 0;
         }
 
-        var value, i;
+        let value;
+        let i;
         if (!(value = objectPath.get(obj, path))) {
             return obj;
         }
@@ -77069,7 +77154,7 @@ define('xide/utils/ObjectUtils',[
      * @param path
      */
     objectPath.push = function (obj, path /*, values */) {
-        var arr = objectPath.get(obj, path);
+        let arr = objectPath.get(obj, path);
         if (!lodash.isArray(arr)) {
             arr = [];
             objectPath.set(obj, path, arr);
@@ -77085,8 +77170,8 @@ define('xide/utils/ObjectUtils',[
      * @returns {*}
      */
     objectPath.coalesce = function (obj, paths, defaultValue) {
-        var value;
-        for (var i = 0, len = paths.length; i < len; i++) {
+        let value;
+        for (let i = 0, len = paths.length; i < len; i++) {
             if ((value = objectPath.get(obj, paths[i])) !== void 0) {
                 return value;
             }
@@ -77117,7 +77202,7 @@ define('xide/utils/ObjectUtils',[
         if (lodash.isString(path)) {
             return objectPath.get(obj, path.split('.'), defaultValue);
         }
-        var currentPath = getKey(path[0]);
+        const currentPath = getKey(path[0]);
         if (path.length === 1) {
             if (obj && obj[currentPath] === void 0) {
                 return defaultValue;
@@ -77215,7 +77300,7 @@ define('xide/utils/ObjectUtils',[
      * @returns {*}
      */
     utils.merge = function (to, from) {
-        for (var n in from) {
+        for (const n in from) {
             if (typeof to[n] != 'object') {
                 to[n] = from[n];
             } else if (typeof from[n] == 'object') {
@@ -77254,7 +77339,9 @@ define('xide/utils/ObjectUtils',[
             // RegExp
             return new RegExp(src); // RegExp
         }
-        var r, i, l;
+        let r;
+        let i;
+        let l;
         if (utils.isArray(src)) {
             // array
             r = [];
@@ -77287,7 +77374,10 @@ define('xide/utils/ObjectUtils',[
      * @private
      */
     utils._mixin = function (dest, source, copyFunc) {
-        var name, s, i, empty = {};
+        let name;
+        let s;
+        let i;
+        const empty = {};
         for (name in source) {
             // the (!(name in empty) || empty[name] !== s) condition avoids copying properties in "source"
             // inherited from Object.prototype.	 For example, if dest has a custom toString() method,
@@ -77339,8 +77429,8 @@ define('xide/utils/ObjectUtils',[
             if (!dest) {
                 dest = {};
             }
-            var l = arguments.length;
-            for (var i = 1; i < l; i++) {
+            const l = arguments.length;
+            for (let i = 1; i < l; i++) {
                 utils._mixin(dest, arguments[i]);
             }
             return dest; // Object
@@ -77354,8 +77444,8 @@ define('xide/utils/ObjectUtils',[
      * @returns {{}}
      */
     utils.cloneKeys = function (defaults, skipEmpty) {
-        var result = {};
-        for (var _class in defaults) {
+        const result = {};
+        for (const _class in defaults) {
             if (skipEmpty === true && !(_class in defaults)) {
                 continue;
             }
@@ -77423,9 +77513,9 @@ define('xide/utils/CIUtils',[
      */
     utils.toOptions  = function(cis){
         cis = utils.flattenCIS(cis);
-        var result = [];
-        for (var i = 0; i < cis.length; i++) {
-            var ci = cis[i];
+        const result = [];
+        for (let i = 0; i < cis.length; i++) {
+            const ci = cis[i];
             result.push({
                 name:utils.toString(ci['name']),
                 value:utils.getCIValue(ci),
@@ -77446,13 +77536,13 @@ define('xide/utils/CIUtils',[
 
     if(has('xideve') || has('xblox-ui')) {
         utils.getEventsAsOptions = function (selected) {
-            var result = [
+            let result = [
                 {label: "Select Event", value: ""}
             ];
-            for (var e in types.EVENTS) {
-                var label = types.EVENTS[e];
+            for (const e in types.EVENTS) {
+                const label = types.EVENTS[e];
 
-                var item = {
+                const item = {
                     label: label,
                     value: types.EVENTS[e]
                 };
@@ -77474,8 +77564,8 @@ define('xide/utils/CIUtils',[
                     {label: "On Load", value: "Load"}
                 ]);
             //select the event we are listening to
-            for (var i = 0; i < result.length; i++) {
-                var obj = result[i];
+            for (let i = 0; i < result.length; i++) {
+                const obj = result[i];
                 if (obj.value === selected) {
                     obj.selected = true;
                     break;
@@ -77486,13 +77576,13 @@ define('xide/utils/CIUtils',[
     }
 
     utils.flattenCIS  = function(cis){
-        var addedCIS = [];
-        var removedCIs = [];
+        const addedCIS = [];
+        const removedCIs = [];
         for (var i = 0; i < cis.length; i++) {
-            var ci = cis[i];
-            var ciType = utils.toInt(ci.type);
+            const ci = cis[i];
+            const ciType = utils.toInt(ci.type);
             if(ciType > types.ECIType.END){//type is higher than core types, try to resolve it
-                var resolved = types.resolveType(ciType);
+                const resolved = types.resolveType(ciType);
                 if(resolved){
                     utils.mixin(addedCIS,resolved);
                     removedCIs.push(ci);
@@ -77511,8 +77601,8 @@ define('xide/utils/CIUtils',[
     };
 
     utils.arrayContains=function(array,element){
-        for (var i = 0; i < array.length; i++){
-            var _e = array[i];
+        for (let i = 0; i < array.length; i++){
+            const _e = array[i];
             if(_e===element){
                 return true;
             }
@@ -77550,7 +77640,7 @@ define('xide/utils/CIUtils',[
      * @returns {{dataRef: null, dataSource: null, name: *, group: number, id: *, title: *, type: *, uid: number, value: *, visible: boolean, enumType: number, class: string}}
      */
     utils.createCI = function (name, type, value,args,settings) {
-        var res = {
+        const res = {
             dataRef:null,
             dataSource:null,
             name:name,
@@ -77609,15 +77699,15 @@ define('xide/utils/CIUtils',[
         if(!data ||!name){
             return null;
         }
-        var chain = 0;
-        var dstChain = chain == 0 ? data.inputs : chain == 1 ? data.outputs : null;
+        const chain = 0;
+        let dstChain = chain == 0 ? data.inputs : chain == 1 ? data.outputs : null;
         if(!dstChain){//has no chains, be nice
             dstChain=data;
         }
         if (dstChain != null) {
-            for (var i = 0; i < dstChain.length; i++) {
-                var ci = dstChain[i];
-                var _n = utils.getStringValue(ci.name);
+            for (let i = 0; i < dstChain.length; i++) {
+                const ci = dstChain[i];
+                const _n = utils.getStringValue(ci.name);
                 if (_n!=null && _n.toLowerCase() === name.toLowerCase()){
                     return ci;
                 }
@@ -77629,15 +77719,15 @@ define('xide/utils/CIUtils',[
         if(!data){
             return null;
         }
-        var chain = 0;
-        var dstChain = chain == 0 ? data.inputs : chain == 1 ? data.outputs : null;
+        const chain = 0;
+        let dstChain = chain == 0 ? data.inputs : chain == 1 ? data.outputs : null;
         if(!dstChain){//has no chains, be nice
             dstChain=data;
         }
         if (dstChain != null) {
-            for (var i = 0; i < dstChain.length; i++) {
-                var ci = dstChain[i];
-                var _n = utils.getStringValue(ci.id);
+            for (let i = 0; i < dstChain.length; i++) {
+                const ci = dstChain[i];
+                const _n = utils.getStringValue(ci.id);
                 if (_n!=null && _n.toLowerCase() === name.toLowerCase()){
                     return ci;
                 }
@@ -77656,14 +77746,14 @@ define('xide/utils/CIUtils',[
         if(!data){
             return null;
         }
-        var dstChain = chain == 0 ? data.inputs : chain == 1 ? data.outputs : null;
+        let dstChain = chain == 0 ? data.inputs : chain == 1 ? data.outputs : null;
         if(!dstChain){//has no chains
             dstChain=data;
         }
         if (dstChain != null) {
-            for (var i = 0; i < dstChain.length; i++) {
-                var ci = dstChain[i];
-                var _n = utils.getStringValue(ci.name);
+            for (let i = 0; i < dstChain.length; i++) {
+                const ci = dstChain[i];
+                const _n = utils.getStringValue(ci.name);
                 if (_n!=null && _n.toLowerCase() === name.toLowerCase()){
                     return ci;
                 }
@@ -77673,9 +77763,9 @@ define('xide/utils/CIUtils',[
     };
     utils.getCIByUid= function (dstChain, uid) {
         if (dstChain != null) {
-            for (var i = 0; i < dstChain.length; i++) {
-                var ci = dstChain[i];
-                var _n = utils.getStringValue(ci.uid);
+            for (let i = 0; i < dstChain.length; i++) {
+                const ci = dstChain[i];
+                const _n = utils.getStringValue(ci.uid);
                 if (_n!=null && _n === uid)
                 {
                     return ci;
@@ -77685,10 +77775,10 @@ define('xide/utils/CIUtils',[
         return null;
     };
     utils.getCIById= function (data, chain, id) {
-        var dstChain = chain == 0 ? data.inputs : chain == 1 ? data.outputs : null;
+        const dstChain = chain == 0 ? data.inputs : chain == 1 ? data.outputs : null;
         if (dstChain != null) {
-            for (var i = 0; i < dstChain.length; i++) {
-                var ci = dstChain[i];
+            for (let i = 0; i < dstChain.length; i++) {
+                const ci = dstChain[i];
                 if (ci.id[0] == id[0]  )
                     return ci;
             }
@@ -77696,7 +77786,7 @@ define('xide/utils/CIUtils',[
         return null;
     };
     utils.getCIInputValueByName = function (data, name) {
-        var ci = utils.getCIByChainAndName(data, 0, name);
+        const ci = utils.getCIByChainAndName(data, 0, name);
         if (ci) {
             return ci.value;
         }
@@ -77773,7 +77863,7 @@ define('xide/utils/CIUtils',[
     };
 
     utils.setCIValue = function (data, field, value) {
-        var ci = utils.getInputCIByName(data,field);
+        const ci = utils.getInputCIByName(data,field);
         if(ci){
             utils.setCIValueByField(ci,'value',value);
         }
@@ -77787,7 +77877,7 @@ define('xide/utils/CIUtils',[
      * @returns {*}
      */
     utils.getCIInputValueByNameAndField = function (data, name, field) {
-        var ci = utils.getCIByChainAndName(data, 0, name);
+        const ci = utils.getCIByChainAndName(data, 0, name);
         if (ci) {
             return ci["" + field];
         }
@@ -77801,7 +77891,7 @@ define('xide/utils/CIUtils',[
      * @returns {null}
      */
     utils.getCIInputValueByNameAndFieldStr = function (data, name, field) {
-        var rawValue = utils.getCIInputValueByNameAndField(data,name,field);
+        const rawValue = utils.getCIInputValueByNameAndField(data,name,field);
         if(rawValue){
             return utils.getStringValue(rawValue);
         }
@@ -77815,7 +77905,7 @@ define('xide/utils/CIUtils',[
      * @returns {null}
      */
     utils.getCIInputValueByNameAndFieldBool = function (data, name, field) {
-        var rawValue = utils.getCIInputValueByNameAndField(data,name,field);
+        const rawValue = utils.getCIInputValueByNameAndField(data,name,field);
         if(rawValue){
             return utils.toBoolean(rawValue);
         }
@@ -77829,8 +77919,8 @@ define('xide/utils/CIUtils',[
      */
     utils.getCIWidgetByName=function(cis,name){
 
-        for (var i = 0; i < cis.length; i++) {
-            var ci = cis[i];
+        for (let i = 0; i < cis.length; i++) {
+            const ci = cis[i];
             if(ci['_widget'] && ci.name===name){
                 return ci['_widget'];
             }
@@ -77848,17 +77938,17 @@ define('xide/utils/WidgetUtils',[
     utils.getParentWidget=function(start,declaredClass,max){
         //sanitize start
         start = start.containerNode || start.domNode || start;
-        var i = 0,
-            element = start,
-            widget = null,
-            _max = max || 10,
-            _lastWidget = null;
+        let i = 0;
+        let element = start;
+        let widget = null;
+        const _max = max || 10;
+        let _lastWidget = null;
 
         while (i < _max && !widget) {
             if (element) {
                 element = element.parentNode;
-                var _widgetById = registry.byId(element.id);
-                var _widget = _widgetById || registry.getEnclosingWidget(element);
+                const _widgetById = registry.byId(element.id);
+                const _widget = _widgetById || registry.getEnclosingWidget(element);
                 _widget && (_lastWidget = _widget);
                 if(_widget && declaredClass &&  _widget.declaredClass && _widget.declaredClass.indexOf(declaredClass)!=-1){
                     widget = _widget;
@@ -77874,8 +77964,8 @@ define('xide/utils/WidgetUtils',[
      * @returns {string}
      */
     utils.getWidgetType = function (type) {
-        var res = "";
-        var root = 'xide.widgets.';
+        let res = "";
+        const root = 'xide.widgets.';
         if (type == types.ECIType.ENUMERATION) {
             res = root  + "Select";
         }
@@ -77953,13 +78043,13 @@ define('xide/utils/StoreUtils',[
         //remove the item itself
         mixed && store.removeSync(mixed[idAttribute],silent);
         //remove children recursively
-        var query = {};
+        const query = {};
         query[parentAttr] = mixed[idAttribute] ? mixed[idAttribute] : mixed;
         destroy ===true && lodash.isObject(mixed) && utils.destroy(mixed,true);
         if(recursive===true) {
-            var items = store.query(query);
+            const items = store.query(query);
             if (items && items.length) {
-                for (var i = 0; i < items.length; i++) {
+                for (let i = 0; i < items.length; i++) {
                     utils.removeFromStore(store, items[i], recursive, idAttribute, parentAttr,silent,destroy);
                 }
             }
@@ -77983,9 +78073,9 @@ define('xide/utils/StoreUtils',[
         return null;
     };
     utils.toBoolean = function (data) {
-        var resInt = false;
+        let resInt = false;
         if (data != null) {
-            var _dataStr = data[0] ? data[0] : data;
+            const _dataStr = data[0] ? data[0] : data;
             if (_dataStr != null) {
                 resInt = !!(( _dataStr === true || _dataStr === 'true' || _dataStr === '1'));
             }
@@ -78002,9 +78092,9 @@ define('xide/utils/StoreUtils',[
         if(_.isNumber(data)){
             return data;
         }
-        var resInt = -1;
+        let resInt = -1;
         if (data!=null) {
-            var _dataStr = data.length > 1 ? data : data[0] ? data[0] : data;
+            const _dataStr = data.length > 1 ? data : data[0] ? data[0] : data;
             if (_dataStr != null) {
                 resInt = parseInt(_dataStr, 10);
             }
@@ -78052,13 +78142,13 @@ define('xide/utils/StoreUtils',[
             return null;
         }
         if (store instanceof Memory) {
-            var result = utils.queryMemoryStoreEx(store, query);
+            const result = utils.queryMemoryStoreEx(store, query);
             if (single && result && result[0]) {
                 return result[0];
             }
             return result;
         }
-        var res = null;
+        let res = null;
         if (store.query) {
             res = store.query(query);
         }
@@ -78082,7 +78172,7 @@ define('xide/utils/StoreUtils',[
      * @returns {*}
      */
     utils.queryStore = function (store, query, nullEmpty) {
-        var res = utils.queryStoreEx(store, query,null,null);
+        const res = utils.queryStoreEx(store, query,null,null);
         if (res && res.length == 1) {
             return res[0];
         }
@@ -78101,7 +78191,7 @@ define('xide/utils/StoreUtils',[
      * @returns {Array}
      */
     utils.queryMemoryStoreEx = function (store, query) {
-        var result = [];
+        const result = [];
         store.query(query).forEach(function (entry) {
             result.push(entry);
         });
@@ -78109,7 +78199,7 @@ define('xide/utils/StoreUtils',[
     };
 
     utils.queryMemoryStoreSingle = function (store, query) {
-        var result = utils.queryMemoryStoreEx(store, query);
+        const result = utils.queryMemoryStoreEx(store, query);
         if (result.length == 1) {
             return result[0];
         }
@@ -78148,13 +78238,13 @@ define('xide/utils/HTMLUtils',[
     utils.empty = function (mixed) {
         //seems widget
         if (mixed.getChildren && mixed.removeChild) {
-            var children = mixed.getChildren();
+            const children = mixed.getChildren();
             _.each(children, function (widget) {
                 mixed.removeChild(widget);
             });
         }
         //now remove anything non-widget
-        var _el = mixed.containerNode || mixed.domNode || _.isElement(mixed) ? mixed : null;
+        const _el = mixed.containerNode || mixed.domNode || _.isElement(mixed) ? mixed : null;
         if (_el) {
             domConstruct.empty(_el);
         }
@@ -78170,12 +78260,12 @@ define('xide/utils/HTMLUtils',[
         if (!startNode || startNode.children == null || startNode.children.length == null) {
             return null;
         }
-        var children = startNode.children;
+        let children = startNode.children;
         if (mustHaveClass !== null) {
             children = utils.find(mustHaveClass, startNode, false);
         }
-        for (var i in children) {
-            var child = children[i];
+        for (const i in children) {
+            const child = children[i];
             if (child.innerHTML === '') {
                 return child;
             }
@@ -78191,7 +78281,7 @@ define('xide/utils/HTMLUtils',[
      * @returns {HTMLElement}
      */
     utils.create = function (tag, options, where) {
-        var doc = win.doc;
+        let doc = win.doc;
         if (where) {
             doc = where.ownerDocument;
         }
@@ -78212,7 +78302,7 @@ define('xide/utils/HTMLUtils',[
      * @returns {boolean}
      */
     utils.isDescendant = function (parent, child) {
-        var node = child.parentNode;
+        let node = child.parentNode;
         while (node !== null) {
             if (node == parent) {
                 return true;
@@ -78281,7 +78371,7 @@ define('xide/utils/HTMLUtils',[
      * @returns {module:xide/_base/_Widget|module:xide/widgets/_Widget|null}
      */
     utils.addWidget = function (widgetProto, ctrArgsIn, delegate, parent, startup, cssClass, baseClasses, select, classExtension) {
-        var ctrArgs = {
+        const ctrArgs = {
             delegate: delegate
         };
         ctrArgsIn = ctrArgsIn || {};
@@ -78289,17 +78379,17 @@ define('xide/utils/HTMLUtils',[
 
         //deal with class name
         if (_.isString(widgetProto)) {
-            var _widgetProto = utils.getObject(widgetProto);
+            const _widgetProto = utils.getObject(widgetProto);
             if (_widgetProto) {
                 widgetProto = _widgetProto;
             }
         }
 
         parent = _.isString(parent) ? domConstruct.create(parent) : parent == null ? win.doc.createElement('div') : parent;
-        var isDirect = ctrArgsIn.attachDirect ? ctrArgsIn.attachDirect : (widgetProto && widgetProto.prototype ? widgetProto.prototype.attachDirect : false);
+        const isDirect = ctrArgsIn.attachDirect ? ctrArgsIn.attachDirect : (widgetProto && widgetProto.prototype ? widgetProto.prototype.attachDirect : false);
         ctrArgs._parent = parent;
 
-        var _target = utils.getNode(parent);
+        const _target = utils.getNode(parent);
 
         //@TODO: remove
         if (parent && parent.finishLoading) {
@@ -78317,7 +78407,7 @@ define('xide/utils/HTMLUtils',[
             return parent.addWidget(widgetProto, ctrArgsIn, delegate, parent, startup, cssClass, baseClasses, select, classExtension);
         }
 
-        var widget = utils.createInstanceSync(widgetProto, ctrArgs, isDirect ? _target : null, baseClasses, classExtension);// new widgetProto(ctrArgs, dojo.doc.createElement('div'));
+        const widget = utils.createInstanceSync(widgetProto, ctrArgs, isDirect ? _target : null, baseClasses, classExtension);// new widgetProto(ctrArgs, dojo.doc.createElement('div'));
         if (!widget) {
             console.error('widget creation failed! ', arguments);
             return null;
@@ -78361,9 +78451,9 @@ define('xide/utils/HTMLUtils',[
             return;
         }
         try {
-            var parentIsWidget = typeof parent.addChild === 'function';
-            var _parentNode = parentIsWidget ? parent : utils.getNode(parent);
-            var _childNode = parentIsWidget ? child : child.domNode || child;
+            const parentIsWidget = typeof parent.addChild === 'function';
+            const _parentNode = parentIsWidget ? parent : utils.getNode(parent);
+            const _childNode = parentIsWidget ? child : child.domNode || child;
             if (_parentNode && _childNode) {
                 if (!parent.addChild) {
                     if (_childNode.nodeType) {
@@ -78375,7 +78465,7 @@ define('xide/utils/HTMLUtils',[
                         logError('child is not html');
                     }
                 } else {
-                    var insertIndex = -1;
+                    let insertIndex = -1;
                     if (parent.getChildren) {
                         insertIndex = parent.getChildren().length;
                     }
@@ -78434,8 +78524,8 @@ define('xide/utils/HTMLUtils',[
 
      */
     utils.templatify = function (baseClass, templateString, parentNode, templateArguments, baseClasses, startup) {
-        var widgetClassIn = baseClass || 'xide/widgets/TemplatedWidgetBase',
-            widgetProto = null;
+        const widgetClassIn = baseClass || 'xide/widgets/TemplatedWidgetBase';
+        let widgetProto = null;
         if (baseClasses) {
             widgetProto = declare([baseClass].concat(baseClasses));
         } else {
@@ -78444,11 +78534,11 @@ define('xide/utils/HTMLUtils',[
         if (!widgetProto) {
             return null;
         }
-        var ctrArgs = {
+        const ctrArgs = {
             templateString: templateString
         };
         utils.mixin(ctrArgs, templateArguments);
-        var widget = new widgetProto(ctrArgs, dojo.doc.createElement('div'));
+        const widget = new widgetProto(ctrArgs, dojo.doc.createElement('div'));
         utils.addChild(parentNode, widget, startup);
         return widget;
     };
@@ -78460,7 +78550,7 @@ define('xide/utils/HTMLUtils',[
      * @private
      */
     utils._clearProperty = function (prop, owner) {
-        var _key = null;
+        let _key = null;
         if (owner) {
             _key = utils.getObjectKeyByValue(owner, prop);
         }
@@ -78504,7 +78594,7 @@ define('xide/utils/HTMLUtils',[
                         domConstruct.destroy(view.domNode);
                     }
                 } else {
-                    var doc = view.ownerDocument;
+                    const doc = view.ownerDocument;
                     // cannot use _destroyContainer.ownerDocument since this can throw an exception on IE
                     if (doc) {
                         domConstruct.destroy(view);
@@ -78528,9 +78618,9 @@ define('xide/utils/HTMLUtils',[
     utils.destroy = function (widget, callDestroy, owner) {
         if (widget) {
             if (_.isArray(widget)) {
-                for (var i = 0; i < widget.length; i++) {
-                    var obj1 = widget[i];
-                    var _key = null;
+                for (let i = 0; i < widget.length; i++) {
+                    const obj1 = widget[i];
+                    let _key = null;
                     if (owner) {
                         _key = utils.getObjectKeyByValue(owner, obj1);
                     }
@@ -78568,7 +78658,7 @@ define('xide/utils/HTMLUtils',[
         if (!_.isArray(widgets)) {
             widgets = [widgets];
         }
-        var total = 0;
+        let total = 0;
         _.each(widgets, function (w) {
             total += $(utils.getNode(w)).outerHeight();
         });
@@ -78589,14 +78679,14 @@ define('xide/utils/HTMLUtils',[
         target = utils.getNode(target);
         source = utils.getNode(source);
         if (height === true) {
-            var targetHeight = $(target).height();
+            let targetHeight = $(target).height();
             if (offset && offset.h !== null) {
                 targetHeight += offset.h;
             }
             $(source).css('height', targetHeight + 'px' + (force === true ? '!important' : ''));
         }
         if (width === true) {
-            var targetWidth = $(target).width();
+            const targetWidth = $(target).width();
             $(source).css('width', targetWidth + 'px' + (force === true ? '!important' : ''));
         }
     };
@@ -78632,8 +78722,8 @@ define('xide/utils/HexUtils',[
      * @memberOf module:xide/utils/StringUtils
      */
     function hex2char(hex) {
-        var result = '';
-        var n = parseInt(hex, 16);
+        let result = '';
+        let n = parseInt(hex, 16);
         if (n <= 0xFFFF) {
             result += String.fromCharCode(n);
         }
@@ -78654,7 +78744,7 @@ define('xide/utils/HexUtils',[
      * @returns {string}
      */
     function dec2char(n) {
-        var result = '';
+        let result = '';
         if (n <= 0xFFFF) {
             result += String.fromCharCode(n);
         }
@@ -78672,7 +78762,7 @@ define('xide/utils/HexUtils',[
         return (textString + 0).toString(16).toUpperCase();
     }
 
-    var hexequiv = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "A", "B", "C", "D", "E", "F"];
+    const hexequiv = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "A", "B", "C", "D", "E", "F"];
 
     function dec2hex2(textString) {
         return hexequiv[(textString >> 4) & 0xF] + hexequiv[textString & 0xF];
@@ -78690,11 +78780,11 @@ define('xide/utils/HexUtils',[
      * @memberOf module:xide/utils/StringUtils
      */
     function convertChar2CP(textString) {
-        var haut = 0;
-        var n = 0;
-        var CPstring = '';
-        for (var i = 0; i < textString.length; i++) {
-            var b = textString.charCodeAt(i);
+        let haut = 0;
+        const n = 0;
+        let CPstring = '';
+        for (let i = 0; i < textString.length; i++) {
+            const b = textString.charCodeAt(i);
             if (b < 0 || b > 0xFFFF) {
                 CPstring += 'Error in convertChar2CP: byte out of range ' + dec2hex(b) + '!';
             }
@@ -78729,7 +78819,7 @@ define('xide/utils/HexUtils',[
         // convert up to 6 digit escapes to characters
         str = str.replace(/0x([A-Fa-f0-9]{1,4})(\s)?/g,
             function (matchstr, parens) {
-                var result = hex2char(parens);
+                const result = hex2char(parens);
                 return hex2char(parens);
             }
         );
@@ -78749,7 +78839,7 @@ define('xide/utils/HexUtils',[
      * @memberOf module:xide/utils/StringUtils
      */
     function convertAllEscapes(str, numbers) {
-        var sle = false;
+        const sle = false;
         str = convertUnicode2Char(str);
         str = removeWhitespacesFromHexSequence(str);
 
@@ -78932,7 +79022,7 @@ define('xide/utils/HexUtils',[
      * @memberOf module:xide/utils/StringUtils
      */
     function convertEntities2Char(str) {
-        var entities = {};
+        const entities = {};
         str = str.replace(/&([A-Za-z0-9]+);/g,
             function (matchstr, parens) {
                 if (parens in entities) {
@@ -78992,9 +79082,9 @@ define('xide/utils/HexUtils',[
      * @memberOf module:xide/utils/StringUtils
      */
     function convertUTF82Char(str) {
-        var outputString = "";
-        var counter = 0;
-        var n = 0;
+        let outputString = "";
+        let counter = 0;
+        let n = 0;
 
         // remove leading and trailing spaces
         str = str.replace(/^\s+/, '');
@@ -79004,9 +79094,9 @@ define('xide/utils/HexUtils',[
         }
         str = str.replace(/\s+/g, ' ');
 
-        var listArray = str.split(' ');
-        for (var i = 0; i < listArray.length; i++) {
-            var b = parseInt(listArray[i], 16);  // alert('b:'+dec2hex(b));
+        const listArray = str.split(' ');
+        for (let i = 0; i < listArray.length; i++) {
+            const b = parseInt(listArray[i], 16);  // alert('b:'+dec2hex(b));
             switch (counter) {
                 case 0:
                     if (0 <= b && b <= 0x7F) {  // 0xxxxxxx
@@ -79056,8 +79146,8 @@ define('xide/utils/HexUtils',[
      * @memberOf module:xide/utils/StringUtils
      */
     function convertUTF162Char(str) {
-        var highsurrogate = 0;
-        var outputString = '';
+        let highsurrogate = 0;
+        let outputString = '';
 
         // remove leading and multiple spaces
         str = str.replace(/^\s+/, '');
@@ -79067,9 +79157,9 @@ define('xide/utils/HexUtils',[
         }
         str = str.replace(/\s+/g, ' ');
 
-        var listArray = str.split(' ');
-        for (var i = 0; i < listArray.length; i++) {
-            var b = parseInt(listArray[i], 16);
+        const listArray = str.split(' ');
+        for (let i = 0; i < listArray.length; i++) {
+            const b = parseInt(listArray[i], 16);
             if (b < 0 || b > 0xFFFF) {
                 outputString += '!Error in convertUTF162Char: unexpected value, b=' + dec2hex(b) + '!';
             }
@@ -79101,13 +79191,13 @@ define('xide/utils/HexUtils',[
      * @memberOf module:xide/utils/StringUtils
      */
     function convertpEsc2Char(str) {
-        var outputString = "";
-        var counter = 0;
-        var n = 0;
+        let outputString = "";
+        let counter = 0;
+        let n = 0;
 
-        var listArray = str.split('%');
-        for (var i = 1; i < listArray.length; i++) {
-            var b = parseInt(listArray[i], 16);
+        const listArray = str.split('%');
+        for (let i = 1; i < listArray.length; i++) {
+            const b = parseInt(listArray[i], 16);
             switch (counter) {
                 case 0:
                     if (0 <= b && b <= 0x7F) { // 0xxxxxxx
@@ -79264,12 +79354,12 @@ define('xide/utils/HexUtils',[
      * @memberOf module:xide/utils/StringUtils
      */
     function convertCharStr2SelectiveCPs(str, parameters, pad, before, after, base) {
-        var haut = 0;
-        var n = 0;
-        var cp;
-        var CPstring = '';
-        for (var i = 0; i < str.length; i++) {
-            var b = str.charCodeAt(i);
+        let haut = 0;
+        const n = 0;
+        let cp;
+        let CPstring = '';
+        for (let i = 0; i < str.length; i++) {
+            const b = str.charCodeAt(i);
             if (b < 0 || b > 0xFFFF) {
                 CPstring += 'Error in convertCharStr2SelectiveCPs: byte out of range ' + dec2hex(b) + '!';
             }
@@ -79325,15 +79415,15 @@ define('xide/utils/HexUtils',[
      * @returns {string}
      */
     function convertCharStr2HexNCR(textString) {
-        var outputString = "";
+        let outputString = "";
         textString = textString.replace(/^\s+/, '');
         if (textString.length == 0) {
             return "";
         }
         textString = textString.replace(/\s+/g, ' ');
-        var listArray = textString.split(' ');
-        for (var i = 0; i < listArray.length; i++) {
-            var n = parseInt(listArray[i], 16);
+        const listArray = textString.split(' ');
+        for (let i = 0; i < listArray.length; i++) {
+            const n = parseInt(listArray[i], 16);
             outputString += '&#x' + dec2hex(n) + ';';
         }
         return ( outputString );
@@ -79345,15 +79435,15 @@ define('xide/utils/HexUtils',[
      * @returns {string}
      */
     function convertCharStr2pEsc(str) {
-        var outputString = "";
-        var CPstring = convertChar2CP(str);
+        let outputString = "";
+        const CPstring = convertChar2CP(str);
         if (str.length == 0) {
             return "";
         }
         // process each codepoint
-        var listArray = CPstring.split(' ');
-        for (var i = 0; i < listArray.length; i++) {
-            var n = parseInt(listArray[i], 16);
+        const listArray = CPstring.split(' ');
+        for (let i = 0; i < listArray.length; i++) {
+            const n = parseInt(listArray[i], 16);
             //if (i > 0) { outputString += ' ';}
             if (n == 0x20) {
                 outputString += '%20';
@@ -79396,12 +79486,12 @@ define('xide/utils/HexUtils',[
      * @memberOf module:xide/utils/StringUtils
      */
     function convertCharStr2UTF8(str) {
-        var highsurrogate = 0;
-        var suppCP; // decimal code point value for a supp char
-        var n = 0;
-        var outputString = '';
-        for (var i = 0; i < str.length; i++) {
-            var cc = str.charCodeAt(i);
+        let highsurrogate = 0;
+        let suppCP; // decimal code point value for a supp char
+        const n = 0;
+        let outputString = '';
+        for (let i = 0; i < str.length; i++) {
+            const cc = str.charCodeAt(i);
             if (cc < 0 || cc > 0xFFFF) {
                 outputString += '!Error in convertCharStr2UTF8: unexpected charCodeAt result, cc=' + cc + '!';
             }
@@ -79442,13 +79532,13 @@ define('xide/utils/HexUtils',[
      * @memberOf module:xide/utils/StringUtils
      */
     function convertCharStr2UTF16(str) {
-        var highsurrogate = 0;
-        var suppCP;
-        var n = 0;
-        var outputString = '';
-        var result = "";
-        for (var i = 0; i < str.length; i++) {
-            var cc = str.charCodeAt(i);
+        let highsurrogate = 0;
+        let suppCP;
+        const n = 0;
+        let outputString = '';
+        let result = "";
+        for (let i = 0; i < str.length; i++) {
+            const cc = str.charCodeAt(i);
             if (cc < 0 || cc > 0xFFFF) {
                 outputString += '!Error in convertCharStr2UTF16: unexpected charCodeAt result, cc=' + cc + '!';
             }
@@ -79487,14 +79577,14 @@ define('xide/utils/HexUtils',[
      * @memberOf module:xide/utils/StringUtils
      */
     function convertCharStr2jEsc(str, parameters) {
-        var highsurrogate = 0;
-        var suppCP;
-        var pad;
-        var n = 0;
-        var pars = parameters.split(';');
-        var outputString = '';
-        for (var i = 0; i < str.length; i++) {
-            var cc = str.charCodeAt(i);
+        let highsurrogate = 0;
+        let suppCP;
+        let pad;
+        const n = 0;
+        const pars = parameters.split(';');
+        let outputString = '';
+        for (let i = 0; i < str.length; i++) {
+            const cc = str.charCodeAt(i);
             if (cc < 0 || cc > 0xFFFF) {
                 outputString += '!Error in convertCharStr2UTF16: unexpected charCodeAt result, cc=' + cc + '!';
             }
@@ -79606,12 +79696,12 @@ define('xide/utils/HexUtils',[
     function convertCharStr2CSS(str) {
         //
         //
-        var highsurrogate = 0;
-        var suppCP;
-        var pad;
-        var outputString = '';
-        for (var i = 0; i < str.length; i++) {
-            var cc = str.charCodeAt(i);
+        let highsurrogate = 0;
+        let suppCP;
+        let pad;
+        let outputString = '';
+        for (let i = 0; i < str.length; i++) {
+            const cc = str.charCodeAt(i);
             if (cc < 0 || cc > 0xFFFF) {
                 outputString += '!Error in convertCharStr2CSS: unexpected charCodeAt result, cc=' + cc + '!';
             }
@@ -79673,13 +79763,13 @@ define('xide/utils/HexUtils',[
      * @memberOf module:xide/utils/StringUtils
      */
     function convertCharStr2CP(textString, parameters, pad, type) {
-        var haut = 0;
-        var n = 0;
-        var CPstring = '';
-        var afterEscape = false;
-        var cp = "";
-        for (var i = 0; i < textString.length; i++) {
-            var b = textString.charCodeAt(i);
+        let haut = 0;
+        const n = 0;
+        let CPstring = '';
+        let afterEscape = false;
+        let cp = "";
+        for (let i = 0; i < textString.length; i++) {
+            const b = textString.charCodeAt(i);
             if (b < 0 || b > 0xFFFF) {
                 CPstring += 'Error in convertChar2CP: byte out of range ' + dec2hex(b) + '!';
             }
@@ -79771,13 +79861,13 @@ define('xide/utils/HexUtils',[
      */
     function convertCharStr2Unicode(textString, preserve, pad) {
         // pad:
-        var haut = 0;
-        var n = 0;
-        var CPstring = '';
-        var cp = "";
+        let haut = 0;
+        const n = 0;
+        let CPstring = '';
+        let cp = "";
         pad = false;
-        for (var i = 0; i < textString.length; i++) {
-            var b = textString.charCodeAt(i);
+        for (let i = 0; i < textString.length; i++) {
+            const b = textString.charCodeAt(i);
             if (b < 0 || b > 0xFFFF) {
                 CPstring += 'Error in convertChar2CP: byte out of range ' + dec2hex(b) + '!';
             }
@@ -79821,18 +79911,18 @@ define('xide/utils/HexUtils',[
 
     utils.convertAllEscapes = convertAllEscapes;
 
-    var digit_array = new Array('0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f');
+    const digit_array = new Array('0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f');
     /**
      *
      * @param n
      * @returns {string}
      */
     utils.to_hex = function (n) {
-        var hex_result = '';
-        var the_start = true;
-        for (var i = 32; i > 0;) {
+        let hex_result = '';
+        let the_start = true;
+        for (let i = 32; i > 0;) {
             i -= 4;
-            var one_digit = (n >> i) & 0xf;
+            const one_digit = (n >> i) & 0xf;
             if (!the_start || one_digit != 0) {
                 the_start = false;
                 hex_result += digit_array[one_digit];
@@ -79857,7 +79947,7 @@ define('xide/utils/HexUtils',[
         return str;
     };
 
-    var zero = function (n, max) {
+    const zero = function (n, max) {
         n = n.toString(16).toUpperCase();
         while (n.length < max) {
             n = '0' + n;
@@ -79880,10 +79970,10 @@ define('xide/utils/HexUtils',[
      * @returns {string}
      */
     utils.stringToHex = function (string) {
-        var str = '',
-            i = 0,
-            tmp_len = string.length,
-            c;
+        let str = '';
+        let i = 0;
+        const tmp_len = string.length;
+        let c;
 
         for (; i < tmp_len; i += 1) {
             c = string.charCodeAt(i);
@@ -79903,11 +79993,11 @@ define('xide/utils/HexUtils',[
      * @returns {string}
      */
     utils.stringToBufferStr = function (string) {
-        var i = 0,
-            tmp_len = string.length,
-            c;
+        let i = 0;
+        const tmp_len = string.length;
+        let c;
 
-        var arr = [];
+        const arr = [];
         for (; i < tmp_len; i += 1) {
             c = string.charCodeAt(i);
             arr.push(c);
@@ -79921,10 +80011,10 @@ define('xide/utils/HexUtils',[
      * @returns {Array}
      */
     utils.stringToBuffer = function (string) {
-        var i = 0,
-            tmp_len = string.length,
-            c;
-        var arr = [];
+        let i = 0;
+        const tmp_len = string.length;
+        let c;
+        const arr = [];
         for (; i < tmp_len; i += 1) {
             c = string.charCodeAt(i);
             arr.push(c);
@@ -79939,10 +80029,10 @@ define('xide/utils/HexUtils',[
      * @returns {String} The hex version of the buffer string
      */
     utils.bufferToHexString = function (bufferString) {
-        var bytesArray = bufferString.indexOf(',') !== -1 ? bufferString.split(',') : [bufferString];
-        var tmp = [];
-        for (var i = 0; i < bytesArray.length; i++) {
-            var dec = bytesArray[i];
+        const bytesArray = bufferString.indexOf(',') !== -1 ? bufferString.split(',') : [bufferString];
+        const tmp = [];
+        for (let i = 0; i < bytesArray.length; i++) {
+            const dec = bytesArray[i];
             tmp.push(utils.dec2hex2(dec));
         }
         return tmp.join(" ");
@@ -79955,8 +80045,8 @@ define('xide/utils/HexUtils',[
      * @returns {integer} The integer array
      */
     utils.bufferFromDecString = function (bufferString) {
-        var bytesArray = bufferString.indexOf(',') !== -1 ? bufferString.split(',') : [bufferString];
-        for (var i = 0; i < bytesArray.length; i++) {
+        const bytesArray = bufferString.indexOf(',') !== -1 ? bufferString.split(',') : [bufferString];
+        for (let i = 0; i < bytesArray.length; i++) {
             bytesArray[i] = parseInt(bytesArray[i],10);
         }
         return bytesArray;
@@ -79970,9 +80060,9 @@ define('xide/utils/HexUtils',[
      * @returns {string}
      */
     utils.stringFromDecString = function (string) {
-        var buffer = utils.bufferFromDecString(string);
-        var result = "";
-        for (var i = 0; i < buffer.length; i++) {
+        const buffer = utils.bufferFromDecString(string);
+        let result = "";
+        for (let i = 0; i < buffer.length; i++) {
             result += String.fromCharCode(buffer[i]);
         }
         return result;
@@ -79984,10 +80074,10 @@ define('xide/utils/HexUtils',[
      * @returns {string}
      */
     utils.stringToHex2 = function (string) {
-        var str = '',
-            i = 0,
-            tmp_len = string.length,
-            c;
+        let str = '';
+        let i = 0;
+        const tmp_len = string.length;
+        let c;
 
         for (; i < tmp_len; i += 1) {
             c = string.charCodeAt(i);
@@ -80002,11 +80092,11 @@ define('xide/utils/HexUtils',[
      * @returns {string}
      */
     function hexToString(string) {
-        var arr = string.split(' '),
-            str = '',
-            i = 0,
-            arr_len = arr.length,
-            c;
+        const arr = string.split(' ');
+        let str = '';
+        let i = 0;
+        const arr_len = arr.length;
+        let c;
 
         for (; i < arr_len; i += 1) {
             c = String.fromCharCode(h2d(arr[i]));
@@ -80023,20 +80113,20 @@ define('xide/utils/HexUtils',[
      * @returns {string}
      */
     utils.prettyHex = function (buffer) {
-        var rows = Math.ceil(buffer.length / 16);
-        var last = buffer.length % 16 || 16;
-        var offsetLength = buffer.length.toString(16).length;
+        const rows = Math.ceil(buffer.length / 16);
+        const last = buffer.length % 16 || 16;
+        let offsetLength = buffer.length.toString(16).length;
         if (offsetLength < 6) {
             offsetLength = 6;
         }
-        var str = 'Offset';
+        let str = 'Offset';
         while (str.length < offsetLength) {
             str += ' ';
         }
 
         str = '\u001b[36m' + str + '  ';
 
-        var i;
+        let i;
         for (i = 0; i < 16; i++) {
             str += ' ' + zero(i, 2);
         }
@@ -80046,17 +80136,17 @@ define('xide/utils/HexUtils',[
             str += '\n';
         }
 
-        var b = 0;
-        var lastBytes;
-        var lastSpaces;
-        var v;
+        let b = 0;
+        let lastBytes;
+        let lastSpaces;
+        let v;
 
         for (i = 0; i < rows; i++) {
             str += '\u001b[36m' + zero(b, offsetLength) + '\u001b[0m  ';
             lastBytes = i === rows - 1 ? last : 16;
             lastSpaces = 16 - lastBytes;
 
-            var j;
+            let j;
             for (j = 0; j < lastBytes; j++) {
                 str += ' ' + zero(buffer[b], 2);
                 b++;
@@ -80086,8 +80176,9 @@ define('xide/utils/HexUtils',[
      * @returns {string}
      */
     utils.hexEncode = function (str, prefix) {
-        var hex, i;
-        var result = "";
+        let hex;
+        let i;
+        let result = "";
         for (i = 0; i < str.length; i++) {
             hex = str.charCodeAt(i).toString(16);
             result += ((prefix !== null ? prefix : "000") + hex).slice(-4);
@@ -80106,13 +80197,13 @@ define('xide/utils/HexUtils',[
     utils.markHex = function (str, prefix, suffix, sign) {
         prefix = prefix || "";
         suffix = suffix || "";
-        var myString = "" + str;
-        var pattern = /[^\x20-\x7E]/gim;
-        var match = pattern.exec(myString);
-        var matches = myString.match(pattern);
-        var newString = "" + myString;
+        let myString = "" + str;
+        const pattern = /[^\x20-\x7E]/gim;
+        const match = pattern.exec(myString);
+        const matches = myString.match(pattern);
+        const newString = "" + myString;
         myString.replace(pattern, function (a, b) {
-            var _raw = utils.hexEncode(a, '$');
+            let _raw = utils.hexEncode(a, '$');
             if (_raw.length == 2) {
                 _raw = _raw.replace("$", "$0");
             }
@@ -80142,7 +80233,8 @@ define('xide/utils/StringUtils',[
      * @returns {Function}
      */
     function serializer(replacer, cycleReplacer) {
-        var stack = [], keys = [];
+        const stack = [];
+        const keys = [];
 
         if (cycleReplacer == null) cycleReplacer = function (key, value) {
             if (stack[0] === value) return "[Circular ~]";
@@ -80151,7 +80243,7 @@ define('xide/utils/StringUtils',[
 
         return function (key, value) {
             if (stack.length > 0) {
-                var thisPos = stack.indexOf(this);
+                const thisPos = stack.indexOf(this);
                 ~thisPos ? stack.splice(thisPos + 1) : stack.push(this);
                 ~thisPos ? keys.splice(thisPos, Infinity, key) : keys.push(key);
                 if (~stack.indexOf(value)) value = cycleReplacer.call(this, key, value)
@@ -80159,7 +80251,7 @@ define('xide/utils/StringUtils',[
             else stack.push(value);
 
             return replacer == null ? value : replacer.call(this, key, value)
-        }
+        };
     }
 
     /**
@@ -80216,8 +80308,8 @@ define('xide/utils/StringUtils',[
 
         digits = ((typeof digits === 'undefined') ? 3 : (parseInt(digits, 10) || 0));
 
-        var f = Math.pow(10, digits);
-        var res = (Math.round(num * f) / f).toFixed(digits);
+        const f = Math.pow(10, digits);
+        let res = (Math.round(num * f) / f).toFixed(digits);
 
         // remove trailing zeros and cast back to string
         if (!trailing) res = '' + (+res);
@@ -80235,14 +80327,14 @@ define('xide/utils/StringUtils',[
      * @returns {string}
      */
     utils.humanFileSize = function (bytes, si) {
-        var thresh = si ? 1000 : 1024;
+        const thresh = si ? 1000 : 1024;
         if (Math.abs(bytes) < thresh) {
             return bytes + ' B';
         }
-        var units = si
+        const units = si
             ? ['kB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB']
             : ['KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB', 'ZiB', 'YiB'];
-        var u = -1;
+        let u = -1;
         do {
             bytes /= thresh;
             ++u;
@@ -80269,22 +80361,24 @@ define('xide/utils/StringUtils',[
      * @returns {boolean}
      */
     utils.isNativeEvent = function (str) {
-        var _foo = null,//just for having an optimized object map for a native event lookup below
-            _nativeEvents = {
-                "onclick": _foo,
-                "ondblclick": _foo,
-                "onmousedown": _foo,
-                "onmouseup": _foo,
-                "onmouseover": _foo,
-                "onmousemove": _foo,
-                "onmouseout": _foo,
-                "onkeypress": _foo,
-                "onkeydown": _foo,
-                "onkeyup": _foo,
-                "onfocus": _foo,
-                "onblur": _foo,
-                "onchange": _foo
-            };
+        const //just for having an optimized object map for a native event lookup below
+        _foo = null;
+
+        let _nativeEvents = {
+            "onclick": _foo,
+            "ondblclick": _foo,
+            "onmousedown": _foo,
+            "onmouseup": _foo,
+            "onmouseover": _foo,
+            "onmousemove": _foo,
+            "onmouseout": _foo,
+            "onkeypress": _foo,
+            "onkeydown": _foo,
+            "onkeyup": _foo,
+            "onfocus": _foo,
+            "onblur": _foo,
+            "onchange": _foo
+        };
 
         if (str in _nativeEvents) {
             return true;
@@ -80306,7 +80400,6 @@ define('xide/utils/StringUtils',[
         };
 
         return str in _nativeEvents;
-
     };
     /**
      *
@@ -80316,7 +80409,7 @@ define('xide/utils/StringUtils',[
      * @memberOf module:xide/utils/StringUtils
      */
     utils.isSystemEvent = function (str) {
-        for (var t in types.EVENTS) {
+        for (const t in types.EVENTS) {
             if (types.EVENTS[t] === str) {
                 return true;
             }
@@ -80332,7 +80425,7 @@ define('xide/utils/StringUtils',[
      * @memberOf module:xide/utils/StringUtils
      */
     utils.contains = function (arr, val) {
-        for (var i = 0; i < arr.length; i++) {
+        for (let i = 0; i < arr.length; i++) {
             if (arr[i] === val) {
                 return i;
             }
@@ -80348,7 +80441,7 @@ define('xide/utils/StringUtils',[
      */
     utils.getObjectKeyByValue = function (obj, val) {
         if (obj && val) {
-            for (var prop in obj) {
+            for (const prop in obj) {
                 if (obj.hasOwnProperty(prop)) {
                     if (obj[prop] === val)
                         return prop;
@@ -80367,14 +80460,14 @@ define('xide/utils/StringUtils',[
      */
     utils.removeURLParameter = function (url, parameter) {
         //prefer to use l.search if you have a location/link object
-        var urlparts = url.split('?');
+        const urlparts = url.split('?');
         if (urlparts.length >= 2) {
 
-            var prefix = encodeURIComponent(parameter) + '=';
-            var pars = urlparts[1].split(/[&;]/g);
+            const prefix = encodeURIComponent(parameter) + '=';
+            const pars = urlparts[1].split(/[&;]/g);
 
             //reverse iteration as may be destructive
-            for (var i = pars.length; i-- > 0;) {
+            for (let i = pars.length; i-- > 0;) {
                 //idiom for string.startsWith
                 if (pars[i].lastIndexOf(prefix, 0) !== -1) {
                     pars.splice(i, 1);
@@ -80401,8 +80494,8 @@ define('xide/utils/StringUtils',[
             url += (url.indexOf('?') > 0 ? '&' : '?') + paramName + '=' + paramValue;
             return url;
         }
-        var pattern = new RegExp('(' + paramName + '=).*?(&|$)');
-        var newUrl = url.replace(pattern, '$1' + paramValue + '$2');
+        const pattern = new RegExp('(' + paramName + '=).*?(&|$)');
+        let newUrl = url.replace(pattern, '$1' + paramValue + '$2');
         if (newUrl == url) {
             newUrl = newUrl + (newUrl.indexOf('?') > 0 ? '&' : '?') + paramName + '=' + paramValue
         }
@@ -80420,12 +80513,12 @@ define('xide/utils/StringUtils',[
     utils.buildPath = function (mount, path, encode) {
 
         //fix mount
-        var _mount = '' + mount;
+        let _mount = '' + mount;
         _mount = utils.replaceAll('/', '', mount);
-        var _path = '' + path;
+        let _path = '' + path;
         _path = _path.replace('./', '/').replace(/^\/|\/$/g, '');
 
-        var _res = _mount + '://' + _path;
+        const _res = _mount + '://' + _path;
         if (encode === true) {
             return encodeURIComponent(_res);
         }
@@ -80522,8 +80615,8 @@ define('xide/utils/StringUtils',[
         if (!_.isString(js)) {
             return js;
         }
-        var res = null;
-        var didFail = false;
+        let res = null;
+        let didFail = false;
         try {
             res = eval("(" + js + ")", {});
         } catch (e) {
@@ -80584,7 +80677,7 @@ define('xide/utils/StringUtils',[
      * @memberOf module:xide/utils/StringUtils
      */
     utils.findOcurrences = function (expression, delimiters) {
-        var d = {
+        const d = {
             begin: utils.escapeRegExp(delimiters.begin),
             end: utils.escapeRegExp(delimiters.end)
         };
@@ -80599,8 +80692,8 @@ define('xide/utils/StringUtils',[
      * @memberOf module:xide/utils/StringUtils
      */
     utils.escapeRegExp = function (string) {
-        var special = ["[", "]", "(", ")", "{", "}", "*", "+", ".", "|", "||"];
-        for (var n = 0; n < special.length; n++) {
+        const special = ["[", "]", "(", ")", "{", "}", "*", "+", ".", "|", "||"];
+        for (let n = 0; n < special.length; n++) {
             string = string.replace(special[n], "\\" + special[n]);
         }
 
@@ -80615,8 +80708,8 @@ define('xide/utils/StringUtils',[
      */
     utils.multipleReplace = function (str, hash) {
         //to array
-        var a = [];
-        for (var key in hash) {
+        const a = [];
+        for (const key in hash) {
             a[a.length] = key;
         }
         return str.replace(new RegExp(a.join('\\b|\\b'), 'g'), function (m) {
@@ -80664,15 +80757,15 @@ define('xide/utils/StringUtils',[
         }
         if (what && _.isObject(what) || _.isArray(what)) {
             if (delimiters) {
-                var ocurr = utils.findOcurrences(str, delimiters),
-                    replaceAll = utils.replaceAll;
+                const ocurr = utils.findOcurrences(str, delimiters);
+                const replaceAll = utils.replaceAll;
                 if (ocurr) {
 
-                    for (var i = 0, j = ocurr.length; i < j; i++) {
-                        var el = ocurr[i];
+                    for (let i = 0, j = ocurr.length; i < j; i++) {
+                        const el = ocurr[i];
 
                         //strip off delimiters
-                        var _variableName = replaceAll(delimiters.begin, '', el);
+                        let _variableName = replaceAll(delimiters.begin, '', el);
                         _variableName = replaceAll(delimiters.end, '', _variableName);
                         str = replaceAll(el, what[_variableName], str);
                     }
@@ -80718,23 +80811,23 @@ define('xide/utils/StringUtils',[
      * @link http://kevin.vanzonneveld.net
      */
     utils.sprintf = function () {
-        var regex = /%%|%(\d+\$)?([-+\'#0 ]*)(\*\d+\$|\*|\d+)?(\.(\*\d+\$|\*|\d+))?([scboxXuideEfFgG])/g;
-        var a = arguments,
-            i = 0,
-            format = a[i++];
+        const regex = /%%|%(\d+\$)?([-+\'#0 ]*)(\*\d+\$|\*|\d+)?(\.(\*\d+\$|\*|\d+))?([scboxXuideEfFgG])/g;
+        const a = arguments;
+        let i = 0;
+        const format = a[i++];
 
         // pad()
-        var pad = function (str, len, chr, leftJustify) {
+        const pad = function (str, len, chr, leftJustify) {
             if (!chr) {
                 chr = ' ';
             }
-            var padding = (str.length >= len) ? '' : Array(1 + len - str.length >>> 0).join(chr);
+            const padding = (str.length >= len) ? '' : Array(1 + len - str.length >>> 0).join(chr);
             return leftJustify ? str + padding : padding + str;
         };
 
         // justify()
-        var justify = function (value, prefix, leftJustify, minWidth, zeroPad, customPadChar) {
-            var diff = minWidth - value.length;
+        const justify = function (value, prefix, leftJustify, minWidth, zeroPad, customPadChar) {
+            const diff = minWidth - value.length;
             if (diff > 0) {
                 if (leftJustify || !zeroPad) {
                     value = pad(value, minWidth, customPadChar, leftJustify);
@@ -80746,9 +80839,9 @@ define('xide/utils/StringUtils',[
         };
 
         // formatBaseX()
-        var formatBaseX = function (value, base, prefix, leftJustify, minWidth, precision, zeroPad) {
+        const formatBaseX = function (value, base, prefix, leftJustify, minWidth, precision, zeroPad) {
             // Note: casts negative numbers to positive ones
-            var number = value >>> 0;
+            const number = value >>> 0;
             prefix = prefix && number && {
                     '2': '0b',
                     '8': '0',
@@ -80759,7 +80852,7 @@ define('xide/utils/StringUtils',[
         };
 
         // formatString()
-        var formatString = function (value, leftJustify, minWidth, precision, zeroPad, customPadChar) {
+        const formatString = function (value, leftJustify, minWidth, precision, zeroPad, customPadChar) {
             if (precision != null) {
                 value = value.slice(0, precision);
             }
@@ -80767,25 +80860,26 @@ define('xide/utils/StringUtils',[
         };
 
         // doFormat()
-        var doFormat = function (substring, valueIndex, flags, minWidth, _, precision, type) {
-            var number;
-            var prefix;
-            var method;
-            var textTransform;
-            var value;
+        const doFormat = function (substring, valueIndex, flags, minWidth, _, precision, type) {
+            let number;
+            let prefix;
+            let method;
+            let textTransform;
+            let value;
 
             if (substring === '%%') {
                 return '%';
             }
 
             // parse flags
-            var leftJustify = false,
-                positivePrefix = '',
-                zeroPad = false,
-                prefixBaseX = false,
-                customPadChar = ' ';
-            var flagsl = flags.length;
-            for (var j = 0; flags && j < flagsl; j++) {
+            let leftJustify = false;
+
+            let positivePrefix = '';
+            let zeroPad = false;
+            let prefixBaseX = false;
+            let customPadChar = ' ';
+            const flagsl = flags.length;
+            for (let j = 0; flags && j < flagsl; j++) {
                 switch (flags.charAt(j)) {
                     case ' ':
                         positivePrefix = ' ';
@@ -80947,8 +81041,8 @@ define('xide/utils/StringUtils',[
      * @link http://phpjs.org/functions/basename/
      */
     utils.basename = function (path, suffix) {
-        var b = path;
-        var lastChar = b.charAt(b.length - 1);
+        let b = path;
+        const lastChar = b.charAt(b.length - 1);
 
         if (lastChar === '/' || lastChar === '\\') {
             b = b.slice(0, -1);
@@ -81002,16 +81096,17 @@ define('xide/utils/StringUtils',[
         //        note: yourself, and then you can use: pathinfo('/www/index.html', PATHINFO_BASENAME | PATHINFO_EXTENSION);
         //        note: which makes it fully compliant with PHP syntax.
         //  depends on: basename
-        var opt = '',
-            real_opt = '',
-            optName = '',
-            optTemp = 0,
-            tmp_arr = {},
-            cnt = 0,
-            i = 0;
-        var have_basename = false,
-            have_extension = false,
-            have_filename = false;
+        let opt = '';
+
+        let real_opt = '';
+        let optName = '';
+        let optTemp = 0;
+        let tmp_arr = {};
+        let cnt = 0;
+        let i = 0;
+        let have_basename = false;
+        let have_extension = false;
+        let have_filename = false;
 
         // Input defaulting & sanitation
         if (!path) {
@@ -81023,7 +81118,7 @@ define('xide/utils/StringUtils',[
 
         // Initialize binary arguments. Both the string & integer (constant) input is
         // allowed
-        var OPTS = {
+        const OPTS = {
             'PATHINFO_DIRNAME': 1,
             'PATHINFO_BASENAME': 2,
             'PATHINFO_EXTENSION': 4,
@@ -81049,16 +81144,16 @@ define('xide/utils/StringUtils',[
         }
 
         // Internal Functions
-        var __getExt = function (path) {
-            var str = path + '';
-            var dotP = str.lastIndexOf('.') + 1;
+        const __getExt = function (path) {
+            const str = path + '';
+            const dotP = str.lastIndexOf('.') + 1;
             return !dotP ? false : dotP !== str.length ? str.substr(dotP) : '';
         };
 
         // Gather path infos
         //noinspection JSBitwiseOperatorUsage,JSBitwiseOperatorUsage
         if (options & OPTS.PATHINFO_DIRNAME) {
-            var dirName = path.replace(/\\/g, '/')
+            const dirName = path.replace(/\\/g, '/')
                 .replace(/\/[^\/]*\/?$/, ''); // dirname
             tmp_arr.dirname = dirName === path ? '.' : dirName;
         }
@@ -81135,21 +81230,26 @@ define('xide/utils/StringUtils',[
         //             note: an extra slash after the scheme/protocol (to allow file:/// as in PHP)
         //        example 1: parse_url('http://username:password@hostname/path?arg=value#anchor');
         //        returns 1: {scheme: 'http', host: 'hostname', user: 'username', pass: 'password', path: '/path', query: 'arg=value', fragment: 'anchor'}
-        var query, key = ['source', 'scheme', 'authority', 'userInfo', 'user', 'pass', 'host', 'port',
-                'relative', 'path', 'directory', 'file', 'query', 'fragment'
-            ],
-            ini = (this.php_js && this.php_js.ini) || {},
-            mode = (ini['phpjs.parse_url.mode'] &&
-                ini['phpjs.parse_url.mode'].local_value) || 'php',
-            parser = {
-                php: /^(?:([^:\/?#]+):)?(?:\/\/()(?:(?:()(?:([^:@]*):?([^:@]*))?@)?([^:\/?#]*)(?::(\d*))?))?()(?:(()(?:(?:[^?#\/]*\/)*)()(?:[^?#]*))(?:\?([^#]*))?(?:#(.*))?)/,
-                strict: /^(?:([^:\/?#]+):)?(?:\/\/((?:(([^:@]*):?([^:@]*))?@)?([^:\/?#]*)(?::(\d*))?))?((((?:[^?#\/]*\/)*)([^?#]*))(?:\?([^#]*))?(?:#(.*))?)/,
-                loose: /^(?:(?![^:@]+:[^:@\/]*@)([^:\/?#.]+):)?(?:\/\/\/?)?((?:(([^:@]*):?([^:@]*))?@)?([^:\/?#]*)(?::(\d*))?)(((\/(?:[^?#](?![^?#\/]*\.[^?#\/.]+(?:[?#]|$)))*\/?)?([^?#\/]*))(?:\?([^#]*))?(?:#(.*))?)/ // Added one optional slash to post-scheme to catch file:/// (should restrict this)
-            };
+        let query;
 
-        var m = parser[mode].exec(str),
-            uri = {},
-            i = 14;
+        const key = ['source', 'scheme', 'authority', 'userInfo', 'user', 'pass', 'host', 'port',
+                'relative', 'path', 'directory', 'file', 'query', 'fragment'
+            ];
+
+        const ini = (this.php_js && this.php_js.ini) || {};
+
+        const mode = (ini['phpjs.parse_url.mode'] &&
+            ini['phpjs.parse_url.mode'].local_value) || 'php';
+
+        let parser = {
+            php: /^(?:([^:\/?#]+):)?(?:\/\/()(?:(?:()(?:([^:@]*):?([^:@]*))?@)?([^:\/?#]*)(?::(\d*))?))?()(?:(()(?:(?:[^?#\/]*\/)*)()(?:[^?#]*))(?:\?([^#]*))?(?:#(.*))?)/,
+            strict: /^(?:([^:\/?#]+):)?(?:\/\/((?:(([^:@]*):?([^:@]*))?@)?([^:\/?#]*)(?::(\d*))?))?((((?:[^?#\/]*\/)*)([^?#]*))(?:\?([^#]*))?(?:#(.*))?)/,
+            loose: /^(?:(?![^:@]+:[^:@\/]*@)([^:\/?#.]+):)?(?:\/\/\/?)?((?:(([^:@]*):?([^:@]*))?@)?([^:\/?#]*)(?::(\d*))?)(((\/(?:[^?#](?![^?#\/]*\.[^?#\/.]+(?:[?#]|$)))*\/?)?([^?#\/]*))(?:\?([^#]*))?(?:#(.*))?)/ // Added one optional slash to post-scheme to catch file:/// (should restrict this)
+        };
+
+        const m = parser[mode].exec(str);
+        const uri = {};
+        let i = 14;
         while (i--) {
             if (m[i]) {
                 uri[key[i]] = m[i];
@@ -81161,7 +81261,7 @@ define('xide/utils/StringUtils',[
                 .toLowerCase()];
         }
         if (mode !== 'php') {
-            var name = (ini['phpjs.parse_url.queryKey'] &&
+            const name = (ini['phpjs.parse_url.queryKey'] &&
                 ini['phpjs.parse_url.queryKey'].local_value) || 'queryKey';
             parser = /(?:^|&)([^&=]*)=?([^&]*)/g;
             uri[name] = {};
@@ -81277,10 +81377,12 @@ define('xide/utils/StringUtils',[
         if (!string || !string.length) {
             return {}
         }
-        var obj = {};
-        var pairs = string.split("&");
-        var pair, name, value;
-        for (var i = 0, len = pairs.length; i < len; i++) {
+        const obj = {};
+        const pairs = string.split("&");
+        let pair;
+        let name;
+        let value;
+        for (let i = 0, len = pairs.length; i < len; i++) {
             pair = pairs[i].split("=");
             name = decodeURIComponent(pair[0]);
             value = decodeURIComponent(pair[1]);
@@ -81314,15 +81416,15 @@ define('xide/utils/StringUtils',[
      * @memberOf module:xide/utils/StringUtils
      */
     utils.getUrlArgs = function (string) {
-        var args = {};
+        const args = {};
         if (string && (string.indexOf('?') != -1 || string.indexOf('&') != -1)) {
 
-            var query = string.substr(string.indexOf("?") + 1) || location.search.substring(1);
-            var pairs = query.split("&");
-            for (var i = 0; i < pairs.length; i++) {
-                var pos = pairs[i].indexOf("=");
-                var name = pairs[i].substring(0, pos);
-                var value = pairs[i].substring(pos + 1);
+            const query = string.substr(string.indexOf("?") + 1) || location.search.substring(1);
+            const pairs = query.split("&");
+            for (let i = 0; i < pairs.length; i++) {
+                const pos = pairs[i].indexOf("=");
+                const name = pairs[i].substring(0, pos);
+                let value = pairs[i].substring(pos + 1);
                 value = decodeURIComponent(value);
                 args[name] = value;
             }
@@ -81337,28 +81439,31 @@ define('xide/utils/StringUtils',[
      * @deprecated
      */
     utils.urlArgs = function (url) {
-        var query = utils.getUrlArgs(url);
-        var map = {};
-        for (var param in query) {
-            var value = query[param],
-                options = utils.findOcurrences(value, {
-                    begin: "|",
-                    end: "|"
-                }),
-                parameterOptions = null;
+        const query = utils.getUrlArgs(url);
+        const map = {};
+        for (const param in query) {
+            let value = query[param];
+
+            const options = utils.findOcurrences(value, {
+                begin: "|",
+                end: "|"
+            });
+
+            let parameterOptions = null;
 
             if (options && options.length) {
                 //clean value:
                 value = value.replace(options[0], '');
+
                 //parse options
-                var optionString = options[0].substr(1, options[0].length - 2),
-                    optionSplit = optionString.split(','),
-                    optionsData = {};
+                const optionString = options[0].substr(1, options[0].length - 2);
 
-                for (var i = 0; i < optionSplit.length; i++) {
+                const optionSplit = optionString.split(',');
+                const optionsData = {};
 
-                    var keyValue = optionSplit[i],
-                        pair = keyValue.split(':');
+                for (let i = 0; i < optionSplit.length; i++) {
+                    const keyValue = optionSplit[i];
+                    const pair = keyValue.split(':');
 
                     optionsData[pair[0]] = pair[1];
                 }
@@ -81386,9 +81491,9 @@ define('xide/utils/StringUtils',[
         if (!fileName) {
             return 'txt2.png';
         }
-        var extension = utils.getFileExtension(fileName);
+        const extension = utils.getFileExtension(fileName);
         if (extension) {
-            var mime = utils.getMimeTable();
+            const mime = utils.getMimeTable();
             if (mime[extension] != null) {
                 return mime[extension];
             }
@@ -81406,12 +81511,12 @@ define('xide/utils/StringUtils',[
         if (!fileName) {
             return 'fa-file-o';
         }
-        var extension = utils.getFileExtension(fileName);
+        const extension = utils.getFileExtension(fileName);
         if (types.customMimeIcons[extension]) {
             return types.customMimeIcons[extension];
         }
         if (extension) {
-            var mime = utils.getMimeTable2();
+            const mime = utils.getMimeTable2();
             if (mime[extension] != null) {
                 return mime[extension];
             }
@@ -81426,7 +81531,7 @@ define('xide/utils/StringUtils',[
      */
     utils.getFileExtension = function (fileName) {
         if (!fileName || fileName == "") return "";
-        var split = utils.getBaseName(fileName).split('.');
+        const split = utils.getBaseName(fileName).split('.');
         if (split.length > 1) return split[split.length - 1].toLowerCase();
         return '';
     };
@@ -81436,7 +81541,7 @@ define('xide/utils/StringUtils',[
      * @memberOf module:xide/utils/StringUtils
      */
     utils.createUUID = function () {
-        var S4 = function () {
+        const S4 = function () {
             return (((1 + Math.random()) * 0x10000) | 0).toString(16).substring(1);
         };
         return (S4() + S4() + "-" + S4() + "-" + S4() + "-" + S4() + "-" + S4() + S4() + S4()); //String
@@ -81449,7 +81554,7 @@ define('xide/utils/StringUtils',[
      */
     utils.getBaseName = function (fileName) {
         if (fileName == null) return null;
-        var separator = "/";
+        let separator = "/";
         if (fileName.indexOf("\\") !==-1)
             separator = "\\";
         return fileName.substr(fileName.lastIndexOf(separator) + 1, fileName.length);
@@ -81480,8 +81585,8 @@ define('xide/utils/StringUtils',[
         // improved by: Lincoln Ramsay
         // improved by: djmix
         // improved by: Dmitry Gorelenkov
-        var b = path;
-        var lastChar = b.charAt(b.length - 1);
+        let b = path;
+        const lastChar = b.charAt(b.length - 1);
 
         if (lastChar === '/' || lastChar === '\\') {
             b = b.slice(0, -1)
@@ -81541,17 +81646,17 @@ define('xide/utils/StringUtils',[
         //      note 1: which makes it fully compliant with PHP syntax.
 
 
-        var basename = utils.basename;
-        var opt = '';
-        var realOpt = '';
-        var optName = '';
-        var optTemp = 0;
-        var tmpArr = {};
-        var cnt = 0;
-        var i = 0;
-        var haveBasename = false;
-        var haveExtension = false;
-        var haveFilename = false;
+        let basename = utils.basename;
+        let opt = '';
+        let realOpt = '';
+        let optName = '';
+        let optTemp = 0;
+        let tmpArr = {};
+        let cnt = 0;
+        let i = 0;
+        let haveBasename = false;
+        let haveExtension = false;
+        let haveFilename = false;
 
         // Input defaulting & sanitation
         if (!path) {
@@ -81563,7 +81668,7 @@ define('xide/utils/StringUtils',[
 
         // Initialize binary arguments. Both the string & integer (constant) input is
         // allowed
-        var OPTS = {
+        const OPTS = {
             'PATHINFO_DIRNAME': 1,
             'PATHINFO_BASENAME': 2,
             'PATHINFO_EXTENSION': 4,
@@ -81589,16 +81694,16 @@ define('xide/utils/StringUtils',[
         }
 
         // Internal Functions
-        var _getExt = function (path) {
-            var str = path + '';
-            var dotP = str.lastIndexOf('.') + 1;
+        const _getExt = function (path) {
+            const str = path + '';
+            const dotP = str.lastIndexOf('.') + 1;
             return !dotP ? false : dotP !== str.length ? str.substr(dotP) : ''
         };
 
         // Gather path infos
         //noinspection JSBitwiseOperatorUsage,JSBitwiseOperatorUsage
         if (options & OPTS.PATHINFO_DIRNAME) {
-            var dirName = path
+            const dirName = path
                 .replace(/\\/g, '/')
                 .replace(/\/[^\/]*\/?$/, ''); // dirname
             tmpArr.dirname = dirName === path ? '.' : dirName
@@ -81689,8 +81794,8 @@ define('xide/utils/StringUtils',[
             .toLowerCase()
             .match(/<[a-z][a-z0-9]*>/g) || [])
             .join(''); // making sure the allowed arg is a string containing only tags in lowercase (<a><b><c>)
-        var tags = /<\/?([a-z][a-z0-9]*)\b[^>]*>/gi,
-            commentsAndPhpTags = /<!--[\s\S]*?-->|<\?(?:php)?[\s\S]*?\?>/gi;
+        const tags = /<\/?([a-z][a-z0-9]*)\b[^>]*>/gi;
+        const commentsAndPhpTags = /<!--[\s\S]*?-->|<\?(?:php)?[\s\S]*?\?>/gi;
         return input.replace(commentsAndPhpTags, '')
             .replace(tags, function ($0, $1) {
                 return allowed.indexOf('<' + $1.toLowerCase() + '>') > -1 ? $0 : '';
@@ -82653,8 +82758,8 @@ define('xide/types/Types',[
      * @returns {*}
      */
     dojo.fromJson = function (js, debug) {
-        var res = null;
-        var didFail = false;
+        let res = null;
+        let didFail = false;
         debug = true;
         try {
             res = eval("(" + js + ")");
@@ -82663,7 +82768,7 @@ define('xide/types/Types',[
         }
 
         if (didFail) {
-            var js2 = js.substring(js.indexOf('{'), js.lastIndexOf('}') + 1);
+            const js2 = js.substring(js.indexOf('{'), js.lastIndexOf('}') + 1);
             try {
                 js2 && (res = eval("(" + js2 + ")"));
             } catch (e) {
@@ -82690,7 +82795,7 @@ define('xide/types/Types',[
 define('xide/types',[
     "dcl/dcl"
 ],function(dcl){
-    var mod = new dcl(null,{
+    const mod = new dcl(null,{
         declaredClass:"xide/types"
     });
     mod.test = 22;

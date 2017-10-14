@@ -878,10 +878,6 @@ define([
 
             //FIXME: Need to add logic for initial themes and device size.
             if(newHtmlParams){
-                if (newHtmlParams.themeSet){
-                    var cmd = new ChangeThemeCommand(newHtmlParams.themeSet, this);
-                    cmd._dojoxMobileAddTheme(this, newHtmlParams.themeSet.mobileTheme, true); // new file
-                }
                 // Automatically include app.css and app.js so users
                 // have a place to put their custom CSS rules and JavaScript logic
                 this.addModeledStyleSheet(this.getAppCssRelativeFile(), true /*skipDomUpdate*/);

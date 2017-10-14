@@ -235,7 +235,7 @@ define("xdojo/declare", function(){});
 define('xide/types',[
     "dcl/dcl"
 ],function(dcl){
-    var mod = new dcl(null,{
+    const mod = new dcl(null,{
         declaredClass:"xide/types"
     });
     mod.test = 22;
@@ -2788,8 +2788,8 @@ define('xide/types/Types',[
      * @returns {*}
      */
     dojo.fromJson = function (js, debug) {
-        var res = null;
-        var didFail = false;
+        let res = null;
+        let didFail = false;
         debug = true;
         try {
             res = eval("(" + js + ")");
@@ -2798,7 +2798,7 @@ define('xide/types/Types',[
         }
 
         if (didFail) {
-            var js2 = js.substring(js.indexOf('{'), js.lastIndexOf('}') + 1);
+            const js2 = js.substring(js.indexOf('{'), js.lastIndexOf('}') + 1);
             try {
                 js2 && (res = eval("(" + js2 + ")"));
             } catch (e) {
@@ -3267,7 +3267,7 @@ define('xide/model/Base',[
     "xide/utils"
 ], function (dcl,declare,utils) {
     
-    var Implementation = {
+    const Implementation = {
         declaredClass:"xide/model/Base",
         /**
          * Mixin constructor arguments into this.
@@ -3301,7 +3301,7 @@ define('xide/model/Base',[
         }
     };
 
-    var Module = declare("xide/model/Base",null,Implementation);
+    const Module = declare("xide/model/Base",null,Implementation);
     Module.dcl = dcl(null,Implementation);
     return Module;
 });
@@ -3359,7 +3359,7 @@ define('xide/mixins/EventedMixin',[
     'xide/factory'
 ], function (array, dcl, declare, has, types, factory) {
 
-    var toString = Object.prototype.toString;
+    const toString = Object.prototype.toString;
     /**
      * Adds convenient functions for events to the consumer, generalizing dojo.subscribe/publish or dojo.on.
      * This mixin can be applied to anything dijit/_Widget based or custom functional classes(needs to call destroy!)
@@ -3368,7 +3368,7 @@ define('xide/mixins/EventedMixin',[
      *
      * @class module:xide/mixins/EventedMixin
      */
-    var Impl = {
+    const Impl = {
 
         _didRegisterSubscribers: false,
 
@@ -3475,20 +3475,19 @@ define('xide/mixins/EventedMixin',[
             if (!this.__events) {
                 this.__events = {};
             }
-            var self = this,
-                events = factory.subscribe(keys, cb, to || self, self.filterSubscribe.bind(self)),
-                container = self.__events;
+            const self = this;
+            const events = factory.subscribe(keys, cb, to || self, self.filterSubscribe.bind(self));
+            const container = self.__events;
 
             //replay on local tracking map
-            for (var i = 0, l = events.length; i < l; i++) {
-                var _type = events[i].type;
+            for (let i = 0, l = events.length; i < l; i++) {
+                const _type = events[i].type;
                 if (!container[_type]) {
                     container[_type] = [];
                 }
                 container[_type].push(events[i]);
             }
             return events;
-
         },
         /**
          * Publish an event (uses dojo.publish)
@@ -3503,7 +3502,7 @@ define('xide/mixins/EventedMixin',[
          *
          */
         publish: function (keys, data, from, delay) {
-            var self = this;
+            const self = this;
             if (delay > 0) {
                 setTimeout(function () {
                     factory.publish(keys, data, from || self, self.filterPublish.bind(self));
@@ -3526,7 +3525,7 @@ define('xide/mixins/EventedMixin',[
          */
         _destroyHandles: function () {
             if (this.__events) {
-                for (var type in this.__events) {
+                for (const type in this.__events) {
                     array.forEach(this.__events[type], function (item) {
                         if (item && item.remove) {
                             item.remove();
@@ -3561,7 +3560,7 @@ define('xide/mixins/EventedMixin',[
          * ```
          */
         once: function (type, listener) {
-            var self = this;
+            const self = this;
 
             function wrapped() {
                 self.unsubscribe(type, listener);
@@ -3604,7 +3603,7 @@ define('xide/mixins/EventedMixin',[
 
             if (!this._didRegisterSubscribers && this.subscribers) {
                 for (var i = 0; i < this.subscribers.length; i++) {
-                    var subscriber = this.subscribers[i];
+                    const subscriber = this.subscribers[i];
                     this._on(subscriber.event, subscriber.handler, subscriber.owner);
                 }
                 this._didRegisterSubscribers = true;
@@ -3613,13 +3612,13 @@ define('xide/mixins/EventedMixin',[
             if (arguments[2] === true)
                 throw new Error("Please use emit.sticky() instead of passing sticky=true for event: " + type);
 
-            var handler = this.__events[type],
-                eventArgs = arguments.length > 1 ? arguments[2] : null;
+            const handler = this.__events[type];
+            const eventArgs = arguments.length > 1 ? arguments[2] : null;
 
             if (!handler)
                 return;
 
-            var returnValue;
+            let returnValue;
 
             if (typeof handler == 'function') {
                 switch (arguments.length) {
@@ -3639,11 +3638,12 @@ define('xide/mixins/EventedMixin',[
 
             else if (_.isArray(handler)) {
                 var args = Array.prototype.slice.call(arguments, 1);
-                var listeners = handler.slice(), temp;
-                var _listener = null;
-                var who = null;
+                const listeners = handler.slice();
+                let temp;
+                let _listener = null;
+                let who = null;
 
-                for (var i = 0, l = listeners.length; i < l; i++) {
+                for (let i = 0, l = listeners.length; i < l; i++) {
 
                     _listener = listeners[i];
                     who = _listener.owner || this;
@@ -3696,11 +3696,11 @@ define('xide/mixins/EventedMixin',[
                 this.__events[type] = [];
                 return this;
             }
-            var list = this.__events[type];
+            const list = this.__events[type];
             if (_.isArray(list)) {
-                var _remove = [];
+                const _remove = [];
                 _.each(list, function (handle, a, b) {
-                    var which = handle.handler == listener ? handle.handler : handle.handler.listener == listener ? handle.handler.listener : null;
+                    const which = handle.handler == listener ? handle.handler : handle.handler.listener == listener ? handle.handler.listener : null;
                     if (which) {
                         _remove.push(handle);
                     }
@@ -3765,9 +3765,7 @@ define('xide/mixins/EventedMixin',[
          * @returns {{handler: *, owner: (exports|module.exports|module:xide/mixins/EventedMixin), type: *, element: (*|jQuery|HTMLElement), selector: *, remove: _handle.remove}}
          */
         __on: function (element, type, selector, handler) {
-
-            var _handler = handler;
-
+            const _handler = handler;
             if (typeof selector == 'function' && !handler) {
                 //no selector given
                 handler = selector;
@@ -3781,8 +3779,8 @@ define('xide/mixins/EventedMixin',[
             if (!this.__events[type]) {
                 this.__events[type] = [];
             }
-            var eventList = this.__events[type];
-            var _handle = {
+            const eventList = this.__events[type];
+            const _handle = {
                 handler: _handler,
                 owner: this,
                 type: type,
@@ -3813,9 +3811,7 @@ define('xide/mixins/EventedMixin',[
                     this.__events[type] = [];
                 }
 
-                var eventList = this.__events[type];
-
-
+                const eventList = this.__events[type];
                 if (!eventList) {
                     // Optimize the case of one listener. Don't need the extra array object.
                     this.__events[type] = listener;
@@ -3826,7 +3822,7 @@ define('xide/mixins/EventedMixin',[
                         return console.warn("adding same listener twice", type);
 
                     // If we've already got an array, just append.
-                    var _handle = {
+                    const _handle = {
                         handler: listener,
                         owner: owner || this,
                         type: type,
@@ -3849,7 +3845,7 @@ define('xide/mixins/EventedMixin',[
     };
 
     //package via declare
-    var Module = declare(null, Impl);
+    const Module = declare(null, Impl);
     //static access to Impl.
     Module.Impl = Impl;
     Module.dcl = dcl(null, Impl);
@@ -3954,9 +3950,9 @@ define('xide/model/Component',[
          * @returns {dojo.Deferred}
          */
         load: function (hasName) {
-            var _defered = new Deferred(),
-                thiz = this,
-                _re = require;
+            const _defered = new Deferred();
+            const thiz = this;
+            const _re = require;
 
             hasName = hasName || this.getLabel();
 
@@ -4033,7 +4029,7 @@ define('xide/model/Path',[
     "xide/utils",
     "dcl/dcl"
 ], function (utils, dcl) {
-    var Path = dcl(null, {
+    const Path = dcl(null, {
         declaredClass: "xide.model.Path",
         /**
          * @class xide.model.Path
@@ -4052,8 +4048,8 @@ define('xide/model/Path',[
         },
 
         endsWith: function (tail) {
-            var segments = utils.clone(this.segments);
-            var tailSegments = (new Path(tail)).getSegments();
+            const segments = utils.clone(this.segments);
+            const tailSegments = (new Path(tail)).getSegments();
             while (tailSegments.length > 0 && segments.length > 0) {
                 if (tailSegments.pop() != segments.pop()) {
                     return false;
@@ -4068,7 +4064,7 @@ define('xide/model/Path',[
             return this.extension;
         },
         segment: function (index) {
-            var segs = this.getSegments();
+            const segs = this.getSegments();
             if (segs.length < index) {
                 return null;
             }
@@ -4081,36 +4077,36 @@ define('xide/model/Path',[
          * @returns {String[]}
          */
         getChildren: function (items, recursive) {
-            var result = [];
-            var root = this,
-                path = this.toString();
+            const result = [];
+            const root = this;
+            const path = this.toString();
 
             function addChild(child) {
-                var _path = typeof child !== 'string' ? child.toString() : child;
-                if (_path !== path && result.indexOf(_path) == -1) {
+                const _path = typeof child !== 'string' ? child.toString() : child;
+                if (_path !== path && !result.includes(_path)) {
                     result.push(_path);
                 }
             }
 
             _.each(items, function (item) {
-                var child = new Path(item);
+                const child = new Path(item);
                 //root match
                 if (child.startsWith(root)) {
                     if (recursive) {
                         addChild(child.toString());
                     } else {
 
-                        var diff = child.relativeTo(path);
+                        const diff = child.relativeTo(path);
                         if (diff) {
-                            var diffSegments = diff.getSegments();
+                            const diffSegments = diff.getSegments();
                             //direct child
                             if (diffSegments.length == 1) {
                                 addChild(child);
                             } else if (diffSegments.length > 1) {
 
                                 //make sure that its parent has been added:
-                                var parent = child.getParentPath();
-                                var parentDiff = parent.relativeTo(path);
+                                const parent = child.getParentPath();
+                                const parentDiff = parent.relativeTo(path);
 
                                 //check diff again
                                 if (parentDiff.getSegments().length == 1) {
@@ -4126,7 +4122,7 @@ define('xide/model/Path',[
         },
         getSegments: function () {
             if (!this.segments) {
-                var path = this.path;
+                const path = this.path;
                 this.segments = path.split('/');
                 if (path.charAt(0) == '/') {
                     this.hasLeading = true;
@@ -4146,7 +4142,7 @@ define('xide/model/Path',[
         },
         getParentPath: function () {
             if (!this._parentPath) {
-                var parentSegments = utils.clone(this.segments);
+                const parentSegments = utils.clone(this.segments);
                 parentSegments.pop();
                 this._parentPath = new Path(parentSegments, this.hasLeading);
             }
@@ -4163,21 +4159,21 @@ define('xide/model/Path',[
             if (tail.isAbsolute()) {
                 return tail;
             }
-            var mySegments = this.segments;
-            var tailSegments = tail.getSegments();
-            var newSegments = mySegments.concat(tailSegments);
-            var result = new Path(newSegments, this.hasLeading, tail.hasTrailing);
+            const mySegments = this.segments;
+            const tailSegments = tail.getSegments();
+            const newSegments = mySegments.concat(tailSegments);
+            const result = new Path(newSegments, this.hasLeading, tail.hasTrailing);
             if (tailSegments[0] == ".." || tailSegments[0] == ".") {
                 result._canonicalize();
             }
             return result;
         },
         toString: function () {
-            var result = [];
+            const result = [];
             if (this.hasLeading) {
                 result.push('/');
             }
-            for (var i = 0; i < this.segments.length; i++) {
+            for (let i = 0; i < this.segments.length; i++) {
                 if (i > 0) {
                     result.push('/');
                 }
@@ -4189,7 +4185,7 @@ define('xide/model/Path',[
             return result.join("");
         },
         removeRelative: function () {
-            var segs = this.getSegments();
+            const segs = this.getSegments();
             if (segs.length > 0 && segs[1] == ".") {
                 return this.removeFirstSegments(1);
             }
@@ -4199,22 +4195,22 @@ define('xide/model/Path',[
             if (typeof base == 'string') {
                 base = new Path(base);
             }
-            var mySegments = this.segments;
+            const mySegments = this.segments;
             if (this.isAbsolute()) {
                 return this;
             }
-            var baseSegments = base.getSegments();
-            var commonLength = this.matchingFirstSegments(base);
-            var baseSegmentLength = baseSegments.length;
+            const baseSegments = base.getSegments();
+            const commonLength = this.matchingFirstSegments(base);
+            let baseSegmentLength = baseSegments.length;
             if (ignoreFilename) {
                 baseSegmentLength = baseSegmentLength - 1;
             }
-            var differenceLength = baseSegmentLength - commonLength;
-            var newSegmentLength = differenceLength + mySegments.length - commonLength;
+            const differenceLength = baseSegmentLength - commonLength;
+            const newSegmentLength = differenceLength + mySegments.length - commonLength;
             if (newSegmentLength == 0) {
                 return Path.EMPTY;
             }
-            var newSegments = [];
+            const newSegments = [];
             for (var i = 0; i < differenceLength; i++) {
                 newSegments.push('..');
             }
@@ -4224,18 +4220,18 @@ define('xide/model/Path',[
             return new Path(newSegments, false, this.hasTrailing);
         },
         startsWith: function (anotherPath) {
-            var count = this.matchingFirstSegments(anotherPath);
+            const count = this.matchingFirstSegments(anotherPath);
             return anotherPath._length() == count;
         },
         _length: function () {
             return this.segments.length;
         },
         matchingFirstSegments: function (anotherPath) {
-            var mySegments = this.segments;
-            var pathSegments = anotherPath.getSegments();
-            var max = Math.min(mySegments.length, pathSegments.length);
-            var count = 0;
-            for (var i = 0; i < max; i++) {
+            const mySegments = this.segments;
+            const pathSegments = anotherPath.getSegments();
+            const max = Math.min(mySegments.length, pathSegments.length);
+            let count = 0;
+            for (let i = 0; i < max; i++) {
                 if (mySegments[i] != pathSegments[i]) {
                     return count;
                 }
@@ -4247,11 +4243,11 @@ define('xide/model/Path',[
             return new Path(this.segments.slice(count, this.segments.length), this.hasLeading, this.hasTrailing);
         },
         removeMatchingLastSegments: function (anotherPath) {
-            var match = this.matchingFirstSegments(anotherPath);
+            const match = this.matchingFirstSegments(anotherPath);
             return this.removeLastSegments(match);
         },
         removeMatchingFirstSegments: function (anotherPath) {
-            var match = this.matchingFirstSegments(anotherPath);
+            const match = this.matchingFirstSegments(anotherPath);
             return this._clone().removeFirstSegments(match);
         },
         removeLastSegments: function (count) {
@@ -4270,7 +4266,7 @@ define('xide/model/Path',[
             if (this.segments.length != anotherPath.segments.length) {
                 return false;
             }
-            for (var i = 0; i < this.segments.length; i++) {
+            for (let i = 0; i < this.segments.length; i++) {
                 if (anotherPath.segments[i] != this.segments[i]) {
                     return false;
                 }
@@ -4278,8 +4274,8 @@ define('xide/model/Path',[
             return true;
         },
         _canonicalize: function () {
-            var doIt;
-            var segments = this.segments;
+            let doIt;
+            const segments = this.segments;
             for (var i = 0; i < segments.length; i++) {
                 if (segments[i] == "." || segments[i] == "..") {
                     doIt = true;
@@ -4287,7 +4283,7 @@ define('xide/model/Path',[
                 }
             }
             if (doIt) {
-                var stack = [];
+                const stack = [];
                 for (var i = 0; i < segments.length; i++) {
                     if (segments[i] == "..") {
                         if (stack.length == 0) {
@@ -4439,7 +4435,7 @@ define('xaction/DefaultActions',[
      * @returns {boolean}
      */
     function hasAction(permissions,what){
-        return _.contains(permissions,what);
+        return _.includes(permissions,what);
     }
 
     /**
@@ -5951,7 +5947,7 @@ define('xide/encoding/_base',[
 ], function(lang){
 
 	//	These functions are 32-bit word-based.  See _sha-64 for 64-bit word ops.
-	var base = {};//lang.getObject("dojox.encoding.digests", true);
+	const base = {};//lang.getObject("dojox.encoding.digests", true);
 
 	base.outputTypes = {
 		// summary:
@@ -5966,22 +5962,22 @@ define('xide/encoding/_base',[
 	base.addWords = function ( /* word */ a, /* word */ b) {
 		// summary:
 		//		add a pair of words together with rollover
-		var l = (a & 0xFFFF) + (b & 0xFFFF);
-		var m = (a >> 16) + (b >> 16) + (l >> 16);
+		const l = (a & 0xFFFF) + (b & 0xFFFF);
+		const m = (a >> 16) + (b >> 16) + (l >> 16);
 		return (m << 16) | (l & 0xFFFF); //	word
 	};
 
 	//	word-based conversion method, for efficiency sake;
 	//	most digests operate on words, and this should be faster
 	//	than the encoding version (which works on bytes).
-	var chrsz = 8; //	16 for Unicode
-	var mask = (1 << chrsz) - 1;
+	const chrsz = 8; //	16 for Unicode
+	const mask = (1 << chrsz) - 1;
 
 	base.stringToWord = function ( /* string */ s) {
 		// summary:
 		//		convert a string to a word array
-		var wa = [];
-		for (var i = 0, l = s.length * chrsz; i < l; i += chrsz) {
+		const wa = [];
+		for (let i = 0, l = s.length * chrsz; i < l; i += chrsz) {
 			wa[i >> 5] |= (s.charCodeAt(i / chrsz) & mask) << (i % 32);
 		}
 		return wa; //	word[]
@@ -5990,34 +5986,36 @@ define('xide/encoding/_base',[
 	base.wordToString = function ( /* word[] */ wa) {
 		// summary:
 		//		convert an array of words to a string
-		var s = [];
-		for (var i = 0, l = wa.length * 32; i < l; i += chrsz) {
+		const s = [];
+		for (let i = 0, l = wa.length * 32; i < l; i += chrsz) {
 			s.push(String.fromCharCode((wa[i >> 5] >>> (i % 32)) & mask));
 		}
 		return s.join(""); //	string
 	};
 
 	base.wordToHex = function ( /* word[] */ wa) {
-		// summary:
-		//		convert an array of words to a hex tab
-		var h = "0123456789abcdef",
-			s = [];
-		for (var i = 0, l = wa.length * 4; i < l; i++) {
+        // summary:
+        //		convert an array of words to a hex tab
+        const h = "0123456789abcdef";
+
+        const s = [];
+        for (let i = 0, l = wa.length * 4; i < l; i++) {
 			s.push(h.charAt((wa[i >> 2] >> ((i % 4) * 8 + 4)) & 0xF) + h.charAt((wa[i >> 2] >> ((i % 4) * 8)) & 0xF));
 		}
-		return s.join(""); //	string
-	};
+        return s.join(""); //	string
+    };
 
 	base.wordToBase64 = function ( /* word[] */ wa) {
-		// summary:
-		//		convert an array of words to base64 encoding, should be more efficient
-		//		than using dojox.encoding.base64
-		var p = "=",
-			tab = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/",
-			s = [];
-		for (var i = 0, l = wa.length * 4; i < l; i += 3) {
-			var t = (((wa[i >> 2] >> 8 * (i % 4)) & 0xFF) << 16) | (((wa[i + 1 >> 2] >> 8 * ((i + 1) % 4)) & 0xFF) << 8) | ((wa[i + 2 >> 2] >> 8 * ((i + 2) % 4)) & 0xFF);
-			for (var j = 0; j < 4; j++) {
+        // summary:
+        //		convert an array of words to base64 encoding, should be more efficient
+        //		than using dojox.encoding.base64
+        const p = "=";
+
+        const tab = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+        const s = [];
+        for (let i = 0, l = wa.length * 4; i < l; i += 3) {
+			const t = (((wa[i >> 2] >> 8 * (i % 4)) & 0xFF) << 16) | (((wa[i + 1 >> 2] >> 8 * ((i + 1) % 4)) & 0xFF) << 8) | ((wa[i + 2 >> 2] >> 8 * ((i + 2) % 4)) & 0xFF);
+			for (let j = 0; j < 4; j++) {
 				if (i * 8 + j * 6 > wa.length * 32) {
 					s.push(p);
 				} else {
@@ -6025,16 +6023,17 @@ define('xide/encoding/_base',[
 				}
 			}
 		}
-		return s.join(""); //	string
-	};
+        return s.join(""); //	string
+    };
 
 	//	convert to UTF-8
 	base.stringToUtf8 = function (input) {
-		var output = "";
-		var i = -1;
-		var x, y;
+        let output = "";
+        let i = -1;
+        let x;
+        let y;
 
-		while (++i < input.length) {
+        while (++i < input.length) {
 			x = input.charCodeAt(i);
 			y = i + 1 < input.length ? input.charCodeAt(i + 1) : 0;
 			if (0xD800 <= x && x <= 0xDBFF && 0xDC00 <= y && y <= 0xDFFF) {
@@ -6051,8 +6050,8 @@ define('xide/encoding/_base',[
 			else if (x <= 0x1FFFFF)
 				output += String.fromCharCode(0xF0 | ((x >>> 18) & 0x07), 0x80 | ((x >>> 12) & 0x3F), 0x80 | ((x >>> 6) & 0x3F), 0x80 | (x & 0x3F));
 		}
-		return output;
-	};
+        return output;
+    };
 
 	return base;
 });
@@ -6068,7 +6067,7 @@ define('xide/encoding/MD5',["./_base"], function(base) {
  *	Dojo port by Tom Trenka
  */
 
-	var chrsz=8;
+	const chrsz=8;
 
 	//	MD5 rounds functions
 	function R(n,c){ return (n<<c)|(n>>>(32-c)); }
@@ -6082,15 +6081,15 @@ define('xide/encoding/MD5',["./_base"], function(base) {
 	function core(x,len){
 		x[len>>5]|=0x80<<((len)%32);
 		x[(((len+64)>>>9)<<4)+14]=len;
-		var a= 1732584193;
-		var b=-271733879;
-		var c=-1732584194;
-		var d= 271733878;
-		for(var i=0; i<x.length; i+=16){
-			var olda=a;
-			var oldb=b;
-			var oldc=c;
-			var oldd=d;
+		let a= 1732584193;
+		let b=-271733879;
+		let c=-1732584194;
+		let d= 271733878;
+		for(let i=0; i<x.length; i+=16){
+			const olda=a;
+			const oldb=b;
+			const oldc=c;
+			const oldd=d;
 
 			a=FF(a,b,c,d,x[i+ 0],7 ,-680876936);
 			d=FF(d,a,b,c,x[i+ 1],12,-389564586);
@@ -6169,25 +6168,26 @@ define('xide/encoding/MD5',["./_base"], function(base) {
 	}
 
 	function hmac(data, key){
-		var wa=base.stringToWord(key);
-		if(wa.length>16){
+        let wa=base.stringToWord(key);
+        if(wa.length>16){
 			wa=core(wa, key.length*chrsz);
 		}
-		var l=[], r=[];
-		for(var i=0; i<16; i++){
+        const l=[];
+        const r=[];
+        for(let i=0; i<16; i++){
 			l[i]=wa[i]^0x36363636;
 			r[i]=wa[i]^0x5c5c5c5c;
 		}
-		var h=core(l.concat(base.stringToWord(data)), 512+data.length*chrsz);
-		return core(r.concat(h), 640);
-	}
+        const h=core(l.concat(base.stringToWord(data)), 512+data.length*chrsz);
+        return core(r.concat(h), 640);
+    }
 
 	//	public function
 	base.MD5=function(/* string */data, /* dojox.encoding.digests.outputTypes? */outputType){
 		// summary:
 		//		computes the digest of data, and returns the result according to type outputType
-		var out=outputType || base.outputTypes.Base64;
-		var wa=core(base.stringToWord(data), data.length*chrsz);
+		const out=outputType || base.outputTypes.Base64;
+		const wa=core(base.stringToWord(data), data.length*chrsz);
 		switch(out){
 			case base.outputTypes.Raw:{
 				return wa;	//	word[]
@@ -6208,8 +6208,8 @@ define('xide/encoding/MD5',["./_base"], function(base) {
 	base.MD5._hmac=function(/* string */data, /* string */key, /* dojox.encoding.digests.outputTypes? */outputType){
 		// summary:
 		//		computes the digest of data, and returns the result according to type outputType
-		var out=outputType || base.outputTypes.Base64;
-		var wa=hmac(data, key);
+		const out=outputType || base.outputTypes.Base64;
+		const wa=hmac(data, key);
 		switch(out){
 			case base.outputTypes.Raw:{
 				return wa;	//	word[]
@@ -6230,13 +6230,14 @@ define('xide/encoding/MD5',["./_base"], function(base) {
 });
 
 /** @module xide/lodash **/
-define('xide/lodash',[],function(){
-
+define('xide/lodash',[],function(app){
     /**
      * temp. wanna be shim for lodash til dojo-2/loader lands here
      */
     if(typeof _ !=="undefined"){
         return _;
+    }else if(app && app._){
+        return app._;
     }else{
         console.error('error loading lodash',global['_']);
     }
@@ -6258,41 +6259,41 @@ define('xide/data/_Base',[
      * @extends module:xide/mixins/EventedMixin
      * @lends module:dstore/Memory
      */
-    return declare("xide/data/_Base",EventedMixin, {
-        __all:null,
-        allowCache:true,
-        _find:function (query) {
-            var result = lodash.filter(this.data,query);
-            if(lodash.isArray(result)){
+    return declare("xide/data/_Base", EventedMixin, {
+        __all: null,
+        allowCache: true,
+        _find: function (query) {
+            const result = lodash.filter(this.data, query);
+            if (lodash.isArray(result)) {
                 return result;
-            }else if(lodash.isObject(result)){
+            } else if (lodash.isObject(result)) {
                 return [result];
             }
             return [];
         },
-        notify:function(){
+        notify: function () {
 
         },
-        _query:function(query){
-            var dfd = new Deferred();
-            var collection = this.filter(query);
+        _query: function (query) {
+            const dfd = new Deferred();
+            const collection = this.filter(query);
             when(collection.fetch(), function (data) {
                 dfd.resolve(data);
             });
             return dfd;
         },
         constructor: function () {
-            var store = this;
+            const store = this;
             if (store._getQuerierFactory('filter') || store._getQuerierFactory('sort')) {
 
                 this.queryEngine = function (query, options) {
                     options = options || {};
 
-                    var filterQuerierFactory = store._getQuerierFactory('filter');
-                    var filter = filterQuerierFactory ? filterQuerierFactory(query) : passthrough;
+                    const filterQuerierFactory = store._getQuerierFactory('filter');
+                    const filter = filterQuerierFactory ? filterQuerierFactory(query) : passthrough;
 
-                    var sortQuerierFactory = store._getQuerierFactory('sort');
-                    var sort = passthrough;
+                    const sortQuerierFactory = store._getQuerierFactory('sort');
+                    let sort = passthrough;
                     if (sortQuerierFactory) {
                         sort = sortQuerierFactory(arrayUtil.map(options.sort, function (criteria) {
                             return {
@@ -6302,13 +6303,13 @@ define('xide/data/_Base',[
                         }));
                     }
 
-                    var range = passthrough;
+                    let range = passthrough;
                     if (!isNaN(options.start) || !isNaN(options.count)) {
                         range = function (data) {
-                            var start = options.start || 0,
-                                count = options.count || Infinity;
+                            const start = options.start || 0;
+                            const count = options.count || Infinity;
 
-                            var results = data.slice(start, start + count);
+                            const results = data.slice(start, start + count);
                             results.total = data.length;
                             return results;
                         };
@@ -6319,15 +6320,15 @@ define('xide/data/_Base',[
                     };
                 };
             }
-            var objectStore = this;
+            const objectStore = this;
             // we call notify on events to mimic the old dojo/store/Trackable
             store.on('add,update,delete', function (event) {
-                var type = event.type;
-                var target = event.target;
+                const type = event.type;
+                const target = event.target;
                 objectStore.notify(
                     (type === 'add' || type === 'update') ? target : undefined,
                     (type === 'delete' || type === 'update') ?
-                        ('id' in event ? event.id : store.getIdentity(target)) : undefined);
+                    ('id' in event ? event.id : store.getIdentity(target)) : undefined);
             });
         },
         /**
@@ -6335,37 +6336,39 @@ define('xide/data/_Base',[
          * Then, delete query cache.
          * @returns {*}
          */
-        destroy:function(){
-            this._emit('destroy',this);
-            _.each(this.query(), function (item) {
+        destroy: function () {
+            this._emit('destroy', this);
+            this.query().forEach((item) => {
                 if (item.destroyOnRemove === true) {
                     item.destroy && item.destroy();
                 }
             });
             delete this._queryCache;
-            this._queryCache=null;
+            this._queryCache = null;
         },
-        refreshItem:function(item,property){
-            this.emit('update',{
+        refreshItem: function (item, property) {
+            this.emit('update', {
                 target: item,
-                property:property
+                property: property
             });
         },
-        query: function (query, options,allowCache) {
+        query: function (query, options, allowCache) {
             //no query, return all
-            if(lodash.isEmpty(query)){
-                var self = this;
-                return _.map(this.data,function(item){
+            if (lodash.isEmpty(query)) {
+                const self = this;
+                return _.map(this.data, function (item) {
                     return self.getSync(item[self.idProperty]);
-                },this);
-            }else if(!_.some(query,function (value) { return value == null})){
+                }, this);
+            } else if (!_.some(query, function (value) {
+                    return value == null
+                })) {
                 //no empty props in query, return lodash.filter
                 //return this._find(query);
             }
 
 
-            var hash = query ? MD5(JSON.stringify(query),1) : null;
-            if(has('xcf-ui')) {
+            const hash = query ? MD5(JSON.stringify(query), 1) : null;
+            if (has('xcf-ui')) {
                 if (hash && !has('host-node') && allowCache !== false) {
                     !this._queryCache && (this._queryCache = {});
                     if (this._queryCache[hash]) {
@@ -6399,14 +6402,14 @@ define('xide/data/_Base',[
             options = options || {};
             query = query || {};
 
-            var results = this.filter(query);
-            var queryResults;
+            let results = this.filter(query);
+            let queryResults;
 
             // Apply sorting
-            var sort = options.sort;
+            const sort = options.sort;
             if (sort) {
                 if (Object.prototype.toString.call(sort) === '[object Array]') {
-                    var sortOptions;
+                    let sortOptions;
                     while ((sortOptions = sort.pop())) {
                         results = results.sort(sortOptions.attribute, sortOptions.descending);
                     }
@@ -6415,8 +6418,8 @@ define('xide/data/_Base',[
                 }
             }
 
-            var tracked;
-            var _track = false;
+            let tracked;
+            const _track = false;
             if (_track && results.track && !results.tracking) {
                 // if it is trackable, always track, so that observe can
                 // work properly.
@@ -6425,7 +6428,7 @@ define('xide/data/_Base',[
             }
             if ('start' in options) {
                 // Apply a range
-                var start = options.start || 0;
+                const start = options.start || 0;
                 // object stores support sync results, so try that if available
                 queryResults = results[results.fetchRangeSync ? 'fetchRangeSync' : 'fetchRange']({
                     start: start,
@@ -6443,18 +6446,18 @@ define('xide/data/_Base',[
                     return value;
                 }
 
-                var addHandle = results.on('add', function (event) {
+                const addHandle = results.on('add', function (event) {
                     callback(event.target, -1, convertUndefined(event.index));
                 });
-                var updateHandle = results.on('update', function (event) {
+                const updateHandle = results.on('update', function (event) {
                     if (includeObjectUpdates || event.previousIndex !== event.index || !isFinite(event.index)) {
                         callback(event.target, convertUndefined(event.previousIndex), convertUndefined(event.index));
                     }
                 });
-                var removeHandle = results.on('delete', function (event) {
+                const removeHandle = results.on('delete', function (event) {
                     callback(event.target, convertUndefined(event.previousIndex), -1);
                 });
-                var handle = {
+                const handle = {
                     remove: function () {
                         addHandle.remove();
                         updateHandle.remove();
@@ -6464,9 +6467,9 @@ define('xide/data/_Base',[
                 handle.cancel = handle.remove;
                 return handle;
             };
-            if(!has('xcf-ui') && hash && !has('host-node') && allowCache!==false){
-                !this._queryCache && (this._queryCache={});
-                this._queryCache[hash]=queryResults;
+            if (!has('xcf-ui') && hash && !has('host-node') && allowCache !== false) {
+                !this._queryCache && (this._queryCache = {});
+                this._queryCache[hash] = queryResults;
             }
             return queryResults;
         }
@@ -6504,7 +6507,7 @@ define('xide/data/Memory',[
          * @returns {*}
          */
         putSync:function(item){
-            var self = this;
+            const self = this;
             item = this.inherited(arguments);
             item && !item._store && Object.defineProperty(item, '_store', {
                 get: function () {
@@ -6525,12 +6528,12 @@ define('xide/editor/Registry',[
 ], function (dcl,declare, factory, types,Memory) {
 
     //exported mixin
-    var editorMixin;
+    let editorMixin;
 
     //singleton store
-    var store;
+    let store;
 
-    var debug=false;
+    const debug=false;
 
     editorMixin = dcl(null, {
         declaredClass:"xide.editor.Registry",
@@ -6546,7 +6549,7 @@ define('xide/editor/Registry',[
 
     editorMixin.editors = [];
 
-    var editors = editorMixin.editors;
+    const editors = editorMixin.editors;
 
     editorMixin.getStore = function(){
         if(!store){
@@ -6572,8 +6575,8 @@ define('xide/editor/Registry',[
     };
 
     editorMixin.unregisterEditor = function (name) {
-        var _store = editorMixin.getStore();
-        var editors = _store._find({
+        const _store = editorMixin.getStore();
+        const editors = _store._find({
             name:name
         });
         function unregister(editor){
@@ -6588,8 +6591,8 @@ define('xide/editor/Registry',[
     };
 
     editorMixin.onRegisterEditor = function (eventData) {
-        var _store = editorMixin.getStore();
-        var allEditors = _store._find({
+        const _store = editorMixin.getStore();
+        const allEditors = _store._find({
             name:eventData.name
         });
        if(allEditors.length>0){
@@ -6606,13 +6609,13 @@ define('xide/editor/Registry',[
     };
 
     editorMixin.getDefaultEditor = function (item) {
-        var editors = editorMixin.getEditors(item);
+        const editors = editorMixin.getEditors(item);
         if (!editors) {
             return null;
         }
 
-        for (var i = 0; i < editors.length; i++) {
-            var obj = editors[i];
+        for (let i = 0; i < editors.length; i++) {
+            const obj = editors[i];
             if (obj.isDefault === true) {
                 return obj;
             }
@@ -6630,33 +6633,32 @@ define('xide/editor/Registry',[
         if(!item){
             return editors;
         }
-        var extension = editorMixin.getExtension(item.path);
+        let extension = editorMixin.getExtension(item.path);
         if (extension != null && extension.length == 0) {
             return null;
         }
         extension=extension.toLowerCase();
-        var result = [];
+        const result = [];
         if (!editorMixin.editors) {
             return null;
         }
 
-        var store = editorMixin.getStore();
-        var _defaultEditor = store._find({
+        const store = editorMixin.getStore();
+        const _defaultEditor = store._find({
             defaultEditor:true
         });
 
-        for (var i = 0; i < editors.length; i++) {
-            var editor = editors[i];
+        editors.forEach(editor => {
             if (editor) {
                 //check multiple extensions
-                if (editor.extensions.indexOf('|') != -1) {
-                    var supportedPluginExtensions = editor.extensions.split('|');
-                    for (var j = 0; j < supportedPluginExtensions.length; j++) {
-                        var supportedPluginExtension = supportedPluginExtensions[j];
+                if (editor.extensions.includes('|')) {
+                    const supportedPluginExtensions = editor.extensions.split('|');
+
+                    supportedPluginExtensions.forEach(supportedPluginExtension => {
                         if (supportedPluginExtension === extension) {
                             result.push(editor);
                         }
-                    }
+                    });
                 } else {
                     //otherwise single extension match
                     if (editor.extensions === extension) {
@@ -6664,7 +6666,7 @@ define('xide/editor/Registry',[
                     }
                 }
             }
-        }
+        });
 
         if(_defaultEditor.length==1){
             result.push(_defaultEditor[0]);
@@ -6792,11 +6794,11 @@ define('xide/editor/Default',[
     'xdojo/has!xace?xace/views/Editor'
 ],function (declare,utils,Editor){
 
-    var debug = false;
+    const debug = false;
     /**
     * A default editor, using ACE!
      */
-    var Implementation = {
+    const Implementation = {
         ctx:null,
         /**
          *
@@ -6806,7 +6808,6 @@ define('xide/editor/Default',[
          * @returns {Editor}
          */
         open:function(item,where,mixin,select,owner){
-
             if(!Editor){
                 debug && console.error('have no xace! abort opening default editor!');
             }
@@ -6820,27 +6821,27 @@ define('xide/editor/Default',[
                 return null;
             }
 
-            var mime = item.mime,
-                mediaTypes = ["image/png","image/jpg"];
+            const mime = item.mime;
+            const mediaTypes = ["image/png","image/jpg"];
 
             if(mime){
-                if(mediaTypes.indexOf(mime)!==-1||
-                    mime.indexOf('video')!==-1||
-                    mime.indexOf('audio')!==-1 ||
-                    mime.indexOf('image')!==-1)
+                if(mediaTypes.includes(mime)||
+                    mime.includes('video')||
+                    mime.includes('audio') ||
+                    mime.includes('image'))
                 {
                     return null;
                 }
             }
 
-            var thiz=this,
-                ctx = thiz.ctx,
-                mainView = ctx ? ctx.mainView : null,
-                title = utils.toString(item.name) ||  (utils.pathinfo(item.path,'PATHINFO_FILENAME') + '.'+ utils.pathinfo(item.path,'PATHINFO_EXTENSION')),
-                docker = mainView ? mainView.getDocker() : null,
-                registerInWindowManager = owner && owner.registerEditors===true ? true : false,
-                container  = where || mainView.layoutCenter,
-                root = null;
+            const thiz=this;
+            const ctx = thiz.ctx;
+            const mainView = ctx ? ctx.mainView : null;
+            const title = utils.toString(item.name) ||  (utils.pathinfo(item.path,'PATHINFO_FILENAME') + '.'+ utils.pathinfo(item.path,'PATHINFO_EXTENSION'));
+            const docker = mainView ? mainView.getDocker() : null;
+            const registerInWindowManager = owner && owner.registerEditors===true ? true : false;
+            const container  = where || mainView.layoutCenter;
+            let root = null;
 
             mixin = mixin || {}
 
@@ -6854,7 +6855,7 @@ define('xide/editor/Default',[
                 root = container;
             }
 
-            var args = {
+            const args = {
 
                 item:item,
                 style:'padding:0px;',
@@ -6869,7 +6870,7 @@ define('xide/editor/Default',[
                  */
                 storeDelegate:{
                     getContent:function(onSuccess,_item){
-                        var file = _item || item;
+                        const file = _item || item;
                         return thiz.ctx.getFileManager().getContent(file.mount,file.path,onSuccess);
                     },
                     saveContent:function(value,onSuccess,onError){
@@ -6881,7 +6882,7 @@ define('xide/editor/Default',[
 
             utils.mixin(args,mixin);
 
-            var editor = utils.addWidget(Editor,args,this,root,true,null,null,select);
+            const editor = utils.addWidget(Editor,args,this,root,true,null,null,select);
 
             root.resize && root.resize() && editor.resize();
 
@@ -6896,7 +6897,7 @@ define('xide/editor/Default',[
     };
 
     //package via declare
-    var _class = declare('xide.editor.Default',null,Implementation);
+    const _class = declare('xide.editor.Default',null,Implementation);
     _class.Implementation = Implementation;
     return _class;
 
@@ -6907,7 +6908,7 @@ define('xide/registry',[
 	"dojo/_base/window", // win.body
     "xdojo/has"
 ], function(array, win, has){
-	/**
+    /**
 	 * @TODOS:
 	 * - add namespaces
 	 * - remove window
@@ -6918,8 +6919,10 @@ define('xide/registry',[
 	 * - define widget.id better
 	 * - add search by class
      */
-	var _widgetTypeCtr = {}, hash = {};
-	var registry =  {
+    const _widgetTypeCtr = {};
+
+    const hash = {};
+    const registry =  {
 		// summary:
 		//		Registry of existing widget on page, plus some utility methods.
 
@@ -6986,7 +6989,7 @@ define('xide/registry',[
 		 * @returns {string}
          */
 		getUniqueId: function(widgetType){
-			var id;
+			let id;
 			do{
 				id = widgetType + "_" +
 					(widgetType in _widgetTypeCtr ?
@@ -7002,13 +7005,13 @@ define('xide/registry',[
          * @returns {Array}
          */
 		findWidgets: function(root, skipNode){
-			var outAry = [];
+			const outAry = [];
 			function getChildrenHelper(root){
-				for(var node = root.firstChild; node; node = node.nextSibling){
+				for(let node = root.firstChild; node; node = node.nextSibling){
 					if(node.nodeType == 1){
-						var widgetId = node.getAttribute("widgetId");
+						const widgetId = node.getAttribute("widgetId");
 						if(widgetId){
-							var widget = hash[widgetId];
+							const widget = hash[widgetId];
 							if(widget){	// may be null on page w/multiple dojo's loaded
 								outAry.push(widget);
 							}
@@ -7044,7 +7047,7 @@ define('xide/registry',[
 			//		Returns the widget whose DOM tree contains the specified DOMNode, or null if
 			//		the node is not contained within the DOM tree of any widget
 			while(node){
-				var id = node.nodeType == 1 && node.getAttribute("widgetId");
+				const id = node.nodeType == 1 && node.getAttribute("widgetId");
 				if(id){
 					return hash[id];
 				}
@@ -7057,7 +7060,7 @@ define('xide/registry',[
 		// Actually, this is accessed from WidgetSet back-compatibility code
 		_hash: hash
 	};
-	return registry;
+    return registry;
 });
 
 /** @module xide/widgets/_Widget **/
@@ -7069,7 +7072,7 @@ define('xide/widgets/_Widget',[
     'xide/registry',
     'xlang/i18'
 ], function (declare,dcl,utils,EventedMixin,registry,i18) {
-    var forwardMethods = ['resize'];
+    const forwardMethods = ['resize'];
     function _resize(what){
         try {
             if (typeof what['resize'] === "function" && what._started) {
@@ -7101,7 +7104,7 @@ define('xide/widgets/_Widget',[
     /**
      * @class module:xide/widgets/_Widget
      */
-    var Implementation = {
+    const Implementation = {
         _widgets:null,
         __eventHandles:null,
         _isResizing:false,
@@ -7131,7 +7134,7 @@ define('xide/widgets/_Widget',[
         },
         _toWidget:function(element){
             if(element && element.id){
-                var widget = registry.byId(element.id);
+                const widget = registry.byId(element.id);
                 if(widget){
                     return widget;
                 }
@@ -7139,13 +7142,13 @@ define('xide/widgets/_Widget',[
             return null;
         },
         parentByClass :function(className,max){
-            var i = 0,
-                element = this.domNode,
-                widget = null;
+            let i = 0;
+            let element = this.domNode;
+            let widget = null;
             max = max || 20;
             while (!widget && i < max && element) {
                 if (element) {
-                    var _widget = this._toWidget(element);
+                    const _widget = this._toWidget(element);
                     if(_widget && _widget.declaredClass){
                         if(_widget.declaredClass === className){
                             widget = _widget;
@@ -7158,10 +7161,10 @@ define('xide/widgets/_Widget',[
             return widget;
         },
         _startWidgets:function(){
-            var result = false;
+            let result = false;
             if(this._widgets) {
-                for (var i = 0; i < this._widgets.length; i++) {
-                    var w = this._widgets[i];
+                for (let i = 0; i < this._widgets.length; i++) {
+                    const w = this._widgets[i];
                     if (w && !w._started && w.startup) {
                         w.startup();
                         w._started = true;
@@ -7173,11 +7176,11 @@ define('xide/widgets/_Widget',[
             return result;
         },
         _createForward:function(method){
-            var self = this;
+            const self = this;
             if(!this[method]){
                 this[method] = function(){
-                    for (var i = 0; i < self._widgets.length; i++) {
-                        var w = self._widgets[i];
+                    for (let i = 0; i < self._widgets.length; i++) {
+                        const w = self._widgets[i];
                         w[method] && w[method]();
                     }
                 };
@@ -7186,8 +7189,8 @@ define('xide/widgets/_Widget',[
         onShow:function(){
             if(this._widgets){
                 this._startWidgets();
-                for (var i = 0; i < this._widgets.length; i++) {
-                    var w = this._widgets[i];
+                for (let i = 0; i < this._widgets.length; i++) {
+                    const w = this._widgets[i];
                     if(w && w!==this) {
                         w._showing=true;
                         w.open = true;
@@ -7200,8 +7203,8 @@ define('xide/widgets/_Widget',[
         },
         onHide:function(){
             if(this._widgets){
-                for (var i = 0; i < this._widgets.length; i++) {
-                    var w = this._widgets[i];
+                for (let i = 0; i < this._widgets.length; i++) {
+                    const w = this._widgets[i];
                     
                     if(!w){
                         console.warn('invalid widget');
@@ -7232,7 +7235,7 @@ define('xide/widgets/_Widget',[
                 return;
             }
             handler = _.isString(handler) ? this[handler] ? this[handler] : null : handler;
-            var self = this;
+            const self = this;
 
             if(typeof handler ==='function'){
                 return this.__on(element,type,null,function(){
@@ -7245,15 +7248,15 @@ define('xide/widgets/_Widget',[
             return true;
         },
         resize:function(){
-            var _args = arguments;
+            const _args = arguments;
             this.inherited && this.inherited(_args);
             if(this.shouldResizeWidgets && this.shouldResizeWidgets()===false){
                 return;
             }
             //if(this._isResizing ===true){return;}
             if(this._widgets){
-                for (var i = 0; i < this._widgets.length; i++) {
-                    var what = this._widgets[i];
+                for (let i = 0; i < this._widgets.length; i++) {
+                    const what = this._widgets[i];
                     if (what) {
                         what.resizeToParent && utils.resizeTo(what, this, true, true);
                         if (what && typeof what['resize'] === "function" && what._started) {
@@ -7265,10 +7268,10 @@ define('xide/widgets/_Widget',[
         },
         destroy:function(){
             this.inherited && this.inherited(arguments);
-            var _widgets = this._widgets;
+            const _widgets = this._widgets;
             if (_widgets) {
-                for (var i = 0; i < _widgets.length; i++) {
-                    var widget = _widgets[i];
+                for (let i = 0; i < _widgets.length; i++) {
+                    const widget = _widgets[i];
                     if (widget && widget != this && widget._destroyed !== true) {
                         utils.destroy(widget);
                     }
@@ -7300,18 +7303,18 @@ define('xide/widgets/_Widget',[
             }
             !this._widgets && (this._widgets = []);
 
-            var widgets = this._widgets;
+            const widgets = this._widgets;
             if(_.isNumber(options)){
                 options = null;
             }
             if(options!==null && !_.isObject(options)){
                 options ={};
             }
-            var result = null;
+            let result = null;
 
             _.isEmpty(options) && (options=null);
 
-            var _parent = parent || ( parent!==false ? this.containerNode || this.domNode : null);
+            const _parent = parent || ( parent!==false ? this.containerNode || this.domNode : null);
 
             //case 1: instance or object
             if((mixed && !options && !parent) || (!options && !parent && !startup && !select && !extension)){
@@ -7330,14 +7333,14 @@ define('xide/widgets/_Widget',[
         },
         buildRendering:function() {
             this.inherited && this.inherited(arguments);
-            var node = utils.getNode(this);
+            const node = utils.getNode(this);
             node && this.cssClass && $(node).addClass(this.cssClass);
             node && this.style && $(node).attr('style',this.style);
         }
     };
 
-    var _Widget = dcl([EventedMixin.dcl,i18.dcl],Implementation);
-    var Module = declare('xide/widgets/_Widget',i18,Implementation);
+    const _Widget = dcl([EventedMixin.dcl,i18.dcl],Implementation);
+    const Module = declare('xide/widgets/_Widget',i18,Implementation);
     Module.Implmentation = Implementation;
     Module.dcl = _Widget;
     dcl.chainAfter(_Widget,'destroy');
@@ -7350,9 +7353,9 @@ define('xide/_Popup',[
     'dcl/dcl'
 ],function (dcl){
 
-    var zIndexStart = 200;
+    let zIndexStart = 200;
 
-    var Module = dcl(null,{});
+    const Module = dcl(null,{});
 
     Module.nextZ = function(incr){
         zIndexStart++;
@@ -7386,180 +7389,175 @@ define('xide/views/_Dialog',[
     utils, EventedMixin,
     _Widget, Deferred, _Popup
 ) {
+    const ctx = window.sctx;
+    let root;
 
+    const _BootstrapDialog = typeof BootstrapDialog !== 'undefined' ? BootstrapDialog : {};
 
+    const Module = dcl([_Widget.dcl, EventedMixin.dcl], {
+        declaredClass: 'xide/views/_Dialog',
+        //message: null,
+        cssClass: 'bootstrap3-dialog',
+        containerClass: '',
+        type: types.DIALOG_TYPE.WARNING,
+        size: types.DIALOG_SIZE.SIZE_WIDE,
+        //defaultOptions:_BootstrapDialog.defaultOptions,
+        dlg: null,
+        bodyCSS: null,
+        okButtonClass: 'btn-danger',
+        startDfd: null,
+        _ready: false,
+        getData: function () {
+            return null;
+        },
+        getInstance: function (args) {
+            this.defaultOptions = typeof BootstrapDialog !== 'undefined' ? BootstrapDialog.defaultOptions : {};
 
-        var ctx = window.sctx,
-            root;
+            if (this.dlg) {
+                return this.dlg;
+            }
+            args = this.buildArgs(args);
+            const instance = new _BootstrapDialog(args);
+            const oldRealize = instance.realize;
+            const self = this;
 
-        var _BootstrapDialog = typeof BootstrapDialog !== 'undefined' ? BootstrapDialog : {};
-
-        var Module = dcl([_Widget.dcl, EventedMixin.dcl], {
-            declaredClass: 'xide/views/_Dialog',
-            //message: null,
-            cssClass: 'bootstrap3-dialog',
-            containerClass: '',
-            type: types.DIALOG_TYPE.WARNING,
-            size: types.DIALOG_SIZE.SIZE_WIDE,
-            //defaultOptions:_BootstrapDialog.defaultOptions,
-            dlg: null,
-            bodyCSS: null,
-            okButtonClass: 'btn-danger',
-            startDfd: null,
-            _ready: false,
-            getData: function () {
-                return null;
-            },
-            getInstance: function (args) {
-                this.defaultOptions = typeof BootstrapDialog !== 'undefined' ? BootstrapDialog.defaultOptions : {};
-
-                if (this.dlg) {
-                    return this.dlg;
-                }
-                args = this.buildArgs(args);
-                var instance = new _BootstrapDialog(args),
-                    oldRealize = instance.realize,
-                    self = this;
-
-                if (!instance) {
-                    console.error('BootstrapDialog not loaded, abort');
-                    return;
-                }
-                instance.realize = function () {
-                    oldRealize.apply(instance, null);
-                    self.buildRendering(instance);
-                    $.each(args.buttons, function (index, button) {
-                        var $button = instance.getButton(button.id);
-                        if ($button && button.focus == true) {
-                            $button.addClass('active');
-                        }
-                    });
-
-                    $(instance.$modalDialog).draggable({ handle: ".modal-header" });
-                }
-                instance.owner = this;
-                this.dlg = instance;
-                return instance;
-
-            },
-            buildRendering: function (dlg) {
-                this.containerNode = this.domNode = dlg.$modalBody[0];
-                dlg.$modalBody.addClass(this.containerClass);
-                this.bodyCSS && dlg.$modalBody.css(this.bodyCSS);
-            },
-            onshown: function (dlg) {
-                dlg.owner.resize();
-                dlg.owner.onShow.apply(dlg.owner, []);
-                var zIndexBackdrop = window.__nextZ ? window.__nextZ(1) : 1040;
-                var zIndexModal = window.__nextZ ? window.__nextZ() : 1050;
-
-                dlg.$modal.css('z-index', zIndexBackdrop);
-                dlg.$modalDialog.css('z-index', zIndexModal);
-
-                this._ready = true;
-            },
-            onReady: function () {
-                var self = this;
-                setTimeout(function () {
-                    self._ready = true;
-                }, 100);
-
-            },
-            startup: function () {
-                var dlg = this.getInstance();
-            },
-            destroy: function () {
-                this.dlg && this.dlg.close();
-            },
-            show: function (args) {
-                var self = this;
-                if (!this.startDfd) {
-                    this.startDfd = new Deferred();
-                    this.startDfd.then(function () {
-                        self.onReady();
-                    });
-                }
-                var dlg = this.getInstance(args);
-                dlg.open();
-                setTimeout(function () {
-                    self._ready = true;
-                }, 1000);
-                return this.startDfd;
-            },
-
-            getButtons: function () {
-                var thiz = this;
-                var buttons = [{
-                    icon: 'fa-check',
-                    label: thiz.localize('Ok'),
-                    cssClass: thiz.okButtonClass || 'btn-primary',
-                    hotkey: 13, // Enter.
-                    autospin: false,
-                    focus: true,
-                    id: utils.createUUID(),
-                    action: function (dialogRef) {
-                        if (!thiz._ready) {
-                            return;
-                        }
-                        dialogRef.close(false);
-                        try {
-                            dialogRef.owner.onOk(thiz.getData());
-                        } catch (e) {
-                            console.error('Error in dlg ok:', e);
-                        }
+            if (!instance) {
+                console.error('BootstrapDialog not loaded, abort');
+                return;
+            }
+            instance.realize = function () {
+                oldRealize.apply(instance, null);
+                self.buildRendering(instance);
+                $.each(args.buttons, function (index, button) {
+                    const $button = instance.getButton(button.id);
+                    if ($button && button.focus == true) {
+                        $button.addClass('active');
                     }
-                },
-                {
-                    icon: 'glyphicon glyphicon-check',
-                    label: thiz.localize('CANCEL'),
-                    cssClass: 'btn-info',
-                    autospin: false,
-                    id: utils.createUUID(),
-                    action: function (dialogRef) {
-                        dialogRef.close();
-                        dialogRef.owner.onCancel();
-                    }
-
-                }
-                ];
-
-                return buttons;
-
-            },
-            buildArgs: function (args) {
-                args = args || this.defaultOptions || {};
-                utils.mixin(args, {
-                    type: this.type,
-                    size: this.size,
-                    message: this.message,
-                    title: this.title,
-                    buttons: this.buttons,
-                    onOk: this.onOk,
-                    onCancel: this.onCancel,
-                    onShow: this.onShow,
-                    onshown: this.onshown
-                    //defaultOptions:_BootstrapDialog.defaultOptions,
                 });
-                args.title = this.localize(args.title)
-                return args;
+
+                $(instance.$modalDialog).draggable({ handle: ".modal-header" });
+            }
+            instance.owner = this;
+            this.dlg = instance;
+            return instance;
+        },
+        buildRendering: function (dlg) {
+            this.containerNode = this.domNode = dlg.$modalBody[0];
+            dlg.$modalBody.addClass(this.containerClass);
+            this.bodyCSS && dlg.$modalBody.css(this.bodyCSS);
+        },
+        onshown: function (dlg) {
+            dlg.owner.resize();
+            dlg.owner.onShow.apply(dlg.owner, []);
+            const zIndexBackdrop = window.__nextZ ? window.__nextZ(1) : 1040;
+            const zIndexModal = window.__nextZ ? window.__nextZ() : 1050;
+
+            dlg.$modal.css('z-index', zIndexBackdrop);
+            dlg.$modalDialog.css('z-index', zIndexModal);
+
+            this._ready = true;
+        },
+        onReady: function () {
+            const self = this;
+            setTimeout(function () {
+                self._ready = true;
+            }, 100);
+
+        },
+        startup: function () {
+            const dlg = this.getInstance();
+        },
+        destroy: function () {
+            this.dlg && this.dlg.close();
+        },
+        show: function (args) {
+            const self = this;
+            if (!this.startDfd) {
+                this.startDfd = new Deferred();
+                this.startDfd.then(function () {
+                    self.onReady();
+                });
+            }
+            const dlg = this.getInstance(args);
+            dlg.open();
+            setTimeout(function () {
+                self._ready = true;
+            }, 1000);
+            return this.startDfd;
+        },
+
+        getButtons: function () {
+            const thiz = this;
+            const buttons = [{
+                icon: 'fa-check',
+                label: thiz.localize('Ok'),
+                cssClass: thiz.okButtonClass || 'btn-primary',
+                hotkey: 13, // Enter.
+                autospin: false,
+                focus: true,
+                id: utils.createUUID(),
+                action: function (dialogRef) {
+                    if (!thiz._ready) {
+                        return;
+                    }
+                    dialogRef.close(false);
+                    try {
+                        dialogRef.owner.onOk(thiz.getData());
+                    } catch (e) {
+                        console.error('Error in dlg ok:', e);
+                    }
+                }
             },
-            constructor: function (args) {
-                this.buttons = this.getButtons();
-                utils.mixin(this, args);
-            },
-            onOk: function () { },
-            onCancel: function () { }
-        });
+            {
+                icon: 'glyphicon glyphicon-check',
+                label: thiz.localize('CANCEL'),
+                cssClass: 'btn-info',
+                autospin: false,
+                id: utils.createUUID(),
+                action: function (dialogRef) {
+                    dialogRef.close();
+                    dialogRef.owner.onCancel();
+                }
 
-        dcl.chainAfter(Module, "onReady");
-        dcl.chainAfter(Module, "onOk");
-        dcl.chainAfter(Module, "onCancel");
-        dcl.chainAfter(Module, "resize");
+            }
+            ];
 
+            return buttons;
 
-        return Module;
-
+        },
+        buildArgs: function (args) {
+            args = args || this.defaultOptions || {};
+            utils.mixin(args, {
+                type: this.type,
+                size: this.size,
+                message: this.message,
+                title: this.title,
+                buttons: this.buttons,
+                onOk: this.onOk,
+                onCancel: this.onCancel,
+                onShow: this.onShow,
+                onshown: this.onshown
+                //defaultOptions:_BootstrapDialog.defaultOptions,
+            });
+            args.title = this.localize(args.title)
+            return args;
+        },
+        constructor: function (args) {
+            this.buttons = this.getButtons();
+            utils.mixin(this, args);
+        },
+        onOk: function () { },
+        onCancel: function () { }
     });
+
+    dcl.chainAfter(Module, "onReady");
+    dcl.chainAfter(Module, "onOk");
+    dcl.chainAfter(Module, "onCancel");
+    dcl.chainAfter(Module, "resize");
+
+
+    return Module;
+});
 /** @module xfile/views/FileOperationDialog **/
 define('xfile/views/FileOperationDialog',[
     "dcl/dcl",
@@ -8879,12 +8877,12 @@ define('xide/_base/_Widget',[
     "dojo/dom-construct",
     'xide/lodash',
     'xide/$'
-], function (dcl,inherited,_Widget,utils,string,lang,registry,cache,domConstruct,_,$) {
+], function (dcl, inherited, _Widget, utils, string, lang, registry, cache, domConstruct, _, $) {
 
-    function destroy(w,preserveDom){
-        if(w.destroyRecursive){
+    function destroy(w, preserveDom) {
+        if (w.destroyRecursive) {
             w.destroyRecursive(preserveDom);
-        }else if(w.destroy){
+        } else if (w.destroy) {
             w.destroy(preserveDom);
         }
     }
@@ -8893,7 +8891,7 @@ define('xide/_base/_Widget',[
     //
     //  Attach Mixin Class
     //
-    var attachAttribute = 'attachTo';
+    const attachAttribute = 'attachTo';
     /**
      *		Mixin for widgets to attach to dom nodes and setup events via
      *		convenient data-dojo-attach-point and data-dojo-attach-event DOM attributes.
@@ -8921,26 +8919,26 @@ define('xide/_base/_Widget',[
      *		to 'this'.
      attachScope: undefined,
      */
-    var _AttachMixinClass = dcl(null, {
-        __attachAsjQueryObject:true,
-        __attachViaAddChild:true,
-        __stopAtContainerNode:false,
-        _started:false,
+    const _AttachMixinClass = dcl(null, {
+        __attachAsjQueryObject: true,
+        __attachViaAddChild: true,
+        __stopAtContainerNode: false,
+        _started: false,
         //attachDirect:true,
-        declaredClass:"xide/_base/_AttachMixin",
-        cssClass:'',
+        declaredClass: "xide/_base/_AttachMixin",
+        cssClass: '',
         /**
          * Attach to DOM nodes marked with special attributes.
          */
-        buildRendering: function(){
+        buildRendering: function () {
             this._attachPoints = [];
             // recurse through the node, looking for, and attaching to, our
             // attachment points and events, which should be defined on the template node.
             this._attachTemplateNodes(this.domNode);
-            this._beforeFillContent();		// hook for _WidgetsInTemplateMixin
+            this._beforeFillContent(); // hook for _WidgetsInTemplateMixin
             this.cssClass && this.domNode && $(this.domNode).addClass(this.cssClass);
         },
-        _beforeFillContent: function(){},
+        _beforeFillContent: function () {},
         /**
          * Iterate through the dom nodes and attach functions and nodes accordingly.
          * @description Map widget properties and functions to the handlers specified in
@@ -8949,23 +8947,25 @@ define('xide/_base/_Widget',[
          *	    - attachTo
          * @param rootNode {HTMLElement}
          **/
-        _attachTemplateNodes: function(rootNode){
+        _attachTemplateNodes: function (rootNode) {
             // DFS to process all nodes except those inside of this.containerNode
-            var node = rootNode;
-            while(true){
-                if  (
+            let node = rootNode;
+            while (true) {
+                if (
                     node.nodeType == 1 &&
-                    ( this._processTemplateNode(node,function(n,p){return n.getAttribute(p);},this._attach)) &&
+                    (this._processTemplateNode(node, function (n, p) {
+                        return n.getAttribute(p);
+                    }, this._attach)) &&
                     node.firstChild
-                ){
+                ) {
                     node = node.firstChild;
-                }else{
-                    if(node == rootNode){
+                } else {
+                    if (node == rootNode) {
                         return;
                     }
-                    while(!node.nextSibling){
+                    while (!node.nextSibling) {
                         node = node.parentNode;
-                        if(node == rootNode){
+                        if (node == rootNode) {
                             return;
                         }
                     }
@@ -8974,24 +8974,26 @@ define('xide/_base/_Widget',[
             }
         },
 
-        _processTemplateNode: function(baseNode, getAttrFunc, attachFunc){
+        _processTemplateNode: function (baseNode, getAttrFunc, attachFunc) {
             // summary:
             //		Process data-dojo-attach-point and data-dojo-attach-event for given node or widget.
             //		Returns true if caller should process baseNode's children too.
-            var ret = true;
+            let ret = true;
 
             // Process data-dojo-attach-point
-            var _attachScope = this.attachScope || this,
-                attachPoint = getAttrFunc(baseNode, attachAttribute);
+            const _attachScope = this.attachScope || this;
 
-            if(attachPoint){
-                var point, points = attachPoint.split(/\s*,\s*/);
-                while((point = points.shift())){
-                    if(_.isArray(_attachScope[point])){
+            const attachPoint = getAttrFunc(baseNode, attachAttribute);
+
+            if (attachPoint) {
+                let point;
+                const points = attachPoint.split(/\s*,\s*/);
+                while ((point = points.shift())) {
+                    if (_.isArray(_attachScope[point])) {
                         _attachScope[point].push(baseNode);
-                    }else{
+                    } else {
                         _attachScope[point] = baseNode;
-                        this.__attachAsjQueryObject &&  (_attachScope['$'+point] = $(baseNode));
+                        this.__attachAsjQueryObject && (_attachScope['$' + point] = $(baseNode));
                     }
                     ret = this.__stopAtContainerNode ? (point != "containerNode") : ret;
                     this._attachPoints.push(point);
@@ -9003,25 +9005,25 @@ define('xide/_base/_Widget',[
          * Detach and clean up the attachments made in _attachtempalteNodes.
          * @private
          */
-        _detachTemplateNodes: function() {
+        _detachTemplateNodes: function () {
             // Delete all attach points to prevent IE6 memory leaks.
-            var _attachScope = this.attachScope || this;
-            _.each(this._attachPoints, function(point){
+            const _attachScope = this.attachScope || this;
+            this._attachPoints.forEach((point) => {
                 delete _attachScope[point];
             });
             this._attachPoints = [];
         },
-        destroyRendering: function(){
+        destroyRendering: function () {
             this._detachTemplateNodes();
             this.inherited && this.inherited(arguments);
         },
-        startup:dcl.superCall(function(sup) {
+        startup: dcl.superCall(function (sup) {
             return function () {
-                var res = null;
-                if(sup){
+                let res = null;
+                if (sup) {
                     res = sup.call(this);
                 }
-                this._started=true;
+                this._started = true;
                 return res;
             };
         })
@@ -9031,8 +9033,8 @@ define('xide/_base/_Widget',[
     //  Templated Mixin Class
     //
     //
-    var _TemplatedMixin = dcl(_AttachMixinClass, {
-        declaredClass:"xide/_base/_TemplatedMixin",
+    const _TemplatedMixin = dcl(_AttachMixinClass, {
+        declaredClass: "xide/_base/_TemplatedMixin",
         // summary:
         //		Mixin for widgets that are instantiated from a template
         // templateString: [protected] String
@@ -9055,28 +9057,34 @@ define('xide/_base/_Widget',[
          //		just function like _AttachMixin.
          _rendered: false,
          =====*/
-        _stringRepl: function(tmpl){
+        _stringRepl: function (tmpl) {
             // summary:
             //		Does substitution of ${foo} type properties in template string
             // tags:
             //		private
-            var className = this.declaredClass, _this = this;
+            const className = this.declaredClass;
+
+            const _this = this;
             // Cache contains a string because we need to do property replacement
             // do the property replacement
-            return string.substitute(tmpl, this, function(value, key){
-                if(key.charAt(0) == '!'){ value = lang.getObject(key.substr(1), false, _this); }
-                if(typeof value == "undefined"){
-                    var error = new Error(className+" template:"+key)
+            return string.substitute(tmpl, this, function (value, key) {
+                if (key.charAt(0) == '!') {
+                    value = lang.getObject(key.substr(1), false, _this);
+                }
+                if (typeof value == "undefined") {
+                    const error = new Error(className + " template:" + key);
                     logError(error);
                 } // a debugging aide
-                if(value == null){ return ""; }
+                if (value == null) {
+                    return "";
+                }
 
                 // Substitution keys beginning with ! will skip the transform step,
                 // in case a user wishes to insert unescaped markup, e.g. ${!foo}
                 return key.charAt(0) == "!" ? value : this._escapeValue("" + value);
             }, this);
         },
-        _escapeValue: function(/*String*/ val){
+        _escapeValue: function ( /*String*/ val) {
             // summary:
             //		Escape a value to be inserted into the template, either into an attribute value
             //		(ex: foo="${bar}") or as inner text of an element (ex: <span>${foo}</span>)
@@ -9084,7 +9092,7 @@ define('xide/_base/_Widget',[
             // Safer substitution, see heading "Attribute values" in
             // http://www.w3.org/TR/REC-html40/appendix/notes.html#h-B.3.2
             // and also https://www.owasp.org/index.php/XSS_%28Cross_Site_Scripting%29_Prevention_Cheat_Sheet#RULE_.231_-_HTML_Escape_Before_Inserting_Untrusted_Data_into_HTML_Element_Content
-            return val.replace(/["'<>&]/g, function(val){
+            return val.replace(/["'<>&]/g, function (val) {
                 return {
                     "&": "&amp;",
                     "<": "&lt;",
@@ -9097,24 +9105,26 @@ define('xide/_base/_Widget',[
         /*
          * @description Construct the UI for this widget from a template, setting this.domNode.
          */
-        buildRendering: dcl.superCall(function(sup){
-            return function(){
-                if(!this._rendered){
-                    if(!this.templateString){
-                        this.templateString = cache(this.templatePath, {sanitize: true});
+        buildRendering: dcl.superCall(function (sup) {
+            return function () {
+                if (!this._rendered) {
+                    if (!this.templateString) {
+                        this.templateString = cache(this.templatePath, {
+                            sanitize: true
+                        });
                     }
                     // Lookup cached version of template, and download to cache if it
                     // isn't there already.  Returns either a DomNode or a string, depending on
                     // whether or not the template contains ${foo} replacement parameters.
-                    var cached = _TemplatedMixin.getCachedTemplate(this.templateString, this._skipNodeCache, this.ownerDocument);
-                    var node;
-                    if(_.isString(cached)){
-                        node =  $(this._stringRepl(cached))[0];
-                        if(node.nodeType != 1){
+                    const cached = _TemplatedMixin.getCachedTemplate(this.templateString, this._skipNodeCache, this.ownerDocument);
+                    let node;
+                    if (_.isString(cached)) {
+                        node = $(this._stringRepl(cached))[0];
+                        if (node.nodeType != 1) {
                             // Flag common problems such as templates with multiple top level nodes (nodeType == 11)
                             throw new Error("Invalid template: " + cached);
                         }
-                    }else{
+                    } else {
                         // if it's a node, all we have to do is clone it
                         node = cached.cloneNode(true);
                     }
@@ -9123,12 +9133,12 @@ define('xide/_base/_Widget',[
 
                 // Call down to _WidgetBase.buildRendering() to get base classes assigned
                 sup.call(this, arguments);
-                if(!this._rendered){
+                if (!this._rendered) {
                     this._fillContent(this.srcNodeRef);
                 }
                 this._rendered = true;
-                if(this.domNode && this.declaredClass){
-                    $(this.domNode).addClass(utils.replaceAll('/','.',this.declaredClass));
+                if (this.domNode && this.declaredClass) {
+                    $(this.domNode).addClass(utils.replaceAll('/', '.', this.declaredClass));
                 }
             };
         }),
@@ -9137,15 +9147,15 @@ define('xide/_base/_Widget',[
          * @param source {HTMLElement}
          * @private
          */
-        _fillContent: function(source){
+        _fillContent: function (source) {
             // summary:
             //		Relocate source contents to templated container node.
             //		this.containerNode must be able to receive children, or exceptions will be thrown.
             // tags:
             //		protected
-            var dest = this.containerNode;
-            if(source && dest){
-                while(source.hasChildNodes()){
+            const dest = this.containerNode;
+            if (source && dest) {
+                while (source.hasChildNodes()) {
                     dest.appendChild(source.firstChild);
                 }
             }
@@ -9155,7 +9165,7 @@ define('xide/_base/_Widget',[
 
     // key is templateString; object is either string or DOM tree
     _TemplatedMixin._templateCache = {};
-    _TemplatedMixin.getCachedTemplate = function(templateString, alwaysUseString, doc){
+    _TemplatedMixin.getCachedTemplate = function (templateString, alwaysUseString, doc) {
         // summary:
         //		Static method to get a template based on the templatePath or
         //		templateString key
@@ -9170,30 +9180,30 @@ define('xide/_base/_Widget',[
         //		a DOM tree (if the node can be cloned directly)
 
         // is it already cached?
-        var tmplts = _TemplatedMixin._templateCache;
-        var key = templateString;
-        var cached = tmplts[key];
-        if(cached){
-            try{
+        const tmplts = _TemplatedMixin._templateCache;
+        const key = templateString;
+        const cached = tmplts[key];
+        if (cached) {
+            try {
                 // if the cached value is an innerHTML string (no ownerDocument) or a DOM tree created within the
                 // current document, then use the current cached value
-                if(!cached.ownerDocument || cached.ownerDocument == (doc || document)){
+                if (!cached.ownerDocument || cached.ownerDocument == (doc || document)) {
                     // string or node of the same document
                     return cached;
                 }
-            }catch(e){ /* squelch */ } // IE can throw an exception if cached.ownerDocument was reloaded
+            } catch (e) { /* squelch */ } // IE can throw an exception if cached.ownerDocument was reloaded
             domConstruct.destroy(cached);
         }
 
         templateString = _.trim(templateString);
 
-        if(alwaysUseString || templateString.match(/\$\{([^\}]+)\}/g)){
+        if (alwaysUseString || templateString.match(/\$\{([^\}]+)\}/g)) {
             // there are variables in the template so all we can do is cache the string
             return (tmplts[key] = templateString); //String
-        }else{
+        } else {
             // there are no variables in the template so we can cache the DOM tree
-            var node = domConstruct.toDom(templateString, doc);
-            if(node.nodeType != 1){
+            const node = domConstruct.toDom(templateString, doc);
+            if (node.nodeType != 1) {
                 throw new Error("Invalid template: " + templateString);
             }
             return (tmplts[key] = node); //Node
@@ -9204,42 +9214,44 @@ define('xide/_base/_Widget',[
     //
     //  Actual Widget base class, adding an API
     //
-    function createClass_WidgetBase(){
-        var tagAttrs = {};
-        function getAttrs(obj){
-            var ret = {};
-            for(var attr in obj){
+    function createClass_WidgetBase() {
+        const tagAttrs = {};
+
+        function getAttrs(obj) {
+            const ret = {};
+            for (const attr in obj) {
                 ret[attr.toLowerCase()] = true;
             }
             return ret;
         }
-        function isEqual(a, b){
+
+        function isEqual(a, b) {
             //	summary:
             //		Function that determines whether two values are identical,
             //		taking into account that NaN is not normally equal to itself
             //		in JS.
-            return a === b || (/* a is NaN */ a !== a && /* b is NaN */ b !== b);
+            return a === b || ( /* a is NaN */ a !== a && /* b is NaN */ b !== b);
         }
         /**
          * @class module:xide/_base/_Widget
          */
-        var Module = dcl(null,{
+        const Module = dcl(null, {
             _attrPairNames: {}, // shared between all widgets
             attributeMap: {},
-            declaredClass:'xide/_base/_Widget',
-            on:function(type,handler){
-                return this._on(type,handler);
+            declaredClass: 'xide/_base/_Widget',
+            on: function (type, handler) {
+                return this._on(type, handler);
             },
-            emit:function(type,args){
-                return this._emit(type,args);
+            emit: function (type, args) {
+                return this._emit(type, args);
             },
-            _set: function(/*String*/ name, /*anything*/ value){
+            _set: function ( /*String*/ name, /*anything*/ value) {
                 // summary:
                 //		Helper function to set new value for specified property, and call handlers
                 //		registered with watch() if the value has changed.
-                var oldValue = this[name];
+                const oldValue = this[name];
                 this[name] = value;
-                if(this._created && !isEqual(oldValue, value)){
+                if (this._created && !isEqual(oldValue, value)) {
                     this._watchCallbacks && this._watchCallbacks(name, oldValue, value);
                     this.emit("attrmodified-" + name, {
                         detail: {
@@ -9257,7 +9269,7 @@ define('xide/_base/_Widget',[
              * @returns {*}
              * @private
              */
-            _get: function( name){
+            _get: function (name) {
                 // future: return name in this.props ? this.props[name] : this[name];
                 return this[name];
             },
@@ -9268,19 +9280,19 @@ define('xide/_base/_Widget',[
              * @returns {*}
              * @private
              */
-            _getAttrNames: function(name){
-                var apn = this._attrPairNames;
-                if(apn[name]){
+            _getAttrNames: function (name) {
+                const apn = this._attrPairNames;
+                if (apn[name]) {
                     return apn[name];
                 }
-                var uc = name.replace(/^[a-z]|-[a-zA-Z]/g, function(c){
+                const uc = name.replace(/^[a-z]|-[a-zA-Z]/g, function (c) {
                     return c.charAt(c.length - 1).toUpperCase();
                 });
                 return (apn[name] = {
                     n: name + "Node",
                     s: "_set" + uc + "Attr", // converts dashes to camel case, ex: accept-charset --> _setAcceptCharsetAttr
                     g: "_get" + uc + "Attr",
-                    l: uc.toLowerCase()        // lowercase name w/out dashes, ex: acceptcharset
+                    l: uc.toLowerCase() // lowercase name w/out dashes, ex: acceptcharset
                 });
             },
             /**
@@ -9307,20 +9319,20 @@ define('xide/_base/_Widget',[
              * @param value {object|null}
              * @returns {*}
              */
-            set: function(name, value){
-                if(typeof name === "object"){
-                    for(var x in name){
+            set: function (name, value) {
+                if (typeof name === "object") {
+                    for (const x in name) {
                         this.set(x, name[x]);
                     }
                     return this;
                 }
-                var names = this._getAttrNames(name),
-                    setter = this[names.s];
+                const names = this._getAttrNames(name);
+                const setter = this[names.s];
 
-                if(_.isFunction(setter)){
+                if (_.isFunction(setter)) {
                     // use the explicit setter
                     setter.apply(this, Array.prototype.slice.call(arguments, 1));
-                }else{
+                } else {
                     // Mapping from widget attribute to DOMNode/subwidget attribute/value/etc.
                     // Map according to:
                     //		1. attributeMap setting, if one exists (TODO: attributeMap deprecated, remove in 2.0)
@@ -9329,28 +9341,30 @@ define('xide/_base/_Widget',[
                     // Checks if an attribute is a "standard attribute" by whether the DOMNode JS object has a similar
                     // attribute name (ex: accept-charset attribute matches jsObject.acceptCharset).
                     // Note also that Tree.focusNode() is a function not a DOMNode, so test for that.
-                    var defaultNode = this.focusNode && !lang.isFunction(this.focusNode) ? "focusNode" : "domNode",
-                        tag = this[defaultNode] && this[defaultNode].tagName,
-                        attrsForTag = tag && (tagAttrs[tag] || (tagAttrs[tag] = getAttrs(this[defaultNode]))),
-                        map = name in this.attributeMap ? this.attributeMap[name] :
-                            names.s in this ? this[names.s] :
-                                ((attrsForTag && names.l in attrsForTag && typeof value != "function") ||
-                                /^aria-|^data-|^role$/.test(name)) ? defaultNode : null;
-                    if(map != null){
+                    const defaultNode = this.focusNode && !lang.isFunction(this.focusNode) ? "focusNode" : "domNode";
+
+                    const tag = this[defaultNode] && this[defaultNode].tagName;
+                    const attrsForTag = tag && (tagAttrs[tag] || (tagAttrs[tag] = getAttrs(this[defaultNode])));
+
+                    const map = name in this.attributeMap ? this.attributeMap[name] :
+                        names.s in this ? this[names.s] :
+                        ((attrsForTag && names.l in attrsForTag && typeof value != "function") ||
+                            /^aria-|^data-|^role$/.test(name)) ? defaultNode : null;
+
+                    if (map != null) {
                         this._attrToDom(name, value, map);
                     }
                     this._set(name, value);
                 }
                 return this;
             },
-            postCreate:function(){
-            },
-            postMixInProperties:dcl.superCall(function(sup){
-                return function(props){
+            postCreate: function () {},
+            postMixInProperties: dcl.superCall(function (sup) {
+                return function (props) {
                     sup && sup.call(this, props);
                 };
             }),
-            create: function(params, srcNodeRef){
+            create: function (params, srcNodeRef) {
                 // summary:
                 //		Kick off the life-cycle of a widget
                 // description:
@@ -9384,25 +9398,25 @@ define('xide/_base/_Widget',[
                 this._supportingWidgets = [];
 
                 // this is here for back-compat, remove in 2.0 (but check NodeList-instantiate.html test)
-                if(this.srcNodeRef && this.srcNodeRef.id){
+                if (this.srcNodeRef && this.srcNodeRef.id) {
                     this.id = this.srcNodeRef.id;
                 }
 
                 // mix in our passed parameters
-                if(params){
+                if (params) {
                     this.params = params;
                     utils.mixin(this, params);
                 }
 
-                if(this.postMixInProperties) {
+                if (this.postMixInProperties) {
                     this.postMixInProperties();
                 }
 
                 // Generate an id for the widget if one wasn't specified, or it was specified as id: undefined.
                 // Do this before buildRendering() because it might expect the id to be there.
-                if(!this.id){
+                if (!this.id) {
                     this.id = registry.getUniqueId(this.declaredClass.replace(/\//g, "_"));
-                    if(this.params){
+                    if (this.params) {
                         // if params contains {id: undefined}, prevent _applyAttributes() from processing it
                         delete this.params.id;
                     }
@@ -9415,7 +9429,7 @@ define('xide/_base/_Widget',[
                 registry.add(this);
 
                 this.buildRendering();
-                if(this.domNode){
+                if (this.domNode) {
                     // Copy attributes listed in attributeMap into the [newly created] DOM for the widget.
                     // Also calls custom setters for all attributes with custom setters.
                     //this._applyAttributes();
@@ -9424,24 +9438,24 @@ define('xide/_base/_Widget',[
                     // For 2.0, move this after postCreate().  postCreate() shouldn't depend on the
                     // widget being attached to the DOM since it isn't when a widget is created programmatically like
                     // new MyWidget({}).	See #11635.
-                    var source = this.srcNodeRef;
-                    if(source && source.parentNode && this.domNode !== source){
+                    const source = this.srcNodeRef;
+                    if (source && source.parentNode && this.domNode !== source) {
                         source.parentNode.replaceChild(this.domNode, source);
                     }
                     // Note: for 2.0 may want to rename widgetId to dojo._scopeName + "_widgetId",
                     // assuming that dojo._scopeName even exists in 2.0
                     this.domNode.setAttribute("id", this.id);
-                    if(this.style){
+                    if (this.style) {
                         $(this.domNode).css(this.style);
                     }
                 }
                 this.postCreate();
                 this._created = true;
             },
-            constructor:function(params,container){
-                this.postscript && this.postscript(params,container);
+            constructor: function (params, container) {
+                this.postscript && this.postscript(params, container);
             },
-            postscript:function(params,srcNodeRef){
+            postscript: function (params, srcNodeRef) {
                 return this.create(params, srcNodeRef);
             },
             /**
@@ -9458,14 +9472,14 @@ define('xide/_base/_Widget',[
              *
              * @returns {*}
              */
-            getChildren: function(){
+            getChildren: function () {
                 return this.containerNode ? registry.findWidgets(this.containerNode) : []; // dijit/_WidgetBase[]
             },
             /**
              *
              * @returns {*}
              */
-            getParent: function(){
+            getParent: function () {
                 // summary:
                 //		Returns the parent widget of this widget.
                 return registry.getEnclosingWidget(this.domNode.parentNode);
@@ -9478,7 +9492,7 @@ define('xide/_base/_Widget',[
              *		dijit._TemplatedMixin widgets.
              * @param preserveDom {boolean}
              */
-            destroyRecursive: function(preserveDom){
+            destroyRecursive: function (preserveDom) {
                 this._beingDestroyed = true;
                 this.destroyDescendants(preserveDom);
                 this.destroy(preserveDom);
@@ -9488,7 +9502,7 @@ define('xide/_base/_Widget',[
              * @param preserveDom {boolean}. If true, this method will leave the original DOM structure alone.
              * Note: This will not yet work with _TemplatedMixin widgets
              */
-            destroy: function(preserveDom){
+            destroy: function (preserveDom) {
                 // summary:
                 //		Destroy this widget, but not its descendants.  Descendants means widgets inside of
                 //		this.containerNode.   Will also destroy any resources (including widgets) registered via this.own().
@@ -9502,8 +9516,8 @@ define('xide/_base/_Widget',[
                 this._beingDestroyed = true;
                 // Destroy supporting widgets, but not child widgets under this.containerNode (for 2.0, destroy child widgets
                 // here too).   if() statement is to guard against exception if destroy() called multiple times (see #15815).
-                if(this.domNode){
-                    _.each(registry.findWidgets(this.domNode, this.containerNode), destroy);
+                if (this.domNode) {
+                    registry.findWidgets(this.domNode, this.containerNode).forEach((w) => destroy);
                 }
                 this.destroyRendering(preserveDom);
                 registry.remove(this.id);
@@ -9514,23 +9528,23 @@ define('xide/_base/_Widget',[
              * Destroys the DOM nodes associated with this widget.
              * @param {boolean} preserveDom. If true, this method will leave the original DOM structure alone during tear-down. Note: this will not work with _Templated widgets yet.
              */
-            destroyRendering: function(preserveDom){
-                if(this.domNode){
-                    if(preserveDom){
+            destroyRendering: function (preserveDom) {
+                if (this.domNode) {
+                    if (preserveDom) {
 
-                    }else{
+                    } else {
                         domConstruct.destroy(this.domNode);
                     }
                     delete this.domNode;
                 }
-                if(this.srcNodeRef){
-                    if(!preserveDom){
+                if (this.srcNodeRef) {
+                    if (!preserveDom) {
                         domConstruct.destroy(this.srcNodeRef);
                     }
                     delete this.srcNodeRef;
                 }
             },
-            destroyDescendants: function(/*Boolean?*/ preserveDom){
+            destroyDescendants: function ( /*Boolean?*/ preserveDom) {
                 // summary:
                 //		Recursively destroy the children of this widget and their
                 //		descendants.
@@ -9540,8 +9554,8 @@ define('xide/_base/_Widget',[
                 //		widgets.
 
                 // get all direct descendants and destroy them recursively
-                _.each(this.getChildren(), function(widget){
-                    if(widget.destroyRecursive){
+                this.getChildren().forEach((widget) => {
+                    if (widget.destroyRecursive) {
                         widget.destroyRecursive(preserveDom);
                     }
                 });
@@ -9551,36 +9565,37 @@ define('xide/_base/_Widget',[
 
     }
 
-    var StoreMixin = dcl(null,{
-        wireStore:function(store,updateFn,events){
+    const StoreMixin = dcl(null, {
+        wireStore: function (store, updateFn, events) {
             store = store || this.store;
-            var handles = [];
-            events = events || ['update','added','remove','delete'];
-            for (var i = 0; i < events.length; i++) {
-                var event = events[i];
-                var _handle = store.on(event, updateFn.bind(this));
+            const handles = [];
+            events = events || ['update', 'added', 'remove', 'delete'];
+
+            events.forEach(event => {
+                const _handle = store.on(event, updateFn.bind(this));
                 handles.push(_handle);
-                this.addHandle && this.addHandle(event,_handle);
-            }
+                this.addHandle && this.addHandle(event, _handle);
+            });
+
             return handles;
         }
     });
-    var _WidgetClass = createClass_WidgetBase();
+    const _WidgetClass = createClass_WidgetBase();
     /////////////////////////////////////////////////////////////////
     //
     //  Module exports
     //
     //
-    var Module = dcl([_WidgetClass,_TemplatedMixin,_Widget.dcl],{});
+    const Module = dcl([_WidgetClass, _TemplatedMixin, _Widget.dcl], {});
 
     Module.AttachClass = _AttachMixinClass;
     Module.TemplateClass = _TemplatedMixin;
     Module.WidgetClass = _WidgetClass;
     Module.StoreMixin = StoreMixin;
 
-    dcl.chainAfter(Module,"resize");
-    dcl.chainAfter(Module,"destroy");
-    dcl.chainAfter(Module,"startup");
+    dcl.chainAfter(Module, "resize");
+    dcl.chainAfter(Module, "destroy");
+    dcl.chainAfter(Module, "startup");
     return Module;
 });
 /** @module xide/container/_ContainerBase **/
@@ -9591,7 +9606,7 @@ define('xide/container/_PaneBase',[
     "xide/_base/_Widget"
 ], function (has,dcl,utils,_Widget) {
 
-    var Module = dcl(_Widget,{
+    const Module = dcl(_Widget,{
         templateString:'<div/>',
         isContainer:true,
         declaredClass:'xide/container/_PaneBase',
@@ -9639,7 +9654,7 @@ define('xide/container/_PaneBase',[
             this.resize();
             this.onShow();
             this.onSelect && this.onSelect();
-            var thiz = this;
+            const thiz = this;
             setTimeout(function(){
                 thiz.owner && thiz.owner.onShowTab(thiz);
             },1);
@@ -9664,8 +9679,8 @@ define('xide/container/_PaneBase',[
             });
         },
         hide:function(){
-            var container = $(this.containerRoot),
-                toggleNode= $(this.toggleNode);
+            const container = $(this.containerRoot);
+            const toggleNode= $(this.toggleNode);
 
             toggleNode.addClass('collapsed');
             toggleNode.attr('aria-expanded',false);
@@ -9675,8 +9690,8 @@ define('xide/container/_PaneBase',[
             this.open = false;
         },
         show:function(){
-            var container = $(this.containerRoot),
-                toggleNode = $(this.toggleNode);
+            const container = $(this.containerRoot);
+            const toggleNode = $(this.toggleNode);
 
             toggleNode.removeClass('collapsed');
             toggleNode.attr('aria-expanded',true);
@@ -9691,11 +9706,11 @@ define('xide/container/_PaneBase',[
             return this._widgets;
         },
         postMixInProperties:function(){
-            var active = this.selected ? 'active' : '';
+            const active = this.selected ? 'active' : '';
             this.templateString = '<div attachTo="containerNode" style="height:100%;width:100%;position:relative;" class="tab-pane ' + active + '"></div>';
         },
         __init:function(){
-            var panel = this.$toggleNode;
+            const panel = this.$toggleNode;
             this.__addHandler(panel,'hidden.bs.tab','_onHided');
             this.__addHandler(panel,'hide.bs.tab','_onHide');
             this.__addHandler(panel,'shown.bs.tab','_onShown');
@@ -9719,13 +9734,13 @@ define('xide/layout/_TabContainer',[
     'xide/$',
     'xide/lodash'
 ], function (dcl, utils, _Widget, _PaneBase, $, _) {
-    var TabPaneClass = dcl(_PaneBase, {
+    const TabPaneClass = dcl(_PaneBase, {
         declaredClass: 'xide/layout/_TabPane',
         postMixInProperties: function () {
             this.templateString = '<div attachTo="containerNode" style="height:inherit;width:inherit;position:relative;" class="tab-pane ' + (this.selected ? 'active' : '') + '"></div>';
         },
         __init: function () {
-            var panel = this.$toggleNode;
+            const panel = this.$toggleNode;
             this.__addHandler(panel, 'hidden.bs.tab', '_onHided');
             this.__addHandler(panel, 'hide.bs.tab', '_onHide');
             this.__addHandler(panel, 'shown.bs.tab', '_onShown');
@@ -9733,7 +9748,7 @@ define('xide/layout/_TabContainer',[
         }
     });
 
-    var TabContainer = dcl(_Widget, {
+    const TabContainer = dcl(_Widget, {
         declaredClass: 'xide/layout/_TabContainer',
         tabClass: TabPaneClass,
         tabs: null,
@@ -9761,15 +9776,15 @@ define('xide/layout/_TabContainer',[
             this._emit('selectChild', tab);
         },
         getSelected: function () {
-            for (var i = 0; i < this.tabs.length; i++) {
-                var obj = this.tabs[i];
+            for (let i = 0; i < this.tabs.length; i++) {
+                const obj = this.tabs[i];
                 if (obj.pane.selected) {
                     return obj.pane;
                 }
             }
         },
         selectChild: function (mixed) {
-            var tab = mixed;
+            let tab = mixed;
             if (mixed !== null) {
                 if (_.isString(mixed)) {
                     tab = this.getTab(mixed);
@@ -9784,7 +9799,7 @@ define('xide/layout/_TabContainer',[
             return tab;
         },
         addWidget: function (widgetProto, ctrArgsIn, delegate, parent, startup, cssClass, baseClasses, select, classExtension) {
-            var target = parent;
+            let target = parent;
             if (!widgetProto.isContainer) {
                 target = this._createTab(this.tabClass, {
                     title: ctrArgsIn.title,
@@ -9818,22 +9833,22 @@ define('xide/layout/_TabContainer',[
         },
         _createTab: function (tabClass, options) {
             !this.tabs && (this.tabs = []);
-            var active = this.tabs.length == 0 ? 'active' : '',
-                icon = options.icon || '',
-                title = options.title || '',
-                selected = options.selected != null ? options.selected : this.tabs.length == 0;
+            const active = this.tabs.length == 0 ? 'active' : '';
+            const icon = options.icon || '';
+            const title = options.title || '';
+            const selected = options.selected != null ? options.selected : this.tabs.length == 0;
 
-            var pane = utils.addWidget(tabClass || this.tabClass, {
+            const pane = utils.addWidget(tabClass || this.tabClass, {
                 title: title,
                 icon: icon,
                 selected: selected,
                 owner: this
             }, null, this.tabContentNode, true);
 
-            var tabId = pane.id,
-                iconStr = icon ? ' ' + icon : '',
-                toggleNodeStr = '<li class="' + active + '"><a href="#' + tabId + '" data-toggle="tab"><span class="' + iconStr + '"/> ' + title + '</a></li>',
-                tabButton = $(toggleNodeStr);
+            const tabId = pane.id;
+            const iconStr = icon ? ' ' + icon : '';
+            const toggleNodeStr = '<li class="' + active + '"><a href="#' + tabId + '" data-toggle="tab"><span class="' + iconStr + '"/> ' + title + '</a></li>';
+            const tabButton = $(toggleNodeStr);
 
             $(this.tabBar).append(tabButton);
             pane.$toggleNode = tabButton.find('a[data-toggle="tab"]');
@@ -9861,7 +9876,7 @@ define('xide/layout/_TabContainer',[
             }
             this._widgets.remove(tab);
             if (selectNew !== false) {
-                var newTab = this._widgets[this._widgets.length - 1];
+                const newTab = this._widgets[this._widgets.length - 1];
                 if (newTab) {
                     this.resize();
                     this.selectChild(newTab);
@@ -9909,9 +9924,9 @@ define('xide/views/CIViewMixin',[
     "dojo/promise/all",
     'dojo/when'
 ], function (dcl,declare, Stateful, utils, factory, EventedMixin,_TabContainer,_Widget,Deferred,all,when) {
-    var _debug = false;
-    var Module = null;
-    var Implementation = {
+    const _debug = false;
+    let Module = null;
+    const Implementation = {
         declaredClass:'xide.views.CIViewMixin',
         widgets: null,
         delegate: null,
@@ -9931,8 +9946,8 @@ define('xide/views/CIViewMixin',[
         typeMap:null,
         containerArgs:null,
         getWidgetByType: function (type) {
-            for (var i = 0; i < this.widgets.length; i++) {
-                var widget = this.widgets[i];
+            for (let i = 0; i < this.widgets.length; i++) {
+                const widget = this.widgets[i];
                 if (widget.userData.type === type) {
                     return widget;
                 }
@@ -9940,13 +9955,13 @@ define('xide/views/CIViewMixin',[
             return null;
         },
         updateWidget:function(id,prop,value){
-            var widget = this.getWidgetById(id);
+            const widget = this.getWidgetById(id);
             if(prop && widget && widget.set){
                 widget.set(prop,value);
             }
         },
         getWidgetById: function (id) {
-            var result = null;
+            let result = null;
             _.each(this.widgets,function(widget){
                 if (widget.userData && widget.userData.id === id){
                     result=widget;
@@ -9964,7 +9979,7 @@ define('xide/views/CIViewMixin',[
             if (this.tabContainer) {
                 return this.tabContainer;
             }
-            var tabContainer = utils.addWidget(this.tabContainerClass || _TabContainer,utils.mixin({
+            const tabContainer = utils.addWidget(this.tabContainerClass || _TabContainer,utils.mixin({
                 direction:'left',
                 style: "min-width:450px;",
                 _parent:this,
@@ -9985,9 +10000,9 @@ define('xide/views/CIViewMixin',[
             return groupContainer.createTab(group,icon,selected,this.tabContainerClass.tabClass ||  _TabContainer.tabClass);
         },
         attachWidgets: function (data, dstNode,view) {
-            var thiz = this;
+            const thiz = this;
             dstNode = dstNode || this.domNode;
-            var isSingle = !dstNode;
+            const isSingle = !dstNode;
             if(!dstNode && this.tabContainer){
                 dstNode = this.tabContainer.containerNode;
             }
@@ -9996,11 +10011,11 @@ define('xide/views/CIViewMixin',[
                 return;
             }
             data = data.reverse();
-            for (var i = 0; i < data.length; i++) {
-                var widget = data[i];
+            for (let i = 0; i < data.length; i++) {
+                const widget = data[i];
                 widget.delegate = this.owner || this;
                 dstNode.appendChild(widget.domNode);
-                var ci = widget.userData;
+                const ci = widget.userData;
                 _debug && console.log('attach widget ',widget);
                 if(view && view.lazy===true) {
                     widget._startOnShow = true;
@@ -10040,8 +10055,8 @@ define('xide/views/CIViewMixin',[
             this.widgets = [];
         },
         toArray: function (obj) {
-            var result = [];
-            for (var c in obj) {
+            const result = [];
+            for (const c in obj) {
                 result.push({
                     name: c,
                     value: obj[c]
@@ -10050,7 +10065,7 @@ define('xide/views/CIViewMixin',[
             return result;
         },
         onRendered:function(){
-            var container = this.getGroupContainer();
+            const container = this.getGroupContainer();
             if(this.options.select) {
                 container.selectChild(this.options.select);
             }else{
@@ -10061,17 +10076,17 @@ define('xide/views/CIViewMixin',[
         getTypeMap:function(){
         },
         renderGroup:function(container,title,data){
-            var view = this.createGroupView(container, title);
+            const view = this.createGroupView(container, title);
             this.tabs.push(view);
             if(this.ciSort) {
                 data = data.sort(function (left, right) {
-                    var a = left.order || 0;
-                    var b = right.order || 0;
+                    const a = left.order || 0;
+                    const b = right.order || 0;
                     return a > b ? -1 : 1;
                 });
             }
-            var groupDfd = factory.createWidgetsFromArray(data, this, null, false,this.getTypeMap(),!this.ciSort),
-                thiz  = this;
+            const groupDfd = factory.createWidgetsFromArray(data, this, null, false,this.getTypeMap(),!this.ciSort);
+            const thiz  = this;
 
             when(groupDfd,function(widgets){
                 if (widgets) {
@@ -10083,17 +10098,17 @@ define('xide/views/CIViewMixin',[
             return groupDfd;
         },
         renderGroups: function (groups) {
-            var groupContainer = this.getGroupContainer(),
-                _array = groups,
-                thiz = this,
-                dfd = new Deferred(),
-                promises = [];
+            const groupContainer = this.getGroupContainer();
+            const _array = groups;
+            const thiz = this;
+            const dfd = new Deferred();
+            const promises = [];
 
             this.widgets=[];
             this.helpNodes = [];
-            for (var i = 0; i < _array.length; i++) {
+            for (let i = 0; i < _array.length; i++) {
                 try {
-                    var groupDfd = this.renderGroup(groupContainer,_array[i].name,_array[i].value);
+                    const groupDfd = this.renderGroup(groupContainer,_array[i].name,_array[i].value);
                     promises.push(groupDfd);
                 } catch (e) {
                     logError(e);
@@ -10118,14 +10133,16 @@ define('xide/views/CIViewMixin',[
             data = data || this.cis;
             data = utils.flattenCIS(data);
             this.data = data;
-            var head = null,
-                thiz = this,
-                groups = _.groupBy(data,function(obj){
-                    return obj.group;
-                }),
-                groupOrder = this.options.groupOrder || {};
+            let head = null;
+            const thiz = this;
 
-            var groupsToRender = [];
+            let groups = _.groupBy(data,function(obj){
+                return obj.group;
+            });
+
+            const groupOrder = this.options.groupOrder || {};
+
+            const groupsToRender = [];
             groups = this.toArray(groups);
 
             //filter groups for visible CIs
@@ -10133,7 +10150,7 @@ define('xide/views/CIViewMixin',[
                 _.find(group.value,{visible:true}) && groupsToRender.push(group);
             });
             groups = groupsToRender;
-            var grouped = _.sortByOrder(groups, function(obj){
+            const grouped = _.sortByOrder(groups, function(obj){
                 return groupOrder[obj.name] || 100;
             });
 
@@ -10190,7 +10207,7 @@ define('xide/views/CIView',[
     'xide/views/CIViewMixin',
     'xide/_base/_Widget'
 ], function (dcl,CIViewMixin,_Widget) {
-    var Module = dcl([_Widget, CIViewMixin.dcl], {
+    const Module = dcl([_Widget, CIViewMixin.dcl], {
         templateString:'<div class="CIView"></div>',
         data: null,
         widgets: null,
@@ -10205,8 +10222,8 @@ define('xide/views/CIView',[
         sortGroups: function (groups, groupMap) {
             groups = groups.sort(function (a, b) {
                 if (a.name && b.name && groupMap[a.name] != null && groupMap[b.name] != null) {
-                    var orderA = groupMap[a.name];
-                    var orderB = groupMap[b.name];
+                    const orderA = groupMap[a.name];
+                    const orderB = groupMap[b.name];
                     return orderB - orderA;
                 }
                 return 100;
@@ -10214,10 +10231,10 @@ define('xide/views/CIView',[
             return groups;
         },
         getElements: function (data, group) {
-            var res = [];
+            const res = [];
 
-            for (var i = 0; i < data.length; i++) {
-                var obj = data[i];
+            for (let i = 0; i < data.length; i++) {
+                const obj = data[i];
                 if (obj.group === group) {
                     res.push(obj);
                 }
@@ -10244,7 +10261,7 @@ define('xide/views/_CIDialog',[
 
 ], function (dcl,types,utils,_Dialog,CIView) {
 
-    var Module =dcl(_Dialog, {
+    const Module =dcl(_Dialog, {
         declaredClass:'xide/views/_CIDialog',
         type: types.DIALOG_TYPE.INFO,
         size: types.DIALOG_SIZE.SIZE_NORMAL,
@@ -10262,9 +10279,9 @@ define('xide/views/_CIDialog',[
         notificationMessage:null,
         cisView:null,
         getData:function(){
-            var cis = this.cisView.getCIS();
-            for (var i = 0; i < cis.length; i++) {
-                var obj = cis[i];
+            const cis = this.cisView.getCIS();
+            for (let i = 0; i < cis.length; i++) {
+                const obj = cis[i];
                 if (obj._widget) {
                     delete obj['_widget'];
                 }
@@ -10272,35 +10289,34 @@ define('xide/views/_CIDialog',[
             return cis;
         },
         getField:function(name){
-            var cis = this.cisView.cis,
-                ci = utils.getCIByChainAndName(cis,0,name),
-                value = ci ? ci.value :null,
-                invalid = null;
-                if(ci){
-                    invalid = ci.invalid == true;
-                }
+            const cis = this.cisView.cis;
+            const ci = utils.getCIByChainAndName(cis,0,name);
+            const value = ci ? ci.value :null;
+            let invalid = null;
+            if(ci){
+                invalid = ci.invalid == true;
+            }
             return invalid ? null : value;
         },
         onShow:function(dlg){
-            var cisView = this.cisView,
-                self = this;
+            const cisView = this.cisView;
+            const self = this;
             cisView.startup();
             this.resize();
             this.startDfd.resolve();
         },
         onReady:function(){},
         message:function(dlg){
-            var thiz = dlg.owner;
+            const thiz = dlg.owner;
             //if(!thiz.cis){}
-            var cisView = thiz.initWithCIS(thiz.cis);
+            const cisView = thiz.initWithCIS(thiz.cis);
             thiz.cisView = cisView;
             return $(cisView.domNode);
         },
         initWithCIS: function (cis) {
-
             cis = cis || [];
 
-            var viewArgs = {
+            const viewArgs = {
                 delegate: this,
                 options: {},
                 cis: cis.inputs || cis,
@@ -10308,9 +10324,11 @@ define('xide/views/_CIDialog',[
                 tabContainerStyle: 'height:inherit',
                 resizeToParent:true
 
-            },self = this;
+            };
+
+            const self = this;
             utils.mixin(viewArgs, this.viewArgs);
-            var view = utils.addWidget(CIView, viewArgs, this.containerNode, null, false);
+            const view = utils.addWidget(CIView, viewArgs, this.containerNode, null, false);
 
             self.onCIValueChanged && view._on('valueChanged',function(e){
                 self.onCIValueChanged(e.ci, e.newValue, e.oldValue);
@@ -10350,7 +10368,7 @@ define('xide/views/_Panel',[
     'xide/registry'
 ], function (dcl, types, utils, EventedMixin, _Widget, Deferred, _Popup, registry) {
 
-    var Module = dcl([_Widget.dcl, EventedMixin.dcl], {
+    const Module = dcl([_Widget.dcl, EventedMixin.dcl], {
         containerClass: '',
         type: types.DIALOG_TYPE.WARNING,
         size: types.DIALOG_SIZE.SIZE_WIDE,
@@ -10373,8 +10391,8 @@ define('xide/views/_Panel',[
             }
         },
         getDefaultOptions: function (mixin) {
-            var self = this;
-            var options = {
+            const self = this;
+            const options = {
                 "contentSize": this.getContentSize(),
                 footerToolbar: [
                     {
@@ -10407,7 +10425,7 @@ define('xide/views/_Panel',[
                 return this.panel;
             }
             _Popup.nextZ(3);
-            var self = this;
+            const self = this;
             this.panel = $.jsPanel(utils.mixin({
                 zi: _Popup.nextZ(),
                 position: {
@@ -10427,13 +10445,13 @@ define('xide/views/_Panel',[
                 },
                 callback: function (panel) {
                     self.domNode = this.content[0];
-                    var thiz = this;
+                    const thiz = this;
                     self.onshown(this, this.content[0]).then(function () {
                         thiz.content.addClass(self.containerClass);
                         thiz.content.css('tabIndex', 1);
                         thiz.header.addClass(self.type);
                         thiz.footer.addClass('modal-footer');
-                        var newZ = _Popup.nextZ();
+                        const newZ = _Popup.nextZ();
                         panel.css("z-index", newZ);
                         panel.attr('tabIndex', 1);
                         panel.keyup(function (event) {
@@ -10451,10 +10469,10 @@ define('xide/views/_Panel',[
             return this.panel;
         },
         onshown: function (panelInstance, content) {
-            var self = this,
-                head = new Deferred();
+            const self = this;
+            const head = new Deferred();
             if (this.onShow) {
-                var result = this.onShow(panelInstance, content, this);
+                const result = this.onShow(panelInstance, content, this);
                 function ready(what) {
                     self.startDfd.resolve(what);
                     self._ready = true;
@@ -10475,7 +10493,7 @@ define('xide/views/_Panel',[
             return head;
         },
         onReady: function () {
-            var self = this;
+            const self = this;
             setTimeout(function () {
                 self._ready = true;
             }, 100);
@@ -10493,7 +10511,7 @@ define('xide/views/_Panel',[
             }
         },
         show: function (options) {
-            var self = this;
+            const self = this;
             this.headDfd = new Deferred();
             if (!this.startDfd) {
                 this.startDfd = new Deferred();
@@ -10533,7 +10551,7 @@ define('xide/views/_PanelDialog',[
     'xide/views/_Panel'
 ], function (dcl,utils,_Panel,CIView) {
 
-    var Module = dcl(_Panel,{
+    const Module = dcl(_Panel,{
         containerClass:'CIDialog',
         getContentSize: function () {
             return {
@@ -10542,8 +10560,8 @@ define('xide/views/_PanelDialog',[
             }
         },
         getDefaultOptions:function(mixin){
-            var self = this;
-            var options = {
+            const self = this;
+            const options = {
                 "contentSize": this.getContentSize(),
                 footerToolbar:[
                     {
@@ -18991,7 +19009,7 @@ define('xide/data/TreeMemory',[
         fetchRange: function () {
             // dstore/Memory#fetchRange always uses fetchSync, which we aren't extending,
             // so we need to extend this as well.
-            var results = this._fetchRange(arguments);
+            const results = this._fetchRange(arguments);
             return new QueryResults(results.then(function (data) {
                 return data;
             }), {
@@ -19001,20 +19019,20 @@ define('xide/data/TreeMemory',[
             });
         },
         filter: function (data) {
-            var _res = this.inherited(arguments);
+            const _res = this.inherited(arguments);
             this._state.filter = data;
             return _res;
         },
         _fetchRange: function (kwArgs) {
-            var deferred = new Deferred();
-            var _res = this.fetchRangeSync(kwArgs);
+            const deferred = new Deferred();
+            let _res = this.fetchRangeSync(kwArgs);
             if (this._state.filter) {
                 //the parent query
                 if (this._state.filter['parent']) {
                     var _item = this.getSync(this._state.filter[this.parentProperty]);
                     if (_item) {
                         this.reset();
-                        var _query = {};
+                        const _query = {};
                         if (this.getChildrenSync) {
                             _res = this.getChildrenSync(_item);
                         } else {
@@ -19027,7 +19045,7 @@ define('xide/data/TreeMemory',[
 
                 //the group query
                 if (this._state && this._state.filter && this._state.filter['group']) {
-                    var _items = this.getSync(this._state.filter.parent);
+                    const _items = this.getSync(this._state.filter.parent);
                     if (_item) {
                         this.reset();
                         _res = _item.items;
@@ -19038,18 +19056,20 @@ define('xide/data/TreeMemory',[
             return deferred;
         },
         getChildren: function (object) {
-            var filter = {};
+            const filter = {};
             filter[this.parentProperty] = this.getIdentity(object);
             return this.root.filter(filter);
         },
         children: function (parent) {
-            var all = this.root.data, out = [];
-            for (var i = 0; i < all.length; i++) {
-                var obj = all[i];
+            const all = this.root.data;
+            const out = [];
+
+            all.forEach(obj => {
                 if (obj[this.parentProperty] == parent[this.idProperty]) {
                     out.push(obj);
                 }
-            }
+            });
+
             return all;
         },
         mayHaveChildren: function (parent) {
@@ -19091,8 +19111,8 @@ define('xide/data/ObservableStore',[
          */
         putSync: function (item, publish) {
             this.silent(!publish);
-            var res = this.inherited(arguments);
-            var self = this;
+            const res = this.inherited(arguments);
+            const self = this;
             publish !== false && this.emit('added', res);
             res && !res._store && Object.defineProperty(res, '_store', {
                 get: function () {
@@ -19111,9 +19131,9 @@ define('xide/data/ObservableStore',[
          */
         removeSync: function (id, silent) {
             this.silent(silent);
-            var _item = this.getSync(id);
+            const _item = this.getSync(id);
             _item && _item.onRemove && _item.onRemove();
-            var res = this.inherited(arguments);
+            const res = this.inherited(arguments);
             this.silent(false);
             return res;
         },
@@ -19129,7 +19149,7 @@ define('xide/data/ObservableStore',[
             if (this._ignoreChangeEvents) {
                 return;
             }
-            var args = {
+            const args = {
                 target: item,
                 property: property,
                 value: value,
@@ -19144,13 +19164,13 @@ define('xide/data/ObservableStore',[
          * @private
          */
         _observe: function (item) {
-            var props = this.observedProperties;
+            let props = this.observedProperties;
             item.observed && (props = props.concat(item.observed));
-            _.each(props, function (property) {
+            props.forEach((property) => {
                 item.property && item.property(property).observe(function (value) {
                     this._onItemChanged(item, property, value, this);
                 }.bind(this));
-            }.bind(this));
+            });
         },
         /**
          * Override setData to bring in dmodel's observe for new items.
@@ -19158,9 +19178,9 @@ define('xide/data/ObservableStore',[
          * @returns {*}
          */
         setData: function (data) {
-            var res = this.inherited(arguments);
+            const res = this.inherited(arguments);
             this.silent(true);
-            data && _.each(data, this._observe, this);
+            data && data.forEach((e) => this._observe);
             this.silent(false);
             return res;
         }
@@ -19602,7 +19622,7 @@ define('xide/utils/ObjectUtils',[
     "dojo/Deferred",
     'xide/lodash'
 ], function (utils, require, Deferred, lodash) {
-    var _debug = false;
+    const _debug = false;
     "use strict";
 
     utils.delegate = (function () {
@@ -19612,7 +19632,7 @@ define('xide/utils/ObjectUtils',[
 
         return function (obj, props) {
             TMP.prototype = obj;
-            var tmp = new TMP();
+            const tmp = new TMP();
             TMP.prototype = null;
             if (props) {
                 lang._mixin(tmp, props);
@@ -19627,7 +19647,7 @@ define('xide/utils/ObjectUtils',[
     //
     //////////////////////////////////////////////////////////////////////////////////////////////
     utils.debounce = function (who, methodName, _function, delay, options, now, args) {
-        var _place = who[methodName + '_debounced'];
+        let _place = who[methodName + '_debounced'];
         if (!_place) {
             _place = who[methodName + '_debounced'] = lodash.debounce(_function, delay, options);
         }
@@ -19651,7 +19671,7 @@ define('xide/utils/ObjectUtils',[
      * @param text
      */
     utils.download = function (filename, text) {
-        var element = document.createElement('a');
+        const element = document.createElement('a');
         text = lodash.isString(text) ? text : JSON.stringify(text, null, 2);
         element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
         element.setAttribute('download', filename);
@@ -19667,8 +19687,8 @@ define('xide/utils/ObjectUtils',[
      * @returns {*}
      */
     utils.hasObject = function (mixed) {
-        var result = null;
-        var _re = require;
+        let result = null;
+        const _re = require;
         try {
             result = _re(mixed);
         } catch (e) {
@@ -19681,7 +19701,7 @@ define('xide/utils/ObjectUtils',[
      * @param mid {string}
      */
     utils.toUrl = function (mid) {
-        var _require = require;
+        const _require = require;
         //make sure cache bust is off otherwise it appends ?time
         _require({
             cacheBust: null,
@@ -19696,9 +19716,9 @@ define('xide/utils/ObjectUtils',[
      * @returns {Object|Promise}
      */
     utils.getObject = function (mixed, _default) {
-        var result = null;
+        let result = null;
         if (utils.isString(mixed)) {
-            var _re = require;
+            const _re = require;
             try {
                 result = _re(mixed);
             } catch (e) {
@@ -19707,7 +19727,7 @@ define('xide/utils/ObjectUtils',[
             //not a loaded module yet
             try {
                 if (!result) {
-                    var deferred = new Deferred();
+                    const deferred = new Deferred();
                     //try loader
                     result = _re([
                         mixed
@@ -19734,8 +19754,8 @@ define('xide/utils/ObjectUtils',[
     //
     //////////////////////////////////////////////////////////////////////////////////////////////
     utils.toArray = function (obj) {
-        var result = [];
-        for (var c in obj) {
+        const result = [];
+        for (const c in obj) {
             result.push({
                 name: c,
                 value: obj[c]
@@ -19760,8 +19780,8 @@ define('xide/utils/ObjectUtils',[
                 return arr[0];
             }
 
-            var rv = {};
-            for (var i = 0; i < arr.length; ++i) {
+            const rv = {};
+            for (let i = 0; i < arr.length; ++i) {
                 rv[i] = arr[i];
             }
             return rv;
@@ -19779,9 +19799,9 @@ define('xide/utils/ObjectUtils',[
     utils.byString = function (o, s, defaultValue) {
         s = s.replace(/\[(\w+)\]/g, '.$1'); // convert indexes to properties
         s = s.replace(/^\./, '');           // strip a leading dot
-        var a = s.split('.');
+        const a = s.split('.');
         while (a.length) {
-            var n = a.shift();
+            const n = a.shift();
             if (n in o) {
                 o = o[n];
             } else {
@@ -19800,9 +19820,10 @@ define('xide/utils/ObjectUtils',[
      * Internals
      */
 
-        //cache
-    var toStr = Object.prototype.toString,
-        _hasOwnProperty = Object.prototype.hasOwnProperty;
+    //cache
+    const toStr = Object.prototype.toString;
+
+    const _hasOwnProperty = Object.prototype.hasOwnProperty;
 
     /**
      * @private
@@ -19819,7 +19840,7 @@ define('xide/utils/ObjectUtils',[
      * @returns {*}
      */
     function getKey(key) {
-        var intKey = parseInt(key, 10);
+        const intKey = parseInt(key, 10);
         if (intKey.toString() === key) {
             return intKey;
         }
@@ -19845,10 +19866,10 @@ define('xide/utils/ObjectUtils',[
         if (lodash.isString(path)) {
             return set(obj, path.split('.').map(getKey), value, doNotReplace);
         }
-        var currentPath = path[0];
+        const currentPath = path[0];
 
         if (path.length === 1) {
-            var oldVal = obj[currentPath];
+            const oldVal = obj[currentPath];
             if (oldVal === void 0 || !doNotReplace) {
                 obj[currentPath] = value;
             }
@@ -19887,8 +19908,8 @@ define('xide/utils/ObjectUtils',[
             return del(obj, path.split('.'));
         }
 
-        var currentPath = getKey(path[0]);
-        var oldVal = obj[currentPath];
+        const currentPath = getKey(path[0]);
+        const oldVal = obj[currentPath];
 
         if (path.length === 1) {
             if (oldVal !== void 0) {
@@ -19911,7 +19932,7 @@ define('xide/utils/ObjectUtils',[
      * @private
      * @type {{}}
      */
-    var objectPath = {};
+    const objectPath = {};
 
     objectPath.has = function (obj, path) {
         if (lodash.isEmpty(obj)) {
@@ -19927,8 +19948,8 @@ define('xide/utils/ObjectUtils',[
             return false;
         }
 
-        for (var i = 0; i < path.length; i++) {
-            var j = path[i];
+        for (let i = 0; i < path.length; i++) {
+            const j = path[i];
             if ((lodash.isObject(obj) || lodash.isArray(obj)) && _hasOwnProperty.call(obj, j)) {
                 obj = obj[j];
             } else {
@@ -19970,7 +19991,7 @@ define('xide/utils/ObjectUtils',[
      * @param at
      */
     objectPath.insert = function (obj, path, value, at) {
-        var arr = objectPath.get(obj, path);
+        let arr = objectPath.get(obj, path);
         at = ~~at;
         if (!lodash.isArray(arr)) {
             arr = [];
@@ -19993,7 +20014,8 @@ define('xide/utils/ObjectUtils',[
             return void 0;
         }
 
-        var value, i;
+        let value;
+        let i;
         if (!(value = objectPath.get(obj, path))) {
             return obj;
         }
@@ -20023,7 +20045,7 @@ define('xide/utils/ObjectUtils',[
      * @param path
      */
     objectPath.push = function (obj, path /*, values */) {
-        var arr = objectPath.get(obj, path);
+        let arr = objectPath.get(obj, path);
         if (!lodash.isArray(arr)) {
             arr = [];
             objectPath.set(obj, path, arr);
@@ -20039,8 +20061,8 @@ define('xide/utils/ObjectUtils',[
      * @returns {*}
      */
     objectPath.coalesce = function (obj, paths, defaultValue) {
-        var value;
-        for (var i = 0, len = paths.length; i < len; i++) {
+        let value;
+        for (let i = 0, len = paths.length; i < len; i++) {
             if ((value = objectPath.get(obj, paths[i])) !== void 0) {
                 return value;
             }
@@ -20071,7 +20093,7 @@ define('xide/utils/ObjectUtils',[
         if (lodash.isString(path)) {
             return objectPath.get(obj, path.split('.'), defaultValue);
         }
-        var currentPath = getKey(path[0]);
+        const currentPath = getKey(path[0]);
         if (path.length === 1) {
             if (obj && obj[currentPath] === void 0) {
                 return defaultValue;
@@ -20169,7 +20191,7 @@ define('xide/utils/ObjectUtils',[
      * @returns {*}
      */
     utils.merge = function (to, from) {
-        for (var n in from) {
+        for (const n in from) {
             if (typeof to[n] != 'object') {
                 to[n] = from[n];
             } else if (typeof from[n] == 'object') {
@@ -20208,7 +20230,9 @@ define('xide/utils/ObjectUtils',[
             // RegExp
             return new RegExp(src); // RegExp
         }
-        var r, i, l;
+        let r;
+        let i;
+        let l;
         if (utils.isArray(src)) {
             // array
             r = [];
@@ -20241,7 +20265,10 @@ define('xide/utils/ObjectUtils',[
      * @private
      */
     utils._mixin = function (dest, source, copyFunc) {
-        var name, s, i, empty = {};
+        let name;
+        let s;
+        let i;
+        const empty = {};
         for (name in source) {
             // the (!(name in empty) || empty[name] !== s) condition avoids copying properties in "source"
             // inherited from Object.prototype.	 For example, if dest has a custom toString() method,
@@ -20293,8 +20320,8 @@ define('xide/utils/ObjectUtils',[
             if (!dest) {
                 dest = {};
             }
-            var l = arguments.length;
-            for (var i = 1; i < l; i++) {
+            const l = arguments.length;
+            for (let i = 1; i < l; i++) {
                 utils._mixin(dest, arguments[i]);
             }
             return dest; // Object
@@ -20308,8 +20335,8 @@ define('xide/utils/ObjectUtils',[
      * @returns {{}}
      */
     utils.cloneKeys = function (defaults, skipEmpty) {
-        var result = {};
-        for (var _class in defaults) {
+        const result = {};
+        for (const _class in defaults) {
             if (skipEmpty === true && !(_class in defaults)) {
                 continue;
             }
@@ -20371,7 +20398,7 @@ define('xide/cache/Circular',[], function () {
             typeof capacity._capacity=="number"&&
             typeof capacity._first=="number"&&
             typeof capacity._size=="number"){
-            for(var prop in capacity){
+            for(const prop in capacity){
                 if(capacity.hasOwnProperty(prop))this[prop]=capacity[prop];
             }
         } else {
@@ -20406,7 +20433,7 @@ define('xide/cache/Circular',[], function () {
         },
         deq: function () {
             if (this._size == 0)throw new RangeError("dequeue on empty buffer");
-            var value = this._buffer[(this._first + this._size - 1) % this._capacity];
+            const value = this._buffer[(this._first + this._size - 1) % this._capacity];
             this._size--;
             return value;
         },
@@ -20415,7 +20442,7 @@ define('xide/cache/Circular',[], function () {
         },
         shift: function () {
             if (this._size == 0)throw new RangeError("shift on empty buffer");
-            var value = this._buffer[this._first];
+            const value = this._buffer[this._first];
             if (this._first == this._capacity - 1)this._first = 0; else this._first++;
             this._size--;
             return value;
@@ -20877,7 +20904,7 @@ define('xide/data/Model',[
     function getSchemaProperty(object, key) {
         // this function will retrieve the individual property definition
         // from the schema, for the provided object and key
-        var definition = object.schema[key];
+        let definition = object.schema[key];
         if (definition !== undefined && !(definition instanceof Property)) {
             definition = new Property(definition);
             definition._parent = object;
@@ -20933,8 +20960,8 @@ define('xide/data/Model',[
         // a new promise represents the eventual completion of all the promises
         // this will consistently preserve a sync (non-promise) return value if all
         // sync values are provided
-        var deferred;
-        var remaining = 1;
+        let deferred;
+        let remaining = 1;
         // start the iterator
         iterator(function (value, callback, key) {
             if (value && value.then) {
@@ -20967,8 +20994,8 @@ define('xide/data/Model',[
             }
         }
     }
-    var slice = [].slice;
-    var Model = dcl(null,{
+    const slice = [].slice;
+    const Model = dcl(null,{
         declaredClass:'xide/data/Model',
         //	summary:
         //		A base class for modelled data objects.
@@ -20998,7 +21025,7 @@ define('xide/data/Model',[
         },
 
         refresh:function(silent,property){
-            var _store = this._store;
+            const _store = this._store;
             _store && _store.refreshItem(this,silent,property);
         },
         getStore:function(){
@@ -21013,11 +21040,11 @@ define('xide/data/Model',[
             // copy in the default values
             values = this._setValues(values);
             // set any defaults
-            for (var key in this.schema) {
-                var definition = this.schema[key];
+            for (const key in this.schema) {
+                const definition = this.schema[key];
                 if (definition && typeof definition === 'object' && 'default' in definition &&
                     !values.hasOwnProperty(key)) {
-                    var defaultValue = definition['default'];
+                    const defaultValue = definition['default'];
                     values[key] = typeof defaultValue === 'function' ? defaultValue.call(this) : defaultValue;
                 }
             }
@@ -21040,12 +21067,12 @@ define('xide/data/Model',[
             //		true to skip it.
             //	returns: any
 
-            var object = this;
+            const object = this;
             return when((options && options.skipValidation) ? true : this.validate(), function (isValid) {
                 if (!isValid) {
                     throw object.createValidationError(object.errors);
                 }
-                var scenario = object._scenario;
+                const scenario = object._scenario;
                 // suppress any non-date from serialization output
                 object.prepareForSerialization();
                 return object._store && when(object._store[scenario === 'insert' ? 'add' : 'put'](object),
@@ -21059,7 +21086,7 @@ define('xide/data/Model',[
         },
 
         remove: function () {
-            var store = this._store;
+            const store = this._store;
             return store.remove(store.getIdentity(this));
         },
 
@@ -21092,9 +21119,9 @@ define('xide/data/Model',[
             //		nested property access.
 
             // create the properties object, if it doesn't exist yet
-            var properties = this.hasOwnProperty('_properties') ? this._properties :
+            const properties = this.hasOwnProperty('_properties') ? this._properties :
                 (this._properties = new Hidden());
-            var property = properties[key];
+            let property = properties[key];
             // if it doesn't exist, create one, delegated from the schema's property definition
             // (this gives an property instance, owning the current property value and listeners,
             // while inheriting metadata from the schema's property definitions)
@@ -21120,7 +21147,9 @@ define('xide/data/Model',[
             //		of a property, augmented with the ability to listen
             //		for future changes
 
-            var property, definition = this.schema[key];
+            let property;
+
+            let definition = this.schema[key];
             // now we need to see if there is a custom get involved, or if we can just
             // shortcut to retrieving the property value
             definition = property || this.schema[key];
@@ -21151,7 +21180,7 @@ define('xide/data/Model',[
             if (typeof key === 'object') {
                 startOperation();
                 try {
-                    for (var i in key) {
+                    for (const i in key) {
                         value = key[i];
                         if (key.hasOwnProperty(i) && !(value && value.toJSON === toJSONHidden)) {
                             this.set(i, value);
@@ -21162,12 +21191,12 @@ define('xide/data/Model',[
                 }
                 return;
             }
-            var definition = this.schema[key];
+            const definition = this.schema[key];
             if (!definition && !this.additionalProperties) {
                 // TODO: Shouldn't this throw an error instead of just giving a warning?
                 return console.warn('Schema does not contain a definition for', key);
             }
-            var property = this.hasOwnProperty('_properties') && this._properties[key];
+            let property = this.hasOwnProperty('_properties') && this._properties[key];
             if (!property &&
                 // we need a real property instance if it is an object or if we have a custom put method
                 ((value && typeof value === 'object') ||
@@ -21267,11 +21296,12 @@ define('xide/data/Model',[
             //		prior validation.
             //	returns: boolean
 
-            var isValid = true,
-                key;
+            let isValid = true;
+
+            let key;
 
             for (key in this.schema) {
-                var property = this.hasOwnProperty('_properties') && this._properties[key];
+                const property = this.hasOwnProperty('_properties') && this._properties[key];
                 if (property && property.errors && property.errors.length) {
                     isValid = false;
                 }
@@ -21282,7 +21312,7 @@ define('xide/data/Model',[
 
     //xhack: make dstore happy
     Model.createSubclass=function(mixins, props){
-        var sub = dcl([this].concat(mixins), props || {});
+        const sub = dcl([this].concat(mixins), props || {});
         sub.extend = function(props){
             utils.mixin(this.prototype,props);
             return this;
@@ -21303,7 +21333,7 @@ define('xide/data/Model',[
         setCallDepth--;
     }
     var setCallDepth = 0;
-    var callbackQueue;
+    let callbackQueue;
     var onEnd;
     // the default nextTurn executes at the end of the current operation
     // The intent with this function is that it could easily be replaced
@@ -21314,7 +21344,7 @@ define('xide/data/Model',[
         onEnd = callback;
     }).atEnd = true;
 
-    var Reactive = dcl(Model, {
+    const Reactive = dcl(Model, {
         //	summary:
         //		A reactive object is a data model that can contain a value,
         //		and notify listeners of changes to that value, in the future.
@@ -21328,7 +21358,7 @@ define('xide/data/Model',[
             //		just future updates. If this is true, it also won't return
             //		a new reactive object
 
-            var reactive;
+            let reactive;
             if (typeof listener === 'string') {
                 // a property key was provided, use the Model's method
                 console.error('fff');
@@ -21344,8 +21374,8 @@ define('xide/data/Model',[
                 }
             }
             // add to the listeners
-            var handle = this._addListener(function (value) {
-                var result = listener(value);
+            const handle = this._addListener(function (value) {
+                const result = listener(value);
                 if (reactive) {
                     // TODO: once we have a real notification API again, call that, instead
                     // of requesting a change
@@ -21406,13 +21436,13 @@ define('xide/data/Model',[
             //		Indicates a new value for this reactive object
 
             // notify all the listeners of this object, that the value has changed
-            var oldValue = this._get();
+            let oldValue = this._get();
             value = this.coerce(value);
             if (this.errors) {
                 // clear any errors
                 this.set('errors', undefined);
             }
-            var property = this;
+            const property = this;
             // call the setter and wait for it
             startOperation();
             return when(this.setValue(value, this._parent), function (result) {
@@ -21425,15 +21455,17 @@ define('xide/data/Model',[
                     // queue the callback
                     property._queueChange(property.onchange, oldValue);
                 }
+
                 // if this was set to an object (or was an object), we need to notify.
                 // update all the sub-property objects, so they can possibly notify their
                 // listeners
-                var key,
-                    hasOldObject = oldValue && typeof oldValue === 'object' && !(oldValue instanceof Array),
-                    hasNewObject = value && typeof value === 'object' && !(value instanceof Array);
+                let key;
+
+                const hasOldObject = oldValue && typeof oldValue === 'object' && !(oldValue instanceof Array);
+                const hasNewObject = value && typeof value === 'object' && !(value instanceof Array);
                 if (hasOldObject || hasNewObject) {
                     // we will iterate through the properties recording the changes
-                    var changes = {};
+                    const changes = {};
                     if (hasOldObject) {
                         oldValue = oldValue._getValues ? oldValue._getValues() : oldValue;
                         for (key in oldValue) {
@@ -21449,8 +21481,8 @@ define('xide/data/Model',[
                     property._values = hasNewObject && value;
                     for (key in changes) {
                         // now for each change, we can notify the property object
-                        var change = changes[key];
-                        var subProperty = property._properties && property._properties[key];
+                        const change = changes[key];
+                        const subProperty = property._properties && property._properties[key];
                         if (subProperty && subProperty.onchange) {
                             // queue the callback
                             subProperty._queueChange(subProperty.onchange, change.old);
@@ -21469,7 +21501,7 @@ define('xide/data/Model',[
             //		Given an input value, this method is responsible
             //		for converting it to the appropriate type for storing on the object.
 
-            var type = this.type;
+            const type = this.type;
             if (type) {
                 if (type === 'string') {
                     value = '' + value;
@@ -21509,7 +21541,7 @@ define('xide/data/Model',[
             //		other validators to perform validation
             //	value:
             //		This is the value to validate.
-            var errors = [];
+            const errors = [];
             if (this.type && !(typeof this.type === 'function' ? (value instanceof this.type) :
                     (this.type === typeof value))) {
                 errors.push(value + ' is not a ' + this.type);
@@ -21525,16 +21557,16 @@ define('xide/data/Model',[
             //	summary:
             //		This method is responsible for validating this particular
             //		property instance.
-            var property = this;
-            var model = this._parent;
-            var validators = this.validators;
-            var value = this.valueOf();
-            var totalErrors = [];
+            const property = this;
+            const model = this._parent;
+            const validators = this.validators;
+            const value = this.valueOf();
+            const totalErrors = [];
 
             return when(whenEach(function (whenItem) {
                 // iterator through any validators (if we have any)
                 if (validators) {
-                    for (var i = 0; i < validators.length; i++) {
+                    for (let i = 0; i < validators.length; i++) {
                         whenItem(validators[i].checkForErrors(value, property, model), addErrors);
                     }
                 }
@@ -21564,10 +21596,10 @@ define('xide/data/Model',[
             if (!callback._queued) {
                 // make sure we only queue up once before it is called by flagging it
                 callback._queued = true;
-                var reactive = this;
+                const reactive = this;
                 // define a function for when it is called that will clear the flag
                 // and provide the correct args
-                var dispatch = function () {
+                const dispatch = function () {
                     callback._queued = false;
                     callback.call(reactive, reactive._get(), oldValue);
                 };
@@ -21585,7 +21617,7 @@ define('xide/data/Model',[
                         // define the callback executor for the next turn
                         Model.nextTurn(function () {
                             // pull out all the callbacks
-                            for (var i = 0; i < callbackQueue.length; i++) {
+                            for (let i = 0; i < callbackQueue.length; i++) {
                                 // call each one
                                 callbackQueue[i]();
                             }
@@ -21655,12 +21687,12 @@ define('xide/data/Source',[
     'xide/lodash'
 ], function (dcl, declare, utils, lodash) {
 
-    var _debug = true;
+    const _debug = true;
     /**
      * @class module:xide/data/Source
      * @augments module:xide/data/Model
      */
-    var Implementation = {
+    const Implementation = {
         /**
          * @type {Array<module:xide/data/Reference>|null}
          */
@@ -21725,17 +21757,17 @@ define('xide/data/Source',[
             }, this);
         },
         updateReferences: function (args) {
-            var property = args.property,
-                value = args.value;
+            const property = args.property;
+            const value = args.value;
 
             if (!this._references) {
                 this._references = [];
             }
-            for (var i = 0; i < this._references.length; i++) {
-                var link = this._references[i],
-                    item = link.item,
-                    settings = link.settings,
-                    store = item._store;
+            for (let i = 0; i < this._references.length; i++) {
+                const link = this._references[i];
+                const item = link.item;
+                const settings = link.settings;
+                const store = item._store;
 
                 if (this._originReference == item) {
                     continue;
@@ -21770,7 +21802,7 @@ define('xide/data/Source',[
         }
     };
     //exports for declare & dcl
-    var Module = declare('xgrid.data.Source', null, Implementation);
+    const Module = declare('xgrid.data.Source', null, Implementation);
     Module.dcl = dcl(null, Implementation);
     Module.Implementation = Implementation;
     return Module;
@@ -21833,9 +21865,9 @@ define('xaction/ActionModel',[
                 action: this,
                 selection: selection
             });
-            _.each(this.getReferences(), function (ref) {
+            this.getReferences().forEach((ref) => {
                 this.updateReference(selection, ref, ref.visibility);
-            }, this);
+            });
         },
         setProperty: function (key, value, updateReferences) {
             return this.set(key, value);
@@ -21956,7 +21988,7 @@ define('xaction/ActionStore',[
             },
             addRenderer: function (renderer) {
                 !this.renderers && (this.renderers = []);
-                !_.contains(this.renderers, renderer) && this.renderers.push(renderer);
+                !_.includes(this.renderers, renderer) && this.renderers.push(renderer);
             }
         }, mixin));
     }
@@ -22262,8 +22294,8 @@ define('xide/Keyboard',[
      * @type {Object[]}
      * @private
      */
-    var listeners = [];
-    var byNode = {};
+    const listeners = [];
+    const byNode = {};
 
     /**
      * Util to extend a keyboard mapping with control functions per listener. Keyboard mappings can
@@ -22271,7 +22303,7 @@ define('xide/Keyboard',[
      * @param mapping
      * @param listeners
      */
-    var addListenerControls = function (mapping, listeners) {
+    const addListenerControls = function (mapping, listeners) {
         mapping.stop = function () {
             return;
             //if(listeners && listeners.length) {
@@ -22297,12 +22329,12 @@ define('xide/Keyboard',[
      * @type {Listener|keypress.Listener}
      * @private
      */
-    var keypressProto = window ? window['keypress'] ? window.keypress.Listener : null : null;
+    const keypressProto = window ? window['keypress'] ? window.keypress.Listener : null : null;
     if (!keypressProto) {
         console.error('you need keypress.min.js installed to use xide/Keyboard');
     }
 
-    var Implementation = {
+    const Implementation = {
         /**
          * @member listener {Object[]} all keypress listener instances
          */
@@ -22355,7 +22387,7 @@ define('xide/Keyboard',[
          */
         addKeyboardListerner: function (keys, params, type, scope, handler, target, eventArgs) {
             // prepare keypress args
-            var _defaults = lang.clone(this.keyPressDefault());
+            const _defaults = lang.clone(this.keyPressDefault());
             //mixin override
             utils.mixin(_defaults, params);
 
@@ -22368,15 +22400,15 @@ define('xide/Keyboard',[
             //normalize to array
             keys = !_.isArray(keys) ? [keys] : keys;
 
-            var _listeners = [],
-                ignore = ['ctrl s', 'ctrl l', 'ctrl r', 'ctrl w', 'ctrl f4', 'shift f4', 'alt tab', 'ctrl tab'];
+            const _listeners = [];
+            const ignore = ['ctrl s', 'ctrl l', 'ctrl r', 'ctrl w', 'ctrl f4', 'shift f4', 'alt tab', 'ctrl tab'];
 
             _.each(keys, function (key_seq) {
-                var targetId = target && target.id ? target.id : 'global',
-                    wasCached = target ? !!byNode[targetId] : false,
-                    registered = false;
+                const targetId = target && target.id ? target.id : 'global';
+                const wasCached = target ? !!byNode[targetId] : false;
+                let registered = false;
 
-                var listener = byNode[targetId];
+                let listener = byNode[targetId];
                 if(listener && listener["_seq"+key_seq]){
                     registered = true;
                 }
@@ -22393,12 +22425,12 @@ define('xide/Keyboard',[
                             return;
                         }
                         e._did = true;
-                        var className = e.target.className.toLowerCase();
+                        const className = e.target.className.toLowerCase();
                         //skip input fields
-                        if (e.target.tagName!=='BUTTON' && className.indexOf('input') == -1 || className.indexOf('ace_text-input') != -1) {
+                        if (e.target.tagName!=='BUTTON' && !className.includes('input') || className.includes('ace_text-input')) {
                             if (handler && handler.apply) {
                                 handler.apply(_defaults['this'], eventArgs || [e]);
-                                if (ignore.indexOf(key_seq) !== -1) {
+                                if (ignore.includes(key_seq)) {
                                     e.preventDefault();
                                     e.stopPropagation();
                                 }
@@ -22419,7 +22451,6 @@ define('xide/Keyboard',[
                         _listeners.push(listener);
                     }
                 }
-
             }, this);
 
             return _listeners;
@@ -22430,14 +22461,14 @@ define('xide/Keyboard',[
          * @returns {xide/types/KEYBOARD_MAPPING}
          */
         registerKeyboardMapping: function (mapping) {
-            var listeners = this.addKeyboardListerner(mapping.keys, mapping.params, null, mapping.scope, mapping.handler, mapping.target, mapping.eventArgs);
+            const listeners = this.addKeyboardListerner(mapping.keys, mapping.params, null, mapping.scope, mapping.handler, mapping.target, mapping.eventArgs);
             mapping.listeners = listeners;
             return addListenerControls(mapping, listeners);
         },
         destroy:function(){
             this.inherited && this.inherited(arguments);
-            var targetId = this.id;
-            var listener = byNode[targetId];
+            const targetId = this.id;
+            const listener = byNode[targetId];
             if(listener){
                 listener.destroy();
                 delete byNode[targetId];
@@ -22458,7 +22489,7 @@ define('xide/Keyboard',[
      * @link http://dmauro.github.io/Keypress/
      * @link https://github.com/dmauro/Keypress/blob/master/keypress.coffee#L728-864
      */
-    var _Keyboard = declare("xide/Keyboard", null, Implementation);
+    const _Keyboard = declare("xide/Keyboard", null, Implementation);
     /**
      * Static mapping factory
      * @param keys
@@ -22472,7 +22503,7 @@ define('xide/Keyboard',[
      * @returns {xide/types/KEYBOARD_MAPPING}
      */
     _Keyboard.createMapping = function (keys, params, type, scope, handler, target, eventArgs) {
-        var mapping = utils.clone(types.KEYBOARD_MAPPING);//@TODO: bad copy, uses a ctr followed by a lang.mixin
+        const mapping = utils.clone(types.KEYBOARD_MAPPING);//@TODO: bad copy, uses a ctr followed by a lang.mixin
         function getHandler(__handler) {
             return _.isString(__handler) ? lang.hitch(scope, __handler) : __handler;
         }
@@ -22928,13 +22959,13 @@ define('xide/mixins/ActionMixin',[
     "dcl/dcl",
     "xdojo/declare",
     "xide/utils"
-], function (dcl,declare,utils) {
-    var Implementation = {
-        store:null,
-        getActionStore:function(){
+], function (dcl, declare, utils) {
+    const Implementation = {
+        store: null,
+        getActionStore: function () {
             return this.store;
         },
-        setActionStore:function(store){
+        setActionStore: function (store) {
             return this.store = store;
         },
         /**
@@ -22946,8 +22977,8 @@ define('xide/mixins/ActionMixin',[
         sortGroups: function (groups, groupMap) {
             groups = groups.sort(function (a, b) {
                 if (a.label && b.label && groupMap[a.label] != null && groupMap[b.label] != null) {
-                    var orderA = groupMap[a.label];
-                    var orderB = groupMap[b.label];
+                    const orderA = groupMap[a.label];
+                    const orderB = groupMap[b.label];
                     return orderB - orderA;
                 }
                 return 100;
@@ -22972,26 +23003,26 @@ define('xide/mixins/ActionMixin',[
          *
          * @param visibility {string|null}
          */
-        clearActions: function (visibility,_store) {
+        clearActions: function (visibility, _store) {
             visibility = visibility || this.visibility;
-            var store = _store || this.getActionStore(),
-                actions = store.data;
+            const store = _store || this.getActionStore();
+            const actions = store.data;
 
-            if(!store){
+            if (!store) {
                 return;
             }
-            actions && _.each(actions,function(action){
-                var actionVisibility = action.getVisibility!= null ? action.getVisibility(visibility) : null;
-                if(actionVisibility){
-                    var widget = actionVisibility.widget;
-                    if(widget){
+            actions && actions.forEach((action) => {
+                const actionVisibility = action.getVisibility != null ? action.getVisibility(visibility) : null;
+                if (actionVisibility) {
+                    const widget = actionVisibility.widget;
+                    if (widget) {
                         //remove action reference widget
                         action.removeReference && action.removeReference(widget);
                         widget.destroy();
                         this.setVisibilityField(action, 'widget', null);
                     }
                 }
-            },this);
+            });
         },
         /**
          * computeList modifies a set of actions in that way:
@@ -23014,9 +23045,9 @@ define('xide/mixins/ActionMixin',[
          * @param _default
          * @returns {*}
          */
-        getVisibilityField:function(action,field,_default){
-            var actionVisibility = action.getVisibility !=null ? action.getVisibility(this.visibility) : {};
-            return actionVisibility[field] !=null ? actionVisibility[field] : action[field] || _default;
+        getVisibilityField: function (action, field, _default) {
+            const actionVisibility = action.getVisibility != null ? action.getVisibility(this.visibility) : {};
+            return actionVisibility[field] != null ? actionVisibility[field] : action[field] || _default;
         },
         /**
          * Sets a field in the object's given visibility store
@@ -23025,23 +23056,23 @@ define('xide/mixins/ActionMixin',[
          * @param value
          * @returns {*}
          */
-        setVisibilityField:function(action,field,value){
-            var _default = {};
-            if(action.getVisibility) {
+        setVisibilityField: function (action, field, value) {
+            const _default = {};
+            if (action.getVisibility) {
                 var actionVisibility = action.getVisibility(this.visibility) || _default;
                 actionVisibility[field] = value;
             }
             return actionVisibility;
         },
-        shouldShowAction:function(action){
-            if(this.getVisibilityField(action,'show')==false){
+        shouldShowAction: function (action) {
+            if (this.getVisibilityField(action, 'show') == false) {
                 return false;
-            }else if(action.getVisibility && action.getVisibility(this.visibility)==null){
+            } else if (action.getVisibility && action.getVisibility(this.visibility) == null) {
                 return false;
             }
             return true;
         }
-    }
+    };
 
     /**
      * Provides tools to deal with 'actions' (xide/action/Action). This is the model part for actions which is being used
@@ -23049,11 +23080,10 @@ define('xide/mixins/ActionMixin',[
      *
      * @mixin module:xide/mixins/ActionMixin
      */
-    var Module = declare("xide/mixins/ActionMixin", null, Implementation);
-    Module.dcl = dcl(null,Implementation);
+    const Module = declare("xide/mixins/ActionMixin", null, Implementation);
+    Module.dcl = dcl(null, Implementation);
     return Module;
 });
-
 /**
  * @module xide/views/History
  */
@@ -23098,7 +23128,7 @@ define('xide/views/History',[
         },
         getNext: function () {
             this._index += 1;
-            var cmd = this._history[this._index] || "";
+            const cmd = this._history[this._index] || "";
             this._index = Math.min(this.length(), this._index);
             return cmd;
         },
@@ -23111,7 +23141,7 @@ define('xide/views/History',[
             this._index = Math.min(this.length(), this._index);
         },
         getNow: function () {
-            var index = Math.max(0, this._index - 1);
+            const index = Math.max(0, this._index - 1);
             if(this._history) {
                 return this._history[index];
             }
@@ -23794,8 +23824,8 @@ define('xide/popup',[
      * jQuery port of dijit/popup and deals with native HTML elements only.
      * @class module:xide/popup
      */
-    var instance = null;
-    var Module = dcl(null, {
+    let instance = null;
+    const Module = dcl(null, {
         // _stack: dijit/_WidgetBase[]
         //		Stack of currently popped up widgets.
         //		(someone opened _stack[0], and then it opened _stack[1], etc.)
@@ -23810,16 +23840,18 @@ define('xide/popup',[
             //		If screen has been scrolled, reposition all the popups in the stack.
             //		Then set timer to check again later.
 
-            if(this._firstAroundNode){	// guard for when clearTimeout() on IE doesn't work
-                var oldPos = this._firstAroundPosition,
-                    newPos = domGeometry.position(this._firstAroundNode, true),
-                    dx = newPos.x - oldPos.x,
-                    dy = newPos.y - oldPos.y;
+            if(this._firstAroundNode){
+                // guard for when clearTimeout() on IE doesn't work
+                const oldPos = this._firstAroundPosition;
+
+                const newPos = domGeometry.position(this._firstAroundNode, true);
+                const dx = newPos.x - oldPos.x;
+                const dy = newPos.y - oldPos.y;
 
                 if(dx || dy){
                     this._firstAroundPosition = newPos;
-                    for(var i = 0; i < this._stack.length; i++){
-                        var style = this._stack[i].wrapper.style;
+                    for(let i = 0; i < this._stack.length; i++){
+                        const style = this._stack[i].wrapper.style;
                         style.top = (parseFloat(style.top) + dy) + "px";
                         if(style.right == "auto"){
                             style.left = (parseFloat(style.left) + dx) + "px";
@@ -23840,14 +23872,14 @@ define('xide/popup',[
          * @private
          */
         _createWrapper: function(node,args){
-            var wrapper = $(node).data('_popupWrapper');
-            var owner = $(node).data('owner') || (_.isObject(args) && args.owner ? args.owner : null);
+            let wrapper = $(node).data('_popupWrapper');
+            const owner = $(node).data('owner') || (_.isObject(args) && args.owner ? args.owner : null);
             if(!wrapper){
-                var $wrapper = $("<div class='xPopup' style='display:none' role='region'></div>" );
+                const $wrapper = $("<div class='xPopup' style='display:none' role='region'></div>" );
                 $('body').append(wrapper);
                 $wrapper.append($(node));
                 wrapper = $wrapper[0];
-                var s = node.style;
+                const s = node.style;
                 s.display = "";
                 s.visibility = "";
                 s.position = "";
@@ -23873,14 +23905,17 @@ define('xide/popup',[
          */
         moveOffScreen: function(node,args){
             // Create wrapper if not already there
-            var wrapper = this._createWrapper(node,args);
+            const wrapper = this._createWrapper(node,args);
+
             // Besides setting visibility:hidden, move it out of the viewport, see #5776, #10111, #13604
-            var ltr = true,
-                style = {
-                    visibility: "hidden",
-                    top: "-9999px",
-                    display: ""
-                };
+            const ltr = true;
+
+            const style = {
+                visibility: "hidden",
+                top: "-9999px",
+                display: ""
+            };
+
             style[ltr ? "left" : "right"] = "-9999px";
             style[ltr ? "right" : "left"] = "auto";
             $(wrapper).css(style);
@@ -23896,7 +23931,7 @@ define('xide/popup',[
          */
         hide: function(widget,args){
             // Create wrapper if not already there
-            var wrapper = this._createWrapper(widget,args);
+            const wrapper = this._createWrapper(widget,args);
             $(wrapper).css({
                 display: "none",
                 height: "auto",			// Open() may have limited the height to fit in the viewport,
@@ -23904,7 +23939,7 @@ define('xide/popup',[
                 border: ""			// Open() may have moved border from popup to wrapper.
             });
             // Open() may have moved border from popup to wrapper.  Move it back.
-            var node = widget;
+            const node = widget;
             if("_originalStyle" in node){
                 node.style.cssText = node._originalStyle;
             }
@@ -23913,7 +23948,7 @@ define('xide/popup',[
             // summary:
             //		Compute the closest ancestor popup that's *not* a child of another popup.
             //		Ex: For a TooltipDialog with a button that spawns a tree of menus, find the popup of the button.
-            var stack = this._stack;
+            const stack = this._stack;
             for(var pi = stack.length - 1; pi > 0 && stack[pi].parent === stack[pi - 1].widget; pi--){
                 /* do nothing, just trying to get right value for pi */
             }
@@ -23939,21 +23974,21 @@ define('xide/popup',[
             //		Popup the widget at the specified position
             //
 
-            var last = null;
+            const last = null;
 
 
 
-            var isLTR = true;
-            var self = this,
-                stack = this._stack,
-                widget = args.popup,
-                node = args.popup,
-                orient = args.orient || ["below", "below-alt", "above", "above-alt"],
-                ltr = args.parent ? args.parent.isLeftToRight() : isLTR,
-                around = args.around,
-                owner = $(node).data('owner'),
-                extraClass = args.extraClass || "",
-                id = (args.around && args.around.id) ? (args.around.id + "_dropdown") : ("popup_" + this._idGen++);
+            const isLTR = true;
+            const self = this;
+            const stack = this._stack;
+            const widget = args.popup;
+            const node = args.popup;
+            const orient = args.orient || ["below", "below-alt", "above", "above-alt"];
+            const ltr = args.parent ? args.parent.isLeftToRight() : isLTR;
+            const around = args.around;
+            const owner = $(node).data('owner');
+            const extraClass = args.extraClass || "";
+            const id = (args.around && args.around.id) ? (args.around.id + "_dropdown") : ("popup_" + this._idGen++);
 
             // If we are opening a new popup that isn't a child of a currently opened popup, then
             // close currently opened popup(s).   This should happen automatically when the old popups
@@ -23964,30 +23999,34 @@ define('xide/popup',[
 
             // Get pointer to popup wrapper, and create wrapper if it doesn't exist.  Remove display:none (but keep
             // off screen) so we can do sizing calculations.
-            var wrapper = this.moveOffScreen(widget,args);
-            var $wrapper = $(wrapper);
+            const wrapper = this.moveOffScreen(widget,args);
+            const $wrapper = $(wrapper);
+
             // Limit height to space available in viewport either above or below aroundNode (whichever side has more
             // room), adding scrollbar if necessary. Can't add scrollbar to widget because it may be a <table> (ex:
             // dijit/Menu), so add to wrapper, and then move popup's border to wrapper so scroll bar inside border.
-            var maxHeight, popupSize = domGeometry.position(node);
+            let maxHeight;
+
+            const popupSize = domGeometry.position(node);
             if("maxHeight" in args && args.maxHeight != -1){
                 maxHeight = args.maxHeight || Infinity;	// map 0 --> infinity for back-compat of _HasDropDown.maxHeight
             }else{
-                var viewport = {
+                const viewport = {
                     t:0,
                     l:0,
                     h:$(window).height(),
                     w:$(window).width()
                 };
-                var aroundPos = around ? domGeometry.position(around, false) : {y: args.y - (args.padding||0), h: (args.padding||0) * 2};
+                const aroundPos = around ? domGeometry.position(around, false) : {y: args.y - (args.padding||0), h: (args.padding||0) * 2};
                 maxHeight = Math.floor(Math.max(aroundPos.y, viewport.h - (aroundPos.y + aroundPos.h)));
             }
             //maxHeight = 300;
             if(popupSize.h > maxHeight){
                 // Get style of popup's border.  Unfortunately domStyle.get(node, "border") doesn't work on FF or IE,
                 // and domStyle.get(node, "borderColor") etc. doesn't work on FF, so need to use fully qualified names.
-                var cs = domStyle.getComputedStyle(node),
-                    borderStyle = cs.borderLeftWidth + " " + cs.borderLeftStyle + " " + cs.borderLeftColor;
+                const cs = domStyle.getComputedStyle(node);
+
+                const borderStyle = cs.borderLeftWidth + " " + cs.borderLeftStyle + " " + cs.borderLeftColor;
 
                 $wrapper.css({
                     'overflow-y': "scroll",
@@ -24007,7 +24046,7 @@ define('xide/popup',[
                 // First element on stack. Save position of aroundNode and setup listener for changes to that position.
                 this._firstAroundNode = around;
                 //this._firstAroundPosition = domGeometry.position(around, true);
-                var offset = $(around).offset();
+                const offset = $(around).offset();
                 this._firstAroundPosition = {
                     w:$(around).width(),
                     h:$(around).height(),
@@ -24021,8 +24060,8 @@ define('xide/popup',[
             }
 
             // position the wrapper node and make it visible
-            var layoutFunc = null ; //widget.orient ? lang.hitch(widget, "orient") : null;
-            var best = around ?
+            const layoutFunc = null; //widget.orient ? lang.hitch(widget, "orient") : null;
+            const best = around ?
                 place.around(wrapper, around, orient, ltr, layoutFunc) :
                 place.at(wrapper, args, orient == 'R' ? ['TR', 'BR', 'TL', 'BL'] : ['TL', 'BL', 'TR', 'BR'], args.padding,
                     layoutFunc);
@@ -24031,7 +24070,7 @@ define('xide/popup',[
             node.style.visibility = "visible";	// counteract effects from _HasDropDown
 
 
-            var handlers = [];
+            const handlers = [];
             $(wrapper).on('keydown',function(evt){
                 if(evt.keyCode == 27 && args.onCancel){//esape
                     evt.stopPropagation();
@@ -24040,7 +24079,7 @@ define('xide/popup',[
                 }else if(evt.keyCode == 9){//tab
                     evt.stopPropagation();
                     evt.preventDefault();
-                    var topPopup = self.getTopPopup();
+                    const topPopup = self.getTopPopup();
                     if(topPopup && topPopup.onCancel){
                         topPopup.onCancel();
                     }
@@ -24081,7 +24120,7 @@ define('xide/popup',[
             // summary:
             //		Close specified popup and any popups that it parented.
             //		If no popup is specified, closes all popups.
-            var stack = this._stack;
+            const stack = this._stack;
             // Basically work backwards from the top of the stack closing popups
             // until we hit the specified popup, but IIRC there was some issue where closing
             // a popup would cause others to close too.  Thus if we are trying to close B in [A,B,C]
@@ -24092,15 +24131,15 @@ define('xide/popup',[
             })) ||
 
             (!popup && stack.length)){
-                var top = stack.pop(),
-                    widget = top.widget,
-                    onClose = top.onClose;
+                const top = stack.pop();
+                const widget = top.widget;
+                const onClose = top.onClose;
 
                 if(widget.onClose){
                     widget.onClose();
                 }
 
-                var h;
+                let h;
 
                 while(h = top.handlers.pop()){
                     h.remove();
@@ -24137,7 +24176,7 @@ define('xide/widgets/_MenuMixin4',[
     "xide/popup"
 ], function (dcl, types, utils, registry, Action, DefaultActions, popup) {
 
-    var createCallback = function (func, menu, item) {
+    const createCallback = function (func, menu, item) {
         return function (event) {
             /*
             if(item) {
@@ -24152,14 +24191,14 @@ define('xide/widgets/_MenuMixin4',[
         };
     };
 
-    var ACTION = types.ACTION;
-    var _debug = false;
-    var _debugWidgets = false;
+    const ACTION = types.ACTION;
+    const _debug = false;
+    const _debugWidgets = false;
     /**
      * Mixin which provides utils for menu & action related render tasks.
      * @mixin module:xide/widgets/_MenuMixin
      */
-    var _Module = dcl(null, {
+    const _Module = dcl(null, {
         actionStores: null,
         correctSubMenu: false,
         _didInit: null,
@@ -24175,11 +24214,11 @@ define('xide/widgets/_MenuMixin4',[
             this.clearAction(evt.target);
         },
         clearAction: function (action) {
-            var self = this;
+            const self = this;
             if (action) {
-                var actionVisibility = action.getVisibility !== null ? action.getVisibility(self.visibility) : {};
+                const actionVisibility = action.getVisibility !== null ? action.getVisibility(self.visibility) : {};
                 if (actionVisibility) {
-                    var widget = actionVisibility.widget;
+                    const widget = actionVisibility.widget;
                     widget && action.removeReference && action.removeReference(widget);
                     if (widget && widget.destroy) {
                         widget.destroy();
@@ -24190,15 +24229,15 @@ define('xide/widgets/_MenuMixin4',[
             }
         },
         removeCustomActions: function () {
-            var oldStore = this.store;
-            var oldActions = oldStore._find({
+            const oldStore = this.store;
+            const oldActions = oldStore._find({
                 custom: true
             });
 
-            var menuData = this.menuData;
+            const menuData = this.menuData;
             _.each(oldActions, function (action) {
                 oldStore.removeSync(action.command);
-                var oldMenuItem = _.find(menuData, {
+                const oldMenuItem = _.find(menuData, {
                     command: action.command
                 });
                 oldMenuItem && menuData.remove(oldMenuItem);
@@ -24212,7 +24251,7 @@ define('xide/widgets/_MenuMixin4',[
          * @returns {*}
          */
         getVisibilityField: function (action, field, _default) {
-            var actionVisibility = action.getVisibility !== null ? action.getVisibility(this.visibility) : {};
+            const actionVisibility = action.getVisibility !== null ? action.getVisibility(this.visibility) : {};
             return actionVisibility[field] !== null ? actionVisibility[field] : action[field] || _default;
         },
         /**
@@ -24223,7 +24262,7 @@ define('xide/widgets/_MenuMixin4',[
          * @returns {*}
          */
         setVisibilityField: function (action, field, value) {
-            var _default = {};
+            const _default = {};
             if (action.getVisibility) {
                 var actionVisibility = action.getVisibility(this.visibility) || _default;
                 actionVisibility[field] = value;
@@ -24287,10 +24326,10 @@ define('xide/widgets/_MenuMixin4',[
                 return;
             }
             this._didInit = true;
-            var options = this.getDefaultOptions();
+            let options = this.getDefaultOptions();
             options = $.extend({}, options, opts);
-            var self = this;
-            var root = $(document);
+            const self = this;
+            const root = $(document);
             this.__on(root, 'click', null, function (e) {
                 if (!self.isOpen) {
                     return;
@@ -24308,9 +24347,9 @@ define('xide/widgets/_MenuMixin4',[
             }
             this.__on(root, 'mouseenter', '.dropdown-submenu', function (e) {
                 try {
-                    var _root = $(e.currentTarget);
-                    var $sub = _root.find('.dropdown-context-sub:first');
-                    var didPopup = false;
+                    const _root = $(e.currentTarget);
+                    let $sub = _root.find('.dropdown-context-sub:first');
+                    let didPopup = false;
                     if ($sub.length === 0) {
                         $sub = _root.data('sub');
                         if ($sub) {
@@ -24319,16 +24358,16 @@ define('xide/widgets/_MenuMixin4',[
                             return;
                         }
                     }
-                    var data = $sub.data('data');
-                    var level = data ? data[0].level : 0;
-                    var isFirst = level === 1;
+                    const data = $sub.data('data');
+                    const level = data ? data[0].level : 0;
+                    const isFirst = level === 1;
                     if (self.menu) {
                         if (!$.contains(self.menu[0], _root[0])) {
                             return;
                         }
                     }
 
-                    var _disabled = _root.hasClass('disabled');
+                    const _disabled = _root.hasClass('disabled');
                     if (_disabled) {
                         $sub.css('display', 'none');
                         return;
@@ -24341,7 +24380,7 @@ define('xide/widgets/_MenuMixin4',[
                         $sub.css('position', 'initial');
 
                         function close() {
-                            var _wrapper = $sub.data('_popupWrapper');
+                            const _wrapper = $sub.data('_popupWrapper');
                             popup.close({
                                 domNode: $sub[0],
                                 _popupWrapper: _wrapper
@@ -24392,19 +24431,21 @@ define('xide/widgets/_MenuMixin4',[
                         top: 0
                     });
 
-                    var autoH = $sub.height() + 0;
-                    var totalH = $('html').height();
-                    var pos = $sub.offset();
-                    var overlapYDown = totalH - (pos.top + autoH);
+                    const autoH = $sub.height() + 0;
+                    const totalH = $('html').height();
+                    const pos = $sub.offset();
+                    const overlapYDown = totalH - (pos.top + autoH);
                     if ((pos.top + autoH) > totalH) {
                         $sub.css({
                             top: overlapYDown - 30
                         }).fadeIn(options.fadeSpeed);
                     }
+
                     ////////////////////////////////////////////////////////////
-                    var subWidth = $sub.width(),
-                        subLeft = $sub.offset().left,
-                        collision = (subWidth + subLeft) > window.innerWidth;
+                    const subWidth = $sub.width();
+
+                    const subLeft = $sub.offset().left;
+                    const collision = (subWidth + subLeft) > window.innerWidth;
 
                     if (collision) {
                         $sub.addClass('drop-left');
@@ -24425,17 +24466,18 @@ define('xide/widgets/_MenuMixin4',[
         },
         buildMenuItems: function ($menu, data, id, subMenu, addDynamicTag) {
             //this._debugMenu && console.log('build - menu items ', arguments);
-            var linkTarget = '',
-                self = this,
-                visibility = this.visibility;
+            let linkTarget = '';
 
-            for (var i = 0; i < data.length; i++) {
-                var item = data[i],
-                    $sub,
-                    widget = item.widget;
+            const self = this;
+            const visibility = this.visibility;
+
+            for (let i = 0; i < data.length; i++) {
+                const item = data[i];
+                let $sub;
+                const widget = item.widget;
 
                 if (typeof item.divider !== 'undefined' && !item.widget) {
-                    var divider = '<li class="divider';
+                    let divider = '<li class="divider';
                     divider += (addDynamicTag) ? ' dynamic-menu-item' : '';
                     divider += '"></li>';
                     item.widget = divider;
@@ -24443,7 +24485,7 @@ define('xide/widgets/_MenuMixin4',[
                     divider.data('item', item);
 
                 } else if (typeof item.header !== 'undefined' && !item.widget) {
-                    var header = item.vertical ? '<li class="divider-vertical' : '<li class="nav-header testClass';
+                    let header = item.vertical ? '<li class="divider-vertical' : '<li class="nav-header testClass';
                     header += (addDynamicTag) ? ' dynamic-menu-item' : '';
                     header += '">' + item.header + '</li>';
                     header = $(header);
@@ -24459,7 +24501,7 @@ define('xide/widgets/_MenuMixin4',[
                         linkTarget = ' target="' + item.target + '"';
                     }
                     if (typeof item.subMenu !== 'undefined' && !widget) {
-                        var sub_menu = '<li tabindex="-1" class="dropdown-submenu ' + this.containerClass;
+                        let sub_menu = '<li tabindex="-1" class="dropdown-submenu ' + this.containerClass;
                         sub_menu += (addDynamicTag) ? ' dynamic-menu-item' : '';
                         sub_menu += '"><a>';
 
@@ -24475,7 +24517,7 @@ define('xide/widgets/_MenuMixin4',[
                             if (item.render) {
                                 $sub = item.render(item, $menu);
                             } else {
-                                var element = '<li tabindex="-1" class="" ';
+                                let element = '<li tabindex="-1" class="" ';
                                 element += (addDynamicTag) ? ' class="dynamic-menu-item"' : '';
                                 element += '><a >';
                                 if (typeof data[i].icon !== 'undefined') {
@@ -24492,11 +24534,11 @@ define('xide/widgets/_MenuMixin4',[
 
                     if (typeof item.action !== 'undefined' && !item.widget) {
                         if (item.addClickHandler && item.addClickHandler() === false) {} else {
-                            var $action = item.action;
+                            const $action = item.action;
                             if ($sub && $sub.find) {
-                                var trigger = $sub.find('a');
+                                const trigger = $sub.find('a');
                                 trigger.addClass('context-event');
-                                var handler = createCallback($action, item, $sub);
+                                const handler = createCallback($action, item, $sub);
                                 trigger.data('handler', handler).on('click', handler);
                             }
                         }
@@ -24528,7 +24570,7 @@ define('xide/widgets/_MenuMixin4',[
                     }
 
                     if (typeof item.subMenu != 'undefined' && !item.subMenuData) {
-                        var subMenuData = self.buildMenu(item.subMenu, id, true);
+                        const subMenuData = self.buildMenu(item.subMenu, id, true);
                         $menu.subMenuData = subMenuData;
                         item.subMenuData = subMenuData;
                         $menu.find('li:last').append(subMenuData);
@@ -24550,24 +24592,23 @@ define('xide/widgets/_MenuMixin4',[
                     });
                     $menu._didOnClick = true;
                 }
-
             }
             return $menu;
         },
         buildMenu: function (data, id, subMenu) {
-            var subClass = (subMenu) ? (' dropdown-context-sub ' + this.containerClass) : ' scrollable-menu ';
-            var $menu = $('<ul tabindex="-1" aria-expanded="true" role="menu" class="dropdown-menu dropdown-context' + subClass + '" id="dropdown-' + id + '"></ul>');
+            const subClass = (subMenu) ? (' dropdown-context-sub ' + this.containerClass) : ' scrollable-menu ';
+            const $menu = $('<ul tabindex="-1" aria-expanded="true" role="menu" class="dropdown-menu dropdown-context' + subClass + '" id="dropdown-' + id + '"></ul>');
             if (!subMenu) {
                 this._rootMenu = $menu;
             }
-            var result = this.buildMenuItems($menu, data, id, subMenu);
+            const result = this.buildMenuItems($menu, data, id, subMenu);
             $menu.data('data', data);
             return result;
         },
         createNewAction: function (command) {
-            var segments = command.split('/');
-            var lastSegment = segments[segments.length - 1];
-            var action = new Action({
+            const segments = command.split('/');
+            const lastSegment = segments[segments.length - 1];
+            const action = new Action({
                 command: command,
                 label: lastSegment,
                 group: lastSegment,
@@ -24576,10 +24617,10 @@ define('xide/widgets/_MenuMixin4',[
             return action;
         },
         findAction: function (command) {
-            var stores = this.actionStores,
-                action = null;
+            const stores = this.actionStores;
+            let action = null;
             _.each(stores, function (store) {
-                var _action = store ? store.getSync(command) : null;
+                const _action = store ? store.getSync(command) : null;
                 if (_action) {
                     action = _action;
                 }
@@ -24589,7 +24630,7 @@ define('xide/widgets/_MenuMixin4',[
         },
         getAction: function (command, store) {
             store = store || this.store;
-            var action = null;
+            let action = null;
             if (store) {
                 action = this.findAction(command);
                 if (!action) {
@@ -24599,9 +24640,9 @@ define('xide/widgets/_MenuMixin4',[
             return action;
         },
         getActions: function (query) {
-            var result = [];
-            var stores = this.actionStores,
-                visibility = this.visibility;
+            let result = [];
+            const stores = this.actionStores;
+            const visibility = this.visibility;
 
             query = query || this.actionFilter;
             _.each(stores, function (store) {
@@ -24609,7 +24650,7 @@ define('xide/widgets/_MenuMixin4',[
                 //store && (result2= result2.concat(store._find(query)));
             });
             result = result.filter(function (action) {
-                var actionVisibility = action.getVisibility != null ? action.getVisibility(visibility) : {};
+                const actionVisibility = action.getVisibility != null ? action.getVisibility(visibility) : {};
                 return !(action.show === false || actionVisibility === false || actionVisibility.show === false);
             });
             /*
@@ -24618,21 +24659,21 @@ define('xide/widgets/_MenuMixin4',[
             return result;
         },
         toActions: function (commands, store) {
-            var result = [],
-                self = this;
+            const result = [];
+            const self = this;
             _.each(commands, function (path) {
-                var _action = self.getAction(path, store);
+                const _action = self.getAction(path, store);
                 _action && result.push(_action);
             });
             return result;
         },
         onRunAction: function (action, owner, e) {
-            var command = action.command;
+            const command = action.command;
             action = this.findAction(command);
             return DefaultActions.defaultHandler.apply(action.owner || owner, [action, e]);
         },
         getActionProperty: function (action, visibility, prop) {
-            var value = prop in action ? action[prop] : null;
+            let value = prop in action ? action[prop] : null;
             if (visibility && prop in visibility) {
                 value = visibility[prop];
             }
@@ -24663,7 +24704,7 @@ define('xide/widgets/_MenuMixin4',[
             }
         },
         getActionData: function (action) {
-            var actionVisibility = action.getVisibility != null ? action.getVisibility(this.visibility) : {};
+            const actionVisibility = action.getVisibility != null ? action.getVisibility(this.visibility) : {};
             return {
                 label: actionVisibility.label != null ? actionVisibility.label : action.label,
                 icon: actionVisibility.icon != null ? actionVisibility.icon : action.icon,
@@ -24679,16 +24720,16 @@ define('xide/widgets/_MenuMixin4',[
 
         },
         _findParentData: function (oldMenuData, parentCommand) {
-            var parent = _.find(oldMenuData, {
+            const parent = _.find(oldMenuData, {
                 command: parentCommand
             });
             if (parent) {
                 return parent;
             }
-            for (var i = 0; i < oldMenuData.length; i++) {
-                var data = oldMenuData[i];
+            for (let i = 0; i < oldMenuData.length; i++) {
+                const data = oldMenuData[i];
                 if (data.subMenu) {
-                    var found = this._findParentData(data.subMenu, parentCommand);
+                    const found = this._findParentData(data.subMenu, parentCommand);
                     if (found) {
                         return found;
                     }
@@ -24697,18 +24738,18 @@ define('xide/widgets/_MenuMixin4',[
             return null;
         },
         _clear: function () {
-            var actions = this.getActions();
-            var store = this.store;
+            let actions = this.getActions();
+            const store = this.store;
             if (store) {
                 this.actionStores.remove(store);
             }
-            var self = this;
+            const self = this;
             actions = actions.concat(this._tmpActions);
             _.each(actions, function (action) {
                 if (action) {
-                    var actionVisibility = action.getVisibility != null ? action.getVisibility(self.visibility) : {};
+                    const actionVisibility = action.getVisibility != null ? action.getVisibility(self.visibility) : {};
                     if (actionVisibility) {
-                        var widget = actionVisibility.widget;
+                        const widget = actionVisibility.widget;
                         action.removeReference && action.removeReference(widget);
                         if (widget && widget.destroy) {
                             widget.destroy();
@@ -24721,13 +24762,13 @@ define('xide/widgets/_MenuMixin4',[
             this.$navBar && this.$navBar.empty();
         },
         buildActionTree: function (store, owner) {
-            var self = this,
-                allActions = self.getActions(),
-                visibility = self.visibility;
+            const self = this;
+            const allActions = self.getActions();
+            const visibility = self.visibility;
 
             self.wireStore(store, function (evt) {
                 if (evt.type === 'update') {
-                    var action = evt.target;
+                    const action = evt.target;
                     if (action.refreshReferences) {
                         action.refreshReferences(evt.property, evt.value);
                     }
@@ -24735,55 +24776,56 @@ define('xide/widgets/_MenuMixin4',[
             });
 
             //return all actions with non-empty tab field
-            var tabbedActions = allActions.filter(function (action) {
-                    var _vis = (action.visibility_ || {})[visibility + '_val'] || {};
+            const tabbedActions = allActions.filter(function (action) {
+                    const _vis = (action.visibility_ || {})[visibility + '_val'] || {};
                     if (action) {
                         return _vis.tab || action.tab;
                     }
-                }),
+                });
 
-                //group all tabbed actions : { Home[actions], View[actions] }
-                groupedTabs = _.groupBy(tabbedActions, function (action) {
-                    var _vis = (action.visibility_ || {})[visibility + '_val'] || {};
-                    if (action) {
-                        return _vis.tab || action.tab;
-                    }
-                }),
-                //now flatten them
-                _actionsFlattened = [];
+            const //group all tabbed actions : { Home[actions], View[actions] }
+            groupedTabs = _.groupBy(tabbedActions, function (action) {
+                const _vis = (action.visibility_ || {})[visibility + '_val'] || {};
+                if (action) {
+                    return _vis.tab || action.tab;
+                }
+            });
+
+            let //now flatten them
+            _actionsFlattened = [];
 
 
             _.each(groupedTabs, function (items) {
                 _actionsFlattened = _actionsFlattened.concat(items);
             });
 
-            var rootActions = [];
+            let rootActions = [];
             _.each(tabbedActions, function (action) {
-                var rootCommand = action.getRoot();
+                const rootCommand = action.getRoot();
                 rootActions.indexOf(rootCommand) == -1 && rootActions.push(rootCommand);
             });
 
             //owner sort of top level
             store.menuOrder && (rootActions = owner.sortGroups(rootActions, store.menuOrder));
 
-            var tree = {};
+            const tree = {};
             //stats to count groups per tab
-            var biggestTab = rootActions[0];
-            var nbGroupsBiggest = 0;
+            let biggestTab = rootActions[0];
+            let nbGroupsBiggest = 0;
 
             _.each(rootActions, function (level) {
                 // collect all actions at level (File/View/...)
-                var menuActions = owner.getItemsAtBranch(allActions, level);
+                let menuActions = owner.getItemsAtBranch(allActions, level);
                 // convert action command strings to Action references
-                var grouped = self.toActions(menuActions, store);
+                let grouped = self.toActions(menuActions, store);
 
                 // expand filter -------------------
-                var addedExpanded = [];
-                var toRemove = [];
+                let addedExpanded = [];
+                const toRemove = [];
                 _.each(grouped, function (action) {
-                    var actionData = self.getActionData(action);
+                    const actionData = self.getActionData(action);
                     if (actionData.expand) {
-                        var children = action.getChildren();
+                        const children = action.getChildren();
                         children && children.length && (addedExpanded = addedExpanded.concat(children));
                         toRemove.push(action);
                     }
@@ -24795,14 +24837,14 @@ define('xide/widgets/_MenuMixin4',[
                 // expand filter ---------------    end
 
                 // group all actions by group
-                var groupedActions = _.groupBy(grouped, function (action) {
-                    var _vis = (action.visibility_ || {})[visibility + '_val'] || {};
+                const groupedActions = _.groupBy(grouped, function (action) {
+                    const _vis = (action.visibility_ || {})[visibility + '_val'] || {};
                     if (action) {
                         return _vis.group || action.group;
                     }
                 });
 
-                var _actions = [];
+                let _actions = [];
                 _.each(groupedActions, function (items, level) {
                     if (level !== 'undefined') {
                         _actions = _actions.concat(items);
@@ -24810,13 +24852,13 @@ define('xide/widgets/_MenuMixin4',[
                 });
 
                 //flatten out again
-                menuActions = _.pluck(_actions, 'command');
+                menuActions = _actions.map((action) => action.command);
                 menuActions.grouped = groupedActions;
                 tree[level] = menuActions;
 
                 //update stats
                 if (self.collapseSmallGroups) {
-                    var nbGroups = _.keys(menuActions.grouped).length;
+                    const nbGroups = _.keys(menuActions.grouped).length;
                     if (nbGroups > nbGroupsBiggest) {
                         nbGroupsBiggest = nbGroups;
                         biggestTab = level;
@@ -24838,7 +24880,7 @@ define('xide/widgets/_MenuMixin4',[
                     tree[biggestTab] && delete tree[level];
                 }
             });
-            var result = {
+            const result = {
                 root: tree,
                 rootActions: rootActions,
                 allActionPaths: _.pluck(allActions, 'command'),
@@ -24849,7 +24891,7 @@ define('xide/widgets/_MenuMixin4',[
             return result;
         }
     });
-    var Module = dcl(null, {
+    const Module = dcl(null, {
         actionStores: null,
         correctSubMenu: false,
         _didInit: null,
@@ -24868,11 +24910,11 @@ define('xide/widgets/_MenuMixin4',[
             this.clearAction(evt.target);
         },
         clearAction: function (action) {
-            var self = this;
+            const self = this;
             if (action) {
-                var actionVisibility = action.getVisibility !== null ? action.getVisibility(self.visibility) : {};
+                const actionVisibility = action.getVisibility !== null ? action.getVisibility(self.visibility) : {};
                 if (actionVisibility) {
-                    var widget = actionVisibility.widget;
+                    const widget = actionVisibility.widget;
                     widget && action.removeReference && action.removeReference(widget);
                     if (widget && widget.destroy) {
                         widget.destroy();
@@ -24883,15 +24925,15 @@ define('xide/widgets/_MenuMixin4',[
             }
         },
         removeCustomActions: function () {
-            var oldStore = this.store;
-            var oldActions = oldStore._find({
+            const oldStore = this.store;
+            const oldActions = oldStore._find({
                 custom: true
             });
 
-            var menuData = this.menuData;
+            const menuData = this.menuData;
             _.each(oldActions, function (action) {
                 oldStore.removeSync(action.command);
-                var oldMenuItem = _.find(menuData, {
+                const oldMenuItem = _.find(menuData, {
                     command: action.command
                 });
                 oldMenuItem && menuData.remove(oldMenuItem);
@@ -24905,7 +24947,7 @@ define('xide/widgets/_MenuMixin4',[
          * @returns {*}
          */
         getVisibilityField: function (action, field, _default) {
-            var actionVisibility = action.getVisibility !== null ? action.getVisibility(this.visibility) : {};
+            const actionVisibility = action.getVisibility !== null ? action.getVisibility(this.visibility) : {};
             return actionVisibility[field] !== null ? actionVisibility[field] : action[field] || _default;
         },
         /**
@@ -24916,7 +24958,7 @@ define('xide/widgets/_MenuMixin4',[
          * @returns {*}
          */
         setVisibilityField: function (action, field, value) {
-            var _default = {};
+            const _default = {};
             if (action.getVisibility) {
                 var actionVisibility = action.getVisibility(this.visibility) || _default;
                 actionVisibility[field] = value;
@@ -24980,10 +25022,10 @@ define('xide/widgets/_MenuMixin4',[
                 return;
             }
             this._didInit = true;
-            var options = this.getDefaultOptions();
+            let options = this.getDefaultOptions();
             options = $.extend({}, options, opts);
-            var self = this;
-            var root = $(document);
+            const self = this;
+            const root = $(document);
             this.__on(root, 'click', null, function (e) {
                 if (!self.isOpen) {
                     return;
@@ -25001,9 +25043,9 @@ define('xide/widgets/_MenuMixin4',[
             }
             this.__on(root, 'mouseenter', '.dropdown-submenu', function (e) {
                 try {
-                    var _root = $(e.currentTarget);
-                    var $sub = _root.find('.dropdown-context-sub:first');
-                    var didPopup = false;
+                    const _root = $(e.currentTarget);
+                    let $sub = _root.find('.dropdown-context-sub:first');
+                    let didPopup = false;
                     if ($sub.length === 0) {
                         $sub = _root.data('sub');
                         if ($sub) {
@@ -25012,16 +25054,16 @@ define('xide/widgets/_MenuMixin4',[
                             return;
                         }
                     }
-                    var data = $sub.data('data');
-                    var level = data ? data[0].level : 0;
-                    var isFirst = level === 1;
+                    const data = $sub.data('data');
+                    const level = data ? data[0].level : 0;
+                    const isFirst = level === 1;
                     if (self.menu) {
                         if (!$.contains(self.menu[0], _root[0])) {
                             return;
                         }
                     }
 
-                    var _disabled = _root.hasClass('disabled');
+                    const _disabled = _root.hasClass('disabled');
                     if (_disabled) {
                         $sub.css('display', 'none');
                         return;
@@ -25034,7 +25076,7 @@ define('xide/widgets/_MenuMixin4',[
                         $sub.css('position', 'initial');
 
                         function close() {
-                            var _wrapper = $sub.data('_popupWrapper');
+                            const _wrapper = $sub.data('_popupWrapper');
                             popup.close({
                                 domNode: $sub[0],
                                 _popupWrapper: _wrapper
@@ -25085,19 +25127,21 @@ define('xide/widgets/_MenuMixin4',[
                         top: 0
                     });
 
-                    var autoH = $sub.height() + 0;
-                    var totalH = $('html').height();
-                    var pos = $sub.offset();
-                    var overlapYDown = totalH - (pos.top + autoH);
+                    const autoH = $sub.height() + 0;
+                    const totalH = $('html').height();
+                    const pos = $sub.offset();
+                    const overlapYDown = totalH - (pos.top + autoH);
                     if ((pos.top + autoH) > totalH) {
                         $sub.css({
                             top: overlapYDown - 30
                         }).fadeIn(options.fadeSpeed);
                     }
+
                     ////////////////////////////////////////////////////////////
-                    var subWidth = $sub.width(),
-                        subLeft = $sub.offset().left,
-                        collision = (subWidth + subLeft) > window.innerWidth;
+                    const subWidth = $sub.width();
+
+                    const subLeft = $sub.offset().left;
+                    const collision = (subWidth + subLeft) > window.innerWidth;
 
                     if (collision) {
                         $sub.addClass('drop-left');
@@ -25118,20 +25162,21 @@ define('xide/widgets/_MenuMixin4',[
         },
         buildMenuItems: function ($menu, data, id, subMenu, addDynamicTag) {
             //this._debugMenu && console.log('build - menu items ', arguments);
-            var linkTarget = '',
-                self = this,
-                visibility = this.visibility;
+            let linkTarget = '';
 
-            var ITEM_TAG_START = '<' + this.ITEM_TAG + ' ';
-            var ITEM_TAG_END = '</' + this.ITEM_TAG + '>';
-            var ITEM_CLASS = this.ITEM_CLASS;
-            for (var i = 0; i < data.length; i++) {
-                var item = data[i],
-                    $sub,
-                    widget = item.widget;
+            const self = this;
+            const visibility = this.visibility;
+
+            const ITEM_TAG_START = '<' + this.ITEM_TAG + ' ';
+            const ITEM_TAG_END = '</' + this.ITEM_TAG + '>';
+            const ITEM_CLASS = this.ITEM_CLASS;
+            for (let i = 0; i < data.length; i++) {
+                const item = data[i];
+                let $sub;
+                const widget = item.widget;
 
                 if (typeof item.divider !== 'undefined' && !item.widget) {
-                    var divider = ITEM_TAG_START + 'class="divider';
+                    let divider = ITEM_TAG_START + 'class="divider';
                     divider += (addDynamicTag) ? ' dynamic-menu-item' : '';
                     divider += '">' + ITEM_TAG_END;
                     item.widget = divider;
@@ -25139,7 +25184,7 @@ define('xide/widgets/_MenuMixin4',[
                     divider.data('item', item);
 
                 } else if (typeof item.header !== 'undefined' && !item.widget) {
-                    var header = item.vertical ? '<li class="divider-vertical' : '<li class="nav-header testClass';
+                    let header = item.vertical ? '<li class="divider-vertical' : '<li class="nav-header testClass';
                     header += (addDynamicTag) ? ' dynamic-menu-item' : '';
                     header += '">' + item.header + '</li>';
                     header = $(header);
@@ -25158,7 +25203,7 @@ define('xide/widgets/_MenuMixin4',[
                     }
 
                     if (typeof item.subMenu !== 'undefined' && !widget) {
-                        var sub_menu = ITEM_TAG_START + 'tabindex="-1" class="dropdown-submenu ' + ITEM_CLASS + this.containerClass;
+                        let sub_menu = ITEM_TAG_START + 'tabindex="-1" class="dropdown-submenu ' + ITEM_CLASS + this.containerClass;
                         sub_menu += (addDynamicTag) ? ' dynamic-menu-item' : '';
                         sub_menu += '"><a>';
 
@@ -25174,7 +25219,7 @@ define('xide/widgets/_MenuMixin4',[
                             if (item.render) {
                                 $sub = item.render(item, $menu);
                             } else {
-                                var element = ITEM_TAG_START + ' tabindex="-1" ';
+                                let element = ITEM_TAG_START + ' tabindex="-1" ';
                                 element += (addDynamicTag) ? ' class="dynamic-menu-item"' : '';
                                 element += '><a >';
                                 if (typeof data[i].icon !== 'undefined') {
@@ -25191,11 +25236,11 @@ define('xide/widgets/_MenuMixin4',[
 
                     if (typeof item.action !== 'undefined' && !item.widget) {
                         if (item.addClickHandler && item.addClickHandler() === false) {} else {
-                            var $action = item.action;
+                            const $action = item.action;
                             if ($sub && $sub.find) {
-                                var trigger = $sub.find('a');
+                                const trigger = $sub.find('a');
                                 trigger.addClass('context-event');
-                                var handler = createCallback($action, item, $sub);
+                                const handler = createCallback($action, item, $sub);
                                 trigger.data('handler', handler).on('click', handler);
                                 //trigger.data('handler',handler).on('click',function(e){
                                 //return func(event, menu, item);
@@ -25234,7 +25279,7 @@ define('xide/widgets/_MenuMixin4',[
                         $sub.attr('level', item.level);
                     }
                     if (typeof item.subMenu != 'undefined' && !item.subMenuData) {
-                        var subMenuData = self.buildMenu(item.subMenu, id, true);
+                        const subMenuData = self.buildMenu(item.subMenu, id, true);
                         $menu.subMenuData = subMenuData;
                         item.subMenuData = subMenuData;
                         $menu.find(this.ITEM_TAG + ':last').append(subMenuData);
@@ -25256,24 +25301,23 @@ define('xide/widgets/_MenuMixin4',[
                     });
                     $menu._didOnClick = true;
                 }
-
             }
             return $menu;
         },
         buildMenu: function (data, id, subMenu) {
-            var subClass = (subMenu) ? (' dropdown-context-sub ' + this.containerClass) : ' scrollable-menu ';
-            var $menu = $('<ul tabindex="-1" aria-expanded="true" role="menu" class="dropdown-menu dropdown-context' + subClass + '" id="dropdown-' + id + '"></ul>');
+            const subClass = (subMenu) ? (' dropdown-context-sub ' + this.containerClass) : ' scrollable-menu ';
+            const $menu = $('<ul tabindex="-1" aria-expanded="true" role="menu" class="dropdown-menu dropdown-context' + subClass + '" id="dropdown-' + id + '"></ul>');
             if (!subMenu) {
                 this._rootMenu = $menu;
             }
-            var result = this.buildMenuItems($menu, data, id, subMenu);
+            const result = this.buildMenuItems($menu, data, id, subMenu);
             $menu.data('data', data);
             return result;
         },
         createNewAction: function (command) {
-            var segments = command.split('/');
-            var lastSegment = segments[segments.length - 1];
-            var action = new Action({
+            const segments = command.split('/');
+            const lastSegment = segments[segments.length - 1];
+            const action = new Action({
                 command: command,
                 label: lastSegment,
                 group: lastSegment,
@@ -25282,10 +25326,10 @@ define('xide/widgets/_MenuMixin4',[
             return action;
         },
         findAction: function (command) {
-            var stores = this.actionStores,
-                action = null;
+            const stores = this.actionStores;
+            let action = null;
             _.each(stores, function (store) {
-                var _action = store ? store.getSync(command) : null;
+                const _action = store ? store.getSync(command) : null;
                 if (_action) {
                     action = _action;
                 }
@@ -25295,7 +25339,7 @@ define('xide/widgets/_MenuMixin4',[
         },
         getAction: function (command, store) {
             store = store || this.store;
-            var action = null;
+            let action = null;
             if (store) {
                 action = this.findAction(command);
                 if (!action) {
@@ -25305,9 +25349,9 @@ define('xide/widgets/_MenuMixin4',[
             return action;
         },
         getActions: function (query) {
-            var result = [];
-            var stores = this.actionStores,
-                visibility = this.visibility;
+            let result = [];
+            const stores = this.actionStores;
+            const visibility = this.visibility;
 
             query = query || this.actionFilter;
             _.each(stores, function (store) {
@@ -25315,7 +25359,7 @@ define('xide/widgets/_MenuMixin4',[
                 //store && (result2= result2.concat(store._find(query)));
             });
             result = result.filter(function (action) {
-                var actionVisibility = action.getVisibility != null ? action.getVisibility(visibility) : {};
+                const actionVisibility = action.getVisibility != null ? action.getVisibility(visibility) : {};
                 return !(action.show === false || actionVisibility === false || actionVisibility.show === false);
 
             });
@@ -25323,36 +25367,36 @@ define('xide/widgets/_MenuMixin4',[
             return result;
         },
         toActions: function (commands, store) {
-            var result = [],
-                self = this;
+            const result = [];
+            const self = this;
             _.each(commands, function (path) {
-                var _action = self.getAction(path, store);
+                const _action = self.getAction(path, store);
                 _action && result.push(_action);
             });
             return result;
         },
         onRunAction: function (action, owner, e) {
-            var command = action.command;
+            const command = action.command;
             action = this.findAction(command);
             return DefaultActions.defaultHandler.apply(action.owner || owner, [action, e]);
         },
         getActionProperty: function (action, visibility, prop) {
-            var value = prop in action ? action[prop] : null;
+            let value = prop in action ? action[prop] : null;
             if (visibility && prop in visibility) {
                 value = visibility[prop];
             }
             return value;
         },
         toMenuItem: function (action, owner, label, icon, visibility, showKeyCombo, lazy) {
-            var self = this,
-            labelLocalized = action.localize !== false ? self.localize(label) : label,
-                actionType = visibility.actionType || action.actionType;
+            const self = this;
+            const labelLocalized = action.localize !== false ? self.localize(label) : label;
+            const actionType = visibility.actionType || action.actionType;
 
-            var ITEM_CLASS = this.ITEM_CLASS;
-            var ITEM_TAG_START = '<' + this.ITEM_TAG + ' class="' + ITEM_CLASS + '" ';
-            var ITEM_TAG_END = '</' + this.ITEM_TAG + '>';
+            const ITEM_CLASS = this.ITEM_CLASS;
+            const ITEM_TAG_START = '<' + this.ITEM_TAG + ' class="' + ITEM_CLASS + '" ';
+            const ITEM_TAG_END = '</' + this.ITEM_TAG + '>';
 
-            var item = {
+            const item = {
                 text: labelLocalized,
                 icon: icon,
                 data: action,
@@ -25367,14 +25411,14 @@ define('xide/widgets/_MenuMixin4',[
                     if (self.renderItem) {
                         return self.renderItem(this, data, $menu, this.data, owner, label, icon, visibility, showKeyCombo, lazy);
                     }
-                    var action = this.data;
-                    var parentAction = action.getParent ? action.getParent() : null;
-                    var closeOnClick = self.getActionProperty(action, visibility, 'closeOnClick');
-                    var keyComboString = ' \n';
-                    var element = null;
+                    const action = this.data;
+                    const parentAction = action.getParent ? action.getParent() : null;
+                    const closeOnClick = self.getActionProperty(action, visibility, 'closeOnClick');
+                    let keyComboString = ' \n';
+                    let element = null;
                     if (action.keyboardMappings && showKeyCombo !== false) {
-                        var mappings = action.keyboardMappings;
-                        var keyCombos = mappings[0].keys;
+                        const mappings = action.keyboardMappings;
+                        const keyCombos = mappings[0].keys;
                         if (keyCombos && keyCombos.length) {
                             keyComboString += '' + keyCombos.join(' | ').toUpperCase() + '';
                         }
@@ -25382,8 +25426,8 @@ define('xide/widgets/_MenuMixin4',[
 
                     if (actionType === types.ACTION_TYPE.MULTI_TOGGLE) {
                         element = ITEM_TAG_START + 'tabindex="-1" class="" >';
-                        var id = action._store.id + '_' + action.command + '_' + self.id;
-                        var checked = action.get('value');
+                        const id = action._store.id + '_' + action.command + '_' + self.id;
+                        const checked = action.get('value');
                         //checkbox-circle
                         element += '<div class="action-checkbox checkbox checkbox-success ">';
                         element += '<input id="' + id + '" type="checkbox" ' + (checked === true ? 'checked' : '') + '>';
@@ -25394,8 +25438,8 @@ define('xide/widgets/_MenuMixin4',[
                         element += ITEM_TAG_END;
 
                         $menu.addClass('noclose');
-                        var result = $(element);
-                        var checkBox = result.find('INPUT');
+                        const result = $(element);
+                        const checkBox = result.find('INPUT');
                         checkBox.on('change', function (e) {
                             action._originReference = data;
                             action._originEvent = e;
@@ -25407,18 +25451,18 @@ define('xide/widgets/_MenuMixin4',[
                     }
                     closeOnClick === false && $menu.addClass('noclose');
                     if (actionType === types.ACTION_TYPE.SINGLE_TOGGLE && parentAction) {
-                        var value = action.value || action.get('value');
-                        var parentValue = parentAction.get('value');
+                        const value = action.value || action.get('value');
+                        const parentValue = parentAction.get('value');
                         if (value == parentValue) {
                             icon = 'fa fa-check';
                         }
                     }
 
-                    var title = data.text || labelLocalized || self.localize(action.title);
+                    const title = data.text || labelLocalized || self.localize(action.title);
 
                     //default:
                     element = ITEM_TAG_START + 'class="' + ITEM_CLASS + '" ' + 'tabindex="-1"><a title="' + title + ' ' + keyComboString + '">';
-                    var _icon = data.icon || icon;
+                    const _icon = data.icon || icon;
 
                     //icon
                     if (typeof _icon !== 'undefined') {
@@ -25437,10 +25481,10 @@ define('xide/widgets/_MenuMixin4',[
                 get: function (key) {},
                 set: function (key, value) {
                     //_debugWidgets && _.isString(value) && console.log('set ' + key + ' ' + value);
-                    var widget = this.widget;
+                    const widget = this.widget;
 
                     function updateCheckbox(widget, checked) {
-                        var what = widget.find("input[type=checkbox]");
+                        const what = widget.find("input[type=checkbox]");
                         if (what) {
                             if (checked) {
                                 what.prop("checked", true);
@@ -25457,7 +25501,7 @@ define('xide/widgets/_MenuMixin4',[
                             }
                         }
                         if (key === 'icon') {
-                            var _iconNode = widget.find('.icon');
+                            const _iconNode = widget.find('.icon');
                             if (_iconNode) {
                                 _iconNode.attr('class', 'icon');
                                 this._lastIcon = this.icon;
@@ -25509,7 +25553,7 @@ define('xide/widgets/_MenuMixin4',[
             }
         },
         getActionData: function (action) {
-            var actionVisibility = action.getVisibility != null ? action.getVisibility(this.visibility) : {};
+            const actionVisibility = action.getVisibility != null ? action.getVisibility(this.visibility) : {};
             return {
                 label: actionVisibility.label != null ? actionVisibility.label : action.label,
                 icon: actionVisibility.icon != null ? actionVisibility.icon : action.icon,
@@ -25525,16 +25569,16 @@ define('xide/widgets/_MenuMixin4',[
 
         },
         _findParentData: function (oldMenuData, parentCommand) {
-            var parent = _.find(oldMenuData, {
+            const parent = _.find(oldMenuData, {
                 command: parentCommand
             });
             if (parent) {
                 return parent;
             }
-            for (var i = 0; i < oldMenuData.length; i++) {
-                var data = oldMenuData[i];
+            for (let i = 0; i < oldMenuData.length; i++) {
+                const data = oldMenuData[i];
                 if (data.subMenu) {
-                    var found = this._findParentData(data.subMenu, parentCommand);
+                    const found = this._findParentData(data.subMenu, parentCommand);
                     if (found) {
                         return found;
                     }
@@ -25543,18 +25587,18 @@ define('xide/widgets/_MenuMixin4',[
             return null;
         },
         _clear: function () {
-            var actions = this.getActions();
-            var store = this.store;
+            let actions = this.getActions();
+            const store = this.store;
             if (store) {
                 this.actionStores.remove(store);
             }
-            var self = this;
+            const self = this;
             actions = actions.concat(this._tmpActions);
             _.each(actions, function (action) {
                 if (action) {
-                    var actionVisibility = action.getVisibility != null ? action.getVisibility(self.visibility) : {};
+                    const actionVisibility = action.getVisibility != null ? action.getVisibility(self.visibility) : {};
                     if (actionVisibility) {
-                        var widget = actionVisibility.widget;
+                        const widget = actionVisibility.widget;
                         action.removeReference && action.removeReference(widget);
                         if (widget && widget.destroy) {
                             widget.destroy();
@@ -25567,13 +25611,13 @@ define('xide/widgets/_MenuMixin4',[
             this.$navBar && this.$navBar.empty();
         },
         buildActionTree: function (store, owner) {
-            var self = this,
-                allActions = self.getActions(),
-                visibility = self.visibility;
+            const self = this;
+            const allActions = self.getActions();
+            const visibility = self.visibility;
 
             self.wireStore(store, function (evt) {
                 if (evt.type === 'update') {
-                    var action = evt.target;
+                    const action = evt.target;
                     if (action.refreshReferences) {
                         action.refreshReferences(evt.property, evt.value);
                     }
@@ -25581,55 +25625,56 @@ define('xide/widgets/_MenuMixin4',[
             });
 
             //return all actions with non-empty tab field
-            var tabbedActions = allActions.filter(function (action) {
-                    var _vis = (action.visibility_ || {})[visibility + '_val'] || {};
+            const tabbedActions = allActions.filter(function (action) {
+                    const _vis = (action.visibility_ || {})[visibility + '_val'] || {};
                     if (action) {
                         return _vis.tab || action.tab;
                     }
-                }),
+                });
 
-                //group all tabbed actions : { Home[actions], View[actions] }
-                groupedTabs = _.groupBy(tabbedActions, function (action) {
-                    var _vis = (action.visibility_ || {})[visibility + '_val'] || {};
-                    if (action) {
-                        return _vis.tab || action.tab;
-                    }
-                }),
-                //now flatten them
-                _actionsFlattened = [];
+            const //group all tabbed actions : { Home[actions], View[actions] }
+            groupedTabs = _.groupBy(tabbedActions, function (action) {
+                const _vis = (action.visibility_ || {})[visibility + '_val'] || {};
+                if (action) {
+                    return _vis.tab || action.tab;
+                }
+            });
+
+            let //now flatten them
+            _actionsFlattened = [];
 
 
             _.each(groupedTabs, function (items) {
                 _actionsFlattened = _actionsFlattened.concat(items);
             });
 
-            var rootActions = [];
+            let rootActions = [];
             _.each(tabbedActions, function (action) {
-                var rootCommand = action.getRoot();
+                const rootCommand = action.getRoot();
                 rootActions.indexOf(rootCommand) == -1 && rootActions.push(rootCommand);
             });
 
             //owner sort of top level
             store.menuOrder && (rootActions = owner.sortGroups(rootActions, store.menuOrder));
 
-            var tree = {};
+            const tree = {};
             //stats to count groups per tab
-            var biggestTab = rootActions[0];
-            var nbGroupsBiggest = 0;
+            let biggestTab = rootActions[0];
+            let nbGroupsBiggest = 0;
 
             _.each(rootActions, function (level) {
                 // collect all actions at level (File/View/...)
-                var menuActions = owner.getItemsAtBranch(allActions, level);
+                let menuActions = owner.getItemsAtBranch(allActions, level);
                 // convert action command strings to Action references
-                var grouped = self.toActions(menuActions, store);
+                let grouped = self.toActions(menuActions, store);
 
                 // expand filter -------------------
-                var addedExpanded = [];
-                var toRemove = [];
+                let addedExpanded = [];
+                const toRemove = [];
                 _.each(grouped, function (action) {
-                    var actionData = self.getActionData(action);
+                    const actionData = self.getActionData(action);
                     if (actionData.expand) {
-                        var children = action.getChildren();
+                        const children = action.getChildren();
                         children && children.length && (addedExpanded = addedExpanded.concat(children));
                         toRemove.push(action);
                     }
@@ -25641,14 +25686,14 @@ define('xide/widgets/_MenuMixin4',[
                 // expand filter ---------------    end
 
                 // group all actions by group
-                var groupedActions = _.groupBy(grouped, function (action) {
-                    var _vis = (action.visibility_ || {})[visibility + '_val'] || {};
+                const groupedActions = _.groupBy(grouped, function (action) {
+                    const _vis = (action.visibility_ || {})[visibility + '_val'] || {};
                     if (action) {
                         return _vis.group || action.group;
                     }
                 });
 
-                var _actions = [];
+                let _actions = [];
                 _.each(groupedActions, function (items, level) {
                     if (level !== 'undefined') {
                         _actions = _actions.concat(items);
@@ -25656,13 +25701,13 @@ define('xide/widgets/_MenuMixin4',[
                 });
 
                 //flatten out again
-                menuActions = _.pluck(_actions, 'command');
+                menuActions = _actions.map((action) => action.command);
                 menuActions.grouped = groupedActions;
                 tree[level] = menuActions;
 
                 //update stats
                 if (self.collapseSmallGroups) {
-                    var nbGroups = _.keys(menuActions.grouped).length;
+                    const nbGroups = _.keys(menuActions.grouped).length;
                     if (nbGroups > nbGroupsBiggest) {
                         nbGroupsBiggest = nbGroups;
                         biggestTab = level;
@@ -25684,10 +25729,10 @@ define('xide/widgets/_MenuMixin4',[
                     tree[biggestTab] && delete tree[level];
                 }
             });
-            var result = {
+            const result = {
                 root: tree,
                 rootActions: rootActions,
-                allActionPaths: _.pluck(allActions, 'command'),
+                allActionPaths: allActions.map((action) => action.command),
                 allActions: allActions
             };
 
@@ -25705,13 +25750,13 @@ define('xide/widgets/_MenuKeyboard',[
     "xide/mixins/EventedMixin"
 ], function (dcl, $, _, EventedMixin) {
 
-    var skip = [
+    const skip = [
         '.divider',
         '.nav-header',
         '.disabled'
     ];
 
-    var Module = dcl(EventedMixin.dcl, {
+    const Module = dcl(EventedMixin.dcl, {
         owner: null,
         /**
          *
@@ -25735,7 +25780,7 @@ define('xide/widgets/_MenuKeyboard',[
                 return $el;
             }
 
-            var data = $el.data(dataIdentifier || 'data');
+            const data = $el.data(dataIdentifier || 'data');
             if (data && data != null) {
                 return $el;
             }
@@ -25755,7 +25800,7 @@ define('xide/widgets/_MenuKeyboard',[
             if ($el && $max && $el[0] == $max[0]) {
                 return $el;
             }
-            var data = $el.data(dataIdentifier || 'item') || $el.data(dataIdentifier || 'data');
+            const data = $el.data(dataIdentifier || 'item') || $el.data(dataIdentifier || 'data');
             if (data && !_.isEmpty(data)) {
                 return $el;
             }
@@ -25770,9 +25815,9 @@ define('xide/widgets/_MenuKeyboard',[
          * @returns {{element: Object, data: (*|{}), parent: *}}
          */
         toNavigationData: function ($el, $max, dataIdentifier, findParent) {
-            var element = this.findNavigationElement($el, $max, dataIdentifier);
+            const element = this.findNavigationElement($el, $max, dataIdentifier);
             if (element) {
-                var data = element.data(dataIdentifier || 'item') || element.data(dataIdentifier || 'data');
+                const data = element.data(dataIdentifier || 'item') || element.data(dataIdentifier || 'data');
                 if (data) {
                     return {
                         element: element,
@@ -25791,7 +25836,7 @@ define('xide/widgets/_MenuKeyboard',[
          */
         next: function ($parent, $origin, direction) {
             if ($origin) {
-                var result = $origin[direction == 1 ? 'next' : 'prev']();
+                const result = $origin[direction == 1 ? 'next' : 'prev']();
                 if (!this.canSelect(result)) {
                     return this.next($parent, result, direction);
                 } else {
@@ -25814,7 +25859,7 @@ define('xide/widgets/_MenuKeyboard',[
          * @returns {HTMLElement[]}
          */
         children: function ($parent, all) {
-            var self = this;
+            const self = this;
             return $parent.children('LI').filter(function (i, child) {
                 if (all !== true) {
                     return self.canSelect(child);
@@ -25828,8 +25873,8 @@ define('xide/widgets/_MenuKeyboard',[
          * @param $el {jQuery}
          */
         close: function ($el) {
-            var _parent = $el.parent();
-            var _parentParent = $el.parent().parent();
+            const _parent = $el.parent();
+            const _parentParent = $el.parent().parent();
             _parent.css('display', '');
             _parent.removeClass('open');
             $el.removeClass('open');
@@ -25846,10 +25891,10 @@ define('xide/widgets/_MenuKeyboard',[
          * @returns {*}
          */
         openRoot: function ($el, $next, direction) {
-            var _next = $next || this.topMost($el).parent()[direction === -1 ? 'prev' : 'next']();
-            var _trigger = $(_next.find('A')[0]);
+            const _next = $next || this.topMost($el).parent()[direction === -1 ? 'prev' : 'next']();
+            const _trigger = $(_next.find('A')[0]);
             _trigger.trigger('click');
-            var _navData = this.toNavigationData($(_next.find('UL')[0]), this.owner.getRootContainer());
+            const _navData = this.toNavigationData($(_next.find('UL')[0]), this.owner.getRootContainer());
             if (_navData) {
                 return this.activate($(this.children(_navData.element)[0]), _navData.element, true);
             }
@@ -25864,8 +25909,8 @@ define('xide/widgets/_MenuKeyboard',[
          */
         open: function ($el) {
             $el.css('display', 'block');
-            var _navData = this.toNavigationData($el, this.owner.getRootContainer(), 'data', null, null);
-            var firstInner = this.children(_navData.parent)[0];
+            let _navData = this.toNavigationData($el, this.owner.getRootContainer(), 'data', null, null);
+            const firstInner = this.children(_navData.parent)[0];
             if (firstInner) {
                 _navData = this.toNavigationData($(firstInner), this.owner.getRootContainer());
                 this.activate(_navData.element, _navData.parent, true);
@@ -25873,10 +25918,10 @@ define('xide/widgets/_MenuKeyboard',[
         },
         topMost: function ($el) {
             if ($el) {
-                var data = $el.data();
+                const data = $el.data();
                 if (data.item || data.data) {
-                    var next = $el.parent();
-                    var parentData = next.data();
+                    const next = $el.parent();
+                    const parentData = next.data();
                     if (next && next[0] && (parentData.item || parentData.data)) {
                         return this.topMost(next);
                     }
@@ -25885,12 +25930,12 @@ define('xide/widgets/_MenuKeyboard',[
             }
         },
         keyboardHandler: function (event, $parent) {
-            var origin = $parent.data('currentTarget');
+            const origin = $parent.data('currentTarget');
             if (event.keyCode === 13) {
-                var trigger = origin.find("A");
-                var handler = trigger.data('handler');
+                const trigger = origin.find("A");
+                const handler = trigger.data('handler');
                 if (handler) {
-                    var actionResult = handler();
+                    const actionResult = handler();
                     if (actionResult && actionResult.then) {
                         actionResult.then(function () {
                             origin.focus();
@@ -25904,25 +25949,25 @@ define('xide/widgets/_MenuKeyboard',[
                 return;
             }
 
-            var vertical = event.keyCode == 38 || event.keyCode == 40 || event.keyCode == 36 || event.keyCode == 35;
-            var horizontal = event.keyCode == 37 || event.keyCode == 39;
-            var direction = vertical ? (event.keyCode == 38 || event.keyCode == 36) ? -1 : 1 : (event.keyCode == 37 ? -1 : 1 );
-            var max = !!(event.keyCode == 36 || event.keyCode == 35 );
+            const vertical = event.keyCode == 38 || event.keyCode == 40 || event.keyCode == 36 || event.keyCode == 35;
+            const horizontal = event.keyCode == 37 || event.keyCode == 39;
+            const direction = vertical ? (event.keyCode == 38 || event.keyCode == 36) ? -1 : 1 : (event.keyCode == 37 ? -1 : 1 );
+            const max = !!(event.keyCode == 36 || event.keyCode == 35 );
 
-            var nextElement = null;
-            var nextData = {};
-            var navData = null;
+            let nextElement = null;
+            let nextData = {};
+            let navData = null;
             if (vertical) {
                 nextElement = max ? direction == 1 ? $(_.last(this.children($parent))) : $(_.first(this.children($parent))) : this.next($parent, origin, direction);
                 nextElement && (nextData = nextElement.data('item'));
             }
             if (horizontal) {
-                var data = origin.data('item');
+                const data = origin.data('item');
                 if (data) {
                     if (direction > 0) {
                         //sub - items?, open them
                         if (data.subMenuData) {
-                            var isOpen = data.subMenuData.css('display') === 'block';
+                            const isOpen = data.subMenuData.css('display') === 'block';
                             if (!isOpen) {
                                 return this.open(data.subMenuData);
                             } else {
@@ -25955,7 +26000,7 @@ define('xide/widgets/_MenuKeyboard',[
             }
         },
         initContainer: function ($container) {
-            var self = this;
+            const self = this;
             if (!$container.data('didSetup')) {
                 $container.data('didSetup', true);
                 this.__on($container, 'keydown', null, function (evt) {
@@ -25974,7 +26019,7 @@ define('xide/widgets/_MenuKeyboard',[
                     $(c).removeClass('focus');
                     $(c).removeClass('open');
                     $(c).removeClass('active');
-                    var _s = $(c).find('.dropdown-context-sub');
+                    const _s = $(c).find('.dropdown-context-sub');
                     if (_s[0] && _s.css('display') === 'block') {
                         _s.css('display', '');
                         _s.removeClass('open');
@@ -25994,7 +26039,7 @@ define('xide/widgets/_MenuKeyboard',[
                 $(c).removeClass('focus');
                 $(c).removeClass('open');
                 $(c).removeClass('active');
-                var _s = $(c).find('.dropdown-context-sub');
+                const _s = $(c).find('.dropdown-context-sub');
                 if (_s[0] && _s.css('display') === 'block') {
                     _s.css('display', '');
                     _s.removeClass('open');
@@ -26019,10 +26064,10 @@ define('xide/widgets/ContextMenu',[
     "xide/lodash",
     "xide/widgets/_MenuKeyboard"
 ], function (dcl, types, i18, _Widget, _XWidget, ActionMixin, ActionContext, MenuMixinClass, Path, _Popup, $, _, _MenuKeyboard) {
-    var ActionRendererClass = dcl(null, {
+    const ActionRendererClass = dcl(null, {
         renderTopLevel: function (name, where) {
             where = where || $(this.getRootContainer());
-            var item = $('<li class="dropdown">' +
+            const item = $('<li class="dropdown">' +
                 '<a href="#" class="dropdown-toggle" data-toggle="dropdown">' + i18.localize(name) + '<b class="caret"></b></a>' +
                 '</li>');
             where.append(item);
@@ -26033,12 +26078,12 @@ define('xide/widgets/ContextMenu',[
             return this.navBar;
         }
     });
-    var _debugTree = false;
-    var _debugMenuData = false;
-    var _debugOldMenuData = false;
-    var KeyboardControl = _MenuKeyboard;
+    const _debugTree = false;
+    const _debugMenuData = false;
+    const _debugOldMenuData = false;
+    const KeyboardControl = _MenuKeyboard;
 
-    var ContextMenu = dcl([_Widget.dcl, ActionContext.dcl, ActionMixin.dcl, ActionRendererClass, MenuMixinClass, _XWidget.StoreMixin], {
+    const ContextMenu = dcl([_Widget.dcl, ActionContext.dcl, ActionMixin.dcl, ActionRendererClass, MenuMixinClass, _XWidget.StoreMixin], {
         target: null,
         openTarget: null,
         visibility: types.ACTION_VISIBILITY.CONTEXT_MENU,
@@ -26048,10 +26093,10 @@ define('xide/widgets/ContextMenu',[
         menuData: null,
         addContext: function (selector, data) {
             this.menuData = data;
-            var id,
-                $menu,
-                self = this,
-                target = this.openTarget ? this.openTarget : $(self.target);
+            let id;
+            let $menu;
+            const self = this;
+            const target = this.openTarget ? this.openTarget : $(self.target);
 
             if (typeof data.id !== 'undefined' && typeof data.data !== 'undefined') {
                 id = data.id;
@@ -26061,19 +26106,19 @@ define('xide/widgets/ContextMenu',[
                     selector.append($menu);
                 }
             } else {
-                var d = new Date();
+                const d = new Date();
                 id = d.getTime();
                 $menu = self.buildMenu(data, id);
                 selector.append($menu);
             }
 
-            var options = this.getDefaultOptions();
+            const options = this.getDefaultOptions();
 
             this.keyboardController = new KeyboardControl();
             this.keyboardController.setup(this);
 
             function mouseEnterHandlerSubs(e) {
-                var navigationData = this.keyboardController.toNavigationData($(e.target), this.getRootContainer());
+                const navigationData = this.keyboardController.toNavigationData($(e.target), this.getRootContainer());
                 if (!navigationData) {
                     return;
                 }
@@ -26090,9 +26135,9 @@ define('xide/widgets/ContextMenu',[
 
             function constextMenuHandler(e) {
                 if (self.delegate && self.delegate.row) {
-                    var row = self.delegate.row(e);
+                    const row = self.delegate.row(e);
                     if (row && row.data && row.data.hasActions) {
-                        var abort = row.data.hasActions()===false;
+                        const abort = row.data.hasActions()===false;
                         if(abort){
                             e.preventDefault();
                             return;
@@ -26100,7 +26145,7 @@ define('xide/widgets/ContextMenu',[
                     }
                 }
                 if (self.limitTo) {
-                    var $target = $(e.target);
+                    let $target = $(e.target);
                     $target = $target.parent();
                     if (!$target.hasClass(self.limitTo)) {
                         return;
@@ -26114,7 +26159,7 @@ define('xide/widgets/ContextMenu',[
                 e.stopPropagation();
                 $('.dropdown-context:not(.dropdown-context-sub)').hide();
 
-                var $dd = $('#dropdown-' + id);
+                const $dd = $('#dropdown-' + id);
                 $dd.css('zIndex', _Popup.nextZ(1));
                 if (!$dd.data('init')) {
                     $dd.data('init', true);
@@ -26130,9 +26175,9 @@ define('xide/widgets/ContextMenu',[
 
                 } else if (typeof options.above == 'string' && options.above == 'auto') {
                     $dd.removeClass('dropdown-context-up');
-                    var autoH = $dd.height() + 0;
+                    const autoH = $dd.height() + 0;
                     if ((e.pageY + autoH) > $('html').height()) {
-                        var top = e.pageY - 20 - autoH;
+                        let top = e.pageY - 20 - autoH;
                         if (top < 0) {
                             top = 20;
                         }
@@ -26155,7 +26200,7 @@ define('xide/widgets/ContextMenu',[
                     }).fadeIn(options.fadeSpeed);
                 } else if (typeof options.left == 'string' && options.left == 'auto') {
                     $dd.removeClass('dropdown-context-left');
-                    var autoL = $dd.width() - 12;
+                    const autoL = $dd.width() - 12;
                     if ((e.pageX + autoL) > $('html').width()) {
                         $dd.addClass('dropdown-context-left').css({
                             left: e.pageX - $dd.width() + 13
@@ -26169,7 +26214,7 @@ define('xide/widgets/ContextMenu',[
 
             this.__on($menu, 'keydown', function (e) {
                 if (e.keyCode == 27) {
-                    var navData = this.keyboardController.toNavigationData($(e.target), this.getRootContainer());
+                    const navData = this.keyboardController.toNavigationData($(e.target), this.getRootContainer());
                     navData && navData.element && this.keyboardController.close(navData.element);
                     $(this.lastFocused).focus();
                 }
@@ -26181,9 +26226,9 @@ define('xide/widgets/ContextMenu',[
             return null;
         },
         buildMenu: function (data, id, subMenu, update) {
-            var subClass = (subMenu) ? ' dropdown-context-sub' : ' scrollable-menu ',
-                menuString = '<ul tabindex="-1" aria-expanded="true" role="menu" class="dropdown-menu dropdown-context' + subClass + '" id="dropdown-' + id + '"></ul>',
-                $menu = update ? (this._rootMenu || $(menuString)) : $(menuString);
+            const subClass = (subMenu) ? ' dropdown-context-sub' : ' scrollable-menu ';
+            const menuString = '<ul tabindex="-1" aria-expanded="true" role="menu" class="dropdown-menu dropdown-context' + subClass + '" id="dropdown-' + id + '"></ul>';
+            const $menu = update ? (this._rootMenu || $(menuString)) : $(menuString);
 
             if (!subMenu) {
                 this._rootMenu = $menu;
@@ -26196,11 +26241,11 @@ define('xide/widgets/ContextMenu',[
             this.setActionStore(this.getActionStore(), this, false, true, actions);
         },
         clearAction: function (action) {
-            var self = this;
+            const self = this;
             if (action) {
-                var actionVisibility = action.getVisibility !== null ? action.getVisibility(self.visibility) : {};
+                const actionVisibility = action.getVisibility !== null ? action.getVisibility(self.visibility) : {};
                 if (actionVisibility) {
-                    var widget = actionVisibility.widget;
+                    const widget = actionVisibility.widget;
                     action.removeReference && action.removeReference(widget);
                     if (widget && widget.destroy) {
                         widget.destroy();
@@ -26214,18 +26259,18 @@ define('xide/widgets/ContextMenu',[
             this.clearAction(evt.target);
         },
         removeCustomActions: function () {
-            var oldStore = this.store;
+            const oldStore = this.store;
             if (!oldStore) {
                 console.warn('removeCustomActions : have no store');
                 return;
             }
-            var oldActions = oldStore._find({
+            const oldActions = oldStore._find({
                 custom: true
             });
-            var menuData = this.menuData;
+            const menuData = this.menuData;
             _.each(oldActions, function (action) {
                 oldStore.removeSync(action.command);
-                var oldMenuItem = _.find(menuData, {
+                const oldMenuItem = _.find(menuData, {
                     command: action.command
                 });
                 oldMenuItem && menuData.remove(oldMenuItem);
@@ -26240,20 +26285,20 @@ define('xide/widgets/ContextMenu',[
                 this.addActionStore(store);
             }
 
-            var self = this,
-                visibility = self.visibility,
-                rootContainer = $(self.getRootContainer());
+            const self = this;
+            const visibility = self.visibility;
+            const rootContainer = $(self.getRootContainer());
 
             this.store = store;
             if (!store) {
                 return;
             }
-            var tree = update ? self.lastTree : self.buildActionTree(store, owner);
-            var allActions = tree.allActions,
-                rootActions = tree.rootActions,
-                allActionPaths = tree.allActionPaths,
-                oldMenuData = self.menuData;
-            var data = [];
+            const tree = update ? self.lastTree : self.buildActionTree(store, owner);
+            const allActions = tree.allActions;
+            const rootActions = tree.rootActions;
+            const allActionPaths = tree.allActionPaths;
+            const oldMenuData = self.menuData;
+            const data = [];
             if (subscribe !== false) {
                 if (!this['_handleAdded_' + store.id]) {
                     this.addHandle('added', store._on('onActionsAdded', function (actions) {
@@ -26268,34 +26313,36 @@ define('xide/widgets/ContextMenu',[
             }
             if (!update) {
                 _.each(tree.root, function (menuActions, level) {
-                    var root = self.onRootAction(level, rootContainer),
-                        lastGroup = '',
-                        lastHeader = {
-                            header: ''
-                        },
-                        groupedActions = menuActions.grouped;
+                    const root = self.onRootAction(level, rootContainer);
+                    let lastGroup = '';
+
+                    let lastHeader = {
+                        header: ''
+                    };
+
+                    const groupedActions = menuActions.grouped;
 
                     _.each(menuActions, function (command) {
-                        var action = self.getAction(command, store),
-                            isDynamicAction = false;
+                        let action = self.getAction(command, store);
+                        let isDynamicAction = false;
 
                         if (!action) {
                             isDynamicAction = true;
                             action = self.createAction(command);
                         }
                         if (action) {
-                            var renderData = self.getActionData(action);
-                            var icon = renderData.icon,
-                                label = renderData.label,
-                                visibility = renderData.visibility,
-                                group = renderData.group;
+                            const renderData = self.getActionData(action);
+                            const icon = renderData.icon;
+                            const label = renderData.label;
+                            const visibility = renderData.visibility;
+                            const group = renderData.group;
 
                             if (visibility.widget) {
                                 return;
                             }
                             if (!isDynamicAction && group && groupedActions[group] && groupedActions[group].length >= 1) {
                                 if (lastGroup !== group) {
-                                    var name = groupedActions[group].length >= 2 ? i18.localize(group) : "";
+                                    const name = groupedActions[group].length >= 2 ? i18.localize(group) : "";
                                     lastHeader = {
                                         header: name
                                     };
@@ -26306,24 +26353,24 @@ define('xide/widgets/ContextMenu',[
                             if (action.command === "Widget/Move/MoveToBackward") {
                                 debugger;
                             }
-                            var item = self.toMenuItem(action, owner, label, icon, visibility || {}, true);
+                            const item = self.toMenuItem(action, owner, label, icon, visibility || {}, true);
                             data.push(item);
                             visibility.widget = item;
                             self.addReference(action, item);
 
                             function parseChildren(command, parent) {
-                                var childPaths = new Path(command).getChildren(allActionPaths, false),
-                                    isContainer = childPaths.length > 0,
-                                    childActions = isContainer ? self.toActions(childPaths, store) : null;
+                                const childPaths = new Path(command).getChildren(allActionPaths, false);
+                                const isContainer = childPaths.length > 0;
+                                const childActions = isContainer ? self.toActions(childPaths, store) : null;
                                 if (childActions) {
-                                    var subs = [];
+                                    const subs = [];
                                     _.each(childActions, function (child) {
-                                        var _renderData = self.getActionData(child);
-                                        var _item = self.toMenuItem(child, owner, _renderData.label, _renderData.icon, _renderData.visibility, true);
+                                        const _renderData = self.getActionData(child);
+                                        const _item = self.toMenuItem(child, owner, _renderData.label, _renderData.icon, _renderData.visibility, true);
                                         self.addReference(child, _item);
                                         subs.push(_item);
-                                        var _childPaths = new Path(child.command).getChildren(allActionPaths, false),
-                                            _isContainer = _childPaths.length > 0;
+                                        const _childPaths = new Path(child.command).getChildren(allActionPaths, false);
+                                        const _isContainer = _childPaths.length > 0;
                                         if (_isContainer) {
                                             parseChildren(child.command, _item);
                                         }
@@ -26341,21 +26388,21 @@ define('xide/widgets/ContextMenu',[
                 if (itemActions || !_.isEmpty(itemActions)) {
                     _.each(itemActions, function (newAction) {
                         if (newAction) {
-                            var action = self.getAction(newAction.command);
+                            const action = self.getAction(newAction.command);
                             if (action) {
-                                var renderData = self.getActionData(action),
-                                    icon = renderData.icon,
-                                    label = renderData.label,
-                                    aVisibility = renderData.visibility,
-                                    group = renderData.group,
-                                    item = self.toMenuItem(action, owner, label, icon, aVisibility || {}, null, false);
+                                const renderData = self.getActionData(action);
+                                const icon = renderData.icon;
+                                const label = renderData.label;
+                                const aVisibility = renderData.visibility;
+                                const group = renderData.group;
+                                const item = self.toMenuItem(action, owner, label, icon, aVisibility || {}, null, false);
 
                                 aVisibility.widget = item;
 
                                 self.addReference(newAction, item);
 
-                                var parentCommand = action.getParentCommand();
-                                var parent = self._findParentData(oldMenuData, parentCommand);
+                                const parentCommand = action.getParentCommand();
+                                const parent = self._findParentData(oldMenuData, parentCommand);
                                 if (parent && parent.subMenu) {
                                     parent.lazy = true;
                                     parent.subMenu.push(item);
@@ -27249,7 +27296,7 @@ define('xide/widgets/TemplatedWidgetBase',[
     'xide/utils',
     'xide/_base/_Widget'
 ], function (dcl,utils,_XWidget2) {
-    var Implementation = {
+    const Implementation = {
         declaredClass: 'xide.widgets.TemplatedWidgetBase',
         data: null,
         delegate: null,
@@ -27269,7 +27316,7 @@ define('xide/widgets/TemplatedWidgetBase',[
         },
         updateTitleNode: function (value) {}
     };
-    var Module = dcl([_XWidget2],Implementation);
+    const Module = dcl([_XWidget2],Implementation);
     dcl.chainAfter(Module,'startup');
     dcl.chainAfter(Module,'destroy');
     return Module;
@@ -35764,7 +35811,7 @@ define('xide/views/_LayoutMixin',[
     /**
      * @class module:xide/views/_LayoutMixin
      */
-    var Implementation = {
+    const Implementation = {
         _docker:null,
         _parent:null,
         __right:null,
@@ -35793,18 +35840,18 @@ define('xide/views/_LayoutMixin',[
          * @returns {module:xdocker/Docker2}
          */
         getDocker:function(container){
-            var thiz = this;
+            const thiz = this;
             if(!this._docker){
-                var _node = this._domNode || this.domNode;
-                var _dst = this.getDockerTargetNode() || container || _node.parentNode;
+                const _node = this._domNode || this.domNode;
+                const _dst = this.getDockerTargetNode() || container || _node.parentNode;
                 thiz._docker = Docker.createDefault(_dst);
                 thiz._oldParent = thiz._parent;
-                var defaultOptions  = this.defaultPanelOptions || {
+                const defaultOptions  = this.defaultPanelOptions || {
                         w: '100%',
                         title:false
                     };
 
-                var parent = thiz._docker.addPanel(this.defaultPanelType, types.DOCKER.TOP, null,defaultOptions);
+                const parent = thiz._docker.addPanel(this.defaultPanelType, types.DOCKER.TOP, null,defaultOptions);
                 this.reparent && dojo.place(_node,parent.containerNode);
                 this.reparent && thiz._docker.$container.css('top',0);
                 thiz._parent = parent;
@@ -35817,7 +35864,7 @@ define('xide/views/_LayoutMixin',[
         },
         getPanelSplitPosition:function(type){
             if(type == types.DOCKER.DOCK.RIGHT && this.__right){
-                var splitter = this.__right.getSplitter();
+                const splitter = this.__right.getSplitter();
                 if(splitter){
                     return splitter.pos();
                 }
@@ -35825,9 +35872,9 @@ define('xide/views/_LayoutMixin',[
             return false;
         },
         setPanelSplitPosition:function(type,position){
-            var right = this.__right;
+            const right = this.__right;
             if(type == types.DOCKER.DOCK.RIGHT && right){
-                var splitter = right.getSplitter();
+                const splitter = right.getSplitter();
                 if(position==1) {
                     splitter._isToggledMin = true;
                     splitter._isToggledMax = true;
@@ -35839,8 +35886,8 @@ define('xide/views/_LayoutMixin',[
             }
         },
         openRight:function(open){
-            var thiz = this,
-                rightSplitPosition=thiz.getPanelSplitPosition(types.DOCKER.DOCK.RIGHT);
+            const thiz = this;
+            const rightSplitPosition=thiz.getPanelSplitPosition(types.DOCKER.DOCK.RIGHT);
             if(!open && rightSplitPosition<1){
                 //panel is open: close it
                 thiz.setPanelSplitPosition(types.DOCKER.DOCK.RIGHT,1);
@@ -35867,8 +35914,8 @@ define('xide/views/_LayoutMixin',[
             return this.__bottomTabContainer;
         },
         _addPanel:function(props,location,title,startPosition,type,target){
-            var docker = this.getDocker();
-            var panel = docker.addPanel(type || 'DefaultFixed', location , target ===false ? null : (target || this._parent), props || {
+            const docker = this.getDocker();
+            const panel = docker.addPanel(type || 'DefaultFixed', location , target ===false ? null : (target || this._parent), props || {
                 w: '30%',
                 h:'30%',
                 title:title||false
@@ -35877,7 +35924,7 @@ define('xide/views/_LayoutMixin',[
                 panel._parent.showTitlebar(false);
             }
             if(startPosition){
-                var splitter = panel.getSplitter();
+                const splitter = panel.getSplitter();
                 if(startPosition==1 || startPosition==0) {
                     splitter.pos(startPosition);
                 }else {
@@ -35890,7 +35937,7 @@ define('xide/views/_LayoutMixin',[
             if(this.__bottom || this._getBottom()){
                 return this.__bottom || this._getBottom();
             }
-            var create = true;
+            const create = true;
             if(create!==false) {
                 this.__bottom = this._addPanel(utils.mixin({
                     w: '30%',
@@ -35907,13 +35954,13 @@ define('xide/views/_LayoutMixin',[
                 w: '30%',
                 title:title || '  '
             },props);
-            var panel = this._addPanel(props,types.DOCKER.DOCK.RIGHT,title,null,type,props.target);
+            const panel = this._addPanel(props,types.DOCKER.DOCK.RIGHT,title,null,type,props.target);
             this.__right = panel;
             return panel;
         }
     };
     //package via declare
-    var _class = declare("xide/views/_LayoutMixin",null,Implementation);
+    const _class = declare("xide/views/_LayoutMixin",null,Implementation);
     _class.Implementation = Implementation;
     _class.dcl = dcl(null,Implementation);
     return _class;
@@ -36466,7 +36513,7 @@ define('xide/mixins/ReloadMixin',[
      * @mixin module:xide/mixins/ReloadMixin
      * @requires module:xide/mixins/EventedMixin
      */
-    var Impl = {
+    const Impl = {
         /**
          *
          * Not used yet, but at @TODO: some flags to describe the hot-replace for reloaded modules
@@ -36495,10 +36542,11 @@ define('xide/mixins/ReloadMixin',[
                     return true;
 
                 }else{
-
                     //manual lookup, browse all base classes and their superclass
-                    var bases = utils.getAt(this, 'constructor._meta.bases', []),//save get, return base::at[path] or empty array
-                        _clsClass = cls.prototype.declaredClass;    //cache
+                    const //save get, return base::at[path] or empty array
+                    bases = utils.getAt(this, 'constructor._meta.bases', []);    //cache
+
+                    const _clsClass = cls.prototype.declaredClass;
 
                     //save space
                     return _.findWhere(bases, function (_base) {
@@ -36508,7 +36556,6 @@ define('xide/mixins/ReloadMixin',[
                         || utils.getAt(_base, 'prototype.declaredClass') === _clsClass;    //sometimes
 
                     });
-
                 }
 
             } catch (e) {
@@ -36526,8 +36573,8 @@ define('xide/mixins/ReloadMixin',[
          * @param source
          */
         mergeFunctions: function (target, source) {
-            for (var i in source) {
-                var o = source[i];
+            for (const i in source) {
+                const o = source[i];
                 if (i === 'constructor' || i === 'inherited') {
                     continue;
                 }
@@ -36550,15 +36597,15 @@ define('xide/mixins/ReloadMixin',[
          */
         onModuleReloaded: function (evt) {
             //console.log('on module reloaded');
-            var newModule = evt.newModule;
+            const newModule = evt.newModule;
             if (!newModule || !newModule.prototype || evt._processed) {
                 return;
             }
-            var moduleProto = newModule.prototype,
-                moduleClass = moduleProto.declaredClass,
-                matchedByClass = false,
-                thisClass = this.declaredClass,
-                thiz=this;
+            const moduleProto = newModule.prototype;
+            const moduleClass = moduleProto.declaredClass;
+            let matchedByClass = false;
+            const thisClass = this.declaredClass;
+            const thiz=this;
 
             if(!moduleClass){
                 return;
@@ -36587,7 +36634,7 @@ define('xide/mixins/ReloadMixin',[
     };
 
     //package via declare
-    var _class = declare(null,Impl);
+    const _class = declare(null,Impl);
 
     //static access to Impl.
     _class.Impl = Impl;
@@ -36598,7 +36645,7 @@ define('xide/mixins/ReloadMixin',[
 
 });
 define('xide/rpc/AdapterRegistry',["dojo/_base/kernel", "dojo/_base/lang"], function (dojo, lang) {
-    var AdapterRegistry = dojo.AdapterRegistry = function (/*Boolean?*/ returnWrappers) {
+    const AdapterRegistry = dojo.AdapterRegistry = function (/*Boolean?*/ returnWrappers) {
         // summary:
         //		A registry to make contextual calling/searching easier.
         // description:
@@ -36667,8 +36714,8 @@ define('xide/rpc/AdapterRegistry',["dojo/_base/kernel", "dojo/_base/lang"], func
             //		is found, throws an exception. match() accepts any number of
             //		arguments, all of which are passed to all matching functions
             //		from the registered pairs.
-            for (var i = 0; i < this.pairs.length; i++) {
-                var pair = this.pairs[i];
+            for (let i = 0; i < this.pairs.length; i++) {
+                const pair = this.pairs[i];
                 if (pair[1].apply(this, arguments)) {
                     if ((pair[3]) || (this.returnWrappers)) {
                         return pair[2];
@@ -36692,8 +36739,8 @@ define('xide/rpc/AdapterRegistry',["dojo/_base/kernel", "dojo/_base/lang"], func
             // FIXME: this is kind of a dumb way to handle this. On a large
             // registry this will be slow-ish and we can use the name as a lookup
             // should we choose to trade memory for speed.
-            for (var i = 0; i < this.pairs.length; i++) {
-                var pair = this.pairs[i];
+            for (let i = 0; i < this.pairs.length; i++) {
+                const pair = this.pairs[i];
                 if (pair[0] == name) {
                     this.pairs.splice(i, 1);
                     return true;
@@ -36716,13 +36763,13 @@ define('xide/rpc/Service',[
     "xide/utils",
     "xide/lodash"
 ], function(dojo,lang,xhr,declare,AdapterRegistry,url,utils,_){
-    var transportRegistry = new AdapterRegistry(true);
-    var envelopeRegistry = new AdapterRegistry(true);
-    var _nextId  = 1;
-    var _sync = false;
+    const transportRegistry = new AdapterRegistry(true);
+    const envelopeRegistry = new AdapterRegistry(true);
+    let _nextId  = 1;
+    const _sync = false;
 
     function getTarget(smd, method){
-        var dest=smd._baseUrl;
+        let dest=smd._baseUrl;
         if(smd.target){
             dest = new dojo._Url(dest,smd.target) + '';
         }
@@ -36734,14 +36781,14 @@ define('xide/rpc/Service',[
 
     function toOrdered(parameters, args){
         if(dojo.isArray(args)){ return args; }
-        var data=[];
-        for(var i=0;i<parameters.length;i++){
+        const data=[];
+        for(let i=0;i<parameters.length;i++){
             data.push(args[parameters[i].name]);
         }
         return data;
     }
 
-    var service = declare("xide.rpc.Service", null, {
+    const service = declare("xide.rpc.Service", null, {
         constructor: function(smd, options){
 
             // summary:
@@ -36762,9 +36809,9 @@ define('xide/rpc/Service',[
             //		a jsonString directly, which will be converted into an object or alternatively
             //		smdObject is accepts an smdObject directly.
 
-            var url;
+            let url;
             var self = this;
-            var singleton = options ? options.singleton : false;
+            const singleton = options ? options.singleton : false;
             function processSmd(smd){
                 smd._baseUrl = new dojo._Url((dojo.isBrowser ? location.href : dojo.config.baseUrl) ,url || '.') + '';
                 self._smd = smd;
@@ -36779,10 +36826,10 @@ define('xide/rpc/Service',[
                 }
 
                 //generate the methods
-                for(var serviceName in self._smd.services){
-                    var pieces = serviceName.split("."); // handle "namespaced" services by breaking apart by .
-                    var current = self;
-                    for(var i=0; i< pieces.length-1; i++){
+                for(const serviceName in self._smd.services){
+                    const pieces = serviceName.split("."); // handle "namespaced" services by breaking apart by .
+                    let current = self;
+                    for(let i=0; i< pieces.length-1; i++){
                         // create or reuse each object as we go down the chain
                         current = current[pieces[i]] || (current[pieces[i]] = {});
                     }
@@ -36826,14 +36873,14 @@ define('xide/rpc/Service',[
             }
             method.name = serviceName;
 
-            var func = dojo.hitch(this, "_executeMethod",method);
+            let func = dojo.hitch(this, "_executeMethod",method);
 
-            var transport = transportRegistry.match(method.transport || this._smd.transport);
+            const transport = transportRegistry.match(method.transport || this._smd.transport);
             if(transport.getExecutor){
                 func = transport.getExecutor(func,method,this);
             }
-            var schema = method.returns || (method._schema = {}); // define the schema
-            var servicePath = '/' + serviceName +'/';
+            const schema = method.returns || (method._schema = {}); // define the schema
+            const servicePath = '/' + serviceName +'/';
             // schemas are minimally used to track the id prefixes for the different services
             schema._service = func;
             func.servicePath = servicePath;
@@ -36842,9 +36889,9 @@ define('xide/rpc/Service',[
             return func;
         },
         _getRequest: function(method,args){
-            var smd = this._smd;
-            var envDef = envelopeRegistry.match(method.envelope || smd.envelope || "NONE");
-            var parameters = (method.parameters || []).concat(smd.parameters || []);
+            const smd = this._smd;
+            const envDef = envelopeRegistry.match(method.envelope || smd.envelope || "NONE");
+            const parameters = (method.parameters || []).concat(smd.parameters || []);
             if(envDef.namedParams){
                 // the serializer is expecting named params
                 if((args.length==1) && dojo.isObject(args[0])){
@@ -36852,7 +36899,7 @@ define('xide/rpc/Service',[
                     args = args[0];
                 }else{
                     // they provided ordered, must convert
-                    var data={};
+                    const data={};
                     for(var i=0;i<method.parameters.length;i++){
                         if(typeof args[i] != "undefined" || !method.parameters[i].optional){
                             data[method.parameters[i].name]=args[i];
@@ -36863,8 +36910,8 @@ define('xide/rpc/Service',[
                 if(method.strictParameters||smd.strictParameters){
                     //remove any properties that were not defined
                     for(i in args){
-                        var found=false;
-                        for(var j=0; j<parameters.length;j++){
+                        let found=false;
+                        for(let j=0; j<parameters.length;j++){
                             if(parameters[j].name==i){ found=true; }
                         }
                         if(!found){
@@ -36875,7 +36922,7 @@ define('xide/rpc/Service',[
                 }
                 // setting default values
                 for(i=0; i< parameters.length; i++){
-                    var param = parameters[i];
+                    const param = parameters[i];
                     if(!param.optional && param.name && !args[param.name]){
                         if(param["default"]){
                             args[param.name] = param["default"];
@@ -36900,10 +36947,10 @@ define('xide/rpc/Service',[
             }
             delete args['mixin'];
 
-            var schema = method._schema || method.returns; // serialize with the right schema for the context;
-            var request = envDef.serialize.apply(this, [smd, method, args]);
+            const schema = method._schema || method.returns; // serialize with the right schema for the context;
+            const request = envDef.serialize.apply(this, [smd, method, args]);
             request._envDef = envDef;// save this for executeMethod
-            var contentType = (method.contentType || smd.contentType || request.contentType);
+            const contentType = (method.contentType || smd.contentType || request.contentType);
 
             // this allows to mandate synchronous behavior from elsewhere when necessary, this may need to be changed to be one-shot in FF3 new sync handling model
             return dojo.mixin(request, {
@@ -36923,13 +36970,13 @@ define('xide/rpc/Service',[
             });
         },
         _executeMethod: function(method){
-            var args = [];
-            var i;
+            const args = [];
+            let i;
             for(i=1; i< arguments.length; i++){
                 args.push(arguments[i]);
             }
-            var request = this._getRequest(method,args);
-            var deferred = transportRegistry.match(request.transport).fire(request);
+            const request = this._getRequest(method,args);
+            const deferred = transportRegistry.match(request.transport).fire(request);
 
             deferred.addBoth(function(results){
                 return request._envDef.deserialize.call(this,results);
@@ -36946,7 +36993,7 @@ define('xide/rpc/Service',[
     service._sync = _sync;
     envelopeRegistry.register("URL", function(str){ return str == "URL"; },{
 		serialize:function(smd, method, data ){
-			var d = dojo.objectToQuery(data);
+			const d = dojo.objectToQuery(data);
 			return {
 				data: d,
 				transport:"POST"
@@ -36959,7 +37006,7 @@ define('xide/rpc/Service',[
 	});
     envelopeRegistry.register("JSON",function(str){ return str == "JSON"; },{
         serialize: function(smd, method, data){
-            var d = dojo.toJson(data);
+            const d = dojo.toJson(data);
 
             return {
                 data: d,
@@ -36973,8 +37020,8 @@ define('xide/rpc/Service',[
     });
     envelopeRegistry.register("PATH",function(str){ return str == "PATH"; },{
         serialize:function(smd, method, data){
-			var i;
-			var target = getTarget(smd, method);
+			let i;
+			let target = getTarget(smd, method);
 			if(dojo.isArray(data)){
 				for(i = 0; i < data.length;i++){
 					target += '/' + data[i];
@@ -37019,9 +37066,9 @@ define('xide/rpc/Service',[
     if(dojo._contentHandlers) {
         dojo._contentHandlers.auto = function (xhr) {
             // automatically choose the right handler based on the returned content type
-            var handlers = dojo._contentHandlers;
-            var retContentType = xhr.getResponseHeader("Content-Type");
-            var results = !retContentType ? handlers.text(xhr) :
+            const handlers = dojo._contentHandlers;
+            const retContentType = xhr.getResponseHeader("Content-Type");
+            const results = !retContentType ? handlers.text(xhr) :
                 retContentType.match(/\/.*json/) ? handlers.json(xhr) :
                     retContentType.match(/\/javascript/) ? handlers.javascript(xhr) :
                         retContentType.match(/\/xml/) ? handlers.xml(xhr) : handlers.text(xhr);
@@ -37049,7 +37096,8 @@ define('xide/utils/StringUtils',[
      * @returns {Function}
      */
     function serializer(replacer, cycleReplacer) {
-        var stack = [], keys = [];
+        const stack = [];
+        const keys = [];
 
         if (cycleReplacer == null) cycleReplacer = function (key, value) {
             if (stack[0] === value) return "[Circular ~]";
@@ -37058,7 +37106,7 @@ define('xide/utils/StringUtils',[
 
         return function (key, value) {
             if (stack.length > 0) {
-                var thisPos = stack.indexOf(this);
+                const thisPos = stack.indexOf(this);
                 ~thisPos ? stack.splice(thisPos + 1) : stack.push(this);
                 ~thisPos ? keys.splice(thisPos, Infinity, key) : keys.push(key);
                 if (~stack.indexOf(value)) value = cycleReplacer.call(this, key, value)
@@ -37066,7 +37114,7 @@ define('xide/utils/StringUtils',[
             else stack.push(value);
 
             return replacer == null ? value : replacer.call(this, key, value)
-        }
+        };
     }
 
     /**
@@ -37123,8 +37171,8 @@ define('xide/utils/StringUtils',[
 
         digits = ((typeof digits === 'undefined') ? 3 : (parseInt(digits, 10) || 0));
 
-        var f = Math.pow(10, digits);
-        var res = (Math.round(num * f) / f).toFixed(digits);
+        const f = Math.pow(10, digits);
+        let res = (Math.round(num * f) / f).toFixed(digits);
 
         // remove trailing zeros and cast back to string
         if (!trailing) res = '' + (+res);
@@ -37142,14 +37190,14 @@ define('xide/utils/StringUtils',[
      * @returns {string}
      */
     utils.humanFileSize = function (bytes, si) {
-        var thresh = si ? 1000 : 1024;
+        const thresh = si ? 1000 : 1024;
         if (Math.abs(bytes) < thresh) {
             return bytes + ' B';
         }
-        var units = si
+        const units = si
             ? ['kB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB']
             : ['KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB', 'ZiB', 'YiB'];
-        var u = -1;
+        let u = -1;
         do {
             bytes /= thresh;
             ++u;
@@ -37176,22 +37224,24 @@ define('xide/utils/StringUtils',[
      * @returns {boolean}
      */
     utils.isNativeEvent = function (str) {
-        var _foo = null,//just for having an optimized object map for a native event lookup below
-            _nativeEvents = {
-                "onclick": _foo,
-                "ondblclick": _foo,
-                "onmousedown": _foo,
-                "onmouseup": _foo,
-                "onmouseover": _foo,
-                "onmousemove": _foo,
-                "onmouseout": _foo,
-                "onkeypress": _foo,
-                "onkeydown": _foo,
-                "onkeyup": _foo,
-                "onfocus": _foo,
-                "onblur": _foo,
-                "onchange": _foo
-            };
+        const //just for having an optimized object map for a native event lookup below
+        _foo = null;
+
+        let _nativeEvents = {
+            "onclick": _foo,
+            "ondblclick": _foo,
+            "onmousedown": _foo,
+            "onmouseup": _foo,
+            "onmouseover": _foo,
+            "onmousemove": _foo,
+            "onmouseout": _foo,
+            "onkeypress": _foo,
+            "onkeydown": _foo,
+            "onkeyup": _foo,
+            "onfocus": _foo,
+            "onblur": _foo,
+            "onchange": _foo
+        };
 
         if (str in _nativeEvents) {
             return true;
@@ -37213,7 +37263,6 @@ define('xide/utils/StringUtils',[
         };
 
         return str in _nativeEvents;
-
     };
     /**
      *
@@ -37223,7 +37272,7 @@ define('xide/utils/StringUtils',[
      * @memberOf module:xide/utils/StringUtils
      */
     utils.isSystemEvent = function (str) {
-        for (var t in types.EVENTS) {
+        for (const t in types.EVENTS) {
             if (types.EVENTS[t] === str) {
                 return true;
             }
@@ -37239,7 +37288,7 @@ define('xide/utils/StringUtils',[
      * @memberOf module:xide/utils/StringUtils
      */
     utils.contains = function (arr, val) {
-        for (var i = 0; i < arr.length; i++) {
+        for (let i = 0; i < arr.length; i++) {
             if (arr[i] === val) {
                 return i;
             }
@@ -37255,7 +37304,7 @@ define('xide/utils/StringUtils',[
      */
     utils.getObjectKeyByValue = function (obj, val) {
         if (obj && val) {
-            for (var prop in obj) {
+            for (const prop in obj) {
                 if (obj.hasOwnProperty(prop)) {
                     if (obj[prop] === val)
                         return prop;
@@ -37274,14 +37323,14 @@ define('xide/utils/StringUtils',[
      */
     utils.removeURLParameter = function (url, parameter) {
         //prefer to use l.search if you have a location/link object
-        var urlparts = url.split('?');
+        const urlparts = url.split('?');
         if (urlparts.length >= 2) {
 
-            var prefix = encodeURIComponent(parameter) + '=';
-            var pars = urlparts[1].split(/[&;]/g);
+            const prefix = encodeURIComponent(parameter) + '=';
+            const pars = urlparts[1].split(/[&;]/g);
 
             //reverse iteration as may be destructive
-            for (var i = pars.length; i-- > 0;) {
+            for (let i = pars.length; i-- > 0;) {
                 //idiom for string.startsWith
                 if (pars[i].lastIndexOf(prefix, 0) !== -1) {
                     pars.splice(i, 1);
@@ -37308,8 +37357,8 @@ define('xide/utils/StringUtils',[
             url += (url.indexOf('?') > 0 ? '&' : '?') + paramName + '=' + paramValue;
             return url;
         }
-        var pattern = new RegExp('(' + paramName + '=).*?(&|$)');
-        var newUrl = url.replace(pattern, '$1' + paramValue + '$2');
+        const pattern = new RegExp('(' + paramName + '=).*?(&|$)');
+        let newUrl = url.replace(pattern, '$1' + paramValue + '$2');
         if (newUrl == url) {
             newUrl = newUrl + (newUrl.indexOf('?') > 0 ? '&' : '?') + paramName + '=' + paramValue
         }
@@ -37327,12 +37376,12 @@ define('xide/utils/StringUtils',[
     utils.buildPath = function (mount, path, encode) {
 
         //fix mount
-        var _mount = '' + mount;
+        let _mount = '' + mount;
         _mount = utils.replaceAll('/', '', mount);
-        var _path = '' + path;
+        let _path = '' + path;
         _path = _path.replace('./', '/').replace(/^\/|\/$/g, '');
 
-        var _res = _mount + '://' + _path;
+        const _res = _mount + '://' + _path;
         if (encode === true) {
             return encodeURIComponent(_res);
         }
@@ -37429,8 +37478,8 @@ define('xide/utils/StringUtils',[
         if (!_.isString(js)) {
             return js;
         }
-        var res = null;
-        var didFail = false;
+        let res = null;
+        let didFail = false;
         try {
             res = eval("(" + js + ")", {});
         } catch (e) {
@@ -37491,7 +37540,7 @@ define('xide/utils/StringUtils',[
      * @memberOf module:xide/utils/StringUtils
      */
     utils.findOcurrences = function (expression, delimiters) {
-        var d = {
+        const d = {
             begin: utils.escapeRegExp(delimiters.begin),
             end: utils.escapeRegExp(delimiters.end)
         };
@@ -37506,8 +37555,8 @@ define('xide/utils/StringUtils',[
      * @memberOf module:xide/utils/StringUtils
      */
     utils.escapeRegExp = function (string) {
-        var special = ["[", "]", "(", ")", "{", "}", "*", "+", ".", "|", "||"];
-        for (var n = 0; n < special.length; n++) {
+        const special = ["[", "]", "(", ")", "{", "}", "*", "+", ".", "|", "||"];
+        for (let n = 0; n < special.length; n++) {
             string = string.replace(special[n], "\\" + special[n]);
         }
 
@@ -37522,8 +37571,8 @@ define('xide/utils/StringUtils',[
      */
     utils.multipleReplace = function (str, hash) {
         //to array
-        var a = [];
-        for (var key in hash) {
+        const a = [];
+        for (const key in hash) {
             a[a.length] = key;
         }
         return str.replace(new RegExp(a.join('\\b|\\b'), 'g'), function (m) {
@@ -37571,15 +37620,15 @@ define('xide/utils/StringUtils',[
         }
         if (what && _.isObject(what) || _.isArray(what)) {
             if (delimiters) {
-                var ocurr = utils.findOcurrences(str, delimiters),
-                    replaceAll = utils.replaceAll;
+                const ocurr = utils.findOcurrences(str, delimiters);
+                const replaceAll = utils.replaceAll;
                 if (ocurr) {
 
-                    for (var i = 0, j = ocurr.length; i < j; i++) {
-                        var el = ocurr[i];
+                    for (let i = 0, j = ocurr.length; i < j; i++) {
+                        const el = ocurr[i];
 
                         //strip off delimiters
-                        var _variableName = replaceAll(delimiters.begin, '', el);
+                        let _variableName = replaceAll(delimiters.begin, '', el);
                         _variableName = replaceAll(delimiters.end, '', _variableName);
                         str = replaceAll(el, what[_variableName], str);
                     }
@@ -37625,23 +37674,23 @@ define('xide/utils/StringUtils',[
      * @link http://kevin.vanzonneveld.net
      */
     utils.sprintf = function () {
-        var regex = /%%|%(\d+\$)?([-+\'#0 ]*)(\*\d+\$|\*|\d+)?(\.(\*\d+\$|\*|\d+))?([scboxXuideEfFgG])/g;
-        var a = arguments,
-            i = 0,
-            format = a[i++];
+        const regex = /%%|%(\d+\$)?([-+\'#0 ]*)(\*\d+\$|\*|\d+)?(\.(\*\d+\$|\*|\d+))?([scboxXuideEfFgG])/g;
+        const a = arguments;
+        let i = 0;
+        const format = a[i++];
 
         // pad()
-        var pad = function (str, len, chr, leftJustify) {
+        const pad = function (str, len, chr, leftJustify) {
             if (!chr) {
                 chr = ' ';
             }
-            var padding = (str.length >= len) ? '' : Array(1 + len - str.length >>> 0).join(chr);
+            const padding = (str.length >= len) ? '' : Array(1 + len - str.length >>> 0).join(chr);
             return leftJustify ? str + padding : padding + str;
         };
 
         // justify()
-        var justify = function (value, prefix, leftJustify, minWidth, zeroPad, customPadChar) {
-            var diff = minWidth - value.length;
+        const justify = function (value, prefix, leftJustify, minWidth, zeroPad, customPadChar) {
+            const diff = minWidth - value.length;
             if (diff > 0) {
                 if (leftJustify || !zeroPad) {
                     value = pad(value, minWidth, customPadChar, leftJustify);
@@ -37653,9 +37702,9 @@ define('xide/utils/StringUtils',[
         };
 
         // formatBaseX()
-        var formatBaseX = function (value, base, prefix, leftJustify, minWidth, precision, zeroPad) {
+        const formatBaseX = function (value, base, prefix, leftJustify, minWidth, precision, zeroPad) {
             // Note: casts negative numbers to positive ones
-            var number = value >>> 0;
+            const number = value >>> 0;
             prefix = prefix && number && {
                     '2': '0b',
                     '8': '0',
@@ -37666,7 +37715,7 @@ define('xide/utils/StringUtils',[
         };
 
         // formatString()
-        var formatString = function (value, leftJustify, minWidth, precision, zeroPad, customPadChar) {
+        const formatString = function (value, leftJustify, minWidth, precision, zeroPad, customPadChar) {
             if (precision != null) {
                 value = value.slice(0, precision);
             }
@@ -37674,25 +37723,26 @@ define('xide/utils/StringUtils',[
         };
 
         // doFormat()
-        var doFormat = function (substring, valueIndex, flags, minWidth, _, precision, type) {
-            var number;
-            var prefix;
-            var method;
-            var textTransform;
-            var value;
+        const doFormat = function (substring, valueIndex, flags, minWidth, _, precision, type) {
+            let number;
+            let prefix;
+            let method;
+            let textTransform;
+            let value;
 
             if (substring === '%%') {
                 return '%';
             }
 
             // parse flags
-            var leftJustify = false,
-                positivePrefix = '',
-                zeroPad = false,
-                prefixBaseX = false,
-                customPadChar = ' ';
-            var flagsl = flags.length;
-            for (var j = 0; flags && j < flagsl; j++) {
+            let leftJustify = false;
+
+            let positivePrefix = '';
+            let zeroPad = false;
+            let prefixBaseX = false;
+            let customPadChar = ' ';
+            const flagsl = flags.length;
+            for (let j = 0; flags && j < flagsl; j++) {
                 switch (flags.charAt(j)) {
                     case ' ':
                         positivePrefix = ' ';
@@ -37854,8 +37904,8 @@ define('xide/utils/StringUtils',[
      * @link http://phpjs.org/functions/basename/
      */
     utils.basename = function (path, suffix) {
-        var b = path;
-        var lastChar = b.charAt(b.length - 1);
+        let b = path;
+        const lastChar = b.charAt(b.length - 1);
 
         if (lastChar === '/' || lastChar === '\\') {
             b = b.slice(0, -1);
@@ -37909,16 +37959,17 @@ define('xide/utils/StringUtils',[
         //        note: yourself, and then you can use: pathinfo('/www/index.html', PATHINFO_BASENAME | PATHINFO_EXTENSION);
         //        note: which makes it fully compliant with PHP syntax.
         //  depends on: basename
-        var opt = '',
-            real_opt = '',
-            optName = '',
-            optTemp = 0,
-            tmp_arr = {},
-            cnt = 0,
-            i = 0;
-        var have_basename = false,
-            have_extension = false,
-            have_filename = false;
+        let opt = '';
+
+        let real_opt = '';
+        let optName = '';
+        let optTemp = 0;
+        let tmp_arr = {};
+        let cnt = 0;
+        let i = 0;
+        let have_basename = false;
+        let have_extension = false;
+        let have_filename = false;
 
         // Input defaulting & sanitation
         if (!path) {
@@ -37930,7 +37981,7 @@ define('xide/utils/StringUtils',[
 
         // Initialize binary arguments. Both the string & integer (constant) input is
         // allowed
-        var OPTS = {
+        const OPTS = {
             'PATHINFO_DIRNAME': 1,
             'PATHINFO_BASENAME': 2,
             'PATHINFO_EXTENSION': 4,
@@ -37956,16 +38007,16 @@ define('xide/utils/StringUtils',[
         }
 
         // Internal Functions
-        var __getExt = function (path) {
-            var str = path + '';
-            var dotP = str.lastIndexOf('.') + 1;
+        const __getExt = function (path) {
+            const str = path + '';
+            const dotP = str.lastIndexOf('.') + 1;
             return !dotP ? false : dotP !== str.length ? str.substr(dotP) : '';
         };
 
         // Gather path infos
         //noinspection JSBitwiseOperatorUsage,JSBitwiseOperatorUsage
         if (options & OPTS.PATHINFO_DIRNAME) {
-            var dirName = path.replace(/\\/g, '/')
+            const dirName = path.replace(/\\/g, '/')
                 .replace(/\/[^\/]*\/?$/, ''); // dirname
             tmp_arr.dirname = dirName === path ? '.' : dirName;
         }
@@ -38042,21 +38093,26 @@ define('xide/utils/StringUtils',[
         //             note: an extra slash after the scheme/protocol (to allow file:/// as in PHP)
         //        example 1: parse_url('http://username:password@hostname/path?arg=value#anchor');
         //        returns 1: {scheme: 'http', host: 'hostname', user: 'username', pass: 'password', path: '/path', query: 'arg=value', fragment: 'anchor'}
-        var query, key = ['source', 'scheme', 'authority', 'userInfo', 'user', 'pass', 'host', 'port',
-                'relative', 'path', 'directory', 'file', 'query', 'fragment'
-            ],
-            ini = (this.php_js && this.php_js.ini) || {},
-            mode = (ini['phpjs.parse_url.mode'] &&
-                ini['phpjs.parse_url.mode'].local_value) || 'php',
-            parser = {
-                php: /^(?:([^:\/?#]+):)?(?:\/\/()(?:(?:()(?:([^:@]*):?([^:@]*))?@)?([^:\/?#]*)(?::(\d*))?))?()(?:(()(?:(?:[^?#\/]*\/)*)()(?:[^?#]*))(?:\?([^#]*))?(?:#(.*))?)/,
-                strict: /^(?:([^:\/?#]+):)?(?:\/\/((?:(([^:@]*):?([^:@]*))?@)?([^:\/?#]*)(?::(\d*))?))?((((?:[^?#\/]*\/)*)([^?#]*))(?:\?([^#]*))?(?:#(.*))?)/,
-                loose: /^(?:(?![^:@]+:[^:@\/]*@)([^:\/?#.]+):)?(?:\/\/\/?)?((?:(([^:@]*):?([^:@]*))?@)?([^:\/?#]*)(?::(\d*))?)(((\/(?:[^?#](?![^?#\/]*\.[^?#\/.]+(?:[?#]|$)))*\/?)?([^?#\/]*))(?:\?([^#]*))?(?:#(.*))?)/ // Added one optional slash to post-scheme to catch file:/// (should restrict this)
-            };
+        let query;
 
-        var m = parser[mode].exec(str),
-            uri = {},
-            i = 14;
+        const key = ['source', 'scheme', 'authority', 'userInfo', 'user', 'pass', 'host', 'port',
+                'relative', 'path', 'directory', 'file', 'query', 'fragment'
+            ];
+
+        const ini = (this.php_js && this.php_js.ini) || {};
+
+        const mode = (ini['phpjs.parse_url.mode'] &&
+            ini['phpjs.parse_url.mode'].local_value) || 'php';
+
+        let parser = {
+            php: /^(?:([^:\/?#]+):)?(?:\/\/()(?:(?:()(?:([^:@]*):?([^:@]*))?@)?([^:\/?#]*)(?::(\d*))?))?()(?:(()(?:(?:[^?#\/]*\/)*)()(?:[^?#]*))(?:\?([^#]*))?(?:#(.*))?)/,
+            strict: /^(?:([^:\/?#]+):)?(?:\/\/((?:(([^:@]*):?([^:@]*))?@)?([^:\/?#]*)(?::(\d*))?))?((((?:[^?#\/]*\/)*)([^?#]*))(?:\?([^#]*))?(?:#(.*))?)/,
+            loose: /^(?:(?![^:@]+:[^:@\/]*@)([^:\/?#.]+):)?(?:\/\/\/?)?((?:(([^:@]*):?([^:@]*))?@)?([^:\/?#]*)(?::(\d*))?)(((\/(?:[^?#](?![^?#\/]*\.[^?#\/.]+(?:[?#]|$)))*\/?)?([^?#\/]*))(?:\?([^#]*))?(?:#(.*))?)/ // Added one optional slash to post-scheme to catch file:/// (should restrict this)
+        };
+
+        const m = parser[mode].exec(str);
+        const uri = {};
+        let i = 14;
         while (i--) {
             if (m[i]) {
                 uri[key[i]] = m[i];
@@ -38068,7 +38124,7 @@ define('xide/utils/StringUtils',[
                 .toLowerCase()];
         }
         if (mode !== 'php') {
-            var name = (ini['phpjs.parse_url.queryKey'] &&
+            const name = (ini['phpjs.parse_url.queryKey'] &&
                 ini['phpjs.parse_url.queryKey'].local_value) || 'queryKey';
             parser = /(?:^|&)([^&=]*)=?([^&]*)/g;
             uri[name] = {};
@@ -38184,10 +38240,12 @@ define('xide/utils/StringUtils',[
         if (!string || !string.length) {
             return {}
         }
-        var obj = {};
-        var pairs = string.split("&");
-        var pair, name, value;
-        for (var i = 0, len = pairs.length; i < len; i++) {
+        const obj = {};
+        const pairs = string.split("&");
+        let pair;
+        let name;
+        let value;
+        for (let i = 0, len = pairs.length; i < len; i++) {
             pair = pairs[i].split("=");
             name = decodeURIComponent(pair[0]);
             value = decodeURIComponent(pair[1]);
@@ -38221,15 +38279,15 @@ define('xide/utils/StringUtils',[
      * @memberOf module:xide/utils/StringUtils
      */
     utils.getUrlArgs = function (string) {
-        var args = {};
+        const args = {};
         if (string && (string.indexOf('?') != -1 || string.indexOf('&') != -1)) {
 
-            var query = string.substr(string.indexOf("?") + 1) || location.search.substring(1);
-            var pairs = query.split("&");
-            for (var i = 0; i < pairs.length; i++) {
-                var pos = pairs[i].indexOf("=");
-                var name = pairs[i].substring(0, pos);
-                var value = pairs[i].substring(pos + 1);
+            const query = string.substr(string.indexOf("?") + 1) || location.search.substring(1);
+            const pairs = query.split("&");
+            for (let i = 0; i < pairs.length; i++) {
+                const pos = pairs[i].indexOf("=");
+                const name = pairs[i].substring(0, pos);
+                let value = pairs[i].substring(pos + 1);
                 value = decodeURIComponent(value);
                 args[name] = value;
             }
@@ -38244,28 +38302,31 @@ define('xide/utils/StringUtils',[
      * @deprecated
      */
     utils.urlArgs = function (url) {
-        var query = utils.getUrlArgs(url);
-        var map = {};
-        for (var param in query) {
-            var value = query[param],
-                options = utils.findOcurrences(value, {
-                    begin: "|",
-                    end: "|"
-                }),
-                parameterOptions = null;
+        const query = utils.getUrlArgs(url);
+        const map = {};
+        for (const param in query) {
+            let value = query[param];
+
+            const options = utils.findOcurrences(value, {
+                begin: "|",
+                end: "|"
+            });
+
+            let parameterOptions = null;
 
             if (options && options.length) {
                 //clean value:
                 value = value.replace(options[0], '');
+
                 //parse options
-                var optionString = options[0].substr(1, options[0].length - 2),
-                    optionSplit = optionString.split(','),
-                    optionsData = {};
+                const optionString = options[0].substr(1, options[0].length - 2);
 
-                for (var i = 0; i < optionSplit.length; i++) {
+                const optionSplit = optionString.split(',');
+                const optionsData = {};
 
-                    var keyValue = optionSplit[i],
-                        pair = keyValue.split(':');
+                for (let i = 0; i < optionSplit.length; i++) {
+                    const keyValue = optionSplit[i];
+                    const pair = keyValue.split(':');
 
                     optionsData[pair[0]] = pair[1];
                 }
@@ -38293,9 +38354,9 @@ define('xide/utils/StringUtils',[
         if (!fileName) {
             return 'txt2.png';
         }
-        var extension = utils.getFileExtension(fileName);
+        const extension = utils.getFileExtension(fileName);
         if (extension) {
-            var mime = utils.getMimeTable();
+            const mime = utils.getMimeTable();
             if (mime[extension] != null) {
                 return mime[extension];
             }
@@ -38313,12 +38374,12 @@ define('xide/utils/StringUtils',[
         if (!fileName) {
             return 'fa-file-o';
         }
-        var extension = utils.getFileExtension(fileName);
+        const extension = utils.getFileExtension(fileName);
         if (types.customMimeIcons[extension]) {
             return types.customMimeIcons[extension];
         }
         if (extension) {
-            var mime = utils.getMimeTable2();
+            const mime = utils.getMimeTable2();
             if (mime[extension] != null) {
                 return mime[extension];
             }
@@ -38333,7 +38394,7 @@ define('xide/utils/StringUtils',[
      */
     utils.getFileExtension = function (fileName) {
         if (!fileName || fileName == "") return "";
-        var split = utils.getBaseName(fileName).split('.');
+        const split = utils.getBaseName(fileName).split('.');
         if (split.length > 1) return split[split.length - 1].toLowerCase();
         return '';
     };
@@ -38343,7 +38404,7 @@ define('xide/utils/StringUtils',[
      * @memberOf module:xide/utils/StringUtils
      */
     utils.createUUID = function () {
-        var S4 = function () {
+        const S4 = function () {
             return (((1 + Math.random()) * 0x10000) | 0).toString(16).substring(1);
         };
         return (S4() + S4() + "-" + S4() + "-" + S4() + "-" + S4() + "-" + S4() + S4() + S4()); //String
@@ -38356,7 +38417,7 @@ define('xide/utils/StringUtils',[
      */
     utils.getBaseName = function (fileName) {
         if (fileName == null) return null;
-        var separator = "/";
+        let separator = "/";
         if (fileName.indexOf("\\") !==-1)
             separator = "\\";
         return fileName.substr(fileName.lastIndexOf(separator) + 1, fileName.length);
@@ -38387,8 +38448,8 @@ define('xide/utils/StringUtils',[
         // improved by: Lincoln Ramsay
         // improved by: djmix
         // improved by: Dmitry Gorelenkov
-        var b = path;
-        var lastChar = b.charAt(b.length - 1);
+        let b = path;
+        const lastChar = b.charAt(b.length - 1);
 
         if (lastChar === '/' || lastChar === '\\') {
             b = b.slice(0, -1)
@@ -38448,17 +38509,17 @@ define('xide/utils/StringUtils',[
         //      note 1: which makes it fully compliant with PHP syntax.
 
 
-        var basename = utils.basename;
-        var opt = '';
-        var realOpt = '';
-        var optName = '';
-        var optTemp = 0;
-        var tmpArr = {};
-        var cnt = 0;
-        var i = 0;
-        var haveBasename = false;
-        var haveExtension = false;
-        var haveFilename = false;
+        let basename = utils.basename;
+        let opt = '';
+        let realOpt = '';
+        let optName = '';
+        let optTemp = 0;
+        let tmpArr = {};
+        let cnt = 0;
+        let i = 0;
+        let haveBasename = false;
+        let haveExtension = false;
+        let haveFilename = false;
 
         // Input defaulting & sanitation
         if (!path) {
@@ -38470,7 +38531,7 @@ define('xide/utils/StringUtils',[
 
         // Initialize binary arguments. Both the string & integer (constant) input is
         // allowed
-        var OPTS = {
+        const OPTS = {
             'PATHINFO_DIRNAME': 1,
             'PATHINFO_BASENAME': 2,
             'PATHINFO_EXTENSION': 4,
@@ -38496,16 +38557,16 @@ define('xide/utils/StringUtils',[
         }
 
         // Internal Functions
-        var _getExt = function (path) {
-            var str = path + '';
-            var dotP = str.lastIndexOf('.') + 1;
+        const _getExt = function (path) {
+            const str = path + '';
+            const dotP = str.lastIndexOf('.') + 1;
             return !dotP ? false : dotP !== str.length ? str.substr(dotP) : ''
         };
 
         // Gather path infos
         //noinspection JSBitwiseOperatorUsage,JSBitwiseOperatorUsage
         if (options & OPTS.PATHINFO_DIRNAME) {
-            var dirName = path
+            const dirName = path
                 .replace(/\\/g, '/')
                 .replace(/\/[^\/]*\/?$/, ''); // dirname
             tmpArr.dirname = dirName === path ? '.' : dirName
@@ -38596,8 +38657,8 @@ define('xide/utils/StringUtils',[
             .toLowerCase()
             .match(/<[a-z][a-z0-9]*>/g) || [])
             .join(''); // making sure the allowed arg is a string containing only tags in lowercase (<a><b><c>)
-        var tags = /<\/?([a-z][a-z0-9]*)\b[^>]*>/gi,
-            commentsAndPhpTags = /<!--[\s\S]*?-->|<\?(?:php)?[\s\S]*?\?>/gi;
+        const tags = /<\/?([a-z][a-z0-9]*)\b[^>]*>/gi;
+        const commentsAndPhpTags = /<!--[\s\S]*?-->|<\?(?:php)?[\s\S]*?\?>/gi;
         return input.replace(commentsAndPhpTags, '')
             .replace(tags, function ($0, $1) {
                 return allowed.indexOf('<' + $1.toLowerCase() + '>') > -1 ? $0 : '';
@@ -38617,7 +38678,7 @@ define('xide/rpc/JsonRPC',[
 				//not converted to json it self. This  will be done, if
 				//appropriate, at the transport level
 	
-				var d = {
+				const d = {
 					id: this._requestId++,
 					method: method.name,
 					params: data
@@ -38639,7 +38700,7 @@ define('xide/rpc/JsonRPC',[
 					obj = utils.fromJson(obj.responseText);
 				}
 				if(obj.error) {
-					var e = new Error(obj.error.message || obj.error);
+					const e = new Error(obj.error.message || obj.error);
 					e._rpcErrorObject = obj.error;
 					return e;
 				}
@@ -38665,88 +38726,104 @@ define('xide/rpc/JsonRPC',[
 });
 
 define('xide/encoding/SHA1',["./_base"], function(base){
+    const //	change to 16 for unicode.
+    chrsz=8;
 
-	var chrsz=8,	//	change to 16 for unicode.
-		mask=(1<<chrsz)-1;
+    const mask=(1<<chrsz)-1;
 
-	function R(n,c){ return (n<<c)|(n>>>(32-c)); }
-	function FT(t,b,c,d){
+    function R(n,c){ return (n<<c)|(n>>>(32-c)); }
+    function FT(t,b,c,d){
 		if(t<20){ return (b&c)|((~b)&d); }
 		if(t<40){ return b^c^d; }
 		if(t<60){ return (b&c)|(b&d)|(c&d); }
 		return b^c^d;
 	}
-	function KT(t){ return (t<20)?1518500249:(t<40)?1859775393:(t<60)?-1894007588:-899497514; }
+    function KT(t){ return (t<20)?1518500249:(t<40)?1859775393:(t<60)?-1894007588:-899497514; }
 
-	function core(x,len){
-		x[len>>5]|=0x80<<(24-len%32);
-		x[((len+64>>9)<<4)+15]=len;
+    function core(x,len){
+        x[len>>5]|=0x80<<(24-len%32);
+        x[((len+64>>9)<<4)+15]=len;
 
-		var w=new Array(80), a=1732584193, b=-271733879, c=-1732584194, d=271733878, e=-1009589776;
-		for(var i=0; i<x.length; i+=16){
-			var olda=a, oldb=b, oldc=c, oldd=d, olde=e;
-			for(var j=0;j<80;j++){
+        const w=new Array(80);
+        let a=1732584193;
+        let b=-271733879;
+        let c=-1732584194;
+        let d=271733878;
+        let e=-1009589776;
+        for(let i=0; i<x.length; i+=16){
+            const olda=a;
+            const oldb=b;
+            const oldc=c;
+            const oldd=d;
+            const olde=e;
+            for(let j=0;j<80;j++){
 				if(j<16){ w[j]=x[i+j]; }
 				else { w[j]=R(w[j-3]^w[j-8]^w[j-14]^w[j-16],1); }
-				var t = base.addWords(base.addWords(R(a,5),FT(j,b,c,d)),base.addWords(base.addWords(e,w[j]),KT(j)));
+				const t = base.addWords(base.addWords(R(a,5),FT(j,b,c,d)),base.addWords(base.addWords(e,w[j]),KT(j)));
 				e=d; d=c; c=R(b,30); b=a; a=t;
 			}
-			a=base.addWords(a,olda);
-			b=base.addWords(b,oldb);
-			c=base.addWords(c,oldc);
-			d=base.addWords(d,oldd);
-			e=base.addWords(e,olde);
-		}
-		return [a, b, c, d, e];
-	}
+            a=base.addWords(a,olda);
+            b=base.addWords(b,oldb);
+            c=base.addWords(c,oldc);
+            d=base.addWords(d,oldd);
+            e=base.addWords(e,olde);
+        }
+        return [a, b, c, d, e];
+    }
 
-	function hmac(data, key){
-		var wa=toWord(key);
-		if(wa.length>16){ wa=core(wa, key.length*chrsz); }
+    function hmac(data, key){
+        let wa=toWord(key);
+        if(wa.length>16){ wa=core(wa, key.length*chrsz); }
 
-		var ipad=new Array(16), opad=new Array(16);
-		for(var i=0;i<16;i++){
+        const ipad=new Array(16);
+        const opad=new Array(16);
+        for(let i=0;i<16;i++){
 			ipad[i]=wa[i]^0x36363636;
 			opad[i]=wa[i]^0x5c5c5c5c;
 		}
 
-		var hash=core(ipad.concat(toWord(data)),512+data.length*chrsz);
-		return core(opad.concat(hash), 512+160);
-	}
+        const hash=core(ipad.concat(toWord(data)),512+data.length*chrsz);
+        return core(opad.concat(hash), 512+160);
+    }
 
-	function toWord(s){
-		var wa=[];
-		for(var i=0, l=s.length*chrsz; i<l; i+=chrsz){
+    function toWord(s){
+		const wa=[];
+		for(let i=0, l=s.length*chrsz; i<l; i+=chrsz){
 			wa[i>>5]|=(s.charCodeAt(i/chrsz)&mask)<<(32-chrsz-i%32);
 		}
 		return wa;	//	word[]
 	}
 
-	function toHex(wa){
-		//	slightly different than the common one.
-		var h="0123456789abcdef", s=[];
-		for(var i=0, l=wa.length*4; i<l; i++){
+    function toHex(wa){
+        //	slightly different than the common one.
+        const h="0123456789abcdef";
+
+        const s=[];
+        for(let i=0, l=wa.length*4; i<l; i++){
 			s.push(h.charAt((wa[i>>2]>>((3-i%4)*8+4))&0xF), h.charAt((wa[i>>2]>>((3-i%4)*8))&0xF));
 		}
-		return s.join("");	//	string
-	}
+        return s.join("");	//	string
+    }
 
-	function _toString(wa){
-		var s=[];
-		for(var i=0, l=wa.length*32; i<l; i+=chrsz){
+    function _toString(wa){
+		const s=[];
+		for(let i=0, l=wa.length*32; i<l; i+=chrsz){
 			s.push(String.fromCharCode((wa[i>>5]>>>(32-chrsz-i%32))&mask));
 		}
 		return s.join("");	//	string
 	}
 
-	function toBase64(/* word[] */wa){
-		// summary:
-		//		convert an array of words to base64 encoding, should be more efficient
-		//		than using dojox.encoding.base64
-		var p="=", tab="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/", s=[];
-		for(var i=0, l=wa.length*4; i<l; i+=3){
-			var t=(((wa[i>>2]>>8*(3-i%4))&0xFF)<<16)|(((wa[i+1>>2]>>8*(3-(i+1)%4))&0xFF)<<8)|((wa[i+2>>2]>>8*(3-(i+2)%4))&0xFF);
-			for(var j=0; j<4; j++){
+    function toBase64(/* word[] */wa){
+        // summary:
+        //		convert an array of words to base64 encoding, should be more efficient
+        //		than using dojox.encoding.base64
+        const p="=";
+
+        const tab="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+        const s=[];
+        for(let i=0, l=wa.length*4; i<l; i+=3){
+			const t=(((wa[i>>2]>>8*(3-i%4))&0xFF)<<16)|(((wa[i+1>>2]>>8*(3-(i+1)%4))&0xFF)<<8)|((wa[i+2>>2]>>8*(3-(i+2)%4))&0xFF);
+			for(let j=0; j<4; j++){
 				if(i*8+j*6>wa.length*32){
 					s.push(p);
 				} else {
@@ -38754,15 +38831,15 @@ define('xide/encoding/SHA1',["./_base"], function(base){
 				}
 			}
 		}
-		return s.join("");	//	string
-	};
+        return s.join("");	//	string
+    }
 
-	//	public function
-	base.SHA1=function(/* String */data, /* dojox.encoding.digests.outputTypes? */outputType){
+    //	public function
+    base.SHA1=function(/* String */data, /* dojox.encoding.digests.outputTypes? */outputType){
 		// summary:
 		//		Computes the SHA1 digest of the data, and returns the result according to output type.
-		var out=outputType||base.outputTypes.Base64;
-		var wa=core(toWord(data), data.length*chrsz);
+		const out=outputType||base.outputTypes.Base64;
+		const wa=core(toWord(data), data.length*chrsz);
 		switch(out){
 			case base.outputTypes.Raw:{
 				return wa;	//	word[]
@@ -38779,12 +38856,12 @@ define('xide/encoding/SHA1',["./_base"], function(base){
 		}
 	};
 
-	//	make this private, for later use with a generic HMAC calculator.
-	base.SHA1._hmac=function(/* string */data, /* string */key, /* dojox.encoding.digests.outputTypes? */outputType){
+    //	make this private, for later use with a generic HMAC calculator.
+    base.SHA1._hmac=function(/* string */data, /* string */key, /* dojox.encoding.digests.outputTypes? */outputType){
 		// summary:
 		//		computes the digest of data, and returns the result according to type outputType
-		var out=outputType || base.outputTypes.Base64;
-		var wa=hmac(data, key);
+		const out=outputType || base.outputTypes.Base64;
+		const wa=hmac(data, key);
 		switch(out){
 			case base.outputTypes.Raw:{
 				return wa;	//	word[]
@@ -38801,7 +38878,7 @@ define('xide/encoding/SHA1',["./_base"], function(base){
 		}
 	};
 
-	return base.SHA1;
+    return base.SHA1;
 });
 
 define('xide/manager/RPCService',[
@@ -38845,13 +38922,13 @@ define('xide/manager/RPCService',[
                     this.publish(types.EVENTS.STATUS, 'Ok');
                 }
             }
-            var struct = {
+            const struct = {
                 error: err
             };
             this.publish(types.EVENTS.ERROR, struct, this);
         },
         prepareCall: function () {
-            var params = {};
+            let params = {};
             if (this.config && this.config.RPC_PARAMS) {
                 params = utils.mixin(params, this.config.RPC_PARAMS.rpcFixedParams);
                 this.extraArgs = params;
@@ -38864,7 +38941,7 @@ define('xide/manager/RPCService',[
             }
         },
         runDeferred: function (serviceClassIn, method, args, options) {
-            var deferred = new Deferred();
+            const deferred = new Deferred();
             options = options || this.defaultOptions;
 
             //check this method exists
@@ -38876,15 +38953,16 @@ define('xide/manager/RPCService',[
             this.prepareCall();
 
             //variable shortcuts
-            var service = this,
-                serviceClass = this.getServiceClass(serviceClassIn),
-                thiz = this;
+            const service = this;
 
-            var resolve = function (data) {
+            const serviceClass = this.getServiceClass(serviceClassIn);
+            const thiz = this;
+
+            const resolve = function (data) {
                 deferred.resolve(data);
             };
 
-            var promise = service[serviceClass][method](args);
+            const promise = service[serviceClass][method](args);
             promise.then(function (res) {
 
                 //the server has some messages for us
@@ -38924,17 +39002,17 @@ define('xide/manager/RPCService',[
         },
         getParameterMap: function (serviceClass, serviceClassMethod) {
 
-            var services = this._smd.services;
-            var smd = services[serviceClass + '.' + serviceClassMethod];
+            const services = this._smd.services;
+            const smd = services[serviceClass + '.' + serviceClassMethod];
             if (smd && smd.parameters) {
                 return smd.parameters;
             }
             return [];
         },
         _getRequest: function (method, args) {
-            var smd = this._smd;
-            var envDef = Service.envelopeRegistry.match(method.envelope || smd.envelope || "NONE");
-            var parameters = (method.parameters || method.params || []).concat(smd.parameters || []);
+            const smd = this._smd;
+            const envDef = Service.envelopeRegistry.match(method.envelope || smd.envelope || "NONE");
+            const parameters = (method.parameters || method.params || []).concat(smd.parameters || []);
 
             if (envDef.namedParams) {
                 // the serializer is expecting named params
@@ -38943,8 +39021,8 @@ define('xide/manager/RPCService',[
                     args = args[0];
                 } else {
                     // they provided ordered, must convert
-                    var data = {};
-                    var params = method.parameters || method.params;
+                    const data = {};
+                    const params = method.parameters || method.params;
                     for (var i = 0; i < params.length; i++) {
                         if (typeof args[i] != "undefined" || !params[i].optional) {
                             data[params[i].name] = args[i];
@@ -38955,8 +39033,8 @@ define('xide/manager/RPCService',[
                 if (method.strictParameters || smd.strictParameters) {
                     //remove any properties that were not defined
                     for (i in args) {
-                        var found = false;
-                        for (var j = 0; j < parameters.length; j++) {
+                        let found = false;
+                        for (let j = 0; j < parameters.length; j++) {
                             if (parameters[i].name == i) {
                                 found = true;
                             }
@@ -38969,7 +39047,7 @@ define('xide/manager/RPCService',[
                 }
                 // setting default values
                 for (i = 0; i < parameters.length; i++) {
-                    var param = parameters[i];
+                    const param = parameters[i];
                     if (!param.optional && param.name && args != null && !args[param.name]) {
                         if (param["default"]) {
                             args[param.name] = param["default"];
@@ -38993,10 +39071,10 @@ define('xide/manager/RPCService',[
                 args = dojo.mixin(args, this._options);
             }
 
-            var schema = method._schema || method.returns; // serialize with the right schema for the context;
-            var request = envDef.serialize.apply(this, [smd, method, args]);
+            const schema = method._schema || method.returns; // serialize with the right schema for the context;
+            const request = envDef.serialize.apply(this, [smd, method, args]);
             request._envDef = envDef;// save this for executeMethod
-            var contentType = (method.contentType || smd.contentType || request.contentType);
+            const contentType = (method.contentType || smd.contentType || request.contentType);
 
             // this allows to mandate synchronous behavior from elsewhere when necessary, this may need to be changed to be one-shot in FF3 new sync handling model
             return dojo.mixin(request, {
@@ -39016,8 +39094,8 @@ define('xide/manager/RPCService',[
             });
         },
         _executeMethod: function (method) {
-            var args = [];
-            var i;
+            let args = [];
+            let i;
             if (arguments.length == 2 && lang.isArray(arguments[1])) {
                 args = arguments[1];
             } else {
@@ -39025,11 +39103,11 @@ define('xide/manager/RPCService',[
                     args.push(arguments[i]);
                 }
             }
-            var request = this._getRequest(method, args);
+            const request = this._getRequest(method, args);
             if (this.correctTarget) {
                 request.target = this._smd.target;
             }
-            var deferred = Service.transportRegistry.match(request.transport).fire(request);
+            const deferred = Service.transportRegistry.match(request.transport).fire(request);
             deferred.addBoth(function (results) {
                 return request._envDef.deserialize.call(this, results);
             });
@@ -39039,9 +39117,8 @@ define('xide/manager/RPCService',[
             return serviceClassIn || this.serviceClass;
         },
         hasMethod: function (method,serviceClass) {
-
-            var _service = this,
-                _serviceClass = serviceClass || this.getServiceClass();
+            const _service = this;
+            const _serviceClass = serviceClass || this.getServiceClass();
 
             return _service &&
                 _serviceClass &&
@@ -39083,11 +39160,19 @@ define('xide/manager/RPCService',[
             //if (typeof this.window.btoa === 'function') {
             //    return btoa(data);
             //}
-            var b64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
-            var o1, o2, o3, h1, h2, h3, h4, bits, i = 0,
-                ac = 0,
-                enc = '',
-                tmp_arr = [];
+            const b64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
+            let o1;
+            let o2;
+            let o3;
+            let h1;
+            let h2;
+            let h3;
+            let h4;
+            let bits;
+            let i = 0;
+            let ac = 0;
+            let enc = '';
+            const tmp_arr = [];
 
             if (!data) {
                 return data;
@@ -39111,10 +39196,9 @@ define('xide/manager/RPCService',[
 
             enc = tmp_arr.join('');
 
-            var r = data.length % 3;
+            const r = data.length % 3;
 
             return (r ? enc.slice(0, r - 3) : enc) + '==='.slice(r || 3);
-
         },
         callMethodEx: function (serviceClass, method, args, readyCB, errorCB, omitError) {
 
@@ -39122,7 +39206,7 @@ define('xide/manager/RPCService',[
              * Check we the RPC method is in the SMD
              */
 
-            var thiz = this;
+            const thiz = this;
             if (!this[serviceClass] || this[serviceClass][method] == null) {
                 if (omitError === true && errorCB) {
                     errorCB({
@@ -39136,7 +39220,7 @@ define('xide/manager/RPCService',[
             /***
              * Build signature
              */
-            var params = {};
+            let params = {};
 
 
             /**
@@ -39177,7 +39261,7 @@ define('xide/manager/RPCService',[
              * Check we the RPC method is in the SMD
              */
             try {
-                var thiz = this;
+                const thiz = this;
                 if (this[serviceClass][method] == null) {
                     if (omitError === true && errorCB) {
                         debugger;
@@ -39191,7 +39275,7 @@ define('xide/manager/RPCService',[
                 /***
                  * Build signature
                  */
-                var params = {};
+                let params = {};
                 params = lang.mixin(params, this.config.RPC_PARAMS.rpcFixedParams);
                 /**
                  * Mixin mandatory fields
@@ -39212,7 +39296,7 @@ define('xide/manager/RPCService',[
                     }
 
                     if (omitError !== false) {
-                        var struct = {
+                        const struct = {
                             message: 'Ok!'
                         };
                         //thiz.publish(types.EVENTS.STATUS,struct ,this);
@@ -39243,7 +39327,7 @@ define('xide/manager/ManagerBase',[
      * @augments module:xide/mixins/EventedMixin
      * @interface
      */
-    var Module =dcl([Base.dcl,EventedMixin.dcl],{
+    const Module =dcl([Base.dcl,EventedMixin.dcl],{
         declaredClass:"xide.manager.ManagerBase",
         /**
          * @type module:xide/manager/ContextBase
@@ -39261,7 +39345,7 @@ define('xide/manager/ManagerBase',[
          * @returns {*|{name, isDir, parentId, path, beanType, scope}|{name: *, isDir: *, parentId: *, path: *, beanType: *, scope: *}}
          */
         _getText: function (url,options) {
-            var result;
+            let result;
             options = utils.mixin({
                 url: url,
                 sync: true,
@@ -39271,7 +39355,7 @@ define('xide/manager/ManagerBase',[
                 }
             },options);
 
-            var def = xhr.get(options);
+            const def = xhr.get(options);
             if(!options.sync){
                 return def;
             }
@@ -39300,13 +39384,13 @@ define('xide/manager/ServerActionBase',[
     'xide/types',
     'xide/utils'
 ], function (dcl, declare, has, Deferred, RPCService, ManagerBase, types, utils) {
-    var Singleton = null;
+    let Singleton = null;
     /**
      * Class dealing with JSON-RPC-2, used by most xide managers
      * @class module:xide.manager.ServerActionBase
      * @augments {module:xide/manager/ManagerBase}
      */
-    var Implementation = {
+    const Implementation = {
         declaredClass: "xide.manager.ServerActionBase",
         serviceObject: null,
         serviceUrl: null,
@@ -39318,7 +39402,6 @@ define('xide/manager/ServerActionBase',[
             checkErrors: true
         },
         base64_encode: function (data) {
-
             // From: http://phpjs.org/functions
             // +   original by: Tyler Akins (http://rumkin.com)
             // +   improved by: Bayron Guevara
@@ -39334,11 +39417,19 @@ define('xide/manager/ServerActionBase',[
             //if (typeof this.window.btoa === 'function') {
             //    return btoa(data);
             //}
-            var b64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
-            var o1, o2, o3, h1, h2, h3, h4, bits, i = 0,
-                ac = 0,
-                enc = '',
-                tmp_arr = [];
+            const b64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
+            let o1;
+            let o2;
+            let o3;
+            let h1;
+            let h2;
+            let h3;
+            let h4;
+            let bits;
+            let i = 0;
+            let ac = 0;
+            let enc = '';
+            const tmp_arr = [];
 
             if (!data) {
                 return data;
@@ -39362,17 +39453,16 @@ define('xide/manager/ServerActionBase',[
 
             enc = tmp_arr.join('');
 
-            var r = data.length % 3;
+            const r = data.length % 3;
 
             return (r ? enc.slice(0, r - 3) : enc) + '==='.slice(r || 3);
-
         },
         runDeferred: function (serviceClassIn, method, args, options, onError) {
             if (this.serviceObject.__init) {
                 if (this.serviceObject.__init.isResolved()) {
                     return this._runDeferred(serviceClassIn, method, args, options, onError);
                 }
-                var dfd = new Deferred();
+                const dfd = new Deferred();
                 this.serviceObject.__init.then(() => {
                     this._runDeferred(serviceClassIn, method, args, options, onError).then(() => {
                         dfd.resolve(arguments);
@@ -39391,8 +39481,8 @@ define('xide/manager/ServerActionBase',[
          * @returns {Deferred}
          */
         _runDeferred: function (serviceClassIn, method, args, options, onError) {
-            var deferred = new Deferred(),
-                promise;
+            const deferred = new Deferred();
+            let promise;
             options = options || this.defaultOptions;
             //check we the RPC method is in the SMD
             this.check();
@@ -39406,12 +39496,13 @@ define('xide/manager/ServerActionBase',[
             this.prepareCall();
 
             //variable shortcuts
-            var service = this.getService(),
-                serviceClass = this.getServiceClass(serviceClassIn),
-                thiz = this;
+            const service = this.getService();
+
+            const serviceClass = this.getServiceClass(serviceClassIn);
+            const thiz = this;
 
             const resolve = function (data, error) {
-                var dfd = deferred;
+                let dfd = deferred;
                 if (options.returnProm) {
                     dfd = promise;
                 }
@@ -39426,7 +39517,7 @@ define('xide/manager/ServerActionBase',[
             promise = service[serviceClass][method](args);
             promise.then(function (res) {
                 res = res || {};
-                var error = res.error || {};
+                const error = res.error || {};
                 //the server has some messages for us
                 if (options.checkMessages) {
                     if (error && error.code == 3) {
@@ -39476,8 +39567,8 @@ define('xide/manager/ServerActionBase',[
             return serviceClassIn || this.serviceClass;
         },
         hasMethod: function (method, serviceClass) {
-            var _service = this.getService(),
-                _serviceClass = serviceClass || this.getServiceClass();
+            const _service = this.getService();
+            const _serviceClass = serviceClass || this.getServiceClass();
 
             return _service &&
                 _serviceClass &&
@@ -39485,10 +39576,10 @@ define('xide/manager/ServerActionBase',[
                 _service[_serviceClass][method] != null;
         },
         findServiceUrl: function (declaredClass) {
-            var config = window['xFileConfig'];
+            const config = window['xFileConfig'];
             if (config && config.mixins) {
-                for (var i = 0; i < config.mixins.length; i++) {
-                    var obj = config.mixins[i];
+                for (let i = 0; i < config.mixins.length; i++) {
+                    const obj = config.mixins[i];
                     if (obj.declaredClass === declaredClass && obj.mixin && obj.mixin.serviceUrl) {
                         return decodeURIComponent(obj.mixin.serviceUrl);
                     }
@@ -39500,12 +39591,12 @@ define('xide/manager/ServerActionBase',[
             this.check();
         },
         _initService: function () {
-            var thiz = this;
+            const thiz = this;
             if (!has('host-browser')) {
                 return false;
             }
             try {
-                var obj = Singleton;
+                const obj = Singleton;
                 if (this.singleton) {
                     if (obj && obj.serviceObject) {
                         this.serviceObject = obj.serviceObject;
@@ -39521,7 +39612,7 @@ define('xide/manager/ServerActionBase',[
                         console.error('have no service url : ' + this.declaredClass);
                         return;
                     }
-                    var url = decodeURIComponent(this.serviceUrl);
+                    const url = decodeURIComponent(this.serviceUrl);
                     this.serviceObject = new RPCService(decodeURIComponent(this.serviceUrl), this.options);
 
                     this.serviceObject.runDeferred = function () {
@@ -39583,7 +39674,7 @@ define('xide/manager/ServerActionBase',[
             return true;
         },
         prepareCall: function () {
-            var params = {};
+            let params = {};
             //Mixin mandatory fields
             if (this.config && this.config.RPC_PARAMS) {
                 params = utils.mixin(params, this.config.RPC_PARAMS.rpcFixedParams);
@@ -39609,7 +39700,7 @@ define('xide/manager/ServerActionBase',[
             }
             //setup signing in serviceObject
             this.prepareCall();
-            var thiz = this;
+            const thiz = this;
             return this.serviceObject[this.getServiceClass(serviceClassIn)][method](args).then(function (res) {
                 try {
                     if (readyCB) {
@@ -39653,7 +39744,7 @@ define('xide/manager/ServerActionBase',[
             args = args || [
                 []
             ];
-            var serviceClass = this.serviceClass;
+            const serviceClass = this.serviceClass;
             try {
                 var thiz = this;
                 //method not listed in SMD
@@ -39669,7 +39760,7 @@ define('xide/manager/ServerActionBase',[
                 /***
                  * Build signature
                  */
-                var params = {};
+                let params = {};
                 params = utils.mixin(params, this.config.RPC_PARAMS.rpcFixedParams);
                 /**
                  * Mixin mandatory fields
@@ -39695,7 +39786,7 @@ define('xide/manager/ServerActionBase',[
                         return;
                     }
                     if (omitError !== false) {
-                        var struct = {
+                        const struct = {
                             message: 'Ok!'
                         };
                         this.publish(types.EVENTS.STATUS, struct, this);
@@ -39710,7 +39801,7 @@ define('xide/manager/ServerActionBase',[
         }
     };
 
-    var Module = dcl(ManagerBase, Implementation);
+    const Module = dcl(ManagerBase, Implementation);
     Module.declare = declare(null, Implementation);
     Singleton = Module;
     return Module;
@@ -41785,9 +41876,9 @@ define('xfile/manager/FileManager',[
     'xfile/factory/Store',
     "xide/lodash",
     'xdojo/has!electron?xfile/manager/Electron'
-], function (dcl,dojo,ServerActionBase, types, fTypes, utils, SHA1, RPCService, Deferred,has,FileManagerActions,require,StoreFactory,_,Electron) {
+], function (dcl, dojo, ServerActionBase, types, fTypes, utils, SHA1, RPCService, Deferred, has, FileManagerActions, require, StoreFactory, _, Electron) {
     var bases = [ServerActionBase, FileManagerActions];
-    if(has('electronx') && Electron){
+    if (has('electronx') && Electron) {
         bases.push(Electron);
     }
     var debug = false;
@@ -41798,27 +41889,27 @@ define('xfile/manager/FileManager',[
      * @augments {module:xide/mixins/EventedMixin}
      */
     return dcl(bases, {
-        declaredClass:"xfile.manager.FileManager",
+        declaredClass: "xfile.manager.FileManager",
         /**
          * Returns a new name 
          * @param item
          * @param others
          * @returns {*}
          */
-        getNewName:function(item,others){
-            var name = item.name.replace('.meta.json','');
+        getNewName: function (item, others) {
+            var name = item.name.replace('.meta.json', '');
             var found = false;
             var i = 1;
             var newName = null;
-            while (!found){
+            while (!found) {
                 newName = name + '-' + i + '.meta.json';
-                var colliding = _.find(others,{
-                    name:newName
+                var colliding = _.find(others, {
+                    name: newName
                 });
 
-                if(!colliding){
+                if (!colliding) {
                     found = true;
-                }else{
+                } else {
                     i++;
                 }
             }
@@ -41836,23 +41927,23 @@ define('xfile/manager/FileManager',[
         serviceUrl: "index.php",
         serviceClass: 'XCOM_Directory_Service',
         settingsStore: null,
-        stores:[],
-        getStore:function(mount,cache){
-            var store =  _.find(this.stores,{
-                mount:mount
+        stores: [],
+        getStore: function (mount, cache) {
+            var store = _.find(this.stores, {
+                mount: mount
             });
-            if(store){
+            if (store && cache !== false) {
                 return store;
             }
-            return StoreFactory.createFileStore(mount,null,this.config,null,this.ctx);
+            return StoreFactory.createFileStore(mount, null, this.config, null, this.ctx);
         },
-        addStore:function(store){
+        addStore: function (store) {
             this.stores.push(store);
-            store._on('destroy',this.removeStore.bind(this));
+            store._on('destroy', this.removeStore.bind(this));
         },
-        removeStore:function(store){
+        removeStore: function (store) {
             var index = this.stores.indexOf(store);
-            if(index) {
+            if (index) {
                 this.stores.remove(store);
             }
         },
@@ -41865,8 +41956,8 @@ define('xfile/manager/FileManager',[
             var selection = [];
             selection.push(src.path);
 
-            if(has('nserver')){
-                window.open('/files/'+src.mount+'/'+src.path +'?userDirectory='+ encodeURIComponent( this.ctx.getUserDirectory()));
+            if (has('nserver')) {
+                window.open('/files/' + src.mount + '/' + src.path + '?userDirectory=' + encodeURIComponent(this.ctx.getUserDirectory()));
                 return;
             }
 
@@ -41897,11 +41988,11 @@ define('xfile/manager/FileManager',[
                 "attachment": "1",
                 "send": "1"
             });
-            delete  aParams['theme'];
-            delete  aParams['debug'];
-            delete  aParams['width'];
-            delete  aParams['attachment'];
-            delete  aParams['send'];
+            delete aParams['theme'];
+            delete aParams['debug'];
+            delete aParams['width'];
+            delete aParams['attachment'];
+            delete aParams['send'];
             var pStr = dojo.toJson(JSON.stringify(aParams));
             var signature = SHA1._hmac(pStr, this.config.RPC_PARAMS.rpcSignatureToken, 1);
             downloadUrl += '&' + this.config.RPC_PARAMS.rpcUserField + '=' + this.config.RPC_PARAMS.rpcUserValue;
@@ -41914,8 +42005,8 @@ define('xfile/manager/FileManager',[
         //
         //////////////////////////////////////////////////////////////////////////////////////////////////////
         getImageUrl: function (src, preventCache, extraParams) {
-            if(has('nserver')){
-                return ('/files/'+src.mount+'/'+src.path + '?userDirectory='+ encodeURIComponent( this.ctx.getUserDirectory()));
+            if (has('nserver')) {
+                return ('/files/' + src.mount + '/' + src.path + '?userDirectory=' + encodeURIComponent(this.ctx.getUserDirectory()));
             }
             preventCache = location.href.indexOf('noImageCache') != -1 || preventCache === true || src.dirty === true;
             var downloadUrl = decodeURIComponent(this.serviceUrl);
@@ -41945,9 +42036,9 @@ define('xfile/manager/FileManager',[
                 "raw": "html"
             });
             utils.mixin(aParams, extraParams);
-            delete  aParams['theme'];
-            delete  aParams['debug'];
-            delete  aParams['width'];
+            delete aParams['theme'];
+            delete aParams['debug'];
+            delete aParams['width'];
             var pStr = dojo.toJson(aParams);
             var signature = SHA1._hmac(pStr, this.config.RPC_PARAMS.rpcSignatureToken, 1);
             downloadUrl += '&' + this.config.RPC_PARAMS.rpcUserField + '=' + this.config.RPC_PARAMS.rpcUserValue;
@@ -41974,7 +42065,9 @@ define('xfile/manager/FileManager',[
                 item.dfd.reject(item);
             }
             thiz.filesToUpload.remove(item);
-            thiz.publish(eventKeys.ON_UPLOAD_FAILED, {item: item}, thiz);
+            thiz.publish(eventKeys.ON_UPLOAD_FAILED, {
+                item: item
+            }, thiz);
         },
         onFileUploaded: function (item) {
             var thiz = this,
@@ -41990,11 +42083,13 @@ define('xfile/manager/FileManager',[
                     item.dfd.resolve(item);
                 }
                 thiz.filesToUpload.remove(item);
-                thiz.publish(eventKeys.ON_UPLOAD_FINISH, {item: item});
+                thiz.publish(eventKeys.ON_UPLOAD_FINISH, {
+                    item: item
+                });
             }, 500);
         },
         getUploadUrl: function () {
-            if(has('nserver')){
+            if (has('nserver')) {
                 return this.serviceUrl.replace('/smd', '/upload/?');
             }
             var url = '' + decodeURIComponent(this.serviceUrl);
@@ -42110,7 +42205,7 @@ define('xfile/manager/FileManager',[
             var auto_rename = false;
             item.status = 'loading';
             var xhr = this.initXHRUpload(item, (auto_rename ? "auto_rename=true" : ""), item['dstDir'], item['mount']);
-            this.publish(types.EVENTS.ON_UPLOAD_BEGIN,{
+            this.publish(types.EVENTS.ON_UPLOAD_BEGIN, {
                 item: item,
                 name: item.name
             }, this);
@@ -42196,24 +42291,24 @@ define('xfile/manager/FileManager',[
             try {
                 return this.callMethod(types.OPERATION.FIND, [mount, conf], readyCB, true);
             } catch (e) {
-                logError(e,'find');
+                logError(e, 'find');
             }
         },
         getContent: function (mount, path, readyCB, emit) {
-            if(this.getContentE){
-                var res = this.getContentE.apply(this,arguments);
-                if(res){
+            if (this.getContentE) {
+                var res = this.getContentE.apply(this, arguments);
+                if (res) {
                     return res;
                 }
             }
-            if(has('php')) {
+            if (has('php')) {
                 var _path = utils.buildPath(mount, path, false);
                 return this.callMethod(types.OPERATION.GET_CONTENT, [_path, false, false], readyCB, false);
-            }else{
-                return this._getText(require.toUrl(mount).replace('main.js','') + '/' + path,{
+            } else {
+                return this._getText(require.toUrl(mount).replace('main.js', '') + '/' + path, {
                     sync: false,
                     handleAs: 'text'
-                }).then(function(res){
+                }).then(function (res) {
                     try {
                         if (readyCB) {
                             readyCB(res);
@@ -42233,9 +42328,9 @@ define('xfile/manager/FileManager',[
             this.publish(types.EVENTS.ON_STATUS_MESSAGE, {
                 text: "Did save file : " + mount + '://' + path
             });
-            if(this.setContentE){
-                var res = this.setContentE.apply(this,arguments);
-                if(res){
+            if (this.setContentE) {
+                var res = this.setContentE.apply(this, arguments);
+                if (res) {
                     return res;
                 }
             }
@@ -42254,7 +42349,7 @@ define('xfile/manager/FileManager',[
             }
         },
         onErrors: function (res) {},
-        init:function(){
+        init: function () {
             this.stores = [];
             this.filesToUpload = [];
         },
@@ -42380,15 +42475,15 @@ define('xfile/manager/FileManager',[
                 });
                 return dfd;
             } catch (e) {
-                console.error('crash calling method' + e,arguments);
+                console.error('crash calling method' + e, arguments);
                 thiz.onError(e);
-                logError(e,'error ');
+                logError(e, 'error ');
             }
         },
         __initService: function () {
             this.filesToUpload = [];
             if (!this.serviceObject) {
-                if(this.serviceUrl) {
+                if (this.serviceUrl) {
                     this.serviceObject = new RPCService(decodeURIComponent(this.serviceUrl));
                     this.serviceObject.config = this.config;
                 }
@@ -42403,7 +42498,7 @@ define('xide/mixins/VariableMixin',[
     'xide/utils'
 ], function (dcl,declare,utils) {
 
-    var Implementation = {
+    const Implementation = {
         /**
          *
          * @param what
@@ -42416,13 +42511,13 @@ define('xide/mixins/VariableMixin',[
             delimitters = delimitters || this.variableDelimiters || null;
             return utils.replace(what,null,variables,delimitters);
         }
-    }
+    };
 
     /**
      * Mixin to resolve resource variables in strings.
      * Currently stub
      */
-    var Module = declare("xide/mixins/VariableMixin", null, Implementation);
+    const Module = declare("xide/mixins/VariableMixin", null, Implementation);
     Module.dcl = dcl(null,Implementation);
     return Module;
 });

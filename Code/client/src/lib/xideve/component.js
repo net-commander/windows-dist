@@ -83,7 +83,6 @@ define([
             return dfd;
         },
         registerEditors:function(){
-
             var VisualEditor = utils.getObject('xideve/views/VisualEditor'),
                 WidgetManager = utils.getObject('xideve/manager/WidgetManager'),
                 ContextManager = utils.getObject('xideve/manager/ContextManager'),
