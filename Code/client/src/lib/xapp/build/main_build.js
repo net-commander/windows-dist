@@ -45482,10 +45482,10 @@ define('xcf/manager/DriverManager',[
     TreeMemory, ObservableStore, Trackable, has, Driver, ServerActionBase, Reference, Deferred, ReloadMixin,
     EventedMixin, DriverManager_UI, _CIDialog) {
     const bases = [
-                  ServerActionBase,
-                  BeanManager,
-                  DriverManager_Server
-              ];
+        ServerActionBase,
+        BeanManager,
+        DriverManager_Server
+    ];
 
     const debug = false;
     const isServer = !has('host-browser');
@@ -45533,10 +45533,7 @@ define('xcf/manager/DriverManager',[
                 const deviceId = device.path;
                 const instanceId = parentId + '_instances_instance_' + deviceId;
                 const instanceReferenceItem = driverStore.getSync(instanceId);
-
                 instanceReferenceItem && driverStore.removeSync(instanceId);
-
-                //"Audio-Player/VLC.meta.json_instances_instance_Audio-Player/VLC.meta.json"
                 const instanceReference = _.find(driver.instances, {
                     path: instanceId
                 });
@@ -45589,7 +45586,6 @@ define('xcf/manager/DriverManager',[
             const parentId = driver.path;
             const deviceManager = this.ctx.getDeviceManager();
             let instances = store.getSync(parentId + '_instances');
-
             instances = instances || store.putSync({
                 path: parentId + '_instances',
                 name: 'Instances',
@@ -45601,12 +45597,8 @@ define('xcf/manager/DriverManager',[
                 icon: 'fa-folder',
                 children: []
             });
-
-
-
             const deviceName = deviceManager.getMetaValue(device, types.DEVICE_PROPERTY.CF_DEVICE_TITLE);
             const deviceId = device.path;
-
             const instance = store.putSync(new Reference({
                 name: deviceName,
                 isCommand: false,
@@ -45620,9 +45612,7 @@ define('xcf/manager/DriverManager',[
                 icon: device.iconClass,
                 state: device.state
             }));
-
             instances.children.push(instance);
-
             device.addReference(instance, {
                 properties: {
                     "name": true,
@@ -45632,7 +45622,6 @@ define('xcf/manager/DriverManager',[
                 },
                 onDelete: false
             }, true);
-
 
             !driver.instances && (driver.instances = []);
 
@@ -45813,7 +45802,7 @@ define('xcf/manager/DriverManager',[
             if (_driver && _driver.blockScope) {
                 block = _driver.blockScope.getBlockById(parts.block.value);
             }
-            if(wasUnloaded){
+            if (wasUnloaded) {
                 _driver.blockScope.destroy();
                 delete _driver.blockScope;
             }
