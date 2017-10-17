@@ -3,18 +3,8 @@ define([
     "requirejs-dplugins/has",
     "dojo/has",
     'dojo/Deferred'
-    //'xdojo/declare',
-    //"dstore/build/dstorer",
-    //"xide/build/xider",
-    //"xblox/build/xbloxr",
-    //"xwire/build/xwirer",
-    //"xcf/build/xcfr",
-    //"decor/build/decorr",
-    //"dpointer/build/dpointerr"
 ], function (dcl,has,dHas,Deferred) {
-
     if(typeof logError==='undefined'){
-
         window['logError']=function(e,message){
             console.error('error '+message,e);
         }
