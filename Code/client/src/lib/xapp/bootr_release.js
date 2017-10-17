@@ -1,8 +1,8 @@
 define([
     "xapp/build/main_build"
 ], function () {
-
-    console.log('Checkpoint 1.2 build ready');
+    const debug = false;
+    debug && console.log('Checkpoint 1.2 build ready');
     
     if(typeof logError==='undefined'){
         window['logError']=function(e,message){
