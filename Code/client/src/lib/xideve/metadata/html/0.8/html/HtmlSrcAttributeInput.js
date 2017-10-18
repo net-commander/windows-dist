@@ -43,7 +43,7 @@ return declare(SmartInput, {
 			//Update the underlying widget
 			this.updateWidget(srcText, altText);
 		};
-
+		debugger;
 		var container = new BorderContainer({});
 		this._inline = Dialog.showDialog({
 			title: htmlNls.selectSource, 
