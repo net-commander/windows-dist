@@ -247,16 +247,13 @@ define([
 
         },
         _setSourceData: function(data) {
-
             if(this.editor && this.editor.item){
                 var path = this.editor.item.path;
                 path = './' +path.replace('.dhtml','.css');
                 path = './' +path.replace('.html','.css');
                 path = path.replace('././','./');
                 data.styleSheets.push(path);
-
             }
-
             //import to tell everyone
             factory.publish(types.EVENTS.ON_SET_SOURCE_DATA,{
                 data:data,
@@ -332,23 +329,7 @@ define([
             var _global = this.getGlobal();
             var _require = _global.require;
             var _dojo = this.getDojo();
-            /*
-            _require(['dojox/html/_base'],function(html){
-                html.set(containerNode, content, {
-                    executeScripts: true,
-                    onEnd: function() {
-                        console.log('got scripts : ' +this._code);
-                        // save any scripts for later execution
-                        scripts = this._code;
-
-                        //var _res = thiz._processWidgets(containerNode, active, thiz._loadFileStatesCache, scripts);
-                        //dfd.resolve(_res);
-                        this.executeScripts = false;
-                        this.inherited('onEnd', arguments);
-                    }
-                });
-            });
-            */
+            
             _global['require'](['dojo/dom-construct','dojo/dom-style','dojo/dom-attr','dojo/_base/html'], function (_domConstruct,_domStyle,domAttr,_dojoHTML) {});
             // Remove "on*" event attributes from editor DOM.
             // They are already in the model. So, they will not be lost.

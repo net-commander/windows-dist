@@ -24,12 +24,12 @@ define([
     "dojox/html/_base",
     'wcDocker/iframe'
 ], function (require, declare, lang, domConstruct, query, Deferred, all,
-             connect, windowUtils, factory, types,utils,has,
-             Path, Runtime, Workbench, Library,
-             metadata, Preferences,html,iframe) {
+    connect, windowUtils, factory, types, utils, has,
+    Path, Runtime, Workbench, Library,
+    metadata, Preferences, html, iframe) {
 
     var debugContent = false;
-    console.log('has debug : ',has('debug'));
+    // console.log('has debug : ',has('debug'));
     /**
      *
      * @mixin module:xideve/delite/_ContextDojo
@@ -39,7 +39,7 @@ define([
         _didDojo: false,
         _reRequire: /\brequire\s*\(\s*\[\s*([\s\S]*?)\s*\]\s*\)/,
         _reModuleId: /[\w.\/]+/g,
-        _bootstrapModules:'', // dijit-all hangs FF4 and does not seem to be needed.
+        _bootstrapModules: '', // dijit-all hangs FF4 and does not seem to be needed.
         getDojoUrl: function () {
             var loc = Workbench.location();
             if (loc.charAt(loc.length - 1) == '/') {
@@ -96,7 +96,10 @@ define([
                 return folder;
             };
 
-            libs = libs.concat({id: 'widgets', root: getWidgetFolder()});
+            libs = libs.concat({
+                id: 'widgets',
+                root: getWidgetFolder()
+            });
 
             libs.forEach(function (lib) {
                 var id = lib.id;
@@ -105,7 +108,10 @@ define([
                     return;
                 }
                 var root = new Path(lib.root).relativeTo(dojoBase).toString();
-                packages.push({name: lib.id, location: root});
+                packages.push({
+                    name: lib.id,
+                    location: root
+                });
             });
 
             dojo.publish('onGetLoaderPackages', {
@@ -118,10 +124,13 @@ define([
         _setSourcePostLoadRequires: function (source, callback, scope, newHtmlParams) {
             this._bootstrapModules = this.template.bootstrapModules;
             var fileName = source.fileName;
-            
+
             // Remove any SCRIPT elements from model that include dojo.require() syntax
             // With Preview 4, user files must use AMD loader
-            source.find({elementType: 'HTMLElement', tag: 'script'}).forEach(function (scriptTag) {
+            source.find({
+                elementType: 'HTMLElement',
+                tag: 'script'
+            }).forEach(function (scriptTag) {
                 for (var j = 0; j < scriptTag.children.length; j++) {
                     var text = scriptTag.children[j].getText();
                     if (text.indexOf('dojo.require') >= 0) {
@@ -130,11 +139,6 @@ define([
                     }
                 }
             });
-            /*
-            source.find({elementType: 'HTMLElement', tag: 'style'}).forEach(function (styleTag) {
-                console.log('found style element ',styleTag);
-            });
-            */
             var data = this._parse(source);
             if (this.frameNode) {
                 if (!this.getGlobal()) {
@@ -156,8 +160,7 @@ define([
                     // #3839 Theme editor uses dojo from installed lib
                     // pull Dojo path from installed libs, if available
                     dojo.some(Library.getUserLibs(resourceBase.toString()), function (lib) {
-                        if (lib.id === "dojo") {
-                        }
+                        if (lib.id === "dojo") {}
                         return false;
                     }, this);
                     // if still not defined, use app's Dojo (which may cause other issues!)
@@ -214,21 +217,21 @@ define([
 
                 var _require = require;
                 var resourceManager = this.ctx.getResourceManager();
-                var complete = function(template) {
+                var complete = function (template) {
                     if (dojoUrl) {
                         subs.id = thiz._id;
                     }
                     subs.styles = data.styles || "";
-                    subs.SCENE_CSS = fileName.replace('.dhtml','.css');
-                    subs.SCENE_CSS = subs.SCENE_CSS.replace('.html','.css');
-                    utils.mixin(subs,thiz.template.templateVariables);
+                    subs.SCENE_CSS = fileName.replace('.dhtml', '.css');
+                    subs.SCENE_CSS = subs.SCENE_CSS.replace('.html', '.css');
+                    utils.mixin(subs, thiz.template.templateVariables);
                     var VFS_GET_URL = thiz.editor.ctx.getResourceManager().getVariable('VFS_GET_URL');
                     var VFS_URL = resourceManager.getVariable('VFS_URL');
                     var item = thiz.editor.item;
-                    subs['APP_CSS'] = VFS_URL + item.mount + '/' + subs.SCENE_CSS.replace('./','/');
+                    subs['APP_CSS'] = VFS_URL + item.mount + '/' + subs.SCENE_CSS.replace('./', '/');
                     subs.path = item.path;
                     subs.mount = item.mount;
-                    subs['workspace_user'] =  VFS_URL + item.mount + '/';
+                    subs['workspace_user'] = VFS_URL + item.mount + '/';
                     subs.themeCssFiles = '';
                     window["loading" + thiz._id] = function (parser, htmlUtil) {
                         var callbackData = thiz;
@@ -248,7 +251,7 @@ define([
                             delete window["loading" + thiz._id];
 
                             body.id = "myapp";
-                            lang.mixin(body.style,thiz.template.bodyStyle);
+                            lang.mixin(body.style, thiz.template.bodyStyle);
                             body.className = thiz.template.bodyTheme;
                             /*
 
@@ -290,9 +293,9 @@ define([
                             // Also, any array value will be converted to {0: val0, 1: val1, ...}
                             // after swapping back and forth between the design and code views twice. This is not an array!
 
-                            if(data.scripts){
-                                _.each(data.scripts,function(url){
-                                    thiz.addJavaScriptSrc(url,false,null,true);
+                            if (data.scripts) {
+                                _.each(data.scripts, function (url) {
+                                    thiz.addJavaScriptSrc(url, false, null, true);
                                 });
                             }
                             /*
@@ -325,7 +328,7 @@ define([
                         debugContent && console.log('write doc content' + content);
                         doc.write(content);
                         doc.close();
-                    }catch(e){
+                    } catch (e) {
                         console.error('error doc');
                     }
 
@@ -348,17 +351,18 @@ define([
                     }));
                     //window["loading" + thiz._id]();
                 };
-                this.ctx.getWidgetManager()._getText(has('debug') ? _require.toUrl("xideve/delite/newfile.template.html") : _require.toUrl("xideve/delite/newfile.template.release.html"),{sync:false}).then(function(template){
+                this.ctx.getWidgetManager()._getText(has('debug') ? _require.toUrl("xideve/delite/newfile.template.html") : _require.toUrl("xideve/delite/newfile.template.release.html"), {
+                    sync: false
+                }).then(function (template) {
                     complete(template);
                 });
             }
         },
         //FIXME: private/protected?
-        getLibraryBase: function(id, version){
-            return Library.getLibRoot(id,version, this.getBase());
+        getLibraryBase: function (id, version) {
+            return Library.getLibRoot(id, version, this.getBase());
         },
         loadRequires: function (type, updateSrc, doUpdateModelDojoRequires, skipDomUpdate) {
-
             // this method is used heavily in RebuildPage.js, so please watch out when changing  API!
             var requires = metadata.query(type, "require");
 
@@ -375,14 +379,12 @@ define([
                     try {
                         //updateSrc
                         return context.addJavaScriptSrc(_getResourcePath(libId, src), updateSrc, src, skipDomUpdate);
-                    }catch(e){
-                        console.error('very bad ',e);
+                    } catch (e) {
+                        console.error('very bad ', e);
                     }
                 },
                 _getResourcePath = function (libId, src) {
                     return src;
-                    //xmaqhack:
-                    /*return libs[libId].append(src).relativeTo(context.getPath(), true).toString();*/
                 };
 
             var loadLibrary = function (libId, lib) {
@@ -397,7 +399,7 @@ define([
                 var ver = metadata.getLibrary(libId).version || lib.version;
 
                 return context.getLibraryBase(libId, ver).then(function (root) {
-                    if (root == null /*empty string OK here, but null isn't. */) {
+                    if (root == null /*empty string OK here, but null isn't. */ ) {
                         console.error("No library found for name = '" + libId + "' version = '" + ver + "'");
                         d.reject();
                         return d;
@@ -456,8 +458,18 @@ define([
                                 console.error("Unknown javascript-module format");
                             }
                             if (r.src) {
+                                if (r.custom === true) {
+                                    const loc = require.toUrl('custom') + '/' + r.$library;
+                                    this.getGlobal().require.config({
+                                        packages: [{
+                                            name: r.$library,
+                                            location: loc
+                                        }]
+                                    });
+                                }
+                                var update = updateSrc || doUpdateModelDojoRequires;
                                 requirePromises.push(
-                                    this.addJavaScriptModule(r.src, updateSrc || doUpdateModelDojoRequires, skipDomUpdate));
+                                    this.addJavaScriptModule(r.src, true, skipDomUpdate));
                             } else {
                                 console.error("Inline 'javascript-module' not handled src=" + r.src);
                             }
@@ -482,7 +494,7 @@ define([
 
                         default:
                             console.error("Unhandled metadata resource type='" + r.type +
-                            "' for widget '" + type + "'");
+                                "' for widget '" + type + "'");
                     }
                     return true;
                 }, this);
@@ -645,30 +657,30 @@ define([
                 }
             }
         },
-        _continueLoading: function(data, callback, callbackData, scope) {
+        _continueLoading: function (data, callback, callbackData, scope) {
             var promise, failureInfo = {};
             try {
                 if (callbackData instanceof Error) {
                     throw callbackData;
                 }
 
-                promise = this._setSourceData(data).then(this.onload.bind(this), function(error) {
+                promise = this._setSourceData(data).then(this.onload.bind(this), function (error) {
                     failureInfo.errorMessage = "Unable to parse HTML source.  See console for error.  Please switch to \"Display Source\" mode and correct the error."; // FIXME: i18n
                     console.error(error.stack || error.message);
                 });
-            } catch(e) {
+            } catch (e) {
                 failureInfo = e;
                 failureInfo = new Error(e.message, e.fileName, e.lineNumber);
                 lang.mixin(failureInfo, e);
-                logError(e,'error loading document');
+                logError(e, 'error loading document');
                 // recreate the Error since we crossed frames
-        //			failureInfo = new Error(e.message, e.fileName, e.lineNumber);
-//			lang.mixin(failureInfo, e);
+                //			failureInfo = new Error(e.message, e.fileName, e.lineNumber);
+                //			lang.mixin(failureInfo, e);
 
             } finally {
                 if (callback) {
                     if (promise) {
-                        promise.then(function(){
+                        promise.then(function () {
                             callback.call((scope || this), failureInfo);
                         }.bind(this));
                     } else {

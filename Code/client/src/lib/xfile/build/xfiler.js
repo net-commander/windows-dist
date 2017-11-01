@@ -1963,6 +1963,793 @@ define('xide/utils',[
         declaredClass:"xide.utils"
     });
 });
+/** @module xide/lodash **/
+define('xide/lodash',[],function(app){
+    /**
+     * temp. wanna be shim for lodash til dojo-2/loader lands here
+     */
+    if(typeof _ !=="undefined"){
+        return _;
+    }else if(app && app._){
+        return app._;
+    }else{
+        console.error('error loading lodash',global['_']);
+    }
+});
+
+define('xide/utils/ObjectUtils',[
+    'xide/utils',
+    'require',
+    "dojo/Deferred",
+    'xide/lodash'
+], function (utils, require, Deferred, lodash) {
+    const _debug = false;
+    "use strict";
+
+    utils.delegate = (function () {
+        // boodman/crockford delegation w/ cornford optimization
+        function TMP() {
+        }
+
+        return function (obj, props) {
+            TMP.prototype = obj;
+            const tmp = new TMP();
+            TMP.prototype = null;
+            if (props) {
+                lang._mixin(tmp, props);
+            }
+            return tmp; // Object
+        };
+    })();
+
+    /////////////////////////////////////////////////////////////////////////////////////////////
+    //
+    //  Loader utils
+    //
+    //////////////////////////////////////////////////////////////////////////////////////////////
+    utils.debounce = function (who, methodName, _function, delay, options, now, args) {
+        let _place = who[methodName + '_debounced'];
+        if (!_place) {
+            _place = who[methodName + '_debounced'] = lodash.debounce(_function, delay, options);
+        }
+        if (now === true) {
+            if (!who[methodName + '_debouncedFirst']) {
+                who[methodName + '_debouncedFirst'] = true;
+                _function.apply(who, args);
+            }
+        }
+        return _place();
+    };
+
+
+    utils.pluck = function (items, prop) {
+        return lodash.map(items, prop);
+    };
+
+    /**
+     * Trigger downloadable file
+     * @param filename
+     * @param text
+     */
+    utils.download = function (filename, text) {
+        const element = document.createElement('a');
+        text = lodash.isString(text) ? text : JSON.stringify(text, null, 2);
+        element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
+        element.setAttribute('download', filename);
+        element.style.display = 'none';
+        document.body.appendChild(element);
+        element.click();
+        document.body.removeChild(element);
+    };
+
+    /**
+     * Ask require registry at this path
+     * @param mixed
+     * @returns {*}
+     */
+    utils.hasObject = function (mixed) {
+        let result = null;
+        const _re = require;
+        try {
+            result = _re(mixed);
+        } catch (e) {
+            console.error('error in utils.hasObject ', e);
+        }
+        return result;
+    };
+    /**
+     * Safe require.toUrl
+     * @param mid {string}
+     */
+    utils.toUrl = function (mid) {
+        const _require = require;
+        //make sure cache bust is off otherwise it appends ?time
+        _require({
+            cacheBust: null,
+            waitSeconds: 5
+        });
+        return _require.toUrl(mid);
+    }
+    /**
+     * Returns a module by module path
+     * @param mixed {String|Object}
+     * @param _default {Object} default object
+     * @returns {Object|Promise}
+     */
+    utils.getObject = function (mixed, _default) {
+        let result = null;
+        if (utils.isString(mixed)) {
+            const _re = require;
+            try {
+                result = _re(mixed);
+            } catch (e) {
+                _debug && console.warn('utils.getObject::require failed for ' + mixed);
+            }
+            //not a loaded module yet
+            try {
+                if (!result) {
+                    const deferred = new Deferred();
+                    //try loader
+                    result = _re([
+                        mixed
+                    ], function (module) {
+                        deferred.resolve(module);
+                    });
+                    return deferred.promise;
+                }
+            } catch (e) {
+                _debug && console.error('error in requiring ' + mixed, e);
+            }
+            return result;
+
+        } else if (utils.isObject(mixed)) {
+            return mixed;//reflect
+        }
+        return result !== null ? result : _default;
+    };
+
+
+    /////////////////////////////////////////////////////////////////////////////////////////////
+    //
+    //  True object utils
+    //
+    //////////////////////////////////////////////////////////////////////////////////////////////
+    utils.toArray = function (obj) {
+        const result = [];
+        for (const c in obj) {
+            result.push({
+                name: c,
+                value: obj[c]
+            });
+        }
+        return result;
+    };
+    /**
+     * Array to object conversion
+     * @param arr
+     * @returns {Object}
+     */
+    utils.toObject = function (arr, lodash) {
+        if (!arr) {
+            return {};
+        }
+        if (lodash !== false) {
+            return lodash.object(lodash.map(arr, lodash.values));
+        } else {
+            //CI related back compat hack
+            if (utils.isObject(arr) && arr[0]) {
+                return arr[0];
+            }
+
+            const rv = {};
+            for (let i = 0; i < arr.length; ++i) {
+                rv[i] = arr[i];
+            }
+            return rv;
+        }
+    };
+
+    /**
+     * Gets an object property by string, eg: utils.byString(someObj, 'part3[0].name');
+     * @deprecated, see objectAtPath below
+     * @param o {Object}    : the object
+     * @param s {String}    : the path within the object
+     * @param defaultValue {Object|String|Number} : an optional default value
+     * @returns {*}
+     */
+    utils.byString = function (o, s, defaultValue) {
+        s = s.replace(/\[(\w+)\]/g, '.$1'); // convert indexes to properties
+        s = s.replace(/^\./, '');           // strip a leading dot
+        const a = s.split('.');
+        while (a.length) {
+            const n = a.shift();
+            if (n in o) {
+                o = o[n];
+            } else {
+                return;
+            }
+        }
+        return o;
+    };
+
+    /////////////////////////////////////////////////////////////////////////////////////////////
+    //
+    //  Object path
+    //
+    //////////////////////////////////////////////////////////////////////////////////////////////
+    /**
+     * Internals
+     */
+
+    //cache
+    const toStr = Object.prototype.toString;
+
+    const _hasOwnProperty = Object.prototype.hasOwnProperty;
+
+    /**
+     * @private
+     * @param type
+     * @returns {*}
+     */
+    function toString(type) {
+        return toStr.call(type);
+    }
+
+    /**
+     * @private
+     * @param key
+     * @returns {*}
+     */
+    function getKey(key) {
+        const intKey = parseInt(key, 10);
+        if (intKey.toString() === key) {
+            return intKey;
+        }
+        return key;
+    }
+
+    /**
+     * internal set value at path in object
+     * @private
+     * @param obj
+     * @param path
+     * @param value
+     * @param doNotReplace
+     * @returns {*}
+     */
+    function set(obj, path, value, doNotReplace) {
+        if (lodash.isNumber(path)) {
+            path = [path];
+        }
+        if (lodash.isEmpty(path)) {
+            return obj;
+        }
+        if (lodash.isString(path)) {
+            return set(obj, path.split('.').map(getKey), value, doNotReplace);
+        }
+        const currentPath = path[0];
+
+        if (path.length === 1) {
+            const oldVal = obj[currentPath];
+            if (oldVal === void 0 || !doNotReplace) {
+                obj[currentPath] = value;
+            }
+            return oldVal;
+        }
+
+        if (obj[currentPath] === void 0) {
+            //check if we assume an array
+            if (lodash.isNumber(path[1])) {
+                obj[currentPath] = [];
+            } else {
+                obj[currentPath] = {};
+            }
+        }
+        return set(obj[currentPath], path.slice(1), value, doNotReplace);
+    }
+
+    /**
+     * deletes an property by a path
+     * @param obj
+     * @param path
+     * @returns {*}
+     */
+    function del(obj, path) {
+        if (lodash.isNumber(path)) {
+            path = [path];
+        }
+        if (lodash.isEmpty(obj)) {
+            return void 0;
+        }
+
+        if (lodash.isEmpty(path)) {
+            return obj;
+        }
+        if (lodash.isString(path)) {
+            return del(obj, path.split('.'));
+        }
+
+        const currentPath = getKey(path[0]);
+        const oldVal = obj[currentPath];
+
+        if (path.length === 1) {
+            if (oldVal !== void 0) {
+                if (lodash.isArray(obj)) {
+                    obj.splice(currentPath, 1);
+                } else {
+                    delete obj[currentPath];
+                }
+            }
+        } else {
+            if (obj[currentPath] !== void 0) {
+                return del(obj[currentPath], path.slice(1));
+            }
+        }
+        return obj;
+    }
+
+    /**
+     * Private helper class
+     * @private
+     * @type {{}}
+     */
+    const objectPath = {};
+
+    objectPath.has = function (obj, path) {
+        if (lodash.isEmpty(obj)) {
+            return false;
+        }
+        if (lodash.isNumber(path)) {
+            path = [path];
+        } else if (lodash.isString(path)) {
+            path = path.split('.');
+        }
+
+        if (lodash.isEmpty(path) || path.length === 0) {
+            return false;
+        }
+
+        for (let i = 0; i < path.length; i++) {
+            const j = path[i];
+            if ((lodash.isObject(obj) || lodash.isArray(obj)) && _hasOwnProperty.call(obj, j)) {
+                obj = obj[j];
+            } else {
+                return false;
+            }
+        }
+
+        return true;
+    };
+
+    /**
+     * Define private public 'ensure exists'
+     * @param obj
+     * @param path
+     * @param value
+     * @returns {*}
+     */
+    objectPath.ensureExists = function (obj, path, value) {
+        return set(obj, path, value, true);
+    };
+
+    /**
+     * Define private public 'set'
+     * @param obj
+     * @param path
+     * @param value
+     * @param doNotReplace
+     * @returns {*}
+     */
+    objectPath.set = function (obj, path, value, doNotReplace) {
+        return set(obj, path, value, doNotReplace);
+    };
+
+    /**
+     Define private public 'insert'
+     * @param obj
+     * @param path
+     * @param value
+     * @param at
+     */
+    objectPath.insert = function (obj, path, value, at) {
+        let arr = objectPath.get(obj, path);
+        at = ~~at;
+        if (!lodash.isArray(arr)) {
+            arr = [];
+            objectPath.set(obj, path, arr);
+        }
+        arr.splice(at, 0, value);
+    };
+
+    /**
+     * Define private public 'empty'
+     * @param obj
+     * @param path
+     * @returns {*}
+     */
+    objectPath.empty = function (obj, path) {
+        if (lodash.isEmpty(path)) {
+            return obj;
+        }
+        if (lodash.isEmpty(obj)) {
+            return void 0;
+        }
+
+        let value;
+        let i;
+        if (!(value = objectPath.get(obj, path))) {
+            return obj;
+        }
+
+        if (lodash.isString(value)) {
+            return objectPath.set(obj, path, '');
+        } else if (lodash.isBoolean(value)) {
+            return objectPath.set(obj, path, false);
+        } else if (lodash.isNumber(value)) {
+            return objectPath.set(obj, path, 0);
+        } else if (lodash.isArray(value)) {
+            value.length = 0;
+        } else if (lodash.isObject(value)) {
+            for (i in value) {
+                if (_hasOwnProperty.call(value, i)) {
+                    delete value[i];
+                }
+            }
+        } else {
+            return objectPath.set(obj, path, null);
+        }
+    };
+
+    /**
+     * Define private public 'push'
+     * @param obj
+     * @param path
+     */
+    objectPath.push = function (obj, path /*, values */) {
+        let arr = objectPath.get(obj, path);
+        if (!lodash.isArray(arr)) {
+            arr = [];
+            objectPath.set(obj, path, arr);
+        }
+        arr.push.apply(arr, Array.prototype.slice.call(arguments, 2));
+    };
+
+    /**
+     * Define private public 'coalesce'
+     * @param obj
+     * @param paths
+     * @param defaultValue
+     * @returns {*}
+     */
+    objectPath.coalesce = function (obj, paths, defaultValue) {
+        let value;
+        for (let i = 0, len = paths.length; i < len; i++) {
+            if ((value = objectPath.get(obj, paths[i])) !== void 0) {
+                return value;
+            }
+        }
+        return defaultValue;
+    };
+
+    /**
+     * Define private public 'get'
+     * @param obj
+     * @param path
+     * @param defaultValue
+     * @returns {*}
+     */
+    objectPath.get = function (obj, path, defaultValue) {
+        if (lodash.isNumber(path)) {
+            path = [path];
+        }
+        if (lodash.isEmpty(path)) {
+            return obj;
+        }
+        if (lodash.isEmpty(obj)) {
+            //lodash doesnt seem to work with html nodes
+            if (obj && obj.innerHTML === null) {
+                return defaultValue;
+            }
+        }
+        if (lodash.isString(path)) {
+            return objectPath.get(obj, path.split('.'), defaultValue);
+        }
+        const currentPath = getKey(path[0]);
+        if (path.length === 1) {
+            if (obj && obj[currentPath] === void 0) {
+                return defaultValue;
+            }
+            if (obj) {
+                return obj[currentPath];
+            }
+        }
+        if (!obj) {
+            return defaultValue;
+        }
+        return objectPath.get(obj[currentPath], path.slice(1), defaultValue);
+    };
+
+    /**
+     * Define private public 'del'
+     * @param obj
+     * @param path
+     * @returns {*}
+     */
+    objectPath.del = function (obj, path) {
+        return del(obj, path);
+    };
+    /////////////////////////////////////////////////////////////////////////////////////////////
+    //
+    //  Object path public xide/utils mixin
+    //
+    //////////////////////////////////////////////////////////////////////////////////////////////
+    /**
+     *  Returns a value by a give object path
+     *
+     *  //works also with arrays
+     *    objectPath.get(obj, "a.c.1");  //returns "f"
+     *    objectPath.get(obj, ["a","c","1"]);  //returns "f"
+     *
+     * @param obj {object}
+     * @param path {string}
+     * @param _default {object|null}
+     * @returns {*}
+     */
+    utils.getAt = function (obj, path, _default) {
+        return objectPath.get(obj, path, _default);
+    };
+
+    /**
+     * Sets a value in an object/array at a given path.
+     * @example
+     *
+     * utils.setAt(obj, "a.h", "m"); // or utils.setAt(obj, ["a","h"], "m");
+     *
+     * //set will create intermediate object/arrays
+     * objectPath.set(obj, "a.j.0.f", "m");
+     *
+     * @param obj{Object|Array}
+     * @param path {string}
+     * @param value {mixed}
+     * @returns {Object|Array}
+     */
+    utils.setAt = function (obj, path, value) {
+        return objectPath.set(obj, path, value);
+    };
+
+    /**
+     * Returns there is anything at given path within an object/array.
+     * @param obj
+     * @param path
+     */
+    utils.hasAt = function (obj, path) {
+        return objectPath.has(obj, path);
+    };
+
+    /**
+     * Ensures at given path, otherwise _default will be placed
+     * @param obj
+     * @param path
+     * @returns {*}
+     */
+    utils.ensureAt = function (obj, path, _default) {
+        return objectPath.ensureExists(obj, path, _default);
+    };
+    /**
+     * Deletes at given path
+     * @param obj
+     * @param path
+     * @returns {*}
+     */
+    utils.deleteAt = function (obj, path) {
+        return objectPath.del(obj, path);
+    };
+
+    /**
+     *
+     * @param to
+     * @param from
+     * @returns {*}
+     */
+    utils.merge = function (to, from) {
+        for (const n in from) {
+            if (typeof to[n] != 'object') {
+                to[n] = from[n];
+            } else if (typeof from[n] == 'object') {
+                to[n] = utils.merge(to[n], from[n]);
+            }
+        }
+
+        return to;
+    };
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //
+    //  Dojo's most wanted
+    //
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    /**
+     * Clones objects (including DOM nodes) and all children.
+     * Warning: do not clone cyclic structures.
+     * @param src {*} The object to clone.
+     * @returns {*}
+     */
+    utils.clone = function (src) {
+        if (!src || typeof src != "object" || utils.isFunction(src)) {
+            // null, undefined, any non-object, or function
+            return src; // anything
+        }
+        if (src.nodeType && "cloneNode" in src) {
+            // DOM Node
+            return src.cloneNode(true); // Node
+        }
+        if (src instanceof Date) {
+            // Date
+            return new Date(src.getTime()); // Date
+        }
+        if (src instanceof RegExp) {
+            // RegExp
+            return new RegExp(src); // RegExp
+        }
+        let r;
+        let i;
+        let l;
+        if (utils.isArray(src)) {
+            // array
+            r = [];
+            for (i = 0, l = src.length; i < l; ++i) {
+                if (i in src) {
+                    r.push(utils.clone(src[i]));
+                }
+            }
+            // we don't clone functions for performance reasons
+            // }else if(d.isFunction(src)){
+            // // function
+            // r = function(){ return src.apply(this, arguments); };
+        } else {
+            // generic objects
+            r = src.constructor ? new src.constructor() : {};
+        }
+        return utils._mixin(r, src, utils.clone);
+    };
+
+    /**
+     * Copies/adds all properties of source to dest; returns dest.
+     * @description All properties, including functions (sometimes termed "methods"), excluding any non-standard extensions
+     * found in Object.prototype, are copied/added to dest. Copying/adding each particular property is
+     * delegated to copyFunc (if any); copyFunc defaults to the Javascript assignment operator if not provided.
+     * Notice that by default, _mixin executes a so-called "shallow copy" and aggregate types are copied/added by reference.
+     * @param dest {object} The object to which to copy/add all properties contained in source.
+     * @param source {object} The object from which to draw all properties to copy into dest.
+     * @param copyFunc {function} The process used to copy/add a property in source; defaults to the Javascript assignment operator.
+     * @returns {object} dest, as modified
+     * @private
+     */
+    utils._mixin = function (dest, source, copyFunc) {
+        let name;
+        let s;
+        let i;
+        const empty = {};
+        for (name in source) {
+            // the (!(name in empty) || empty[name] !== s) condition avoids copying properties in "source"
+            // inherited from Object.prototype.	 For example, if dest has a custom toString() method,
+            // don't overwrite it with the toString() method that source inherited from Object.prototype
+            s = source[name];
+            if (!(name in dest) || (dest[name] !== s && (!(name in empty) || empty[name] !== s))) {
+                dest[name] = copyFunc ? copyFunc(s) : s;
+            }
+        }
+
+        return dest; // Object
+    };
+    /**
+     * Copies/adds all properties of one or more sources to dest; returns dest.
+     * @param dest {object} The object to which to copy/add all properties contained in source. If dest is falsy, then
+     * a new object is manufactured before copying/adding properties begins.
+     *
+     * @param sources One of more objects from which to draw all properties to copy into dest. sources are processed
+     * left-to-right and if more than one of these objects contain the same property name, the right-most
+     * value "wins".
+     *
+     * @returns {object} dest, as modified
+     *
+     * @example
+     * make a shallow copy of an object
+     * var copy = utils.mixin({}, source);
+     *
+     * @example
+     *
+     * many class constructors often take an object which specifies
+     *        values to be configured on the object. In this case, it is
+     *        often simplest to call `lang.mixin` on the `this` object:
+     *        declare("acme.Base", null, {
+    *			constructor: function(properties){
+    *				//property configuration:
+    *				lang.mixin(this, properties);
+    *				console.log(this.quip);
+    *			},
+    *			quip: "I wasn't born yesterday, you know - I've seen movies.",
+    *			* ...
+    *		});
+     *
+     *        //create an instance of the class and configure it
+     *        var b = new acme.Base({quip: "That's what it does!" });
+     *
+     */
+    utils.mixin = function (dest, sources) {
+        if (sources) {
+            if (!dest) {
+                dest = {};
+            }
+            const l = arguments.length;
+            for (let i = 1; i < l; i++) {
+                utils._mixin(dest, arguments[i]);
+            }
+            return dest; // Object
+        }
+        return dest;
+    };
+
+    /**
+     * Clone object keys
+     * @param defaults
+     * @returns {{}}
+     */
+    utils.cloneKeys = function (defaults, skipEmpty) {
+        const result = {};
+        for (const _class in defaults) {
+            if (skipEmpty === true && !(_class in defaults)) {
+                continue;
+            }
+            result[_class] = defaults[_class];
+        }
+        return result;
+    };
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //
+    //  STD
+    /**
+     *
+     * @param what
+     * @returns {*}
+     */
+    utils.isArray = function (what) {
+        return lodash.isArray(what);
+    };
+    /**
+     *
+     * @param what
+     * @returns {*}
+     */
+    utils.isObject = function (what) {
+        return lodash.isObject(what);
+    };
+    /**
+     *
+     * @param what
+     * @returns {*}
+     */
+    utils.isString = function (what) {
+        return lodash.isString(what);
+    };
+    /**
+     *
+     * @param what
+     * @returns {*}
+     */
+    utils.isNumber = function (what) {
+        return lodash.isNumber(what);
+    };
+    /**
+     * Return true if it is a Function
+     * @param it
+     * @returns {*}
+     */
+    utils.isFunction = function (it) {
+        return lodash.isFunction(it);
+    };
+    return utils;
+});
 /** @module xide/types
  *  @description All the package's constants and enums in C style structures.
  */
@@ -1971,8 +2758,9 @@ define('xide/types/Types',[
     'xide/types',
     'dojo/_base/json',
     'dojo/_base/kernel',
-    'xide/utils'
-], function (lang, types, json, dojo,utils) {
+    'xide/utils',
+    'xide/utils/ObjectUtils'
+], function (lang, types, json, dojo, utils) {
     /**
      * @TODO:
      * - apply xide/registry for types
@@ -2066,15 +2854,15 @@ define('xide/types/Types',[
         return null;
     };
 
-    types.registerCICallbacks = function (type,callbacks) {
+    types.registerCICallbacks = function (type, callbacks) {
         if (!types['CICallbacks'][type]) {
             types['CICallbacks'][type] = {}
         }
-        utils.mixin(types['CICallbacks'][type],callbacks);
+        utils.mixin(types['CICallbacks'][type], callbacks);
         return null;
     };
     types.getCICallbacks = function (type) {
-        if (types['CICallbacks'][type]){
+        if (types['CICallbacks'][type]) {
             return types['CICallbacks'][type];
         }
         return null;
@@ -2087,7 +2875,7 @@ define('xide/types/Types',[
         ACTIONS: 'ACTIONS',
         CONTEXT_MENU: 'CONTEXT_MENU'
     };
-    
+
     types.VIEW_FEATURE = {
         KEYBOARD_NAVIGATION: 'KEYBOARD_NAVIGATION',
         KEYBOARD_SELECT: 'KEYBOARD_SELECT',
@@ -2095,7 +2883,7 @@ define('xide/types/Types',[
         ACTIONS: 'ACTIONS',
         CONTEXT_MENU: 'CONTEXT_MENU'
     };
-    
+
     types.KEYBOARD_PROFILE = {
         DEFAULT: {
             prevent_default: true,
@@ -2528,27 +3316,27 @@ define('xide/types/Types',[
          * Bean type 'file' is handled by the xfile package
          * @constant
          */
-        FILE: 'BTFILE',         //file object
+        FILE: 'BTFILE', //file object
         /**
          * Bean type 'widget' is handled by the xide/ve and davinci package
          * @constant
          */
-        WIDGET: 'WIDGET',       //ui designer
+        WIDGET: 'WIDGET', //ui designer
         /**
          * Bean type 'block' is handled by the xblox package
          * @constant
          */
-        BLOCK: 'BLOCK',         //xblox
+        BLOCK: 'BLOCK', //xblox
         /**
          * Bean type 'text' is used for text editors
          * @constant
          */
-        TEXT: 'TEXT',           //xace
+        TEXT: 'TEXT', //xace
         /**
          * Bean type 'xexpression' is used for user expressions
          * @constant
          */
-        EXPRESSION: 'EXPRESSION'       //xexpression
+        EXPRESSION: 'EXPRESSION' //xexpression
     };
 
     /**
@@ -2624,9 +3412,9 @@ define('xide/types/Types',[
         /**
          * generic
          */
-        ERROR: 'onError',//xhr
-        STATUS: 'onStatus',//xhr
-        ON_CREATED_MANAGER: 'onCreatedManager',//context
+        ERROR: 'onError', //xhr
+        STATUS: 'onStatus', //xhr
+        ON_CREATED_MANAGER: 'onCreatedManager', //context
 
         /**
          * item events, to be renoved
@@ -2662,8 +3450,8 @@ define('xide/types/Types',[
         ON_MODULE_UPDATED: 'onModuleUpdated',
 
 
-        ON_DID_OPEN_ITEM: 'onDidOpenItem',//remove
-        ON_DID_RENDER_COLLECTION: 'onDidRenderCollection',//move
+        ON_DID_OPEN_ITEM: 'onDidOpenItem', //remove
+        ON_DID_RENDER_COLLECTION: 'onDidRenderCollection', //move
 
         ON_PLUGIN_LOADED: 'onPluginLoaded',
         ON_PLUGIN_READY: 'onPluginReady',
@@ -2672,11 +3460,11 @@ define('xide/types/Types',[
         /**
          * editors
          */
-        ON_CREATE_EDITOR_BEGIN: 'onCreateEditorBegin',//move to xedit
-        ON_CREATE_EDITOR_END: 'onCreateEditorEnd',//move to xedit
-        REGISTER_EDITOR: 'registerEditor',//move to xedit
-        ON_EXPRESSION_EDITOR_ADD_FUNCTIONS: 'onExpressionEditorAddFunctions',//move to xedit
-        ON_ACE_READY: 'onACEReady',//remove
+        ON_CREATE_EDITOR_BEGIN: 'onCreateEditorBegin', //move to xedit
+        ON_CREATE_EDITOR_END: 'onCreateEditorEnd', //move to xedit
+        REGISTER_EDITOR: 'registerEditor', //move to xedit
+        ON_EXPRESSION_EDITOR_ADD_FUNCTIONS: 'onExpressionEditorAddFunctions', //move to xedit
+        ON_ACE_READY: 'onACEReady', //remove
 
         /**
          * Files
@@ -2740,13 +3528,13 @@ define('xide/types/Types',[
         ON_REMOVE_CONTAINER: 'onRemoveContainer',
         ON_CONTAINER_REPLACED: 'onContainerReplaced',
         ON_CONTAINER_SPLIT: 'onContainerSplit',
-        ON_RENDER_WELCOME_GRID_GROUP:'onRenderWelcomeGridGroup',
+        ON_RENDER_WELCOME_GRID_GROUP: 'onRenderWelcomeGridGroup',
 
-        ON_DND_SOURCE_OVER:'/dnd/source/over',
-        ON_DND_START:'/dnd/start',
-        ON_DND_DROP_BEFORE:'/dnd/drop/before',
-        ON_DND_DROP:'/dnd/drop',
-        ON_DND_CANCEL:'/dnd/cancel'
+        ON_DND_SOURCE_OVER: '/dnd/source/over',
+        ON_DND_START: '/dnd/start',
+        ON_DND_DROP_BEFORE: '/dnd/drop/before',
+        ON_DND_DROP: '/dnd/drop',
+        ON_DND_CANCEL: '/dnd/cancel'
     };
     /**
      * To be moved
@@ -2755,7 +3543,7 @@ define('xide/types/Types',[
     types.DIALOG_SIZE = {
         SIZE_NORMAL: 'size-normal',
         SIZE_SMALL: 'size-small',
-        SIZE_WIDE: 'size-wide',    // size-wide is equal to modal-lg
+        SIZE_WIDE: 'size-wide', // size-wide is equal to modal-lg
         SIZE_LARGE: 'size-large'
     };
 
@@ -2812,7 +3600,8 @@ define('xide/types/Types',[
                                 "message": js,
                                 "data": null
                             }
-                        }, "id": 0
+                        },
+                        "id": 0
                     };
                 }
                 throw new Error(js);
@@ -6227,20 +7016,6 @@ define('xide/encoding/MD5',["./_base"], function(base) {
 	};
 
 	return base.MD5;
-});
-
-/** @module xide/lodash **/
-define('xide/lodash',[],function(app){
-    /**
-     * temp. wanna be shim for lodash til dojo-2/loader lands here
-     */
-    if(typeof _ !=="undefined"){
-        return _;
-    }else if(app && app._){
-        return app._;
-    }else{
-        console.error('error loading lodash',global['_']);
-    }
 });
 
 define('xide/data/_Base',[
@@ -19616,779 +20391,6 @@ define('dstore/Trackable',[
 	return Trackable;
 });
 
-define('xide/utils/ObjectUtils',[
-    'xide/utils',
-    'require',
-    "dojo/Deferred",
-    'xide/lodash'
-], function (utils, require, Deferred, lodash) {
-    const _debug = false;
-    "use strict";
-
-    utils.delegate = (function () {
-        // boodman/crockford delegation w/ cornford optimization
-        function TMP() {
-        }
-
-        return function (obj, props) {
-            TMP.prototype = obj;
-            const tmp = new TMP();
-            TMP.prototype = null;
-            if (props) {
-                lang._mixin(tmp, props);
-            }
-            return tmp; // Object
-        };
-    })();
-
-    /////////////////////////////////////////////////////////////////////////////////////////////
-    //
-    //  Loader utils
-    //
-    //////////////////////////////////////////////////////////////////////////////////////////////
-    utils.debounce = function (who, methodName, _function, delay, options, now, args) {
-        let _place = who[methodName + '_debounced'];
-        if (!_place) {
-            _place = who[methodName + '_debounced'] = lodash.debounce(_function, delay, options);
-        }
-        if (now === true) {
-            if (!who[methodName + '_debouncedFirst']) {
-                who[methodName + '_debouncedFirst'] = true;
-                _function.apply(who, args);
-            }
-        }
-        return _place();
-    };
-
-
-    utils.pluck = function (items, prop) {
-        return lodash.map(items, prop);
-    };
-
-    /**
-     * Trigger downloadable file
-     * @param filename
-     * @param text
-     */
-    utils.download = function (filename, text) {
-        const element = document.createElement('a');
-        text = lodash.isString(text) ? text : JSON.stringify(text, null, 2);
-        element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
-        element.setAttribute('download', filename);
-        element.style.display = 'none';
-        document.body.appendChild(element);
-        element.click();
-        document.body.removeChild(element);
-    };
-
-    /**
-     * Ask require registry at this path
-     * @param mixed
-     * @returns {*}
-     */
-    utils.hasObject = function (mixed) {
-        let result = null;
-        const _re = require;
-        try {
-            result = _re(mixed);
-        } catch (e) {
-            console.error('error in utils.hasObject ', e);
-        }
-        return result;
-    };
-    /**
-     * Safe require.toUrl
-     * @param mid {string}
-     */
-    utils.toUrl = function (mid) {
-        const _require = require;
-        //make sure cache bust is off otherwise it appends ?time
-        _require({
-            cacheBust: null,
-            waitSeconds: 5
-        });
-        return _require.toUrl(mid);
-    }
-    /**
-     * Returns a module by module path
-     * @param mixed {String|Object}
-     * @param _default {Object} default object
-     * @returns {Object|Promise}
-     */
-    utils.getObject = function (mixed, _default) {
-        let result = null;
-        if (utils.isString(mixed)) {
-            const _re = require;
-            try {
-                result = _re(mixed);
-            } catch (e) {
-                _debug && console.warn('utils.getObject::require failed for ' + mixed);
-            }
-            //not a loaded module yet
-            try {
-                if (!result) {
-                    const deferred = new Deferred();
-                    //try loader
-                    result = _re([
-                        mixed
-                    ], function (module) {
-                        deferred.resolve(module);
-                    });
-                    return deferred.promise;
-                }
-            } catch (e) {
-                _debug && console.error('error in requiring ' + mixed, e);
-            }
-            return result;
-
-        } else if (utils.isObject(mixed)) {
-            return mixed;//reflect
-        }
-        return result !== null ? result : _default;
-    };
-
-
-    /////////////////////////////////////////////////////////////////////////////////////////////
-    //
-    //  True object utils
-    //
-    //////////////////////////////////////////////////////////////////////////////////////////////
-    utils.toArray = function (obj) {
-        const result = [];
-        for (const c in obj) {
-            result.push({
-                name: c,
-                value: obj[c]
-            });
-        }
-        return result;
-    };
-    /**
-     * Array to object conversion
-     * @param arr
-     * @returns {Object}
-     */
-    utils.toObject = function (arr, lodash) {
-        if (!arr) {
-            return {};
-        }
-        if (lodash !== false) {
-            return lodash.object(lodash.map(arr, lodash.values));
-        } else {
-            //CI related back compat hack
-            if (utils.isObject(arr) && arr[0]) {
-                return arr[0];
-            }
-
-            const rv = {};
-            for (let i = 0; i < arr.length; ++i) {
-                rv[i] = arr[i];
-            }
-            return rv;
-        }
-    };
-
-    /**
-     * Gets an object property by string, eg: utils.byString(someObj, 'part3[0].name');
-     * @deprecated, see objectAtPath below
-     * @param o {Object}    : the object
-     * @param s {String}    : the path within the object
-     * @param defaultValue {Object|String|Number} : an optional default value
-     * @returns {*}
-     */
-    utils.byString = function (o, s, defaultValue) {
-        s = s.replace(/\[(\w+)\]/g, '.$1'); // convert indexes to properties
-        s = s.replace(/^\./, '');           // strip a leading dot
-        const a = s.split('.');
-        while (a.length) {
-            const n = a.shift();
-            if (n in o) {
-                o = o[n];
-            } else {
-                return;
-            }
-        }
-        return o;
-    };
-
-    /////////////////////////////////////////////////////////////////////////////////////////////
-    //
-    //  Object path
-    //
-    //////////////////////////////////////////////////////////////////////////////////////////////
-    /**
-     * Internals
-     */
-
-    //cache
-    const toStr = Object.prototype.toString;
-
-    const _hasOwnProperty = Object.prototype.hasOwnProperty;
-
-    /**
-     * @private
-     * @param type
-     * @returns {*}
-     */
-    function toString(type) {
-        return toStr.call(type);
-    }
-
-    /**
-     * @private
-     * @param key
-     * @returns {*}
-     */
-    function getKey(key) {
-        const intKey = parseInt(key, 10);
-        if (intKey.toString() === key) {
-            return intKey;
-        }
-        return key;
-    }
-
-    /**
-     * internal set value at path in object
-     * @private
-     * @param obj
-     * @param path
-     * @param value
-     * @param doNotReplace
-     * @returns {*}
-     */
-    function set(obj, path, value, doNotReplace) {
-        if (lodash.isNumber(path)) {
-            path = [path];
-        }
-        if (lodash.isEmpty(path)) {
-            return obj;
-        }
-        if (lodash.isString(path)) {
-            return set(obj, path.split('.').map(getKey), value, doNotReplace);
-        }
-        const currentPath = path[0];
-
-        if (path.length === 1) {
-            const oldVal = obj[currentPath];
-            if (oldVal === void 0 || !doNotReplace) {
-                obj[currentPath] = value;
-            }
-            return oldVal;
-        }
-
-        if (obj[currentPath] === void 0) {
-            //check if we assume an array
-            if (lodash.isNumber(path[1])) {
-                obj[currentPath] = [];
-            } else {
-                obj[currentPath] = {};
-            }
-        }
-        return set(obj[currentPath], path.slice(1), value, doNotReplace);
-    }
-
-    /**
-     * deletes an property by a path
-     * @param obj
-     * @param path
-     * @returns {*}
-     */
-    function del(obj, path) {
-        if (lodash.isNumber(path)) {
-            path = [path];
-        }
-        if (lodash.isEmpty(obj)) {
-            return void 0;
-        }
-
-        if (lodash.isEmpty(path)) {
-            return obj;
-        }
-        if (lodash.isString(path)) {
-            return del(obj, path.split('.'));
-        }
-
-        const currentPath = getKey(path[0]);
-        const oldVal = obj[currentPath];
-
-        if (path.length === 1) {
-            if (oldVal !== void 0) {
-                if (lodash.isArray(obj)) {
-                    obj.splice(currentPath, 1);
-                } else {
-                    delete obj[currentPath];
-                }
-            }
-        } else {
-            if (obj[currentPath] !== void 0) {
-                return del(obj[currentPath], path.slice(1));
-            }
-        }
-        return obj;
-    }
-
-    /**
-     * Private helper class
-     * @private
-     * @type {{}}
-     */
-    const objectPath = {};
-
-    objectPath.has = function (obj, path) {
-        if (lodash.isEmpty(obj)) {
-            return false;
-        }
-        if (lodash.isNumber(path)) {
-            path = [path];
-        } else if (lodash.isString(path)) {
-            path = path.split('.');
-        }
-
-        if (lodash.isEmpty(path) || path.length === 0) {
-            return false;
-        }
-
-        for (let i = 0; i < path.length; i++) {
-            const j = path[i];
-            if ((lodash.isObject(obj) || lodash.isArray(obj)) && _hasOwnProperty.call(obj, j)) {
-                obj = obj[j];
-            } else {
-                return false;
-            }
-        }
-
-        return true;
-    };
-
-    /**
-     * Define private public 'ensure exists'
-     * @param obj
-     * @param path
-     * @param value
-     * @returns {*}
-     */
-    objectPath.ensureExists = function (obj, path, value) {
-        return set(obj, path, value, true);
-    };
-
-    /**
-     * Define private public 'set'
-     * @param obj
-     * @param path
-     * @param value
-     * @param doNotReplace
-     * @returns {*}
-     */
-    objectPath.set = function (obj, path, value, doNotReplace) {
-        return set(obj, path, value, doNotReplace);
-    };
-
-    /**
-     Define private public 'insert'
-     * @param obj
-     * @param path
-     * @param value
-     * @param at
-     */
-    objectPath.insert = function (obj, path, value, at) {
-        let arr = objectPath.get(obj, path);
-        at = ~~at;
-        if (!lodash.isArray(arr)) {
-            arr = [];
-            objectPath.set(obj, path, arr);
-        }
-        arr.splice(at, 0, value);
-    };
-
-    /**
-     * Define private public 'empty'
-     * @param obj
-     * @param path
-     * @returns {*}
-     */
-    objectPath.empty = function (obj, path) {
-        if (lodash.isEmpty(path)) {
-            return obj;
-        }
-        if (lodash.isEmpty(obj)) {
-            return void 0;
-        }
-
-        let value;
-        let i;
-        if (!(value = objectPath.get(obj, path))) {
-            return obj;
-        }
-
-        if (lodash.isString(value)) {
-            return objectPath.set(obj, path, '');
-        } else if (lodash.isBoolean(value)) {
-            return objectPath.set(obj, path, false);
-        } else if (lodash.isNumber(value)) {
-            return objectPath.set(obj, path, 0);
-        } else if (lodash.isArray(value)) {
-            value.length = 0;
-        } else if (lodash.isObject(value)) {
-            for (i in value) {
-                if (_hasOwnProperty.call(value, i)) {
-                    delete value[i];
-                }
-            }
-        } else {
-            return objectPath.set(obj, path, null);
-        }
-    };
-
-    /**
-     * Define private public 'push'
-     * @param obj
-     * @param path
-     */
-    objectPath.push = function (obj, path /*, values */) {
-        let arr = objectPath.get(obj, path);
-        if (!lodash.isArray(arr)) {
-            arr = [];
-            objectPath.set(obj, path, arr);
-        }
-        arr.push.apply(arr, Array.prototype.slice.call(arguments, 2));
-    };
-
-    /**
-     * Define private public 'coalesce'
-     * @param obj
-     * @param paths
-     * @param defaultValue
-     * @returns {*}
-     */
-    objectPath.coalesce = function (obj, paths, defaultValue) {
-        let value;
-        for (let i = 0, len = paths.length; i < len; i++) {
-            if ((value = objectPath.get(obj, paths[i])) !== void 0) {
-                return value;
-            }
-        }
-        return defaultValue;
-    };
-
-    /**
-     * Define private public 'get'
-     * @param obj
-     * @param path
-     * @param defaultValue
-     * @returns {*}
-     */
-    objectPath.get = function (obj, path, defaultValue) {
-        if (lodash.isNumber(path)) {
-            path = [path];
-        }
-        if (lodash.isEmpty(path)) {
-            return obj;
-        }
-        if (lodash.isEmpty(obj)) {
-            //lodash doesnt seem to work with html nodes
-            if (obj && obj.innerHTML === null) {
-                return defaultValue;
-            }
-        }
-        if (lodash.isString(path)) {
-            return objectPath.get(obj, path.split('.'), defaultValue);
-        }
-        const currentPath = getKey(path[0]);
-        if (path.length === 1) {
-            if (obj && obj[currentPath] === void 0) {
-                return defaultValue;
-            }
-            if (obj) {
-                return obj[currentPath];
-            }
-        }
-        if (!obj) {
-            return defaultValue;
-        }
-        return objectPath.get(obj[currentPath], path.slice(1), defaultValue);
-    };
-
-    /**
-     * Define private public 'del'
-     * @param obj
-     * @param path
-     * @returns {*}
-     */
-    objectPath.del = function (obj, path) {
-        return del(obj, path);
-    };
-    /////////////////////////////////////////////////////////////////////////////////////////////
-    //
-    //  Object path public xide/utils mixin
-    //
-    //////////////////////////////////////////////////////////////////////////////////////////////
-    /**
-     *  Returns a value by a give object path
-     *
-     *  //works also with arrays
-     *    objectPath.get(obj, "a.c.1");  //returns "f"
-     *    objectPath.get(obj, ["a","c","1"]);  //returns "f"
-     *
-     * @param obj {object}
-     * @param path {string}
-     * @param _default {object|null}
-     * @returns {*}
-     */
-    utils.getAt = function (obj, path, _default) {
-        return objectPath.get(obj, path, _default);
-    };
-
-    /**
-     * Sets a value in an object/array at a given path.
-     * @example
-     *
-     * utils.setAt(obj, "a.h", "m"); // or utils.setAt(obj, ["a","h"], "m");
-     *
-     * //set will create intermediate object/arrays
-     * objectPath.set(obj, "a.j.0.f", "m");
-     *
-     * @param obj{Object|Array}
-     * @param path {string}
-     * @param value {mixed}
-     * @returns {Object|Array}
-     */
-    utils.setAt = function (obj, path, value) {
-        return objectPath.set(obj, path, value);
-    };
-
-    /**
-     * Returns there is anything at given path within an object/array.
-     * @param obj
-     * @param path
-     */
-    utils.hasAt = function (obj, path) {
-        return objectPath.has(obj, path);
-    };
-
-    /**
-     * Ensures at given path, otherwise _default will be placed
-     * @param obj
-     * @param path
-     * @returns {*}
-     */
-    utils.ensureAt = function (obj, path, _default) {
-        return objectPath.ensureExists(obj, path, _default);
-    };
-    /**
-     * Deletes at given path
-     * @param obj
-     * @param path
-     * @returns {*}
-     */
-    utils.deleteAt = function (obj, path) {
-        return objectPath.del(obj, path);
-    };
-
-    /**
-     *
-     * @param to
-     * @param from
-     * @returns {*}
-     */
-    utils.merge = function (to, from) {
-        for (const n in from) {
-            if (typeof to[n] != 'object') {
-                to[n] = from[n];
-            } else if (typeof from[n] == 'object') {
-                to[n] = utils.merge(to[n], from[n]);
-            }
-        }
-
-        return to;
-    };
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //
-    //  Dojo's most wanted
-    //
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    /**
-     * Clones objects (including DOM nodes) and all children.
-     * Warning: do not clone cyclic structures.
-     * @param src {*} The object to clone.
-     * @returns {*}
-     */
-    utils.clone = function (src) {
-        if (!src || typeof src != "object" || utils.isFunction(src)) {
-            // null, undefined, any non-object, or function
-            return src; // anything
-        }
-        if (src.nodeType && "cloneNode" in src) {
-            // DOM Node
-            return src.cloneNode(true); // Node
-        }
-        if (src instanceof Date) {
-            // Date
-            return new Date(src.getTime()); // Date
-        }
-        if (src instanceof RegExp) {
-            // RegExp
-            return new RegExp(src); // RegExp
-        }
-        let r;
-        let i;
-        let l;
-        if (utils.isArray(src)) {
-            // array
-            r = [];
-            for (i = 0, l = src.length; i < l; ++i) {
-                if (i in src) {
-                    r.push(utils.clone(src[i]));
-                }
-            }
-            // we don't clone functions for performance reasons
-            // }else if(d.isFunction(src)){
-            // // function
-            // r = function(){ return src.apply(this, arguments); };
-        } else {
-            // generic objects
-            r = src.constructor ? new src.constructor() : {};
-        }
-        return utils._mixin(r, src, utils.clone);
-    };
-
-    /**
-     * Copies/adds all properties of source to dest; returns dest.
-     * @description All properties, including functions (sometimes termed "methods"), excluding any non-standard extensions
-     * found in Object.prototype, are copied/added to dest. Copying/adding each particular property is
-     * delegated to copyFunc (if any); copyFunc defaults to the Javascript assignment operator if not provided.
-     * Notice that by default, _mixin executes a so-called "shallow copy" and aggregate types are copied/added by reference.
-     * @param dest {object} The object to which to copy/add all properties contained in source.
-     * @param source {object} The object from which to draw all properties to copy into dest.
-     * @param copyFunc {function} The process used to copy/add a property in source; defaults to the Javascript assignment operator.
-     * @returns {object} dest, as modified
-     * @private
-     */
-    utils._mixin = function (dest, source, copyFunc) {
-        let name;
-        let s;
-        let i;
-        const empty = {};
-        for (name in source) {
-            // the (!(name in empty) || empty[name] !== s) condition avoids copying properties in "source"
-            // inherited from Object.prototype.	 For example, if dest has a custom toString() method,
-            // don't overwrite it with the toString() method that source inherited from Object.prototype
-            s = source[name];
-            if (!(name in dest) || (dest[name] !== s && (!(name in empty) || empty[name] !== s))) {
-                dest[name] = copyFunc ? copyFunc(s) : s;
-            }
-        }
-
-        return dest; // Object
-    };
-    /**
-     * Copies/adds all properties of one or more sources to dest; returns dest.
-     * @param dest {object} The object to which to copy/add all properties contained in source. If dest is falsy, then
-     * a new object is manufactured before copying/adding properties begins.
-     *
-     * @param sources One of more objects from which to draw all properties to copy into dest. sources are processed
-     * left-to-right and if more than one of these objects contain the same property name, the right-most
-     * value "wins".
-     *
-     * @returns {object} dest, as modified
-     *
-     * @example
-     * make a shallow copy of an object
-     * var copy = utils.mixin({}, source);
-     *
-     * @example
-     *
-     * many class constructors often take an object which specifies
-     *        values to be configured on the object. In this case, it is
-     *        often simplest to call `lang.mixin` on the `this` object:
-     *        declare("acme.Base", null, {
-    *			constructor: function(properties){
-    *				//property configuration:
-    *				lang.mixin(this, properties);
-    *				console.log(this.quip);
-    *			},
-    *			quip: "I wasn't born yesterday, you know - I've seen movies.",
-    *			* ...
-    *		});
-     *
-     *        //create an instance of the class and configure it
-     *        var b = new acme.Base({quip: "That's what it does!" });
-     *
-     */
-    utils.mixin = function (dest, sources) {
-        if (sources) {
-            if (!dest) {
-                dest = {};
-            }
-            const l = arguments.length;
-            for (let i = 1; i < l; i++) {
-                utils._mixin(dest, arguments[i]);
-            }
-            return dest; // Object
-        }
-        return dest;
-    };
-
-    /**
-     * Clone object keys
-     * @param defaults
-     * @returns {{}}
-     */
-    utils.cloneKeys = function (defaults, skipEmpty) {
-        const result = {};
-        for (const _class in defaults) {
-            if (skipEmpty === true && !(_class in defaults)) {
-                continue;
-            }
-            result[_class] = defaults[_class];
-        }
-        return result;
-    };
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //
-    //  STD
-    /**
-     *
-     * @param what
-     * @returns {*}
-     */
-    utils.isArray = function (what) {
-        return lodash.isArray(what);
-    };
-    /**
-     *
-     * @param what
-     * @returns {*}
-     */
-    utils.isObject = function (what) {
-        return lodash.isObject(what);
-    };
-    /**
-     *
-     * @param what
-     * @returns {*}
-     */
-    utils.isString = function (what) {
-        return lodash.isString(what);
-    };
-    /**
-     *
-     * @param what
-     * @returns {*}
-     */
-    utils.isNumber = function (what) {
-        return lodash.isNumber(what);
-    };
-    /**
-     * Return true if it is a Function
-     * @param it
-     * @returns {*}
-     */
-    utils.isFunction = function (it) {
-        return lodash.isFunction(it);
-    };
-    return utils;
-});
 define('xide/cache/Circular',[], function () {
 
     function CircularBuffer(capacity){
@@ -40009,13 +40011,14 @@ define('xfile/model/File',[
     "dcl/dcl",
     "xide/data/Model",
     "xide/utils",
-    "xide/types"
-], function (dcl, Model, utils, types) {
+    "xide/types",
+    "xide/lodash"
+], function (dcl, Model, utils, types, _) {
     /**
      * @class module:xfile/model/File
      */
     return dcl(Model, {
-        declaredClass:'xfile.model.File',
+        declaredClass: 'xfile.model.File',
         getFolder: function () {
             var path = this.getPath();
             if (this.directory) {
@@ -40031,12 +40034,16 @@ define('xfile/model/File',[
             var store = this.getStore() || this._S;
             return store.getParent(this);
         },
+        getChild: function (path) {
+            return _.find(this.getChildren(), {
+                path: path
+            });
+        },
         getStore: function () {
             return this._store || this._S;
         }
     });
 });
-
 /**
  * @module xfile/data/FileStore
  **/
@@ -40411,6 +40418,7 @@ define('xfile/data/Store',[
                         if (isFinish) {
                             deferred.resolve(thiz._getItem(path));
                         } else {
+                            
                             for (var i = 0; i < partsToLoad.length; i++) {
                                 if (!partsToLoad[i].loaded) {
                                     var _item = thiz.getSync(partsToLoad[i].path);
@@ -40442,6 +40450,14 @@ define('xfile/data/Store',[
                                     break;
                                 }
                             }
+
+
+                            var isFinish = !_.find(partsToLoad, {
+                                loaded: false
+                            });
+                            if (isFinish) {
+                                deferred.resolve(thiz._getItem(path));
+                            }
                         }
                     };
 
@@ -40460,6 +40476,7 @@ define('xfile/data/Store',[
                             loaded: false
                         });
                     }
+
                     //fire
                     _loadNext();
                     return deferred;
@@ -40560,6 +40577,9 @@ define('xfile/data/Store',[
                 item.getPath = function () {
                     return this.path;
                 };
+                if (!this.getSync(item.path)) {
+                    this.putSync(item);
+                }
             },
             /////////////////////////////////////////////////////////////////////////////
             //
@@ -40644,8 +40664,9 @@ define('xfile/data/Store',[
                             });
                         });
                     } else {
-                        this._loadPath(item.path, true).then(function (items) {
-                            deferred.resolve(item);
+                        this._loadPath(item.path, true).then((items)=> {
+                            var _item = this.getSync(item.path);
+                            deferred.resolve(_item);
                         }, function (err) {
                             console.error('error occured whilst loading items');
                             deferred.reject(err);
@@ -42293,6 +42314,27 @@ define('xfile/manager/FileManager',[
             } catch (e) {
                 logError(e, 'find');
             }
+        },
+        getContentSync: function (mount, path, readyCB, emit) {
+            /*
+            var self = this;
+
+            function resolveAfter2Seconds(x) {
+                return new Promise(resolve => {
+                    self.getContent(mount, path, function (content) {
+                        resolve(content);
+                    })
+                });
+            }
+
+            async function f1() {
+                var x = await resolveAfter2Seconds(10);
+                console.log('got ', x); // 10
+                return x;
+            }
+            const content = f1();
+            return content;
+            */
         },
         getContent: function (mount, path, readyCB, emit) {
             if (this.getContentE) {

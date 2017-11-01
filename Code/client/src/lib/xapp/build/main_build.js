@@ -43731,6 +43731,7 @@ define('dojo/_base/Deferred',[
 						}
 						listener.deferred[unchanged && isError ? "reject" : "resolve"](unchanged ? result : newResult);
 					}catch(e){
+						console.error('error',e);
 						listener.deferred.reject(e);
 					}
 				}else{
@@ -52595,7 +52596,7 @@ define('xcf/manager/DeviceManager_DeviceServer',[
     'xide/utils/HexUtils',
     'xdojo/has!host-node?nxapp/utils/_console'
 ], function (dcl, MD5, types, utils, factory, has, Deferred, ReloadMixin, EventedMixin, require, _, Variable, HexUtils, _console) {
-    let console = typeof window !== 'undefined' ? window.console : typeof global !== 'undefined' ? global.console : _console;
+    var console = typeof window !== 'undefined' ? window.console : typeof global !== 'undefined' ? global.console : _console;
     if (_console) {
         console = _console;
     }
@@ -64495,6 +64496,27 @@ define('xfile/manager/FileManager',[
                 logError(e, 'find');
             }
         },
+        getContentSync: function (mount, path, readyCB, emit) {
+            /*
+            var self = this;
+
+            function resolveAfter2Seconds(x) {
+                return new Promise(resolve => {
+                    self.getContent(mount, path, function (content) {
+                        resolve(content);
+                    })
+                });
+            }
+
+            async function f1() {
+                var x = await resolveAfter2Seconds(10);
+                console.log('got ', x); // 10
+                return x;
+            }
+            const content = f1();
+            return content;
+            */
+        },
         getContent: function (mount, path, readyCB, emit) {
             if (this.getContentE) {
                 var res = this.getContentE.apply(this, arguments);
@@ -65238,6 +65260,7 @@ define('xfile/data/Store',[
                         if (isFinish) {
                             deferred.resolve(thiz._getItem(path));
                         } else {
+                            
                             for (var i = 0; i < partsToLoad.length; i++) {
                                 if (!partsToLoad[i].loaded) {
                                     var _item = thiz.getSync(partsToLoad[i].path);
@@ -65269,6 +65292,14 @@ define('xfile/data/Store',[
                                     break;
                                 }
                             }
+
+
+                            var isFinish = !_.find(partsToLoad, {
+                                loaded: false
+                            });
+                            if (isFinish) {
+                                deferred.resolve(thiz._getItem(path));
+                            }
                         }
                     };
 
@@ -65287,6 +65318,7 @@ define('xfile/data/Store',[
                             loaded: false
                         });
                     }
+
                     //fire
                     _loadNext();
                     return deferred;
@@ -65387,6 +65419,9 @@ define('xfile/data/Store',[
                 item.getPath = function () {
                     return this.path;
                 };
+                if (!this.getSync(item.path)) {
+                    this.putSync(item);
+                }
             },
             /////////////////////////////////////////////////////////////////////////////
             //
@@ -65471,8 +65506,9 @@ define('xfile/data/Store',[
                             });
                         });
                     } else {
-                        this._loadPath(item.path, true).then(function (items) {
-                            deferred.resolve(item);
+                        this._loadPath(item.path, true).then((items)=> {
+                            var _item = this.getSync(item.path);
+                            deferred.resolve(_item);
                         }, function (err) {
                             console.error('error occured whilst loading items');
                             deferred.reject(err);
@@ -65741,13 +65777,14 @@ define('xfile/model/File',[
     "dcl/dcl",
     "xide/data/Model",
     "xide/utils",
-    "xide/types"
-], function (dcl, Model, utils, types) {
+    "xide/types",
+    "xide/lodash"
+], function (dcl, Model, utils, types, _) {
     /**
      * @class module:xfile/model/File
      */
     return dcl(Model, {
-        declaredClass:'xfile.model.File',
+        declaredClass: 'xfile.model.File',
         getFolder: function () {
             var path = this.getPath();
             if (this.directory) {
@@ -65763,12 +65800,16 @@ define('xfile/model/File',[
             var store = this.getStore() || this._S;
             return store.getParent(this);
         },
+        getChild: function (path) {
+            return _.find(this.getChildren(), {
+                path: path
+            });
+        },
         getStore: function () {
             return this._store || this._S;
         }
     });
-});
-;
+});;
 define('dstore/Cache',[
 	'dojo/_base/array',
 	'dojo/when',
@@ -67017,6 +67058,7 @@ define('xide/manager/Context',[
 
             if (path.includes('resources') ||
                 path.includes('meta') ||
+                path.includes('lib/custom') ||
                 !path.includes('.js')) {
                 return;
             }
@@ -81930,8 +81972,9 @@ define('xide/types/Types',[
     'xide/types',
     'dojo/_base/json',
     'dojo/_base/kernel',
-    'xide/utils'
-], function (lang, types, json, dojo,utils) {
+    'xide/utils',
+    'xide/utils/ObjectUtils'
+], function (lang, types, json, dojo, utils) {
     /**
      * @TODO:
      * - apply xide/registry for types
@@ -82025,15 +82068,15 @@ define('xide/types/Types',[
         return null;
     };
 
-    types.registerCICallbacks = function (type,callbacks) {
+    types.registerCICallbacks = function (type, callbacks) {
         if (!types['CICallbacks'][type]) {
             types['CICallbacks'][type] = {}
         }
-        utils.mixin(types['CICallbacks'][type],callbacks);
+        utils.mixin(types['CICallbacks'][type], callbacks);
         return null;
     };
     types.getCICallbacks = function (type) {
-        if (types['CICallbacks'][type]){
+        if (types['CICallbacks'][type]) {
             return types['CICallbacks'][type];
         }
         return null;
@@ -82046,7 +82089,7 @@ define('xide/types/Types',[
         ACTIONS: 'ACTIONS',
         CONTEXT_MENU: 'CONTEXT_MENU'
     };
-    
+
     types.VIEW_FEATURE = {
         KEYBOARD_NAVIGATION: 'KEYBOARD_NAVIGATION',
         KEYBOARD_SELECT: 'KEYBOARD_SELECT',
@@ -82054,7 +82097,7 @@ define('xide/types/Types',[
         ACTIONS: 'ACTIONS',
         CONTEXT_MENU: 'CONTEXT_MENU'
     };
-    
+
     types.KEYBOARD_PROFILE = {
         DEFAULT: {
             prevent_default: true,
@@ -82487,27 +82530,27 @@ define('xide/types/Types',[
          * Bean type 'file' is handled by the xfile package
          * @constant
          */
-        FILE: 'BTFILE',         //file object
+        FILE: 'BTFILE', //file object
         /**
          * Bean type 'widget' is handled by the xide/ve and davinci package
          * @constant
          */
-        WIDGET: 'WIDGET',       //ui designer
+        WIDGET: 'WIDGET', //ui designer
         /**
          * Bean type 'block' is handled by the xblox package
          * @constant
          */
-        BLOCK: 'BLOCK',         //xblox
+        BLOCK: 'BLOCK', //xblox
         /**
          * Bean type 'text' is used for text editors
          * @constant
          */
-        TEXT: 'TEXT',           //xace
+        TEXT: 'TEXT', //xace
         /**
          * Bean type 'xexpression' is used for user expressions
          * @constant
          */
-        EXPRESSION: 'EXPRESSION'       //xexpression
+        EXPRESSION: 'EXPRESSION' //xexpression
     };
 
     /**
@@ -82583,9 +82626,9 @@ define('xide/types/Types',[
         /**
          * generic
          */
-        ERROR: 'onError',//xhr
-        STATUS: 'onStatus',//xhr
-        ON_CREATED_MANAGER: 'onCreatedManager',//context
+        ERROR: 'onError', //xhr
+        STATUS: 'onStatus', //xhr
+        ON_CREATED_MANAGER: 'onCreatedManager', //context
 
         /**
          * item events, to be renoved
@@ -82621,8 +82664,8 @@ define('xide/types/Types',[
         ON_MODULE_UPDATED: 'onModuleUpdated',
 
 
-        ON_DID_OPEN_ITEM: 'onDidOpenItem',//remove
-        ON_DID_RENDER_COLLECTION: 'onDidRenderCollection',//move
+        ON_DID_OPEN_ITEM: 'onDidOpenItem', //remove
+        ON_DID_RENDER_COLLECTION: 'onDidRenderCollection', //move
 
         ON_PLUGIN_LOADED: 'onPluginLoaded',
         ON_PLUGIN_READY: 'onPluginReady',
@@ -82631,11 +82674,11 @@ define('xide/types/Types',[
         /**
          * editors
          */
-        ON_CREATE_EDITOR_BEGIN: 'onCreateEditorBegin',//move to xedit
-        ON_CREATE_EDITOR_END: 'onCreateEditorEnd',//move to xedit
-        REGISTER_EDITOR: 'registerEditor',//move to xedit
-        ON_EXPRESSION_EDITOR_ADD_FUNCTIONS: 'onExpressionEditorAddFunctions',//move to xedit
-        ON_ACE_READY: 'onACEReady',//remove
+        ON_CREATE_EDITOR_BEGIN: 'onCreateEditorBegin', //move to xedit
+        ON_CREATE_EDITOR_END: 'onCreateEditorEnd', //move to xedit
+        REGISTER_EDITOR: 'registerEditor', //move to xedit
+        ON_EXPRESSION_EDITOR_ADD_FUNCTIONS: 'onExpressionEditorAddFunctions', //move to xedit
+        ON_ACE_READY: 'onACEReady', //remove
 
         /**
          * Files
@@ -82699,13 +82742,13 @@ define('xide/types/Types',[
         ON_REMOVE_CONTAINER: 'onRemoveContainer',
         ON_CONTAINER_REPLACED: 'onContainerReplaced',
         ON_CONTAINER_SPLIT: 'onContainerSplit',
-        ON_RENDER_WELCOME_GRID_GROUP:'onRenderWelcomeGridGroup',
+        ON_RENDER_WELCOME_GRID_GROUP: 'onRenderWelcomeGridGroup',
 
-        ON_DND_SOURCE_OVER:'/dnd/source/over',
-        ON_DND_START:'/dnd/start',
-        ON_DND_DROP_BEFORE:'/dnd/drop/before',
-        ON_DND_DROP:'/dnd/drop',
-        ON_DND_CANCEL:'/dnd/cancel'
+        ON_DND_SOURCE_OVER: '/dnd/source/over',
+        ON_DND_START: '/dnd/start',
+        ON_DND_DROP_BEFORE: '/dnd/drop/before',
+        ON_DND_DROP: '/dnd/drop',
+        ON_DND_CANCEL: '/dnd/cancel'
     };
     /**
      * To be moved
@@ -82714,7 +82757,7 @@ define('xide/types/Types',[
     types.DIALOG_SIZE = {
         SIZE_NORMAL: 'size-normal',
         SIZE_SMALL: 'size-small',
-        SIZE_WIDE: 'size-wide',    // size-wide is equal to modal-lg
+        SIZE_WIDE: 'size-wide', // size-wide is equal to modal-lg
         SIZE_LARGE: 'size-large'
     };
 
@@ -82771,7 +82814,8 @@ define('xide/types/Types',[
                                 "message": js,
                                 "data": null
                             }
-                        }, "id": 0
+                        },
+                        "id": 0
                     };
                 }
                 throw new Error(js);

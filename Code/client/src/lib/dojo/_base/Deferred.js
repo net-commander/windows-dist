@@ -195,6 +195,7 @@ define([
 						}
 						listener.deferred[unchanged && isError ? "reject" : "resolve"](unchanged ? result : newResult);
 					}catch(e){
+						console.error('error',e);
 						listener.deferred.reject(e);
 					}
 				}else{

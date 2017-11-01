@@ -12,8 +12,7 @@ define([
     "davinci/html/HTMLText",
     "dojox/html/_base"
 ], function (declare, xhr, Deferred, all, factory, types, HTMLElement, HTMLText) {
-
-    var debug = false;
+    var debug = true;
     /**
      *
      * @mixin module:xideve/delite/_ContextJS
@@ -50,7 +49,7 @@ define([
                 // into the global context. To work around that, we do our own `eval` call.
                 promises.push(xhr.get({
                     url: absoluteUrl,
-                    sync: true    // XXX -> async, Defer rest of method
+                    sync: true // XXX -> async, Defer rest of method
                 }).then(function (data) {
                     context.getGlobal()['eval'](data);
                 }));
@@ -79,8 +78,6 @@ define([
                                     editor: thiz.editor
                                 }, this);
 
-
-                                //console.log('setting src attribute to',element);
                                 var actualUrl = element.getAttribute('src');
                                 if (/\/dojo.js$/.test(actualUrl)) {
 
@@ -88,16 +85,7 @@ define([
                                     debug && console.log('add custom script, url=' + actualUrl);
                                     thiz.addHeaderScript(actualUrl);
                                 }
-                                //element.setAttribute("src", evtData.dojoUrl);
-                            }else{
-
-                                /*thiz.addHeaderScript(elementUrl);*/
-                                /*
-                                domConstruct.create('script', {
-                                    src:url
-                                }, query('head')[0]);
-                                */
-
+                            } else {
 
                                 var _doc = thiz.getGlobal().document;
                                 var script = _doc.createElement('script');
@@ -147,19 +135,19 @@ define([
                         this.addHeaderScript(url);
                     }
                 }
-            }else{
+            } else {
                 var doc = this.getDocument();
                 dojo.withDoc(doc, function () {
 
                     var parent = thiz.editor.item.getParent();
                     url = thiz.ctx.getFileManager().getImageUrl({
-                        path:parent.path + '/' + url,
-                        mount:thiz.editor.item.mount
-                    },false);
+                        path: parent.path + '/' + url,
+                        mount: thiz.editor.item.mount
+                    }, false);
                     var script = doc.createElement('script');
                     script.type = 'text/javascript';
                     script.src = url;
-                    debug && console.log('add js : ',url);
+                    debug && console.log('add js : ', url);
                     //var head = this.getDocumentElement().getChildElement('head');
                     var headElem = doc.getElementsByTagName('head')[0];
                     headElem.appendChild(script);
@@ -179,9 +167,9 @@ define([
                 promise.resolve();
             }
 
-            if(( mid.indexOf('deliteful')!==-1 || mid==='xblox/RunScript' || mid==='xblox/StyleState' || mid==='xblox/CSSState') && doUpdateModel){
-                promise.resolve();
-                return promise;
+            if ((mid.indexOf('deliteful') !== -1 || mid === 'xblox/RunScript' || mid === 'xblox/StyleState' || mid === 'xblox/CSSState') && doUpdateModel) {
+             //   promise.resolve();
+             //   return promise;
             }
 
             if (doUpdateModel) {
@@ -191,7 +179,9 @@ define([
                         found;
 
                     found = head.getChildElements('script').some(function (child) {
-                        var script = child.find({elementType: 'HTMLText'}, true);
+                        var script = child.find({
+                            elementType: 'HTMLText'
+                        }, true);
                         if (script) {
                             if (this._reRequire.test(script.getText())) {
                                 // found suitable `require` block
@@ -209,13 +199,15 @@ define([
                 }
 
                 // insert new `mid` into array of existing `require`
-                var scriptText = this._requireHtmlElem.find({elementType: 'HTMLText'}, true),
+                var scriptText = this._requireHtmlElem.find({
+                        elementType: 'HTMLText'
+                    }, true),
                     text = scriptText.getText(),
                     m = text.match(this._reRequire),
                     arr = m[1].match(this._reModuleId);
                 // check for duplicate
                 if (arr.indexOf(mid) === -1) {
-                    if(mid!=='xblox/RunScript') {
+                    if (mid !== 'xblox/RunScript') {
                         arr.push(mid);
                         text = text.replace(this._reRequire, 'require(' + JSON.stringify(arr, null, '  ') + ')');
                         scriptText.setText(text);
@@ -239,7 +231,7 @@ define([
                 } catch (e) {
                     var len = text.length;
                     console.error("eval of \"" + text.substr(0, 20) + (len > 20 ? "..." : "") +
-                    "\" failed");
+                        "\" failed");
                 }
             }
             if (doUpdateModel) {
@@ -278,7 +270,7 @@ define([
                 i,
                 node;
 
-            debug && console.log('add js header text' + url);
+            debug && console.log('add js header text' + text);
 
             // reverse search; cannot use getChildElements, et al
             for (i = children.length - 1; i >= 0; i--) {
@@ -288,7 +280,9 @@ define([
                     // If the latter, this breaks with 'inlineScript' equal to 'null'
                     // and a new inline script is created later.  This is done so
                     // that new inline script comes after the latest added JS file.
-                    scriptText = node.find({elementType: 'HTMLText'}, true);
+                    scriptText = node.find({
+                        elementType: 'HTMLText'
+                    }, true);
                     break;
                 }
             }

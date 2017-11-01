@@ -9,7 +9,6 @@ define([
 	"davinci/ve/commands/MoveCommand",
 	"davinci/ve/commands/ResizeCommand",
 	"davinci/ve/commands/StyleCommand",
-	"davinci/ve/tools/CreateTool",
 	"./DataStoreBasedWidgetInput"
 ], function(
 	declare,
@@ -22,7 +21,6 @@ define([
 	MoveCommand,
 	ResizeCommand,
 	StyleCommand,
-	CreateTool,
 	DataStoreBasedWidgetInput
 ) {
 

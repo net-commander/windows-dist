@@ -1,5 +1,5 @@
 <base href="%baseUrl%">
-<meta charset="utf-8"/>
+<meta charset="utf-8" />
 <meta http-equiv="content-type" content="text/html; charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <meta http-equiv="content-type" content="text/html; charset=utf-8" />
@@ -17,12 +17,12 @@
 <script>
     require.config({
         config: {
-            waitSeconds:9999999,
+            waitSeconds: 9999999,
             has: {
                 "use-dcl": true
             },
-            'delite/theme':{
-                theme:'%theme%'
+            'delite/theme': {
+                theme: '%theme%'
             },
             "requirejs-dplugins/has": {
                 "phone-like-channel": true,
@@ -32,135 +32,136 @@
 
         },
         baseUrl: "%requireBaseUrl%",
-        paths: {
-        },
+        paths: {},
         shim: {
             // Libraries
             lodash: {
                 exports: '_'
             }
         },
-        packages:[
-            {
+        packages: [{
                 name: 'lodash',
-                location: './lodash-compat'   //points to bower_components/dcl
+                location: './lodash-compat' //points to bower_components/dcl
             },
             {
-                name:'xide',
-                location:'%libRoot%/xide'
+                name: 'xide',
+                location: '%libRoot%/xide'
             },
             {
-                name:'xdeliteful',
-                location:'%requireBaseUrl%/../xibm/deliteful'
+                name: 'xdeliteful',
+                location: '%requireBaseUrl%/../xibm/deliteful'
             },
             {
-                name:'xdelite',
-                location:'%requireBaseUrl%/../xibm/delite'
+                name: 'xdelite',
+                location: '%requireBaseUrl%/../xibm/delite'
             },
             {
-                name:'xblox',
-                location:'%libRoot%/xblox'
+                name: 'xblox',
+                location: '%libRoot%/xblox'
             },
             {
-                name:'xdocker',
-                location:'%libRoot%/xdocker'
+                name: 'xdocker',
+                location: '%libRoot%/xdocker'
             },
             {
-                name:'wcDocker',
-                location:'%libRoot%/wcDocker/src/'
+                name: 'wcDocker',
+                location: '%libRoot%/wcDocker/src/'
             },
             {
-                name:'xapp',
-                location:'%libRoot%/xapp'
+                name: 'xapp',
+                location: '%libRoot%/xapp'
             },
             {
-                name:'dijit',
-                location:'%libRoot%/dijit'
+                name: 'dijit',
+                location: '%libRoot%/dijit'
             },
             {
-                name:'dijit',
-                location:'%libRoot%/dijit'
+                name: 'dijit',
+                location: '%libRoot%/dijit'
             },
             {
-                name:'xwire',
-                location:'%libRoot%/xwire'
+                name: 'xwire',
+                location: '%libRoot%/xwire'
             },
             {
-                name:'dojo',
-                location:'%libRoot%/dojo'
+                name: 'dojo',
+                location: '%libRoot%/dojo'
             },
             {
-                name:'dojox',
-                location:'%libRoot%/dojox'
+                name: 'dojox',
+                location: '%libRoot%/dojox'
             },
             {
-                name:'xdojo',
-                location:'%libRoot%/xdojo'
+                name: 'xdojo',
+                location: '%libRoot%/xdojo'
             },
             {
-                name:'xdelite',
-                location:'%libRoot%/xdelite'
+                name: 'xdelite',
+                location: '%libRoot%/xdelite'
             },
             {
-                name:'xfile',
-                location:'%libRoot%/xfile'
+                name: 'xfile',
+                location: '%libRoot%/xfile'
             },
             {
-                name:'xgrid',
-                location:'%libRoot%/xgrid'
+                name: 'xgrid',
+                location: '%libRoot%/xgrid'
             },
             {
-                name:'dgrid',
-                location:'%libRoot%/dgrid'
+                name: 'dgrid',
+                location: '%libRoot%/dgrid'
             },
             {
-                name:'xnode',
-                location:'%libRoot%/xnode'
+                name: 'xnode',
+                location: '%libRoot%/xnode'
             },
             {
-                name:'xcf',
-                location:'%libRoot%/xcf'
+                name: 'xcf',
+                location: '%libRoot%/xcf'
             },
             {
-                name:'dstore',
-                location:'%libRoot%/dstore'
+                name: 'dstore',
+                location: '%libRoot%/dstore'
             },
             {
-                name:'xaction',
-                location:'%libRoot%/xaction/src'
+                name: 'xaction',
+                location: '%libRoot%/xaction/src'
             },
             {
-                name:'xlang',
-                location:'%libRoot%/xlang'
+                name: 'xlang',
+                location: '%libRoot%/xlang'
             },
             {
-                name:'xlog',
-                location:'%libRoot%/xlog'
+                name: 'xlog',
+                location: '%libRoot%/xlog'
             },
             {
-                name:'system_drivers',
-                location:'%data%/system/drivers'
+                name: 'system_drivers',
+                location: '%data%/system/drivers'
             },
             {
-                name:'user_drivers',
-                location:'%user_drivers_path%'
+                name: 'user_drivers',
+                location: '%user_drivers_path%'
             },
             {
-                name:'nxapp',
-                location:'%libRoot%/../../../../server/nodejs/nxapp/'
+                name: 'nxapp',
+                location: '%libRoot%/../../../../server/nodejs/nxapp/'
             },
             {
-                name:'workspace_user',
-                location:'%workspace_user%'
+                name: 'workspace_user',
+                location: '%workspace_user%'
+            },
+            {
+                name: 'custom',
+                location: '{{workspace_user}}/lib/custom'
             }
-
         ]
     });
     require({
-        map:{
-            '*':{
-                'delite/Container':'../xibm/delite/Container',
-                'deliteful/Button':'xdeliteful/Button'
+        map: {
+            '*': {
+                'delite/Container': '../xibm/delite/Container',
+                'deliteful/Button': 'xdeliteful/Button'
             }
         }
     });
@@ -200,18 +201,17 @@
 <style></style>
 
 <script type="text/javascript">
-
     /**
      * The document settings
      */
-    var xideveSettings={
-        item:{
-            path:"%path%",
-            mount:"%mount%"
+    var xideveSettings = {
+        item: {
+            path: "%path%",
+            mount: "%mount%"
         },
-        xbloxScripts:[],
-        rpcUrl:'%rpcUrl%',
-        xFileConfig:{
+        xbloxScripts: [],
+        rpcUrl: '%rpcUrl%',
+        xFileConfig: {
             RPC_PARAMS: {
                 rpcUserField: 'user',
                 rpcUserValue: 'e741198e1842408aa660459240d430a6',
@@ -220,41 +220,40 @@
                 rpcFixedParams: {}
             }
         },
-        mixins:[
-            {
-                "declaredClass":'xcf.manager.DriverManager',
-                "mixin":{
-                    "prefetch":{
-                        "system_drivers":%XCF_SYSTEM_DRIVERS%,
-                        "user_drivers":%XCF_USER_DRIVERS%
+        mixins: [{
+                "declaredClass": 'xcf.manager.DriverManager',
+                "mixin": {
+                    "prefetch": {
+                        "system_drivers": % XCF_SYSTEM_DRIVERS % ,
+                        "user_drivers": % XCF_USER_DRIVERS %
                     }
                 }
             },
             {
-                "declaredClass":'xcf.manager.DeviceManager',
-                "mixin":{
-                    "prefetch":{
-                        "system_devices":%XCF_SYSTEM_DEVICES%,
-                        "user_devices":%XCF_USER_DEVICES%
+                "declaredClass": 'xcf.manager.DeviceManager',
+                "mixin": {
+                    "prefetch": {
+                        "system_devices": % XCF_SYSTEM_DEVICES % ,
+                        "user_devices": % XCF_USER_DEVICES %
                     }
                 }
             },
             {
-                declaredClass:'xide.manager.ServerActionBase',
-                mixin:{
-                    serviceUrl:'%RPC_URL%',
-                    singleton:true
+                declaredClass: 'xide.manager.ServerActionBase',
+                mixin: {
+                    serviceUrl: '%RPC_URL%',
+                    singleton: true
                 }
             },
             {
-                declaredClass:'xide.manager.ResourceManager',
+                declaredClass: 'xide.manager.ResourceManager',
                 mixin: {
                     serviceUrl: '%RPC_URL%',
                     singleton: true,
                     resourceVariables: {
-                        'VFS_CONFIG':%VFS_VARS%,
-                        'USER_DIRECTORY':'%USER_DIRECTORY%',
-                        'VFS_GET_URL':'%VFS_GET_URL%'
+                        'VFS_CONFIG': % VFS_VARS % ,
+                        'USER_DIRECTORY': '%USER_DIRECTORY%',
+                        'VFS_GET_URL': '%VFS_GET_URL%'
 
                     }
                 }
@@ -262,15 +261,15 @@
         ]
     };
     var appContext = null;
-    var runBlox = function(path,id,context,settings){
-        appContext.application.runBlox(path,id,context,settings);
+    var runBlox = function (path, id, context, settings) {
+        appContext.application.runBlox(path, id, context, settings);
     };
-    var runx = function(ctx,expression,args){
-        var _function = new Function("{" +expression+"; }");
-        return _function.call(ctx,args);
+    var runx = function (ctx, expression, args) {
+        var _function = new Function("{" + expression + "; }");
+        return _function.call(ctx, args);
     };
 
-    var runExpression =function(expression,context,args){
+    var runExpression = function (expression, context, args) {
         var _function = new Function("{" + expression + "}");
         return _function.apply(context || this, args || {});
     };
@@ -298,23 +297,23 @@
      * @param settings
      * @returns {module:dojo/Deferred}
      */
-    function bootx(settings,Deferred) {
+    function bootx(settings, Deferred) {
 
         console.log('Checkpoint 2. bootx');
         var headDfd = new Deferred();
-        require(['xapp/boot','xide/utils'], function (boot,utils) {
+        require(['xapp/boot', 'xide/utils'], function (boot, utils) {
             var bootStrap = new boot();
             console.log('Checkpoint 3. xapp/boot ready');
             bootStrap.load().then(function () {
                 console.log('   Checkpoint 3.1 xapp/boot load()');
-                utils.mixin(settings,xideveSettings);
+                utils.mixin(settings, xideveSettings);
                 bootStrap.start(settings).then(function (ctx) {
-                    console.log('   Checkpoint 5.2 xapp/boot start',xideveSettings);
-                    if(xideveSettings.item && xideveSettings.item.path){
+                    console.log('   Checkpoint 5.2 xapp/boot start', xideveSettings);
+                    if (xideveSettings.item && xideveSettings.item.path) {
                         document.title = utils.pathinfo(xideveSettings.item.path).basename;
                     }
                     startx(headDfd, bootStrap, ctx, xideveSettings);
-                    if(window.__parent){
+                    if (window.__parent) {
                         console.error('tell parent');
                         window.__parent.ready(ctx);
                     }
@@ -324,7 +323,7 @@
         return headDfd;
     }
 
-    require(["requirejs-domready/domReady","requirejs-dplugins/has"], function (ready,has) {
+    require(["requirejs-domready/domReady", "requirejs-dplugins/has"], function (ready, has) {
 
         console.log('Checkpoint 1. domReady');
 
@@ -363,7 +362,7 @@
             "xcf/types/Types",
             "xblox/component"
 
-        ], function (dcl,register,has,dHas,Deferred) {
+        ], function (dcl, register, has, dHas, Deferred) {
 
 
             has.add('use-dcl', function () {
@@ -402,11 +401,8 @@
             });
 
             bootx({
-                delegate:null
-            },Deferred);
+                delegate: null
+            }, Deferred);
         });
     });
-
-
 </script>
-

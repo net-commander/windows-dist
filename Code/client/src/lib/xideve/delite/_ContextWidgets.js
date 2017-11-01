@@ -316,7 +316,6 @@ define([
                     widget.type = "html." + widget.getTagName();
 
                 } else if (widget.isGenericWidget && widget.domNode && widget.domNode.render != null && data && data.properties && (data.properties['is'])) {
-                    console.error('_fixme');
                     var _is = data.properties['is'];
                     switch (_is) {
                         case'd-toggle-button':
@@ -343,6 +342,9 @@ define([
                             widget.type = 'delite/ToggleButton';
                             break;
                         }
+                    }
+                    if(!widget.type){
+                        widget.type = _is;
                     }
                 }
                 else if (widget.isGenericWidget) {
