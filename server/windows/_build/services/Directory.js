@@ -33,6 +33,8 @@ const Path_1 = require("../model/Path");
 const sftp_1 = require("../vfs/ssh/sftp");
 const copy_1 = require("../fs/copy");
 const exists_1 = require("../fs/exists");
+// import * as jet from 'fs-jetpack';
+const mkdirp = require("mkdirp");
 let posix = null;
 const _fs = require('node-fs-extra');
 try {
@@ -149,15 +151,20 @@ class DirectoryService extends Base_1.BaseService {
             return new Promise((resolve, reject) => {
                 const vfs = this.getVFS(mount, this._getRequest(args));
                 if (vfs) {
+                    const resolved = this.resolvePath(mount, path, this._getRequest(args));
+                    mkdirp.sync(resolved);
+                    resolve(true);
+                    /*
+                    return;
                     vfs.mkdir(path, {}, (err, data) => {
                         if (err) {
                             reject("error reading file : " + err);
-                        }
-                        else {
+                        } else {
                             resolve(true);
                         }
                     });
                     resolve(true);
+                    */
                 }
                 else {
                     reject('Cant find VFS for ' + mount);
