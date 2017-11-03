@@ -29,9 +29,7 @@ define([
         addJavaScriptSrc: function (url, doUpdateModel, baseSrcPath, skipDomUpdate) {
 
             debug && console.log('add js source ' + url);
-            if(url.indexOf('custom/')===-1){
-                return;
-            }
+            
 
             var isDojoJS = /\/dojo.js$/.test(url),
                 promises = [];

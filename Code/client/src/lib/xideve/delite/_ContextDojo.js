@@ -469,7 +469,7 @@ define([
                                 }
                                 var update = updateSrc || doUpdateModelDojoRequires;
                                 requirePromises.push(
-                                    this.addJavaScriptModule(r.src, true, skipDomUpdate));
+                                    this.addJavaScriptModule(r.src, r.custom, skipDomUpdate));
                             } else {
                                 console.error("Inline 'javascript-module' not handled src=" + r.src);
                             }
