@@ -29,6 +29,9 @@ define([
         addJavaScriptSrc: function (url, doUpdateModel, baseSrcPath, skipDomUpdate) {
 
             debug && console.log('add js source ' + url);
+            if(url.indexOf('custom/')===-1){
+                return;
+            }
 
             var isDojoJS = /\/dojo.js$/.test(url),
                 promises = [];
@@ -158,6 +161,7 @@ define([
         },
         addJavaScriptModule: function (mid, doUpdateModel, skipDomUpdate) {
             debug && console.log('add js module' + mid);
+            
             var promise = new Deferred();
             if (!skipDomUpdate) {
                 this.getGlobal().require([mid], function (module) {
