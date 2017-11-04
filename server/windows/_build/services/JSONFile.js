@@ -38,6 +38,7 @@ class JSONFileService extends Base_1.BaseService {
         if (user) {
             configPath = this._userDir(user, file || 'settings.json');
         }
+        console.log('read settings :' + configPath);
         return configPath;
     }
     get(section, path, query) {

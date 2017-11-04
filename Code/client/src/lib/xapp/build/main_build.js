@@ -67321,7 +67321,7 @@ define('xide/manager/Context_UI',[
         },
         getOpenFilesP: function () {
 
-            const p = new Deferred();
+            const head = new Deferred();
 
             const settingsManager = this.getSettingsManager();
 
@@ -67345,10 +67345,10 @@ define('xide/manager/Context_UI',[
             });
 
             all(defs).then(() => {
-                p.resolve(out);
+                head.resolve(out);
             });
 
-            return p;
+            return head;
         },
 
         getOpenFiles: function () {
@@ -67434,10 +67434,13 @@ define('xide/manager/Context_UI',[
         },
         onComponentsReady: function () {
             // todo : store is leaked!
-            this.getOpenFilesP().then((items) => {
-                items.forEach((item) => {
-                    this.openItem(item);
-                })
+            this.getSettingsManager().initStore().then(() => {
+                this.getOpenFilesP().then((items) => {
+                    console.log('onComponentsReady# open files', items);
+                    items.forEach((item) => {
+                        this.openItem(item);
+                    });
+                });
             });
         },
         /***********************************************************************/
@@ -71437,18 +71440,18 @@ define('xide/manager/SettingsManager',[
     "xide/manager/ManagerBase",
     "xide/data/Memory",
     "dojo/Deferred"
-], function (dcl,ServerActionBase, utils, ManagerBase,Memory,Deferred) {
+], function (dcl, ServerActionBase, utils, ManagerBase, Memory, Deferred) {
     const Module = dcl([ManagerBase, ServerActionBase], {
-        declaredClass:"xide.manager.SettingsManager",
+        declaredClass: "xide.manager.SettingsManager",
         serviceClass: 'XApp_Store',
         settingsStore: null,
         settingsDataAll: null,
         section: 'settings',
-        store:null,
+        store: null,
         has: function (section, path, query, data, readyCB) {},
-        getSetting:function(id){
+        getSetting: function (id) {
             const _val = this.getStore().query({
-                id:id
+                id: id
             });
             return _val && _val[0] ? _val[0].value : null;
         },
@@ -71493,9 +71496,13 @@ define('xide/manager/SettingsManager',[
         },
         write: function (section, path, query, data, decode, readyCB) {
             try {
-                const itemLocal = utils.queryStoreEx(this.settingsStore, {id: data.id}, true, true);
+                const itemLocal = utils.queryStoreEx(this.settingsStore, {
+                    id: data.id
+                }, true, true);
                 if (itemLocal) {
-                    return this.update(section, path, {id: data.id}, data.data, decode, readyCB);
+                    return this.update(section, path, {
+                        id: data.id
+                    }, data.data, decode, readyCB);
                 } else {
                     return this.callMethodEx(this.serviceClass, 'set', [section || this.section, path, query, data, decode], readyCB, false);
                 }
@@ -71508,7 +71515,7 @@ define('xide/manager/SettingsManager',[
                 //var itemLocal = utils.queryStoreEx(this.settingsStore, {id: data.id}, true, true);
                 const itemLocal = utils.queryStoreEx(this.settingsStore, query, true, true);
                 if (itemLocal) {
-                    utils.mixin(itemLocal,data);
+                    utils.mixin(itemLocal, data);
                     return this.update(section, path, query, data, decode, readyCB);
                 } else {
                     return this.callMethodEx(this.serviceClass, 'set', [section || this.section, path, query, data, decode], readyCB, false);
@@ -71519,16 +71526,20 @@ define('xide/manager/SettingsManager',[
         },
         initStore: function () {
             const dfd = new Deferred();
-            const self = this;
-            this.serviceObject.__init.then(function() {
-                self.read(self.section, '.', null, self.onSettingsReceived.bind(self));
-                dfd.resolve();
+            if (this.settingsStore) {
+                console.log('have store already');
+                dfd.resolve(this.settingsStore);
+                return dfd;
+            }
+            this.serviceObject.__init.then(() => {
+                this.read(this.section, '.', null, this.onSettingsReceived.bind(this)).then(() => {
+                    dfd.resolve(this.settingsStore);
+                });
             });
             return dfd;
         },
-        init:function(){
+        init: function () {
             const dfd = new Deferred();
-            const self = this;
             dfd.resolve();
             return dfd;
         }
