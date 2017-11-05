@@ -38,10 +38,8 @@ if (argv.file) {
     */
 }
 let user = null;
-if (argv.user) {
-    if (argv.user === 'home') {
-        // 	user = path.join(homedir(), 'Documents', 'Control-Freak');
-    }
+if (!argv.user && argv.home === 'true') {
+    user = path.join(homedir(), 'Documents', 'Control-Freak');
 }
 const CFOptions = {
     root: root,
@@ -53,7 +51,8 @@ const CFOptions = {
     uuid: argv.uuid || 'ide',
     user: user || (argv.user ? path.resolve(argv.user) : null),
     persistence: argv.persistences ? argv.persistence : Application_1.EPersistence.MEMORY,
-    interface: argv.interface ? argv.interface : null
+    interface: argv.interface ? argv.interface : null,
+    home: argv.home === 'true'
 };
 function create(app) {
     let application;

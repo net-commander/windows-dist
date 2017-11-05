@@ -26,9 +26,12 @@ function create() {
         default: "5555"
     });
     cli.options('host', {
-        alias: 'h',
         description: 'Specify http host',
         default: "0.0.0.0"
+    });
+    cli.options('home', {
+        description: 'Is desktop release, this will set user to ~/.control-freak',
+        default: false
     });
     cli.options('print', {
         description: 'verbose',
