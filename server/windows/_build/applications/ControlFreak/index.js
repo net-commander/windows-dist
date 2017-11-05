@@ -69,7 +69,6 @@ class ControlFreak extends Base_1.ApplicationBase {
         const CLIENT_ROOT = path.join(APP_ROOT, 'Code/client/src/');
         const NODE_ROOT = options.release ? process.cwd() : path.join(APP_ROOT, 'server/nodejs/');
         const USER_DIRECTORY = options.user || path.join(APP_ROOT, '/user');
-        console_1.console.log('e', USER_DIRECTORY);
         const DATA_ROOT = path.join(APP_ROOT, '/data/');
         let DB_ROOT = null;
         if (this.options.persistence === Application_1.EPersistence.MONGO) {
