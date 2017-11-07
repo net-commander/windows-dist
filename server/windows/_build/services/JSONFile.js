@@ -47,7 +47,7 @@ class JSONFileService extends Base_1.BaseService {
         result[section] = dotProp.get(data, this.root + path + section);
         return result;
     }
-    set(section, path = '.', searchQuery = null, value, decodeValue = true) {
+    set(section, path = '.', searchQuery = null, value, decodeValue = true, request) {
         let data = this.readConfig(this._getConfigPath(arguments));
         const dataAt = dotProp.get(data, this.root + path + section);
         if (!_.find(dataAt, searchQuery)) {
@@ -57,8 +57,8 @@ class JSONFileService extends Base_1.BaseService {
         dataAt && _.extend(_.find(dataAt, searchQuery), value);
         return data;
     }
-    update(section, path = '.', searchQuery = null, value = null, decodeValue = true) {
-        return this.writeConfig(this._getConfigPath(arguments), this.set(section, path, searchQuery, value, decodeValue));
+    update(section, path = '.', searchQuery = null, value = null, decodeValue = true, request) {
+        return this.writeConfig(this._getConfigPath(arguments), this.set(section, path, searchQuery, value, decodeValue, this._getRequest(arguments)));
     }
     read(path) {
         return this.readConfig(this._getConfigPath(arguments));
@@ -86,13 +86,13 @@ __decorate([
 __decorate([
     Base_1.RpcMethod,
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String, Object, Object, Boolean]),
+    __metadata("design:paramtypes", [String, String, Object, Object, Boolean, Object]),
     __metadata("design:returntype", void 0)
 ], JSONFileService.prototype, "set", null);
 __decorate([
     Base_1.RpcMethod,
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String, Object, Object, Boolean]),
+    __metadata("design:paramtypes", [String, String, Object, Object, Boolean, Object]),
     __metadata("design:returntype", void 0)
 ], JSONFileService.prototype, "update", null);
 exports.JSONFileService = JSONFileService;

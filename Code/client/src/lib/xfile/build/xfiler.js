@@ -40709,6 +40709,7 @@ define('xfile/data/Store',[
                 }, this);
             },
             getSync: function (id) {
+                id = id || '';
                 var data = this.storage.fullData;
                 return data[this.storage.index[id]] || data[this.storage.index[id.replace('./', '')]];
             },
