@@ -2,13 +2,12 @@ define([
     "dcl/dcl",
     "delite/register",
     "delite/Widget",
-    'xide/mixins/EventedMixin',
     "delite/handlebars!./{{widgetName}}.html",
     "requirejs-dplugins/jquery!attributes/classes",
     "requirejs-dplugins/has",
     "delite/handlebars",
     "delite/Template"
-], function (dcl, register, Widget, EventedMixin, template, $, has, handlebars, Template) {
+], function (dcl, register, Widget, template, $, has, handlebars, Template) {
     const {{widgetName}} = dcl([Widget], {
         baseClass: "d-media-player",
         template: template,
