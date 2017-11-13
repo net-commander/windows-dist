@@ -67029,7 +67029,8 @@ define('xide/manager/Context',[
         onCSSChanged: function (evt) {
             if (isBrowser) {
                 let path = evt.path;
-                const _p = this.findVFSMount(path);
+                const _p = this.findVFSMountPath(path);
+                path = utils.replaceAll(_p, '', path);
                 path = utils.replaceAll('//', '/', path);
                 path = path.replace('/PMaster/', '');
                 const reloadFn = window['xappOnStyleSheetChanged'];
@@ -67122,6 +67123,22 @@ define('xide/manager/Context',[
                     mountPath = mountPath.replace(/\/+$/, "");
                     if (path.includes(mountPath)) {
                         return mount;
+                    }
+                }
+
+            }
+            return null;
+        },
+        findVFSMountPath: function (path) {
+            const resourceManager = this.getResourceManager();
+            const vfsConfig = resourceManager ? resourceManager.getVariable('VFS_CONFIG') || {} : null;
+            if (vfsConfig) {
+                for (const mount in vfsConfig) {
+                    let mountPath = vfsConfig[mount];
+                    mountPath = utils.replaceAll('//', '/', mountPath);
+                    mountPath = mountPath.replace(/\/+$/, "");
+                    if (path.includes(mountPath)) {
+                        return mountPath;
                     }
                 }
 
@@ -67437,7 +67454,6 @@ define('xide/manager/Context_UI',[
             // todo : store is leaked!
             this.getSettingsManager().initStore().then(() => {
                 this.getOpenFilesP().then((items) => {
-                    console.log('onComponentsReady# open files', items);
                     items.forEach((item) => {
                         this.openItem(item);
                     });
@@ -71528,7 +71544,6 @@ define('xide/manager/SettingsManager',[
         initStore: function () {
             const dfd = new Deferred();
             if (this.settingsStore) {
-                console.log('have store already');
                 dfd.resolve(this.settingsStore);
                 return dfd;
             }
@@ -73651,6 +73666,7 @@ define('xblox/model/html/SetStyle',[
     "dojo/dom-style",
     "dojo/_base/Color",
     "xide/registry"
+     // not loaded yet
 ], function (dcl, Block, utils, types, EventedMixin, Referenced, domAttr, domStyle, Color, registry) {
 
     var debug = false;
