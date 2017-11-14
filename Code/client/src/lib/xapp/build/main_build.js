@@ -1645,7 +1645,7 @@ define('dojo/dom-prop',["exports", "./_base/kernel", "./sniff", "./_base/lang", 
 
 			node = dom.byId(node);
 			if(!node){
-				console.error('invalid node!',node);
+				console.warn('invalid node!',new Error().stack);
 				return node;
 			}
 			var l = arguments.length;
