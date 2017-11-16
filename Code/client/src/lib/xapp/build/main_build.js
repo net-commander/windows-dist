@@ -70608,7 +70608,7 @@ define('xaction/Action',[
                 const thiz = this;
 
                 //track vis key in all
-                [_vis.MAIN_MENU, _vis.ACTION_TOOLBAR, _vis.CONTEXT_MENU, _vis.RIBBON].forEach(vis => {
+                [_vis.MAIN_MENU, _vis.ACTION_TOOLBAR, _vis.CONTEXT_MENU, _vis.RIBBON, _vis.QUICK_LAUNCH].forEach(vis => {
                     thiz.setVisibility(vis, utils.cloneKeys(_obj, false));
                 });
                 return this;

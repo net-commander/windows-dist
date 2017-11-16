@@ -232,22 +232,10 @@
 }).call(this);
 define("xdojo/declare", function(){});
 
-define('xide/types',[
-    "dcl/dcl"
-],function(dcl){
-    const mod = new dcl(null,{
-        declaredClass:"xide/types"
-    });
-    mod.test = 22;
-    return mod;
-});
-
-
 /** @module xgrid/Renderer **/
 define('xgrid/Renderer',[
-    "xdojo/declare",
-    'xide/types'
-], function (declare,types) {
+    "xdojo/declare"
+], function (declare) {
     var Implementation = {
         _renderIndex: 0,
         _lastRenderedArray: null,
@@ -1899,11 +1887,10 @@ define('dgrid/Grid',[
 /** @module xgrid/ListRenderer **/
 define('xgrid/ListRenderer',[
     "xdojo/declare",
-    'xide/types',
     './Renderer',
     'dojo/dom-construct',
     'dgrid/Grid'
-], function (declare,types,Renderer,domConstruct,Grid) {
+], function (declare,Renderer,domConstruct,Grid) {
 
     /**
      * The list renderer does nothing since the xgrid/Base is already inherited from
@@ -1963,6 +1950,17 @@ define('xide/utils',[
         declaredClass:"xide.utils"
     });
 });
+define('xide/types',[
+    "dcl/dcl"
+],function(dcl){
+    const mod = new dcl(null,{
+        declaredClass:"xide/types"
+    });
+    mod.test = 22;
+    return mod;
+});
+
+
 /** @module xide/lodash **/
 define('xide/lodash',[],function(app){
     /**
@@ -20787,7 +20785,7 @@ define('xaction/Action',[
                 const thiz = this;
 
                 //track vis key in all
-                [_vis.MAIN_MENU, _vis.ACTION_TOOLBAR, _vis.CONTEXT_MENU, _vis.RIBBON].forEach(vis => {
+                [_vis.MAIN_MENU, _vis.ACTION_TOOLBAR, _vis.CONTEXT_MENU, _vis.RIBBON, _vis.QUICK_LAUNCH].forEach(vis => {
                     thiz.setVisibility(vis, utils.cloneKeys(_obj, false));
                 });
                 return this;
@@ -24334,10 +24332,10 @@ define('xide/widgets/_MenuMixin4',[
                 const what = $(e.target);
                 const widget = what.data('widget');
                 if (widget && widget.action) {
-                    if(self.getVisibilityField(widget.action,'closeOnClick')===false){
+                    if (self.getVisibilityField(widget.action, 'closeOnClick') === false) {
                         return e.preventDefault();
                     }
-                    
+
                 }
                 if (!self.isOpen) {
                     return;
@@ -24682,7 +24680,6 @@ define('xide/widgets/_MenuMixin4',[
             const ITEM_TAG_END = '</' + this.ITEM_TAG + '>';
 
             if (visibility.widgetClass) {
-                console.log('have own widget class', arguments);
                 const args = utils.mixin({
                     text: labelLocalized,
                     icon: icon,
@@ -24691,6 +24688,7 @@ define('xide/widgets/_MenuMixin4',[
                     command: action.command,
                     visibility: self.visibility
                 }, visibility.widgetArgs || {});
+
                 const custom = new proxyClass({
                     args: args,
                     renderer: visibility.widgetClass,
@@ -24704,8 +24702,8 @@ define('xide/widgets/_MenuMixin4',[
                     get: function () {
                         console.log('get ', arguments);
                     },
-                    set: function (key,value) {
-                        console.log('set '+key, value);
+                    set: function (key, value) {
+                        // console.log('set '+key, value);
                     },
                     destroy: function () {
                         utils.destroy(this.widget);
@@ -25395,9 +25393,6 @@ define('xide/widgets/ContextMenu',[
             return this.navBar;
         }
     });
-    const _debugTree = false;
-    const _debugMenuData = false;
-    const _debugOldMenuData = false;
     const KeyboardControl = _MenuKeyboard;
 
     const ContextMenu = dcl([_Widget.dcl, ActionContext.dcl, ActionMixin.dcl, ActionRendererClass, MenuMixinClass, _XWidget.StoreMixin], {
@@ -26357,10 +26352,9 @@ define('xdocker/Docker2',[
 /** @module xgrid/ThumbRenderer **/
 define('xgrid/ThumbRenderer',[
     "xdojo/declare",
-    'xide/types',
     'dojo/dom-construct',
     './Renderer'
-], function (declare,types,domConstruct,Renderer) {
+], function (declare,domConstruct,Renderer) {
     /**
      * The list renderer does nothing since the xgrid/Base is already inherited from
      * dgrid/OnDemandList and its rendering as list already.
