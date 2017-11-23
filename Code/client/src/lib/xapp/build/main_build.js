@@ -47630,7 +47630,7 @@ define('xide/data/Source',[
             for (let i = 0; i < this._references.length; i++) {
                 const link = this._references[i];
                 const item = link.item;
-                const settings = link.settings;
+                const settings = link.settings || {};
                 const store = item._store;
 
                 if (this._originReference == item) {
@@ -70306,10 +70306,11 @@ define('xaction/Action',[
     'xide/utils/ObjectUtils',
     'xide/utils',
     'xide/mixins/EventedMixin',
-    'xide/cache/Circular'
-], (dcl, Base, types, ObjectUtils, utils, EventedMixin, Circular) => {
+    'xide/cache/Circular',
+    'xide/lodash'
+], (dcl, Base, types, ObjectUtils, utils, EventedMixin, Circular, _) => {
 
-    const Cache = null;//new Circular(100);
+    const Cache = null; //new Circular(100);
     /***
      * Extend the core types for action visibility(main menu,...) options/enums:
      * 1. 'Main menu',
@@ -70602,18 +70603,20 @@ define('xaction/Action',[
 
          */
         setVisibility: function () {
+            const _vis = types.ACTION_VISIBILITY;
             if (arguments.length == 2 && _.isString(arguments[0]) && arguments[0] == types.ACTION_VISIBILITY_ALL) {
                 const _obj = arguments[1];
-                const _vis = types.ACTION_VISIBILITY;
-                const thiz = this;
-
                 //track vis key in all
                 [_vis.MAIN_MENU, _vis.ACTION_TOOLBAR, _vis.CONTEXT_MENU, _vis.RIBBON, _vis.QUICK_LAUNCH].forEach(vis => {
-                    thiz.setVisibility(vis, utils.cloneKeys(_obj, false));
+                    this.setVisibility(vis, utils.cloneKeys(_obj, false));
                 });
                 return this;
             }
             const _args = _.isArray(arguments[0]) ? arguments[0] : arguments;
+            if (!arguments[0] in _vis || !arguments[0]) {
+                console.error('no such visibility !', arguments[0]);
+                return this;
+            }
             this.visibility_ = types.ACTION_VISIBILITY.factory(_args, this.visibility_);
             return this;
         },
@@ -70713,8 +70716,7 @@ define('xaction/Action',[
      */
     Module.createDefault = (label, icon, command, group, handler, mixin) => Module.create(label, icon, command, false, null, null, group || 'nogroup', null, false, handler, mixin);
     return Module;
-});
-;
+});;
 define('xide/cache/Circular',[], function () {
 
     function CircularBuffer(capacity){
