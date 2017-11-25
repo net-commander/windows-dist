@@ -761,7 +761,7 @@ class ControlFreak extends Base_1.ApplicationBase {
                 let isWin = /^win/.test(process.platform);
                 const ips = this.getIps();
                 if (isWin && host === '0.0.0.0') {
-                    host = ips[0].ip;
+                    // host = ips[0].ip;
                 }
                 console_1.console.info('ControlFreak#run : create HTTP server at ' + host + ':' + port);
                 this.server.listen(port, host);
