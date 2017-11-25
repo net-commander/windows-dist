@@ -793,6 +793,10 @@ class ControlFreak extends Base_1.ApplicationBase {
                         });
                     }
                     resolve(context);
+                    let isWin = /^win/.test(process.platform);
+                    if (isWin && host === '0.0.0.0') {
+                        host = ips[0].ip;
+                    }
                     this.ready('http://' + host + ':' +
                         port + '/app/xcf?userDirectory=' +
                         encodeURIComponent(this.path(Base_1.EEKey.USER_DIRECTORY)));
