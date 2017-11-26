@@ -138,6 +138,9 @@ define([
                 if (w.domNode == node) {
                     ret = w;
                 }
+                if (w.domNode.id == node.id) {
+                    ret = w;
+                }
             })
             return ret;
         },

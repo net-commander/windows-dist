@@ -29,6 +29,13 @@ define([
 			});
 			state && state.applyTo(this,stateName) && console.log('did set state : ' + stateName);
 		},
+		getState:function(_stateName){
+			//can be integer or anything non string
+			var stateName = "" + _stateName;
+			return _.find(this.getStates(),{
+				name:stateName
+			});
+		},
 		attachedCallback: function () {
 			/*
 			console.log('attached ' + has('ide'));

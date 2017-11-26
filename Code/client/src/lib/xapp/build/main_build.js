@@ -73149,9 +73149,8 @@ define('xblox/StyleState',[
                 if(!keyVal || !keyVal.length){
                     continue;
                 }
-                var key = obj.substring(0,obj.indexOf(':'));
-                var value = obj.substring(obj.indexOf(':')+1,obj.length);
-
+                var key = obj.substring(0,obj.indexOf(':')).trim();
+                var value = obj.substring(obj.indexOf(':')+1,obj.length).trim();
                 _result[key]=value;
             }
             return _result;
@@ -73167,6 +73166,20 @@ define('xblox/StyleState',[
         onChanged:function () {
             this.applyTo(this._widget);
         },
+        attachedCallback: function () {
+            if($(this).attr('style').indexOf('display')==-1){
+               // this.style.display = 'none';
+            }
+            // 
+			/*
+			console.log('attached ' + has('ide'));
+			if(!has('ide')){
+				var style = $(this).attr('style');
+				var background = utils.getBackgroundUrl(style);
+				console.log('style : '+background,this);
+			}
+			*/
+		},
         applyTo:function(widget){
             $(widget).removeClass($(widget).data('_lastCSSState'));
             $(widget).removeClass($(widget).data('_lastCSSClass'));
