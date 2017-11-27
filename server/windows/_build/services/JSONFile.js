@@ -13,6 +13,9 @@ const Base_1 = require("../services/Base");
 const dotProp = require("dot-prop");
 const _ = require("lodash");
 const pathUtil = require("path");
+const defaultFileName = 'settings.json';
+const exists_1 = require("../fs/exists");
+const write_1 = require("../fs/write");
 /**
  * This service sets/gets data in a json file, utilizing 'dot-prop' to select certain data in the object.
  *
@@ -26,18 +29,31 @@ class JSONFileService extends Base_1.BaseService {
     constructor(config) {
         super(config, null, null);
         this.method = 'XApp_Store';
+        this.defaultFileName = defaultFileName;
+        this.defaultData = {
+            'admin': {
+                'settings': []
+            }
+        };
         this.configPath = config;
         this.root = 'admin';
+    }
+    _ensure(path) {
+        if (!exists_1.sync(path)) {
+            write_1.sync(path, this.defaultData);
+        }
     }
     _userDir(userRoot, what) {
         return pathUtil.resolve(pathUtil.join(userRoot + pathUtil.sep + what));
     }
-    _getConfigPath(args, file = 'settings.json') {
+    _getConfigPath(args, file) {
+        file = file || this.defaultFileName;
         const user = this._getUser(this._getRequest(args));
         let configPath = this.configPath;
         if (user) {
             configPath = this._userDir(user, file || 'settings.json');
         }
+        this._ensure(configPath);
         return configPath;
     }
     get(section, path, query) {
@@ -45,6 +61,7 @@ class JSONFileService extends Base_1.BaseService {
         let data = this.readConfig(configPath);
         let result = {};
         result[section] = dotProp.get(data, this.root + path + section);
+        console.log('config path ' + configPath, [path, query, result]);
         return result;
     }
     set(section, path = '.', searchQuery = null, value, decodeValue = true, request) {

@@ -144,6 +144,15 @@ define([
             })
             return ret;
         },
+        getWidgetById:function(id){
+            let ret = null;
+            _.each(this.widgetHash, (w) => {
+                if (w.domNode.id == id) {
+                    ret = w;
+                }
+            })
+            return ret;
+        },
         /////////////////////////////////////////////////////////////////////////////////////////////////
         //
         //  Upgrade to xideve : begin
