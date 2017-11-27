@@ -41396,7 +41396,7 @@ define('xide/manager/ServerActionBase',[
             if (!this.hasMethod(method, serviceClass) && omit === true) {
                 this.onError({
                     code: 1,
-                    message: ['Sorry, server doesnt know ' + method]
+                    message: ['Sorry, server doesnt know ' + method + ' in ' + serviceClass]
                 });
                 return false;
             }
@@ -41481,7 +41481,7 @@ define('xide/manager/ServerActionBase',[
                     if (omitError === true) {
                         this.onError({
                             code: 1,
-                            message: ['Sorry, server doesnt know ' + method]
+                            message: ['Sorry, server doesnt know ' + method + ' in ' + serviceClass]
                         });
                     }
                     return null;
@@ -44416,7 +44416,7 @@ define('xide/manager/RPCService',[
                 debugger;
                 this.onError({
                     code: 1,
-                    message: ['Sorry, server doesnt know ' + method]
+                    message: ['Sorry, server doesnt know ' + method + ' in ' + serviceClass]
                 });
                 return false;
             }
@@ -44552,7 +44552,7 @@ define('xide/manager/RPCService',[
                         debugger;
                         errorCB({
                             code: 1,
-                            message: ['Sorry, server doesnt know ' + method]
+                            message: ['Sorry, server doesnt know ' + method + ' in ' + serviceClass]
                         });
                     }
                     return null;
@@ -66478,7 +66478,7 @@ define('xide/manager/PluginManager',[
     "dojo/Deferred",
     "dojo/promise/all"
 ], function (dcl, has, ManagerBase, utils, types, factory, Deferred, all){
-    const _debug = false;
+    const _debug = true;
 
     /**
      * Plugin manager which provides loading of additional modules at any time after the main layer(s)
@@ -71505,7 +71505,7 @@ define('xide/manager/SettingsManager',[
             });
         },
         read: function (section, path, query, readyCB) {
-            return this.runDeferred(null, 'get', [section, path, query]).then(function (data) {
+            return this.runDeferred(this.serviceClass, 'get', [section, path, query]).then(function (data) {
                 readyCB && readyCB(data);
             }.bind(this));
         },
