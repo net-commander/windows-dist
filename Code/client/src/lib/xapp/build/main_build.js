@@ -44549,7 +44549,6 @@ define('xide/manager/RPCService',[
                 const thiz = this;
                 if (this[serviceClass][method] == null) {
                     if (omitError === true && errorCB) {
-                        debugger;
                         errorCB({
                             code: 1,
                             message: ['Sorry, server doesnt know ' + method + ' in ' + serviceClass]
@@ -45581,7 +45580,7 @@ define('xcf/manager/DriverManager',[
          * @param driver
          */
         addDeviceInstance: function (device, driver) {
-            return;
+            /*
             driver.directory = true;
             const store = driver._store;
             const parentId = driver.path;
@@ -45636,6 +45635,7 @@ define('xcf/manager/DriverManager',[
             }
 
             driver.instances.push(instance);
+            */
         },
         declaredClass: "xcf.manager.DriverManager",
         /***
@@ -71489,8 +71489,7 @@ define('xide/manager/SettingsManager',[
                 this._createStore([]);
                 return;
             }
-            const _a = data['' + this.section];
-            this.settingsStore = this._createStore(_a);
+            this.settingsStore = this._createStore(data['' + this.section]);
         },
         replace: function (path, query, operation, newValue, readyCB) {
             const thiz = this;
@@ -73167,9 +73166,9 @@ define('xblox/StyleState',[
             this.applyTo(this._widget);
         },
         attachedCallback: function () {
-            if($(this).attr('style').indexOf('display')==-1){
+            //if($(this).attr('style').indexOf('display')==-1){
                // this.style.display = 'none';
-            }
+            //}
             // 
 			/*
 			console.log('attached ' + has('ide'));
@@ -74483,7 +74482,11 @@ define('xapp/manager/Context',[
     'xcf/types/Types',
     'xdojo/has',
     'dojo/Deferred'
+    // 'xblox/_Stated'
 ], function (dcl, ContextBase, PluginManager, Application, ResourceManager, EventedMixin, types, utils, _WidgetPickerMixin, Reloadable, Types, has, Deferred) {
+
+    // console.log(require.toUrl('../xibm/delite/_Stated'));
+
     var isIDE = has('xcf-ui');
     var debugWire = false;
     var debugBoot = false;
@@ -74679,8 +74682,9 @@ define('xapp/manager/Context',[
                 //dijit
                 (widget.baseClass && widget.baseClass.indexOf('dijitContentPane') != -1)
                 //delite
-                || widget.render != null || widget.on != null) {
-                _isWidget = false;//use on
+                ||
+                widget.render != null || widget.on != null) {
+                _isWidget = false; //use on
             }
 
             if (_target) {
@@ -74711,8 +74715,7 @@ define('xapp/manager/Context',[
                                 _handle = _target.subscribe(event, function (evt) {
                                     run(event, evt, block, widget);
                                 }.bind(this), widget);
-                            }
-                            else {
+                            } else {
                                 if (utils.isNativeEvent(event)) {
                                     event = event.replace('on', '');
                                 }
@@ -74900,6 +74903,8 @@ define('xapp/manager/Context',[
                 debugBoot && console.log('emit load', widget);
                 widget.__didEmitLoad = true;
                 if (widget.nodeName === 'BODY') {
+                    // utils.mixin(widget, _Stated.prototype);;
+                    // console.error('widget',widget.getStates());
                     $(widget.nodeName).trigger('load');
                 } else {
                     if (widget.emit) {
@@ -74942,6 +74947,7 @@ define('xapp/manager/Context',[
         },
         loadXBloxFiles: function (files) {
             var thiz = this;
+
             function loadXBLOXFiles() {
                 thiz.getBlockManager().loadFiles(files).then(function (scopes) {
                     debugBoot && console.log('   Checkpoint 8.1. xapp/manager/context->xblox files loaded');
@@ -75096,7 +75102,7 @@ define('xapp/manager/Context',[
                 }, 10);
 
             });
-            
+
             if (has('debug')) {
                 this.loadXIDE();
             }
@@ -75132,8 +75138,7 @@ define('xapp/manager/Context',[
                     thiz.driverManager = thiz.createManager(DriverManager, null, {
                         serviceUrl: settings.rpcUrl,
                         singleton: true
-                    }
-                    );
+                    });
                     thiz.driverManager.init();
 
                     try {
@@ -75144,8 +75149,7 @@ define('xapp/manager/Context',[
                                 thiz.deviceManager = thiz.createManager(DeviceManager, null, {
                                     serviceUrl: settings.rpcUrl,
                                     singleton: true
-                                }
-                                );
+                                });
                                 thiz.deviceManager.init();
                                 thiz.deviceManager.ls('system_devices').then(function () {
                                     thiz.deviceManager.ls('user_devices').then(function () {
