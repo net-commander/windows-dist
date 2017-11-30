@@ -66478,7 +66478,7 @@ define('xide/manager/PluginManager',[
     "dojo/Deferred",
     "dojo/promise/all"
 ], function (dcl, has, ManagerBase, utils, types, factory, Deferred, all){
-    const _debug = true;
+    const _debug = false;
 
     /**
      * Plugin manager which provides loading of additional modules at any time after the main layer(s)
