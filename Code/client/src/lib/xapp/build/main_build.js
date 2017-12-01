@@ -65370,7 +65370,7 @@ define('xfile/data/Store',[
                 var item = mixed,
                     result = null;
 
-                if (lang.isString(item)) {
+                if (_.isString(item)) {
                     item = this.getSync(mixed);
                 }
 
@@ -68244,7 +68244,7 @@ define('xaction/ActionProvider',[
     'xide/mixins/EventedMixin',
     'xaction/DefaultActions',
     'xide/lodash'
-], (
+], function (
     declare,
     dcl,
     types,
@@ -68256,7 +68256,7 @@ define('xaction/ActionProvider',[
     EventedMixin,
     DefaultActions,
     _
-) => {
+) {
 
     const Implementation = {
         /**
@@ -68332,7 +68332,9 @@ define('xaction/ActionProvider',[
          */
         __createAction: function (title, command, group, icon, handler, accelKey, keyCombo, keyProfile, keyTarget, keyScope, mixin) {
             icon = icon || types.ACTION_ICON[command];
-            const args = {accelKey: accelKey};
+            const args = {
+                accelKey: accelKey
+            };
             utils.mixin(args, mixin);
             const action = Action.createDefault(title, icon, command, group, handler, args);
             if (keyCombo) {
@@ -68591,7 +68593,9 @@ define('xaction/ActionProvider',[
             let action = null;
 
             mixin = mixin || {};
-            utils.mixin(mixin, {owner: owner || thiz});
+            utils.mixin(mixin, {
+                owner: owner || thiz
+            });
 
             if (mixin.addPermission || DefaultActions.hasAction(permissions, command)) {
                 if (!handler) {
@@ -68653,8 +68657,7 @@ define('xaction/ActionProvider',[
     const Module = declare("xaction/ActionProvider", [EventedMixin, Keyboard], Implementation);
     Module.dcl = dcl([EventedMixin.dcl, Keyboard.dcl], Implementation);
     return Module;
-});
-;
+});;
 /** @module xaction/DefaultActions **/
 define('xaction/DefaultActions',[
     "dcl/dcl",
@@ -68663,11 +68666,11 @@ define('xaction/DefaultActions',[
     'xide/types',
     'xide/utils',
     'xlang/i18'
-], (dcl, inherited, declare, types, utils, i18) => {
+], function(dcl, inherited, declare, types, utils, i18) {
     /**
      * @mixin module:xide/action/DefaultActions
      */
-    const Module = declare("xaction/DefaultActions", null , {});
+    const Module = declare("xaction/DefaultActions", null, {});
     /**
      *
      * @param title
@@ -68683,7 +68686,7 @@ define('xaction/DefaultActions',[
      * @param mixin
      * @returns {{title: *, command: *, group: *, icon: *, handler: *, accelKey: *, keyCombo: *, keyProfile: *, keyTarget: *, keyScope: *}}
      */
-    Module.createActionParameters=(
+    Module.createActionParameters = (
         title,
         command,
         group,
@@ -68696,7 +68699,7 @@ define('xaction/DefaultActions',[
         keyScope,
         mixin
     ) => ({
-        title:title,
+        title: title,
         command: command,
         group: group,
         icon: icon,
@@ -68706,7 +68709,7 @@ define('xaction/DefaultActions',[
         keyProfile: keyProfile,
         keyTarget: keyTarget,
         keyScope: keyScope,
-        mixin:mixin
+        mixin: mixin
     });
     /**
      *
@@ -68740,27 +68743,27 @@ define('xaction/DefaultActions',[
         shouldDisable,
         container
     ) => {
-        if(keycombo) {
+        if (keycombo) {
             if (_.isString(keycombo)) {
                 keycombo = [keycombo];
             }
         }
 
         mixin = utils.mixin({
-            filterGroup:filterGroup || "item|view",
-            tab:tab||'File',
+            filterGroup: filterGroup || "item|view",
+            tab: tab || 'File',
             onCreate: onCreate || (action => {}),
-            shouldShow:shouldShow||(() => true),
-            shouldDisable:shouldDisable||(() => false)
-        },mixin);
+            shouldShow: shouldShow || (() => true),
+            shouldDisable: shouldDisable || (() => false)
+        }, mixin);
 
         const _action = Module.createActionParameters(
             label,
             command,
-            group || 'File',//Group
+            group || 'File', //Group
             icon, handler || null, "", keycombo, null, container, null, mixin);
 
-        utils.mixin(_action,mixin);
+        utils.mixin(_action, mixin);
 
         return _action;
     };
@@ -68770,8 +68773,8 @@ define('xaction/DefaultActions',[
      * @param what
      * @returns {boolean}
      */
-    function hasAction(permissions,what){
-        return _.includes(permissions,what);
+    function hasAction(permissions, what) {
+        return _.includes(permissions, what);
     }
 
     /**
@@ -68784,7 +68787,7 @@ define('xaction/DefaultActions',[
      * @param action
      * @private
      */
-    function _afterAction(dfdResult,event,action) {
+    function _afterAction(dfdResult, event, action) {
         const who = this;
         // call onAfterAction with this results
         let onAfterActionDfd = null;
@@ -68806,23 +68809,23 @@ define('xaction/DefaultActions',[
      * @param action {module:xaction/ActionModel}
      * @param event
      */
-    function defaultHandler(action,event){
+    function defaultHandler(action, event) {
         let actionDfd;
         const who = this;
 
         who && who.onBeforeAction && who.onBeforeAction(action);
-        if(who.runAction){
-            actionDfd = who.runAction.apply(who,[action,null,event]);
-        }else if(action.handler){
-            actionDfd = action.handler.apply(who,[action,null,event]);
+        if (who.runAction) {
+            actionDfd = who.runAction.apply(who, [action, null, event]);
+        } else if (action.handler) {
+            actionDfd = action.handler.apply(who, [action, null, event]);
         }
-        if(actionDfd && actionDfd.then){
+        if (actionDfd && actionDfd.then) {
             actionDfd.then(actionResult => {
-                _afterAction.apply(who,[actionResult,event,action]);
+                _afterAction.apply(who, [actionResult, event, action]);
             });
 
-        }else{
-            _afterAction.apply(who,[actionDfd,event,action]);
+        } else {
+            _afterAction.apply(who, [actionDfd, event, action]);
         }
         return actionDfd;
     }
@@ -68834,7 +68837,7 @@ define('xaction/DefaultActions',[
      * @param owner
      * @returns {Array}
      */
-    function getDefaultActions(permissions,grid,owner){
+    function getDefaultActions(permissions, grid, owner) {
         /**
          *
          * @param selection
@@ -68842,10 +68845,10 @@ define('xaction/DefaultActions',[
          * @param visibility
          * @returns {boolean}
          */
-        function shouldDisableDefaultEmptySelection(selection,reference,visibility){
+        function shouldDisableDefaultEmptySelection(selection, reference, visibility) {
             selection = selection || grid ? grid.getSelection() : [];
 
-            if(!selection || !selection.length){
+            if (!selection || !selection.length) {
                 return true;
             }
             return false;
@@ -68857,14 +68860,14 @@ define('xaction/DefaultActions',[
          * @param visibility
          * @returns {boolean}
          */
-        function shouldDisableDefaultFileOnly(selection,reference,visibility){
+        function shouldDisableDefaultFileOnly(selection, reference, visibility) {
 
-            if(shouldDisableDefaultEmptySelection.apply(this,arguments)){
+            if (shouldDisableDefaultEmptySelection.apply(this, arguments)) {
                 return true;
             }
             selection = selection || grid ? grid.getSelection() : [];
 
-            if(selection && selection[0].isDir === true){
+            if (selection && selection[0].isDir === true) {
                 return true;
             }
             return false;
@@ -68894,18 +68897,20 @@ define('xaction/DefaultActions',[
          * @param shouldShow
          * @param shouldDisable
          */
-        function addAction(label,command,icon,keycombo,tab,group,filterGroup,onCreate,handler,mixin,shouldShow,shouldDisable){
+        function addAction(label, command, icon, keycombo, tab, group, filterGroup, onCreate, handler, mixin, shouldShow, shouldDisable) {
             let action = null;
             mixin = mixin || {};
-            utils.mixin(mixin,{owner:owner || grid});
+            utils.mixin(mixin, {
+                owner: owner || grid
+            });
 
-            if(mixin.addPermission || hasAction(permissions,command)){
+            if (mixin.addPermission || hasAction(permissions, command)) {
 
                 handler = handler || defaultHandler;
 
-                action = createAction(label,command,icon,keycombo,tab,group,filterGroup,onCreate,handler,mixin,shouldShow,shouldDisable,grid.domNode);
+                action = createAction(label, command, icon, keycombo, tab, group, filterGroup, onCreate, handler, mixin, shouldShow, shouldDisable, grid.domNode);
 
-                if(action) {
+                if (action) {
                     if (owner && owner.addAction) {
                         owner.addAction(null, action);
                     }
@@ -68913,52 +68918,53 @@ define('xaction/DefaultActions',[
                 }
             }
         }
-        if(hasAction(permissions, ACTION.CLIPBOARD) && grid.getClipboardActions){
+        if (hasAction(permissions, ACTION.CLIPBOARD) && grid.getClipboardActions) {
             result.push(creator.createAction({
                 label: 'Clipboard',
                 command: 'Edit/Clipboard',
                 icon: 'fa-clipboard',
                 tab: 'Edit',
                 group: 'Clipboard',
-                mixin:{
-                    addPermission:true,
-                    dynamic:true,
-                    quick:true
+                mixin: {
+                    addPermission: true,
+                    dynamic: true,
+                    quick: true
                 },
-                onCreate:function(action){
-                    action.setVisibility(VISIBILITY.RIBBON,{
-                        expand:true,
-                        tab:"File"
+                onCreate: function (action) {
+                    action.setVisibility(VISIBILITY.RIBBON, {
+                        expand: true,
+                        tab: "File"
                     });
                 }
             }));
 
             result = result.concat(grid.getClipboardActions(addAction));
         }
+        if (hasAction(permissions, ACTION.TOOLBAR) || hasAction(permissions, ACTION.HEADER)) {
+            result.push(creator.createAction({
+                label: 'Show',
+                command: 'View/Show',
+                icon: 'fa-eye',
+                tab: 'View',
+                group: 'Show',
+                mixin: {
+                    addPermission: true,
+                    dynamic: true
+                },
+                onCreate: function (action) {
+                    action.setVisibility(VISIBILITY.RIBBON, {
+                        expand: true
+                    });
+                }
+            }));
+        }
 
-        result.push(creator.createAction({
-            label: 'Show',
-            command: 'View/Show',
-            icon: 'fa-eye',
-            tab: 'View',
-            group: 'Show',
-            mixin:{
-                addPermission:true,
-                dynamic:true
-            },
-            onCreate:function(action){
-                action.setVisibility(VISIBILITY.RIBBON,{
-                    expand:true
-                });
-            }
-        }));
 
-
-        if(hasAction(permissions,ACTION.LAYOUT) && grid.getRendererActions){
+        if (hasAction(permissions, ACTION.LAYOUT) && grid.getRendererActions) {
             result = result.concat(grid.getRendererActions());
         }
 
-        if(hasAction(permissions,ACTION.COLUMNS) && grid.getColumnHiderActions){
+        if (hasAction(permissions, ACTION.COLUMNS) && grid.getColumnHiderActions) {
             result = result.concat(grid.getColumnHiderActions(permissions));
         }
         ///////////////////////////////////////
@@ -68972,11 +68978,11 @@ define('xaction/DefaultActions',[
             icon: ACTION_ICON.EDIT,
             tab: 'Home',
             group: 'Open',
-            keycombo: ['f4', 'enter','dblclick'],
-            mixin:{
-                quick:true
+            keycombo: ['f4', 'enter', 'dblclick'],
+            mixin: {
+                quick: true
             },
-            shouldDisable:shouldDisableDefaultFileOnly
+            shouldDisable: shouldDisableDefaultFileOnly
         }));
 
 
@@ -68990,14 +68996,14 @@ define('xaction/DefaultActions',[
             icon: ACTION_ICON.DELETE,
             tab: 'Home',
             group: 'Organize',
-            keycombo: ['f8','delete'],
-            mixin:{
-                quick:true
+            keycombo: ['f8', 'delete'],
+            mixin: {
+                quick: true
             },
-            shouldDisable:shouldDisableDefaultEmptySelection
+            shouldDisable: shouldDisableDefaultEmptySelection
         }));
 
-        addAction('Rename','File/Rename','fa-edit',['f2'],'Home','Organize','item',null,null,null,null,shouldDisableDefaultEmptySelection);
+        addAction('Rename', 'File/Rename', 'fa-edit', ['f2'], 'Home', 'Organize', 'item', null, null, null, null, shouldDisableDefaultEmptySelection);
 
         result.push(creator.createAction({
             label: 'Reload',
@@ -69006,18 +69012,18 @@ define('xaction/DefaultActions',[
             tab: 'Home',
             group: 'File',
             keycombo: ['ctrl l'],
-            mixin:{
-                quick:true
+            mixin: {
+                quick: true
             }
         }));
-        addAction('Create archive','File/Compress',ACTION_ICON.COMPRESS,['ctrl z'],'Home','Organize','item|view',null,null,null,null,shouldDisableDefaultEmptySelection);
+        addAction('Create archive', 'File/Compress', ACTION_ICON.COMPRESS, ['ctrl z'], 'Home', 'Organize', 'item|view', null, null, null, null, shouldDisableDefaultEmptySelection);
 
         ///////////////////////////////////////
         //
         //  File
         //
-        addAction('Extract','File/Extract',ACTION_ICON.EXTRACT,['ctrl e'],'Home','File','item|view',null,null,null,null,() => //return shouldDisableDefaultFileOnly.apply(this,arguments);
-        true);
+        addAction('Extract', 'File/Extract', ACTION_ICON.EXTRACT, ['ctrl e'], 'Home', 'File', 'item|view', null, null, null, null, () => //return shouldDisableDefaultFileOnly.apply(this,arguments);
+            true);
 
         result.push(creator.createAction({
             label: 'Download',
@@ -69026,8 +69032,8 @@ define('xaction/DefaultActions',[
             tab: 'Home',
             group: 'File',
             keycombo: ['ctrl down'],
-            mixin:{
-                quick:true
+            mixin: {
+                quick: true
             }
         }));
 
@@ -69035,18 +69041,22 @@ define('xaction/DefaultActions',[
         //
         //  New
         //
-        if(hasAction(permissions,ACTION.NEW_DIRECTORY)|| hasAction(permissions,ACTION.NEW_FILE)) {
-            addAction('New','File/New','fa-magic',null,'Home','New','item|view',null,null,{},null,null);
+        if (hasAction(permissions, ACTION.NEW_DIRECTORY) || hasAction(permissions, ACTION.NEW_FILE)) {
+            addAction('New', 'File/New', 'fa-magic', null, 'Home', 'New', 'item|view', null, null, {}, null, null);
         }
-        addAction('New Folder',ACTION.NEW_DIRECTORY,'fa-folder',['f7'],'Home','New','item|view',null,null,{quick:true},null,null);
-        addAction('New File',ACTION.NEW_FILE,'el-icon-file',['ctrl f4'],'Home','New','item|view',null,null,{quick:true},null,null);
+        addAction('New Folder', ACTION.NEW_DIRECTORY, 'fa-folder', ['f7'], 'Home', 'New', 'item|view', null, null, {
+            quick: true
+        }, null, null);
+        addAction('New File', ACTION.NEW_FILE, 'el-icon-file', ['ctrl f4'], 'Home', 'New', 'item|view', null, null, {
+            quick: true
+        }, null, null);
 
 
         //////////////////////////////////////////
         //
         //  Preview
         //
-        if(hasAction(permissions,ACTION.PREVIEW)) {
+        if (hasAction(permissions, ACTION.PREVIEW)) {
             result.push(creator.createAction({
                 label: 'Preview',
                 command: 'File/Preview',
@@ -69054,10 +69064,10 @@ define('xaction/DefaultActions',[
                 tab: 'Home',
                 group: 'Open',
                 keycombo: ['f3'],
-                mixin:{
-                    quick:true
+                mixin: {
+                    quick: true
                 },
-                shouldDisable:shouldDisableDefaultFileOnly
+                shouldDisable: shouldDisableDefaultFileOnly
             }));
         }
 
@@ -69065,30 +69075,30 @@ define('xaction/DefaultActions',[
         //
         //  Selection
         //
-        if(hasAction(permissions,ACTION.SELECTION)) {
+        if (hasAction(permissions, ACTION.SELECTION)) {
             result.push(createAction('Select', 'File/Select', 'fa-hand-o-up', null, 'Home', 'Select', 'item|view', action => {
-                action.setVisibility(VISIBILITY.RIBBON,{
-                    expand:true
+                action.setVisibility(VISIBILITY.RIBBON, {
+                    expand: true
                 });
-            }, null, null, null, null,grid.domNode));
+            }, null, null, null, null, grid.domNode));
 
             const _mixin = {
-                          owner:owner || grid
-                      };
+                owner: owner || grid
+            };
 
             const container = grid.domNode;
 
             result.push(createAction('Select all', 'File/Select/All', 'fa-th', ['ctrl a'], 'Home', 'Select', 'item|view', null, () => {
                 grid.selectAll();
-            }, _mixin, null, null,container));
+            }, _mixin, null, null, container));
 
             result.push(createAction('Select none', 'File/Select/None', 'fa-square-o', 'ctrl d', 'Home', 'Select', 'item|view', null, () => {
                 grid.deselectAll();
-            }, _mixin, null, null,container));
+            }, _mixin, null, null, container));
 
             result.push(createAction('Invert selection', 'File/Select/Invert', 'fa-square', ['ctrl i'], 'Home', 'Select', 'item|view', null, () => {
                 grid.invertSelection();
-            }, _mixin, null, null,container));
+            }, _mixin, null, null, container));
         }
         return result;
     }
@@ -70811,7 +70821,7 @@ define('xaction/ActionStore',[
     'xide/data/ObservableStore',
     'dstore/Trackable',
     'xaction/ActionModel'
-], (declare, TreeMemory, utils, ObservableStore, Trackable, ActionModel) => {
+], function (declare, TreeMemory, utils, ObservableStore, Trackable, ActionModel) {
     /**
      * Default properties to be observed (in ObservableStore)
      * @type {string[]}
@@ -70857,8 +70867,7 @@ define('xaction/ActionStore',[
     Module.createClass = createClass;
     Module.DEFAULT_ACTION_PROPERTIES = DEFAULT_ACTION_PROPERTIES;
     return Module;
-});
-;
+});;
 /** module:xaction/ActionModel **/
 define('xaction/ActionModel',[
     "dcl/dcl",
@@ -70867,7 +70876,7 @@ define('xaction/ActionModel',[
     "xide/data/Source",
     'xide/model/Path',
     'xide/utils'
-], (dcl, Action, Model, Source, Path, utils) => {
+], function (dcl, Action, Model, Source, Path, utils) {
     const debug = false;
     const count = 0;
     /**
