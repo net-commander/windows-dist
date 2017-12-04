@@ -67445,11 +67445,11 @@ define('xide/manager/Context_UI',[
                 register: true
             });
         },
-        _restoreNavigation: function () {
+        _restoreNavigation: function () {            
             const on = this.getSettingsManager().getSetting('navigation') || {
                 value: true
             }
-            this.getApplication().collapseNavigation(on.on);
+            this.getApplication().collapseNavigation(on.on);            
         },
         onComponentsReady: function () {
             // todo : store is leaked!
@@ -73328,7 +73328,6 @@ define('xblox/_State',[
                 widget = null;
 
             while (i < 2 && !widget) {
-
                 if (element) {
                     element = element.parentNode;
                     widget = this.getEnclosingWidget(element, "widgetId");
