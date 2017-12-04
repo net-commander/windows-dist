@@ -2,10 +2,11 @@
 define([
 	"dcl/dcl",
 	"requirejs-dplugins/has",
-	"xide/utils/CSSUtils"
-], function (dcl,has,utils) {
-	return dcl(null,{
-		state:'',
+	"xide/utils/CSSUtils",
+	"xide/lodash"
+], function (dcl, has, utils, _) {
+	return dcl(null, {
+		state: '',
 		/**
 		 * Returns all direct children of this widget, i.e. all widgets or DOM nodes underneath
 		 * `this.containerNode`.  Note that it does not return all
@@ -20,21 +21,21 @@ define([
 			// use Array.prototype.slice to transform the live HTMLCollection into an Array
 			return Array.prototype.slice.call(this.children);
 		},
-		_states:null,
-		setState:function(_stateName){
+		_states: null,
+		setState: function (_stateName) {
 			//can be integer or anything non string
-			var stateName = "" + _stateName;
-			var state = _.find(this.getStates(),{
-				name:stateName
+			var state = _.find(this.getStates(), {
+				name: _stateName
 			});
-			state && state.applyTo(this,stateName) && console.log('did set state : ' + stateName);
+			state && state.applyTo(this, stateName) && console.log('did set state : ' + stateName);
 		},
-		getState:function(_stateName){
+		getState: function (_stateName) {
 			//can be integer or anything non string
 			var stateName = "" + _stateName;
-			return _.find(this.getStates(),{
-				name:stateName
+			const found = _.find(this.getStates(), {
+				name: stateName
 			});
+			return found;
 		},
 		attachedCallback: function () {
 			/*
@@ -46,32 +47,39 @@ define([
 			}
 			*/
 		},
-		addState:function(state){
-			if(!this._states){
+		addState: function (state) {
+			if (!this._states) {
 				this._states = [];
 			}
 
-			if(this._states.indexOf(state)==-1){
+			if (this._states.indexOf(state) == -1) {
 				this._states.push(state);
 			}
 		},
-		removeState:function(state){
-			if(!this._states){
+		removeState: function (state) {
+			if (!this._states) {
 				this._states = [];
 			}
 
-			if(this._states.indexOf(state)==-1){
-				this._states.splice(this._states.indexOf(state),1);
+			if (this._states.indexOf(state) == -1) {
+				this._states.splice(this._states.indexOf(state), 1);
+			}
+			// @TODO: weird, still there
+			const found = _.find(this.getStates(), {
+				id: state.id
+			});
+			if(found){
+				this._states.splice(this._states.indexOf(found), 1);
 			}
 		},
 
-		stateReady:function(state){
-			if(state.name ===this.state){
-				state.applyTo(this,state.name);
+		stateReady: function (state) {
+			if (state.name === this.state) {
+				state.applyTo(this, state.name);
 			}
 			this.addState(state);
 		},
-		getStates:function(){
+		getStates: function () {
 			return this._states || [];
 		}
 	})

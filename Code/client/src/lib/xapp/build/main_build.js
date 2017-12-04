@@ -11122,8 +11122,7 @@ define('xide/mixins/EventedMixin',[
          * @param key
          * @private
          */
-        _destroyHandle: function (key) {
-        },
+        _destroyHandle: function (key) {},
         /**
          * Turns the lights off, kills all event handles.
          * @private
@@ -11235,14 +11234,12 @@ define('xide/mixins/EventedMixin',[
                         return handler.call(this, arguments[1]);
                     case 3:
                         return handler.call(this, arguments[1], arguments[2]);
-                    // slower
+                        // slower
                     default:
                         var args = Array.prototype.slice.call(arguments, 1);
                         returnValue = handler.apply(this, args);
                 }
-            }
-
-            else if (_.isArray(handler)) {
+            } else if (_.isArray(handler)) {
                 var args = Array.prototype.slice.call(arguments, 1);
                 const listeners = handler.slice();
                 let temp;
@@ -11401,15 +11398,7 @@ define('xide/mixins/EventedMixin',[
             return _handle;
 
         },
-        /**
-         * Dojo based sub
-         * @param type
-         * @param listener
-         * @param owner
-         * @returns {*}
-         * @private
-         */
-        _on: function (type, listener, owner) {
+        _on_: function (type, listener, owner) {
             try {
                 if (!this.__events) this.__events = {};
 
@@ -11421,8 +11410,7 @@ define('xide/mixins/EventedMixin',[
                 if (!eventList) {
                     // Optimize the case of one listener. Don't need the extra array object.
                     this.__events[type] = listener;
-                }
-                else if (_.isArray(eventList)) {
+                } else if (_.isArray(eventList)) {
 
                     if (eventList.indexOf(listener) != -1)
                         return console.warn("adding same listener twice", type);
@@ -11447,6 +11435,15 @@ define('xide/mixins/EventedMixin',[
                 logError(e);
             }
             return this;
+        },
+        _on: function (type, listener, owner) {
+            if (!_.isArray(type)) {
+                type = [type];
+            }
+            type.forEach((evt) => {
+                this._on_(evt, listener, owner);
+            });
+            return this;
         }
     };
 
@@ -11457,9 +11454,7 @@ define('xide/mixins/EventedMixin',[
     Module.dcl = dcl(null, Impl);
     dcl.chainAfter(Module.dcl, 'destroy');
     return Module;
-});
-
-;
+});;
 define('xide/factory',[
     'dcl/dcl'
 ],function(dcl){
@@ -67450,9 +67445,16 @@ define('xide/manager/Context_UI',[
                 register: true
             });
         },
+        _restoreNavigation: function () {
+            const on = this.getSettingsManager().getSetting('navigation') || {
+                value: true
+            }
+            this.getApplication().collapseNavigation(on.on);
+        },
         onComponentsReady: function () {
             // todo : store is leaked!
             this.getSettingsManager().initStore().then(() => {
+                this._restoreNavigation();
                 this.getOpenFilesP().then((items) => {
                     items.forEach((item) => {
                         this.openItem(item);
@@ -71483,6 +71485,22 @@ define('xide/manager/SettingsManager',[
             });
             return _val && _val[0] ? _val[0].value : null;
         },
+        setSetting: function (id, value) {
+            let props = this.getStore().getSync(id);
+            if(!props){
+                props = this.getStore().putSync({
+                    id:id,
+                    value: value
+                })
+            }else{
+                props.value = value;
+            }
+            return this.write2(null, '.', {
+                id: id
+            }, {
+                value: props.value
+            }, true, null);
+        },
         getStore: function () {
             return this.settingsStore;
         },
@@ -73164,7 +73182,6 @@ define('xblox/StyleState',[
             return _result;
         },
         _toStyleString:function(values){
-
             var _values = [];
             for(var prop in values){
                 _values.push( prop + ':' + values[prop]);
@@ -73187,7 +73204,8 @@ define('xblox/StyleState',[
 				console.log('style : '+background,this);
 			}
 			*/
-		},
+        },
+        _lastStyle:'',
         applyTo:function(widget){
             $(widget).removeClass($(widget).data('_lastCSSState'));
             $(widget).removeClass($(widget).data('_lastCSSClass'));
@@ -73195,6 +73213,8 @@ define('xblox/StyleState',[
                 this._widget = widget;
                 var _cssWidget = this._toObject($(widget).attr('style'));
                 var _cssThis = this._toObject($(this).attr('style'));
+                this._lastStyle = _cssThis;
+                widget._lastStyle = _cssThis;
                 var styleOut = utils.mixin(_cssWidget,_cssThis);
                 $(widget).attr('style',this._toStyleString(styleOut));
             }
@@ -78307,7 +78327,7 @@ define('xide/utils/HTMLUtils',[
     "dojo/_base/window",
     'xide/lodash',
     'xide/$'
-], function (utils, types, dcl,declare, domConstruct, has, domClass, win, _,$) {
+], function (utils, types, dcl, declare, domConstruct, has, domClass, win, _, $) {
     /**
      * @TODO: remove
      * #Maqetta back compat tool
@@ -78398,8 +78418,8 @@ define('xide/utils/HTMLUtils',[
         }
         return false;
     };
-    utils.find=function(clss,parent){
-        return $(clss,parent)[0];
+    utils.find = function (clss, parent) {
+        return $(clss, parent)[0];
     }
     /**
      * Finds and returns a widgets instance in a stack-container by name
@@ -78438,7 +78458,7 @@ define('xide/utils/HTMLUtils',[
             extraBaseClasses = _.isArray(extraBaseClasses) ? extraBaseClasses : [extraBaseClasses];
             extraBaseClasses.push(proto);
             extraBaseClasses.reverse();
-            proto = proto.extend ? declare(extraBaseClasses, {}) : dcl(extraBaseClasses,{});
+            proto = proto.extend ? declare(extraBaseClasses, {}) : dcl(extraBaseClasses, {});
         }
         return new proto(args || {}, node || win.doc.createElement('div'));
 
@@ -78494,7 +78514,7 @@ define('xide/utils/HTMLUtils',[
             return parent.addWidget(widgetProto, ctrArgsIn, delegate, parent, startup, cssClass, baseClasses, select, classExtension);
         }
 
-        const widget = utils.createInstanceSync(widgetProto, ctrArgs, isDirect ? _target : null, baseClasses, classExtension);// new widgetProto(ctrArgs, dojo.doc.createElement('div'));
+        const widget = utils.createInstanceSync(widgetProto, ctrArgs, isDirect ? _target : null, baseClasses, classExtension); // new widgetProto(ctrArgs, dojo.doc.createElement('div'));
         if (!widget) {
             console.error('widget creation failed! ', arguments);
             return null;
@@ -78517,10 +78537,6 @@ define('xide/utils/HTMLUtils',[
         if (parent.resize || parent.startup) {
             widget._parent = parent;
         }
-
-        //@TODO: remove
-        widget.utils = utils;
-        widget.types = types;
         return widget;
     };
 
@@ -78779,8 +78795,7 @@ define('xide/utils/HTMLUtils',[
     };
 
     return utils;
-});
-;
+});;
 /** @module xide/$ **/
 define('xide/$',[],function(){
     /**
