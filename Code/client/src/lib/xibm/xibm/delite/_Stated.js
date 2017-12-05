@@ -6,6 +6,9 @@ define([
 	"xide/lodash",
 	'xide/utils'
 ], function (dcl, has, utils, _, xutils) {
+	const toArray = (stateName) => {
+		return xutils.replaceAll(' ', '', stateName).split(',');
+	}
 	return dcl(null, {
 		state: '',
 		/**
@@ -69,25 +72,39 @@ define([
 			const found = _.find(this.getStates(), {
 				id: state.id
 			});
-			if(found){
+			if (found) {
 				this._states.splice(this._states.indexOf(found), 1);
 			}
 		},
-		isActive:function(name){
-			const allStates = this.getStates();			
-			const enabled = xutils.replaceAll(' ', '', this.state).split(',');
+		isActive: function (name) {
+			const allStates = this.getStates();
+			const enabled = toArray(this.state)
 			return enabled.includes(name);
 		},
-		getActiveStates:function(){
-			const allStates = this.getStates();			
-			const enabled = xutils.replaceAll(' ', '', this.state).split(',');
-			return allStates.filter((state)=>{
+		getActiveStates: function () {
+			const allStates = this.getStates();
+			const enabled = toArray(this.state)
+			return allStates.filter((state) => {
 				return enabled.includes(state.name);
-			});		
+			});
+		},
+		disableState: function (state) {
+			let enabled = toArray(this.state)
+			enabled = enabled.filter((stateName) => {
+				return state.name !== stateName
+			});
+			return enabled.join(',');
+		},
+		enableState: function (state) {
+			let enabled = toArray(this.state);
+			if (!this.isActive(state.name)) {
+				enabled.push(state.name);
+			}
+			return enabled.join(',');
 		},
 		stateReady: function (state) {
 			this.addState(state);
-			if(this.isActive(state.name)){
+			if (this.isActive(state.name)) {
 				state.applyTo(this, state.name);
 			}
 		},
