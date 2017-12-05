@@ -3,8 +3,9 @@ define([
 	"dcl/dcl",
 	"requirejs-dplugins/has",
 	"xide/utils/CSSUtils",
-	"xide/lodash"
-], function (dcl, has, utils, _) {
+	"xide/lodash",
+	'xide/utils'
+], function (dcl, has, utils, _, xutils) {
 	return dcl(null, {
 		state: '',
 		/**
@@ -72,12 +73,23 @@ define([
 				this._states.splice(this._states.indexOf(found), 1);
 			}
 		},
-
+		isActive:function(name){
+			const allStates = this.getStates();			
+			const enabled = xutils.replaceAll(' ', '', this.state).split(',');
+			return enabled.includes(name);
+		},
+		getActiveStates:function(){
+			const allStates = this.getStates();			
+			const enabled = xutils.replaceAll(' ', '', this.state).split(',');
+			return allStates.filter((state)=>{
+				return enabled.includes(state.name);
+			});		
+		},
 		stateReady: function (state) {
-			if (state.name === this.state) {
+			this.addState(state);
+			if(this.isActive(state.name)){
 				state.applyTo(this, state.name);
 			}
-			this.addState(state);
 		},
 		getStates: function () {
 			return this._states || [];
