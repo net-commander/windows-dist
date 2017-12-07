@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const JSONFile_1 = require("../../../services/JSONFile");
 const dotProp = require("dot-prop");
+const JSONFile_1 = require("../../../services/JSONFile");
 const defaultFileName = 'styles.json';
 /**
  * This service sets/gets data in a json file, utilizing 'dot-prop' to select certain data in the object.

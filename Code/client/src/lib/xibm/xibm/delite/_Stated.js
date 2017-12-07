@@ -26,12 +26,12 @@ define([
 			return Array.prototype.slice.call(this.children);
 		},
 		_states: null,
-		setState: function (_stateName) {
+		setState: function (stateName) {
 			//can be integer or anything non string
 			var state = _.find(this.getStates(), {
-				name: _stateName
+				name: stateName
 			});
-			state && state.applyTo(this, stateName) && console.log('did set state : ' + stateName);
+			state && state.applyTo(this, stateName);
 		},
 		getState: function (_stateName) {
 			//can be integer or anything non string

@@ -67333,11 +67333,8 @@ define('xide/manager/Context_UI',[
             return actionDfd;
         },
         getOpenFilesP: function () {
-
             const head = new Deferred();
-
             const settingsManager = this.getSettingsManager();
-
             const settingsStore = settingsManager.getStore() || {
                 getSync: function () {}
             };
@@ -67364,19 +67361,7 @@ define('xide/manager/Context_UI',[
             return head;
         },
 
-        getOpenFiles: function () {
-            const settingsManager = this.getSettingsManager();
-            const settingsStore = settingsManager.getStore() || {
-                getSync: function () {}
-            };
-            const props = settingsStore.getSync('openFiles') || {
-                value: {
-                    files: []
-                }
-            };
-            const fileManager = this.getFileManager();
-            return props.value.files;
-        },
+
         trackEditor: function (item, editor) {
             const settingsManager = this.getSettingsManager();
 
@@ -67445,11 +67430,11 @@ define('xide/manager/Context_UI',[
                 register: true
             });
         },
-        _restoreNavigation: function () {            
+        _restoreNavigation: function () {
             const on = this.getSettingsManager().getSetting('navigation') || {
                 value: true
             }
-            this.getApplication().collapseNavigation(on.on);            
+            this.getApplication().collapseNavigation(on.on);
         },
         onComponentsReady: function () {
             // todo : store is leaked!
@@ -72667,7 +72652,7 @@ define('xblox/model/html/SetState',[
     "dojo/dom-style",
     "dojo/_base/Color",
     "xide/registry"
-], function(dcl,Block,utils,types,EventedMixin,Referenced,domAttr,domStyle,Color,registry){
+], function (dcl, Block, utils, types, EventedMixin, Referenced, domAttr, domStyle, Color, registry) {
     /**
      * @augments module:xide/mixins/EventedMixin
      * @lends module:xblox/model/Block_UI
@@ -72675,14 +72660,14 @@ define('xblox/model/html/SetState',[
      * @extends module:xblox/model/ModelBase
      */
     var Impl = {
-        declaredClass:"xblox.model.html.SetState",
-        name:'Set State',
-        reference:'',
-        references:null,
-        description:'Switches to a state',
-        value:'',
-        mode:1,
-        sharable:false,
+        declaredClass: "xblox.model.html.SetState",
+        name: 'Set State',
+        reference: '',
+        references: null,
+        description: 'Switches to a state',
+        value: '',
+        mode: 1,
+        sharable: false,
         /////////////////////////////////////////////////////////////////////////////////////
         //
         //  UI
@@ -72693,41 +72678,41 @@ define('xblox/model/html/SetState',[
          * @param scope
          * @param settings
          */
-        solve:function(scope,settings) {
+        solve: function (scope, settings) {
             var value = this.value;
             settings = settings || {};
             settings.flags = types.CIFLAG.DONT_PARSE;
-            var objects = this.resolveReference(this.deserialize(this.reference),settings);
-            if(this.override && this.override.variables){
-                value = utils.replace(value,null,this.override.variables,{
-                    begin:'{',
-                    end:'}'
+            var objects = this.resolveReference(this.deserialize(this.reference), settings);
+            if (this.override && this.override.variables) {
+                value = utils.replace(value, null, this.override.variables, {
+                    begin: '{',
+                    end: '}'
                 });
             }
-            if(objects && objects.length){
-                _.each(objects,function(object){
+            if (objects && objects.length) {
+                _.each(objects, function (object) {
                     var widget = object
                     var _widget = registry.byId(widget.id) || widget;
-                    if(widget!=_widget){
+                    if (widget != _widget) {
 
                     }
-                    if(_widget && _widget.setState){
+                    if (_widget && _widget.setState) {
                         _widget.setState(value);
                     }
                 });
             }
-            this.onSuccess(this,settings);
-            this.onDidRun();//clear overrides
+            this.onSuccess(this, settings);
+            this.onDidRun(); //clear overrides
         },
         /**
          * Get human readable string for the UI
          * @returns {string}
          */
-        toText:function(){
+        toText: function () {
             var _ref = this.deserialize(this.reference);
-            var result = this.getBlockIcon() + ' ' + this.name + ' :: on ' + _ref.reference + ' to' || ' ' + ' to ';
-            if(this.value){
-                result+= ' ' + this.value;
+            var result = this.getBlockIcon() + ' ' + this.name + ' :: on ' + (_ref.reference || 'this' ) + ' to' || ' ' + ' to ';
+            if (this.value) {
+                result += ' ' + this.value;
             }
             return result;
         },
@@ -72735,176 +72720,180 @@ define('xblox/model/html/SetState',[
          * Standard call when editing this block
          * @returns {*}
          */
-        getFields:function(){
+        getFields: function () {
             var fields = this.getDefaultFields(false);
             var referenceArgs = {
-                group:'General',
-                dst:'reference',
-                value:this.reference
+                group: 'General',
+                dst: 'reference',
+                value: this.reference
             };
-            fields.push(utils.createCI('State',types.ECIType.STRING,this.value,{
-                group:'General',
-                dst:'value',
-                value:this.value,
-                intermediateChanges:false
+            fields.push(utils.createCI('State', types.ECIType.STRING, this.value, {
+                group: 'General',
+                dst: 'value',
+                value: this.value,
+                intermediateChanges: false
             }));
-            fields.push(utils.createCI('Target',types.ECIType.WIDGET_REFERENCE,this.reference,referenceArgs));
+            fields.push(utils.createCI('Target', types.ECIType.WIDGET_REFERENCE, this.reference, referenceArgs));
             return fields;
         },
-        getBlockIcon:function(){
+        getBlockIcon: function () {
             return '<span class="fa-paint-brush"></span>';
         },
-        getPropValue:function(stylesObject,prop){
+        getPropValue: function (stylesObject, prop) {
             for (var _prop in stylesObject) {
-                if(_prop === prop){
+                if (_prop === prop) {
                     return stylesObject[_prop];
                 }
             }
             return null;
         },
-        updateObject:function(obj,style,mode){
-            if(!obj){
+        updateObject: function (obj, style, mode) {
+            if (!obj) {
                 return false;
             }
             mode = mode || 1;
-            if(obj.domNode!=null){
+            if (obj.domNode != null) {
                 obj = obj.domNode;
             }
-            var currentStyle = domAttr.get(obj,'style');
-            if(currentStyle===";"){
-                currentStyle="";
+            var currentStyle = domAttr.get(obj, 'style');
+            if (currentStyle === ";") {
+                currentStyle = "";
             }
-            if(currentStyle===""){
-                if(obj['lastStyle']!=null){
+            if (currentStyle === "") {
+                if (obj['lastStyle'] != null) {
                     currentStyle = obj['lastStyle'];
-                }else {
+                } else {
                     currentStyle = style;
                 }
             }
 
-            if(currentStyle===";"){
-                currentStyle=style;
+            if (currentStyle === ";") {
+                currentStyle = style;
             }
-            switch (mode){
+            switch (mode) {
                 //set
-                case 1:{
-                    var currentStyleMap = this._toObject(currentStyle);
-                    var props = style.split(';');
-                    for (var i = 0; i < props.length; i++) {
-                        var _style = props[i].split(':');
-                        if(_style.length==2){
-                            currentStyleMap[_style[0]]=_style[1];
+                case 1:
+                    {
+                        var currentStyleMap = this._toObject(currentStyle);
+                        var props = style.split(';');
+                        for (var i = 0; i < props.length; i++) {
+                            var _style = props[i].split(':');
+                            if (_style.length == 2) {
+                                currentStyleMap[_style[0]] = _style[1];
+                            }
                         }
+                        var styles = [];
+                        for (var p in currentStyleMap) {
+                            styles.push(p + ':' + currentStyleMap[p]);
+                        }
+                        $(obj).attr('style', styles.join(';'));
+                        break;
                     }
-                    var styles=[];
-                    for (var p in currentStyleMap){
-                        styles.push(p + ':' +currentStyleMap[p]);
+                    //add
+                case 2:
+                    {
+                        var _newStyle = currentStyle + ';' + style,
+                            _newStyleT = _.uniq(_newStyle.split(';')).join(';');
+                        domAttr.set(obj, 'style', _newStyleT);
+                        break;
                     }
-                    $(obj).attr('style',styles.join(';'));
-                    break;
-                }
-                //add
-                case 2:{
-                    var _newStyle = currentStyle + ';' + style,
-                        _newStyleT = _.uniq(_newStyle.split(';')).join(';');
-                    domAttr.set(obj,'style',_newStyleT);
-                    break;
-                }
-                //remove
-                case 3:{
-                    domAttr.set(obj,'style',utils.replaceAll(style,'',currentStyle));
-                    break;
-                }
-                //increase
+                    //remove
+                case 3:
+                    {
+                        domAttr.set(obj, 'style', utils.replaceAll(style, '', currentStyle));
+                        break;
+                    }
+                    //increase
                 case 4:
-                //decrease
-                case 5:{
-                    var	numbersOnlyRegExp = new RegExp(/(\D*)(-?)(\d+)(\D*)/);
-                    /**
-                     * compute current style values of the object
-                     * @type {{}}
-                     */
-                    var stylesRequested = this._toObject(style);
-                    var stylesComputed = {};
-                    var jInstance = $(obj);
-                    ///determine from node it self
-                    if(stylesRequested) {
-                        for (var prop in stylesRequested) {
-                            stylesComputed[prop] = this._getStyle(prop,obj,jInstance);
+                    //decrease
+                case 5:
+                    {
+                        var numbersOnlyRegExp = new RegExp(/(\D*)(-?)(\d+)(\D*)/);
+                        /**
+                         * compute current style values of the object
+                         * @type {{}}
+                         */
+                        var stylesRequested = this._toObject(style);
+                        var stylesComputed = {};
+                        var jInstance = $(obj);
+                        ///determine from node it self
+                        if (stylesRequested) {
+                            for (var prop in stylesRequested) {
+                                stylesComputed[prop] = this._getStyle(prop, obj, jInstance);
+                            }
                         }
-                    }
 
-                    var _newStyleObject = {};
-                    /**
-                     * compute the new style
-                     * @type {number}
-                     */
-                    for (var prop in stylesRequested){
-                        var _prop = '' + prop.trim();
-                        var multiplicator = 1;
-                        if(stylesComputed[_prop]!=null){
+                        var _newStyleObject = {};
+                        /**
+                         * compute the new style
+                         * @type {number}
+                         */
+                        for (var prop in stylesRequested) {
+                            var _prop = '' + prop.trim();
+                            var multiplicator = 1;
+                            if (stylesComputed[_prop] != null) {
 
-                            var _valueRequested = stylesRequested[prop];
-                            var _valueComputed = stylesComputed[prop];
+                                var _valueRequested = stylesRequested[prop];
+                                var _valueComputed = stylesComputed[prop];
 
-                            var _isHex = _valueRequested.indexOf('#')!=-1;
-                            var _isRGB = _valueRequested.indexOf('rgb')!=-1;
-                            var _isRGBA = _valueRequested.indexOf('rgba')!=-1;
+                                var _isHex = _valueRequested.indexOf('#') != -1;
+                                var _isRGB = _valueRequested.indexOf('rgb') != -1;
+                                var _isRGBA = _valueRequested.indexOf('rgba') != -1;
 
-                            if( _isHex || _isRGB || _isRGBA){
+                                if (_isHex || _isRGB || _isRGBA) {
 
-                                var dColorMultiplicator = dojo.colorFromString(_valueRequested);
-                                var dColorNow = dojo.colorFromString(_valueRequested);
-                                var dColorComputed = dojo.colorFromString(_valueComputed);
-                                var dColorNew = new Color();
+                                    var dColorMultiplicator = dojo.colorFromString(_valueRequested);
+                                    var dColorNow = dojo.colorFromString(_valueRequested);
+                                    var dColorComputed = dojo.colorFromString(_valueComputed);
+                                    var dColorNew = new Color();
 
-                                _.each(["r", "g", "b", "a"], function(x){
-                                    dColorNew[x] = Math.min(dColorComputed[x] + dColorMultiplicator[x], x=="a" ? 1 : 255);
-                                });
+                                    _.each(["r", "g", "b", "a"], function (x) {
+                                        dColorNew[x] = Math.min(dColorComputed[x] + dColorMultiplicator[x], x == "a" ? 1 : 255);
+                                    });
 
-                                var _valueOut = '';
-                                if(_isHex){
-                                    _valueOut = dColorNew.toHex();
-                                }else if(_isRGB){
-                                    _valueOut = dColorNew.toCss(false);
-                                }else if(_isRGBA){
-                                    _valueOut = dColorNew.toCss(true);
-                                }
-                                _newStyleObject[prop]=_valueOut;
-                                domStyle.set(obj,prop, _valueOut);
+                                    var _valueOut = '';
+                                    if (_isHex) {
+                                        _valueOut = dColorNew.toHex();
+                                    } else if (_isRGB) {
+                                        _valueOut = dColorNew.toCss(false);
+                                    } else if (_isRGBA) {
+                                        _valueOut = dColorNew.toCss(true);
+                                    }
+                                    _newStyleObject[prop] = _valueOut;
+                                    domStyle.set(obj, prop, _valueOut);
 
 
-                            }else{
-                                //extract actual number :
-                                var numberOnly = numbersOnlyRegExp.exec(stylesComputed[_prop]);
-                                if(numberOnly && numberOnly.length>=3){
-                                    var _int = parseInt(numberOnly[3]);
-                                    if(_int && _int>0){
-                                        multiplicator  = _int;
+                                } else {
+                                    //extract actual number :
+                                    var numberOnly = numbersOnlyRegExp.exec(stylesComputed[_prop]);
+                                    if (numberOnly && numberOnly.length >= 3) {
+                                        var _int = parseInt(numberOnly[3]);
+                                        if (_int && _int > 0) {
+                                            multiplicator = _int;
+                                        }
                                     }
                                 }
                             }
                         }
+                        //now get an object array of the styles we'd like to alter
+                        var styles = this._toObject(currentStyle);
+                        if (!styles) {
+                            return false;
+                        }
+                        break;
                     }
-                    //now get an object array of the styles we'd like to alter
-                    var styles = this._toObject(currentStyle);
-                    if(!styles){
-                        return false;
-                    }
-                    break;
-                }
             }
         },
-        activate:function(){
-            this._destroy();//you never know
+        activate: function () {
+            this._destroy(); //you never know
         },
-        deactivate:function(){
+        deactivate: function () {
             this._destroy();
         }
     };
 
     //package via declare
-    var _class = dcl([Block,EventedMixin.dcl,Referenced.dcl],Impl);
+    var _class = dcl([Block, EventedMixin.dcl, Referenced.dcl], Impl);
     //static access to Impl.
     _class.Impl = Impl;
     return _class;

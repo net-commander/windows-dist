@@ -16,6 +16,7 @@ const pathUtil = require("path");
 const defaultFileName = 'settings.json';
 const exists_1 = require("../fs/exists");
 const write_1 = require("../fs/write");
+const debug = false;
 /**
  * This service sets/gets data in a json file, utilizing 'dot-prop' to select certain data in the object.
  *
@@ -39,8 +40,17 @@ class JSONFileService extends Base_1.BaseService {
         this.root = 'admin';
     }
     _ensure(path) {
-        if (!exists_1.sync(path)) {
-            write_1.sync(path, this.defaultData);
+        if (path || path.length) {
+            debug && console.error('ensure invalid path !');
+            return;
+        }
+        try {
+            if (path && path.length && !exists_1.sync(path)) {
+                write_1.sync(path, this.defaultData);
+            }
+        }
+        catch (e) {
+            debug && console.error('ensure failed : ' + path);
         }
     }
     _userDir(userRoot, what) {
@@ -58,10 +68,13 @@ class JSONFileService extends Base_1.BaseService {
     }
     get(section, path, query) {
         let configPath = this._getConfigPath(arguments);
+        if (!configPath || !configPath.length) {
+            debug && console.error('get failed!, invalid path ' + configPath + ' for secction ' + section + ' & path = ' + path);
+            return [];
+        }
         let data = this.readConfig(configPath);
         let result = {};
         result[section] = dotProp.get(data, this.root + path + section);
-        console.log('config path ' + configPath, [path, query, result]);
         return result;
     }
     set(section, path = '.', searchQuery = null, value, decodeValue = true, request) {
