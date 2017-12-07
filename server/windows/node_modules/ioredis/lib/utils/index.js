@@ -1,6 +1,5 @@
 'use strict';
 var urllib = require('url');
-var util = require('util');
 var _ = require('lodash');
 
 /**
@@ -214,24 +213,6 @@ exports.toArg = function (arg) {
   return String(arg);
 };
 
-var crc16 = require('./crc');
-/**
- * Calculate slot by key
- *
- * @param {string} key
- * @return {number}
- */
-exports.calcSlot = function (key) {
-  var s = key.indexOf('{');
-  if (s !== -1) {
-    var e = key.indexOf('}', s + 2);
-    if (e !== -1) {
-      key = key.slice(s + 1, e);
-    }
-  }
-  return crc16(key) & 16383;
-};
-
 /**
  * Optimize error stack
  *
@@ -256,6 +237,12 @@ exports.optimizeErrorStack = function (error, friendlyStack, filterPath) {
   return error;
 };
 
+/**
+ * Parse the redis protocol url
+ *
+ * @param {string} url - the redis protocol url
+ * @return {Object}
+ */
 exports.parseURL = function (url) {
   if (exports.isInt(url)) {
     return { port: url };
@@ -291,17 +278,25 @@ exports.parseURL = function (url) {
   return result;
 };
 
-exports.extendsError = function (name) {
-  var errorClass = function (message) {
-    Error.call(this);
-    Error.captureStackTrace(this, this.constructor);
-
-    this.name = name;
-    this.message = message;
-  };
-
-  // inherit from Error
-  util.inherits(errorClass, Error);
-
-  return errorClass;
+/**
+ * Get a random element from `array`
+ *
+ * @param {array} array - the array
+ * @param {number} [from=0] - start index
+ * @return {}
+ */
+exports.sample = function (array, from) {
+  var length = array.length;
+  if (typeof from !== 'number') {
+    from = 0;
+  }
+  if (from >= length) {
+    return;
+  }
+  return array[from + Math.floor(Math.random() * (length - from))];
 };
+
+/**
+ * Error message for connection being disconnected
+ */
+exports.CONNECTION_CLOSED_ERROR_MSG = 'Connection is closed.';
