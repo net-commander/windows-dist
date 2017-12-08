@@ -383,7 +383,7 @@ define([
                 if (!this._selection || this._selection.length > 1 || selection.length > 1 || this.getSelection() != widget) {
                     var oldSelection = this._selection;
                     this._selection = selection;
-                    quite !==false && this.onSelectionChange(selection, add);
+                    quite !== true && this.onSelectionChange(selection, add);
                     if (oldSelection) {
                         oldSelection.forEach(function (w) {
                             var h = w.getHelper();
@@ -398,7 +398,7 @@ define([
                     }
                 }
             }
-            quite !== false && this.updateFocus(widget, index, inline);
+            quite !== true && this.updateFocus(widget, index, inline);
         },
         deselect: function (widget) {
             if (!this._selection) {
@@ -430,11 +430,9 @@ define([
             } else { // deselect all
                 if (this._selection) {
                     this._selection.forEach(function (w) {
-                        if(w.getHelper){
                         var h = w.getHelper();
                         if (h && h.onDeselect) {
                             h.onDeselect(w);
-                        }
                         }
                     }, this);
                 }
