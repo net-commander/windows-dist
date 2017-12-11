@@ -71480,11 +71480,16 @@ define('xide/manager/SettingsManager',[
             }else{
                 props.value = value;
             }
-            return this.write2(null, '.', {
+            this.getStore().emit('update',{
+                target:props
+            })
+            const prom = this.write2(null, '.', {
                 id: id
             }, {
                 value: props.value
             }, true, null);
+            
+            return prom;
         },
         getStore: function () {
             return this.settingsStore;
