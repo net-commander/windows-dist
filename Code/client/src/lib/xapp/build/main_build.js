@@ -73401,7 +73401,7 @@ define('xblox/CSSState',[
     'xblox/_State',
     'xide/utils',
     'xdojo/has'
-], function (dcl,register, CustomElement,_State,utils,has) {
+], function (dcl, register, CustomElement, _State, utils, has) {
     var extraRules = [],
         extraSheet,
         removeMethod,
@@ -73411,6 +73411,7 @@ define('xblox/CSSState',[
     has.add('dom-contains', function (global, doc, element) {
         return !!element.contains; // not supported by FF < 9
     });
+
     function removeRule(index) {
         // Function called by the remove method on objects returned by addCssRule.
         var realIndex = extraRules[index],
@@ -73436,9 +73437,9 @@ define('xblox/CSSState',[
         }
     }
     var Impl = {
-        _lastState:null,
+        _lastState: null,
         declaredClass: 'xblox/CSSState',
-        cssClass:"",
+        cssClass: "",
         addCssRule: function (selector, css) {
             // summary:
             //		Dynamically adds a style rule to the document.  Returns an object
@@ -73473,45 +73474,45 @@ define('xblox/CSSState',[
                 remove: function () {
                     removeRule(index);
                 },
-                sheet:extraSheet
+                sheet: extraSheet
             };
         },
         escapeCssIdentifier: function (id, replace) {
             return typeof id === 'string' ? id.replace(invalidCssChars, replace || '\\$1') : id;
         },
-        detachedCallback:function(){
-            this._styles && _.each(this._styles,function(style){
+        detachedCallback: function () {
+            this._styles && _.each(this._styles, function (style) {
                 style.remove();
             });
             delete this._styles;
         },
-        applyTo:function(widget,name){
-            if(this._lastState){
+        applyTo: function (widget, name) {
+            if (this._lastState) {
                 this._lastState.remove();
             }
             delete this._lastStateName;
             this._lastStateName = name;
-            if(!this._attached){
+            if (!this._attached) {
                 return;
             }
             var cssClass = this.cssClass;
             var isCSSClass = cssClass.length > 0;
             var id = widget.id || utils.createUUID();
-            var _uniqueId = widget.tagName.replace(/\./g,"_") + '_' + id;
+            var _uniqueId = widget.tagName.replace(/\./g, "_") + '_' + id;
             var css = '' + this.innerHTML;
-            css = css.replace('.style','');
+            css = css.replace('.style', '');
             css = css.replace(/<(?:.|\n)*?>/gm, '');
-            css = css.replace('{','');
-            css = css.replace('}','');
-            css = css.replace(/(\r\n|\n|\r|\t)/gm,"");
+            css = css.replace('{', '');
+            css = css.replace('}', '');
+            css = css.replace(/(\r\n|\n|\r|\t)/gm, "");
 
-            _uniqueId+='_state_' + name;
+            _uniqueId += '_state_' + name;
 
             $(widget).removeClass($(widget).data('_lastCSSState'));
             $(widget).removeClass($(widget).data('_lastCSSClass'));
             $(widget).removeClass(cssClass);
 
-            if(!cssClass) {
+            if (!cssClass) {
                 $(widget).addClass(_uniqueId);
                 $(widget).data('_lastCSSState', _uniqueId);
                 var selectorPrefix = '.' + this.escapeCssIdentifier(_uniqueId);
@@ -73520,7 +73521,7 @@ define('xblox/CSSState',[
                 }
                 var style = this.addCssRule(selectorPrefix, css);
                 this._styles.push(style);
-            }else{
+            } else {
                 $(widget).addClass(cssClass);
                 $(widget).data('_lastCSSClass', cssClass);
             }
