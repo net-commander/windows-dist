@@ -71472,6 +71472,13 @@ define('xide/manager/SettingsManager',[
         },
         setSetting: function (id, value) {
             let props = this.getStore().getSync(id);
+            if(value==null){
+                this.getStore().removeSync(id);
+                const prom = this.remove(null, '.', {
+                    id: id
+                });
+                return;
+            }
             if(!props){
                 props = this.getStore().putSync({
                     id:id,
@@ -71526,8 +71533,10 @@ define('xide/manager/SettingsManager',[
             }.bind(this));
         },
         update: function (section, path, query, data, decode) {
-            //return this.callMethodEx(this.serviceClass, 'update', [section || this.section, path, query, data, decode], readyCB, false);
             return this.runDeferred(null, 'update', [section || this.section, path, query, data, decode]);
+        },
+        remove: function (section, path, query) {
+            return this.runDeferred(null, 'remove', [section || this.section, path, query]);
         },
         write: function (section, path, query, data, decode, readyCB) {
             try {
