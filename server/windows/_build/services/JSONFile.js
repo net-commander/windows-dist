@@ -39,8 +39,11 @@ class JSONFileService extends Base_1.BaseService {
         this.configPath = config;
         this.root = 'admin';
     }
+    getDefaults() {
+        return this.defaultData;
+    }
     _ensure(path) {
-        if (path || path.length) {
+        if (!path || !path.length) {
             debug && console.error('ensure invalid path !');
             return;
         }

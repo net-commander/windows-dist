@@ -24,6 +24,14 @@ class LibraryService extends JSONFile_1.JSONFileService {
         };
         this.configPath = config;
         this.root = 'user';
+        this.defaultData = {
+            user: {
+                styles: []
+            }
+        };
+    }
+    getDefaults() {
+        return this.defaultData;
     }
     _get(section, path, query) {
         let configPath = this._getConfigPath(arguments);
