@@ -8,6 +8,7 @@ const fs = require("fs");
 const _ = require("lodash");
 const mkdirp = require("mkdirp");
 const _path = require("path");
+const url = require("url");
 const write_1 = require("../fs/write");
 // const write = require('write-file-atomic');
 const qs = require('qs').parse;
@@ -56,7 +57,8 @@ class BaseService extends Resolver_1.ResourceResolver {
     _getUser(request) {
         if (request) {
             // pick userDirectory from referrer (xide RPC calls don't have it has it as url parameter )
-            let urlArgs = qs(request.get('referrer'));
+            const ref = request.get('referrer');
+            let urlArgs = qs(url.parse(ref).query);
             let user = urlArgs['userDirectory'];
             if (user) {
                 return user;
