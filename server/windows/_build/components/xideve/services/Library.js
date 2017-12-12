@@ -19,14 +19,34 @@ class LibraryService extends JSONFile_1.JSONFileService {
         this.defaultFileName = defaultFileName;
         this.defaultData = {
             user: {
-                styles: []
+                styles: [
+                    {
+                        "id": "white",
+                        "value": {
+                            "type": "xblox/StyleState",
+                            "properties": {
+                                "style": "background-color: white; background-image: none;"
+                            }
+                        }
+                    }
+                ]
             }
         };
         this.configPath = config;
         this.root = 'user';
         this.defaultData = {
             user: {
-                styles: []
+                styles: [
+                    {
+                        "id": "white",
+                        "value": {
+                            "type": "xblox/StyleState",
+                            "properties": {
+                                "style": "background-color: white; background-image: none;"
+                            }
+                        }
+                    }
+                ]
             }
         };
     }
