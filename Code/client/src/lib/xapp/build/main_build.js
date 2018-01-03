@@ -63272,6 +63272,7 @@ define('xcf/types/Types',[
     'xide/utils',
     'xide/utils/HexUtils'
 ], function (aTypes, cTypes, types, ObjectUtils, utils, HexUtils) {
+    
 
     if (!String.prototype.setBytes) {
         String.prototype.setBytes = function (bytes) {
@@ -63365,6 +63366,7 @@ define('xcf/types/Types',[
          */
         DEVICE_CONSOLE: 0x00000020
     };
+
 
     /**
      * Help struct for jsDoc
@@ -67434,7 +67436,7 @@ define('xide/manager/Context_UI',[
             const on = this.getSettingsManager().getSetting('navigation') || {
                 value: true
             }
-            this.getApplication().collapseNavigation(on.on);
+            this.getApplication().collapseNavigation(on.on !==undefined ? !on.on : false);
         },
         onComponentsReady: function () {
             // todo : store is leaked!
