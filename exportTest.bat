@@ -1,1 +1,0 @@
-export C:\Users\mc007\Documents\Control-Freak --linux32=false --linux64=false --osx=false --arm=false
