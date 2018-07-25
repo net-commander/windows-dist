@@ -1,8 +1,10 @@
 'use strict';
 const binding = require('bindings')('serialport.node');
 const BaseBinding = require('./base');
+const Poller = require('./poller');
 const promisify = require('../util').promisify;
 const unixRead = require('./unix-read');
+const unixWrite = require('./unix-write');
 
 const defaultBindingOptions = Object.freeze({
   vmin: 1,
@@ -16,9 +18,9 @@ class DarwinBinding extends BaseBinding {
 
   constructor(opt) {
     super(opt);
-    this.disconnect = opt.disconnect;
-    this.bindingOptions = opt.bindingOptions || {};
+    this.bindingOptions = Object.assign({}, defaultBindingOptions, opt.bindingOptions || {});
     this.fd = null;
+    this.writeOperation = null;
   }
 
   get isOpen() {
@@ -28,23 +30,25 @@ class DarwinBinding extends BaseBinding {
   open(path, options) {
     return super.open(path, options)
       .then(() => {
-        options = Object.assign({}, defaultBindingOptions, this.bindingOptions, options);
-        return promisify(binding.open)(path, options);
+        this.openOptions = Object.assign({}, this.bindingOptions, options);
+        return promisify(binding.open)(path, this.openOptions);
       })
-      .then((fd) => { this.fd = fd });
+      .then((fd) => {
+        this.fd = fd;
+        this.poller = new Poller(fd);
+      });
   }
 
   close() {
     return super.close()
       .then(() => {
-        if (this.readPoller) {
-          this.readPoller.close();
-          this.readPoller = null;
-        }
-
-        return promisify(binding.close)(this.fd);
-      })
-      .then(() => { this.fd = null });
+        const fd = this.fd;
+        this.poller.stop();
+        this.poller = null;
+        this.openOptions = null;
+        this.fd = null;
+        return promisify(binding.close)(fd);
+      });
   }
 
   read(buffer, offset, length) {
@@ -53,8 +57,12 @@ class DarwinBinding extends BaseBinding {
   }
 
   write(buffer) {
-    return super.write(buffer)
-      .then(() => promisify(binding.write)(this.fd, buffer));
+    this.writeOperation = super.write(buffer)
+      .then(() => unixWrite.call(this, buffer))
+      .then(() => {
+        this.writeOperation = null;
+      });
+    return this.writeOperation;
   }
 
   update(options) {
@@ -74,6 +82,7 @@ class DarwinBinding extends BaseBinding {
 
   drain() {
     return super.drain()
+      .then(() => Promise.resolve(this.writeOperation))
       .then(() => promisify(binding.drain)(this.fd));
   }
 

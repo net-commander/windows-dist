@@ -1,24 +1,18 @@
 'use strict';
+const Buffer = require('safe-buffer').Buffer;
 const DelimiterParser = require('./delimiter');
-const inherits = require('util').inherits;
 
-function ReadlineParser(options) {
-  if (!(this instanceof ReadlineParser)) {
-    return new ReadlineParser(options);
+module.exports = class ReadLineParser extends DelimiterParser {
+  constructor(options) {
+    const opts = Object.assign({
+      delimiter: Buffer.from('\n', 'utf8'),
+      encoding: 'utf8'
+    }, options);
+
+    if (typeof opts.delimiter === 'string') {
+      opts.delimiter = Buffer.from(opts.delimiter, opts.encoding);
+    }
+
+    super(opts);
   }
-
-  options = options || {};
-
-  if (options.delimiter === undefined) {
-    options.delimiter = new Buffer('\n', 'utf8');
-  }
-
-  DelimiterParser.call(this, options);
-
-  const encoding = options.encoding || 'utf8';
-  this.delimiter = new Buffer(options.delimiter, encoding);
-  this.setEncoding(encoding);
-}
-
-inherits(ReadlineParser, DelimiterParser);
-module.exports = ReadlineParser;
+};
