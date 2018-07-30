@@ -6,8 +6,8 @@ define([
     //'dojo/dom-construct',
     "xide/manager/ManagerBase"
 ], function (dcl, Deferred, types, utils, ManagerBase) {
-    var debugBootstrap = false;
-    var debugBlocks = false;
+    var debugBootstrap = true;
+    var debugBlocks = true;
     //Application
     var Module = dcl([ManagerBase], {
         declaredClass: "xapp/manager/Application",
@@ -116,7 +116,7 @@ define([
                     }
 
 
-                    thiz.onReady();
+                    // thiz.onReady();
 
 
                 } else {
@@ -124,7 +124,7 @@ define([
                     blockManagerInstance.ctx = thiz.ctx;
                     thiz.ctx.blockManager = blockManagerInstance;
                 }
-                thiz.onReady();
+                //thiz.onReady();
             });
         },
         /**

@@ -20,7 +20,7 @@ define([
 
     var isIDE = has('xcf-ui');
     var debugWire = false;
-    var debugBoot = false;
+    var debugBoot = true;
     var debugRun = false;
     var Instance = null;
     var NotifierClass = dcl([EventedMixin.dcl], {});
@@ -613,6 +613,7 @@ define([
             debugBoot && console.log('Checkpoint 7. xapp/manager->init(settings)', settings);
             var thiz = this;
             this.subscribe(types.EVENTS.ON_DEVICE_DRIVER_INSTANCE_READY, function (evt) {
+                debugBoot && console.log('Checkpoint 7.1.4 xapp/manager->init() Device Instance Ready', settings);
                 if (thiz._timer) {
                     clearTimeout(thiz._timer);
                     delete thiz._timer;
@@ -629,8 +630,9 @@ define([
                     thiz.publish(types.EVENTS.ON_APP_READY, {
                         context: thiz
                     });
+                    // thiz.onReady();
                     thiz.application.publishVariables();
-                }, 10);
+                }, 1000);
 
             });
 
