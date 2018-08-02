@@ -95,6 +95,9 @@ define([
         },
         updateImages(){
             const thiz = this;
+            if(!thiz.ctx.getFileManager()){
+                return;
+            }
             $('img').each(function (i, img) {
                 let src = $(img).attr('src');
                 if (src.indexOf('http') == -1 && src.indexOf('://') == -1) {
