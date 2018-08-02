@@ -74,8 +74,8 @@ define([
                                 item: variable,
                                 scope: instance.blockScope,
                                 owner: this,
-                                save: false,                         //dont save it
-                                source: types.MESSAGE_SOURCE.DEVICE,  //for prioritizing
+                                save: false, //dont save it
+                                source: types.MESSAGE_SOURCE.DEVICE, //for prioritizing
                                 publishMQTT: false
                             });
                         }
@@ -85,16 +85,34 @@ define([
         },
         onReady: function () {
             debugBootstrap && console.log('   Checkpoint 5.3 managers ready');
+
             this.publish(types.EVENTS.ON_APP_READY, {
                 context: this.ctx,
                 application: this,
                 delegate: this.delegate
             });
+
+        },
+        updateImages(){
+            const thiz = this;
+            $('img').each(function (i, img) {
+                let src = $(img).attr('src');
+                if (src.indexOf('http') == -1 && src.indexOf('://') == -1) {
+                    src = thiz.ctx.getFileManager().getImageUrl({
+                        mount: 'workspace_user',
+                        path: src
+                    });
+                    img.src = src;
+                    // console.log('updated img to ' + src, img);
+                }
+            });
+
         },
         onXBloxReady: function () {
             var _re = require,
                 thiz = this;
             debugBootstrap && console.log('   Checkpoint 5.2 xblox component ready');
+            this.updateImages();
             _re(['xblox/embedded', 'xblox/manager/BlockManager'], function (embedded, BlockManager) {
                 debugBootstrap && console.log('   Checkpoint 5.2 setup xblox');
                 //IDE's block manager
@@ -116,7 +134,7 @@ define([
                     }
 
 
-                    // thiz.onReady();
+                    thiz.onReady();
 
 
                 } else {
@@ -124,7 +142,7 @@ define([
                     blockManagerInstance.ctx = thiz.ctx;
                     thiz.ctx.blockManager = blockManagerInstance;
                 }
-                //thiz.onReady();
+                thiz.onReady();
             });
         },
         /**
