@@ -59,6 +59,7 @@ PreviewRouter.get('/:preview/:mount/*', (ctx, next) => __awaiter(this, void 0, v
         VFS_URL: variables[Base_1.EEKey.VFS_URL],
         VFS_VARS: json_1.serialize(variables['VFS_CONFIG'], null, 2),
         CSS: variables[Base_1.EEKey.VFS_URL] + mount + '/' + filePath.replace('.dhtml', '.css'),
+        SHARED: variables[Base_1.EEKey.VFS_URL] + mount + '/' + 'shared.css',
         DOC_BASE_URL: variables[Base_1.EEKey.VFS_URL] + mount + '/' + dir,
         USER_DIRECTORY: encodeURIComponent(app.directoryService._getUser(ctx.request) || variables['VFS_CONFIG'].user)
     };

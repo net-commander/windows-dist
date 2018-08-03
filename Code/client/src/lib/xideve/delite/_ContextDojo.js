@@ -28,7 +28,7 @@ define([
     Path, Runtime, Workbench, Library,
     metadata, Preferences, html, iframe) {
 
-    var debugContent = false;
+    var debugContent = true;
     // console.log('has debug : ',has('debug'));
     /**
      *
@@ -229,6 +229,8 @@ define([
                     var VFS_URL = resourceManager.getVariable('VFS_URL');
                     var item = thiz.editor.item;
                     subs['APP_CSS'] = VFS_URL + item.mount + '/' + subs.SCENE_CSS.replace('./', '/');
+                    subs['SHARED'] = VFS_URL + item.mount + '/' + 'shared.css';
+                    console.error('shared ' , subs['SHARED']);
                     subs.path = item.path;
                     subs.mount = item.mount;
                     subs['workspace_user'] = VFS_URL + item.mount + '/';

@@ -556,6 +556,7 @@ class ControlFreak extends Base_1.ApplicationBase {
     stop() {
         return __awaiter(this, void 0, void 0, function* () {
             this.deviceServer.destroy();
+            console_1.console.log('stop cf app');
             // @TODO: get rid of 'server-destroy'
             this.server['destroy']();
             const services = this.externalServices();
@@ -746,7 +747,9 @@ class ControlFreak extends Base_1.ApplicationBase {
     run(deviceServer = true) {
         const _super = name => super[name];
         return __awaiter(this, void 0, void 0, function* () {
-            process.once('SIGINT', (e) => { return this.stop(); });
+            process.on('SIGINT', (e) => { return this.stop(); });
+            process.on('SIGTERM', (e) => { return this.stop(); });
+            // process.on('SIGKILL', (e) => { return this.stop(); });
             process.on('unhandledRejection', (reason) => {
                 console_1.console.error('Unhandled rejection, reason: ', reason);
             });
